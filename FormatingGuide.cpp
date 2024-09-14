@@ -95,8 +95,6 @@ typedef ClassName<StructName_s> TypeName_t;                     ///< Description
 // Constants
 const char* const CONSTANT_NAME = "constantValue";              ///< Description
 
-
-
 void functionName() {
     int32_t useFixedWithIntegers;   // Local variables don't need descriptions, but should have descriptive names
     int32_t* pointerDeclaration;
