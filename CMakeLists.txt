@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 11)
 option(BUILD_DOC "Build documentation" ON)
 find_package(Doxygen)
 if (DOXYGEN_FOUND)
-    add_custom_target(CreateDoxygen ALL
+    add_custom_target(create_doxygen ALL
             COMMAND ${DOXYGEN_EXECUTABLE} Doxyfile
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs/
             COMMENT "Generating API documentation with Doxygen"
