@@ -115,7 +115,7 @@ int32_t ClassName<TTemplateType>::methodName(double localVarName) {
 ```
 ### Structs, Enums, Typedefs and Functions
 - Use postfix: _s, _e, _t
-- Functions are camelCase()
+  - Functions are camelCase()
 ```cpp
 /**
  * @brief A brief description
