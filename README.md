@@ -1,5 +1,5 @@
 # NULI Avionics Flight Software
-## Setup:
+## Setup
 - Install clion
 - Install platformio extension
 - Install doxygen
