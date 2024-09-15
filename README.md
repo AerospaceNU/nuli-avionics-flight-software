@@ -24,6 +24,7 @@
 Doxygen is a code documentation generator. By formatting comments specifically, 
 documentation can be easily generated. The following code block should be placed
 before declarations of classes, enums, struts, etc (only the relevant lines).
+
 ```cpp
     /**
      * @brief A brief description
@@ -35,12 +36,14 @@ before declarations of classes, enums, struts, etc (only the relevant lines).
 ```
 The following should be placed to the right of the declaration of member variables,
 enumerated constants, constants, etc
+
 ```cpp
 const int NAME = "";    ///< Description
 ```
 ### Variables 
 - Everything should have descriptive names, without uncommon acronyms or words
 - Used sized integer variables like int32_t when possible
+
 ```cpp
 // Pointers (* on the type)
 int32_t* pointerDeclaration;
@@ -55,6 +58,7 @@ ENUM_CONSTANT_NAME,     ///< Description
 
 // Local variables (don't require doxygen descriptions)
 int32_t useFixedWithIntegers;
+
 ```
 ### Classes
 - Class names are UpperCamel, methods are lowerCamel and members are m_lowerCamel
@@ -65,6 +69,7 @@ int32_t useFixedWithIntegers;
 - Order is always public/protected/private. Within each the order is data types/constructors/methods/member variables
 - All member variables begin with m_
 - Separate into .h and .cpp files
+
 ```cpp
 /**
  * @brief A brief description
@@ -115,7 +120,8 @@ int32_t ClassName<TTemplateType>::methodName(double localVarName) {
 ```
 ### Structs, Enums, Typedefs and Functions
 - Use postfix: _s, _e, _t
-  - Functions are camelCase()
+- Functions are camelCase()
+
 ```cpp
 /**
  * @brief A brief description
