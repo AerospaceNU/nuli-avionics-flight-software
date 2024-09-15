@@ -3,4 +3,4 @@ project(desktop)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(desktop main.cpp)
+add_executable(desktop platformio_nuli_avionics_flight_software/src/desktop.cpp)
