@@ -58,7 +58,7 @@ void loop() {
     Messages messages = hardware.readAllMessages();
     // Processing Layer
     FilteredSensorData filteredSensorData = filter.runFilterOnce(&rawSensorData);
-    Responses responses = parser.parseAndConfigure(&messages);
+    Responses responses = parser.parseAndExecute(&messages);
     // Event Layer
     State currentState = stateMachine.updateState(&filteredSensorData);
     ActiveEvents activeEvents = eventManager.detectEvents(currentState, &filteredSensorData);

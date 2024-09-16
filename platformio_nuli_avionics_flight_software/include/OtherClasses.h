@@ -38,7 +38,7 @@ public:
         m_logger = logger;
     }
 
-    Responses parseAndConfigure(Messages* messages) {
+    Responses parseAndExecute(Messages* messages) {
         return {};
     }
 

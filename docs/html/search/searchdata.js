@@ -1,18 +1,21 @@
 var indexSectionsWithContent =
 {
-  0: "n",
-  1: "n"
+  0: "abcefghlmnprs",
+  1: "abcefghlmnprs",
+  2: "n"
 };
 
 var indexSectionNames =
 {
   0: "all",
-  1: "pages"
+  1: "classes",
+  2: "pages"
 };
 
 var indexSectionLabels =
 {
   0: "All",
-  1: "Pages"
+  1: "Classes",
+  2: "Pages"
 };
 
