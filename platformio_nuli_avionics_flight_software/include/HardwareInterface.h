@@ -13,11 +13,15 @@ public:
         return {};
     }
 
-    Messages readAllMessages() {
+    Messages readCommunicationLinks() {
         return {};
     }
 
-    void sendResponses(Responses *responses) {
+    void executeEvents(TriggeredEvents* activeEvents) {
+
+    }
+
+    void writeCommunicationLinks(Messages *responses) {
 
     }
 

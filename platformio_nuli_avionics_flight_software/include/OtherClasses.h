@@ -38,7 +38,7 @@ public:
         m_logger = logger;
     }
 
-    Responses parseAndExecute(Messages* messages) {
+    Messages parseAndExecute(Messages* messages) {
         return {};
     }
 
@@ -55,13 +55,13 @@ public:
         m_logger = logger;
     }
 
-    ActiveEvents detectEvents(State state, FilteredSensorData* filteredSensorData) {
+    TriggeredEvents detectEvents(State state, FilteredSensorData* filteredSensorData) {
         return {};
     }
 
-    void executeEvents(ActiveEvents* activeEvents) {
-
-    }
+//    void executeEvents(ActiveEvents* activeEvents) {
+//
+//    }
 
 private:
     Configuration* m_configuration;

@@ -13,8 +13,8 @@ Barometer barometer;
 NineAxisIMU nineAxisIMU;
 GPS gps;
 FlashMemory flashMemory;
-RadioTransmitter radioTransmitter;
-SerialConnection serialConnection;
+RadioTransmitterLink radioTransmitterLink;
+SerialConnectionLink serialConnectionLink;
 
 // Core objects accessible by all components
 HardwareInterface hardware;
@@ -39,8 +39,8 @@ void setup() {
     hardware.addGPS(&gps);
     hardware.addFlashMemory(&flashMemory);
     // Communication links
-    hardware.addCommunicationLink(&radioTransmitter);
-    hardware.addCommunicationLink(&serialConnection);
+    hardware.addCommunicationLink(&radioTransmitterLink);
+    hardware.addCommunicationLink(&serialConnectionLink);
     hardware.setup();       // Finish initializing all hardware
     // Set up the rest of the core
     configuration.setup(&hardware);
@@ -52,17 +52,27 @@ void setup() {
     eventManager.setup(&hardware, &configuration, &logger);
 }
 
+/*
+ * What I really like, and would not change:
+ *      - It's super clear what access the hardware (The logger and configuration will too, but they are abstracted)
+ *      - The flow of data is clear: input -> process -> decide -> output
+ * Current concerns:
+ *      - How is offload handled
+ *      - How are multiple communication links handled in messages/responses
+ *      - How are multiple sensors and sensors that don't exist handled in RawSensorData
+ *      - How are events passed
+ */
+
 void loop() {
-    // Input Layer
+    // Read in sensor data
     RawSensorData rawSensorData = hardware.readAllSensors();
-    Messages messages = hardware.readAllMessages();
-    // Processing Layer
+    Messages receivedMessages = hardware.readCommunicationLinks();
+    // Process data to determine outputs
     FilteredSensorData filteredSensorData = filter.runFilterOnce(&rawSensorData);
-    Responses responses = parser.parseAndExecute(&messages);
-    // Event Layer
     State currentState = stateMachine.updateState(&filteredSensorData);
-    ActiveEvents activeEvents = eventManager.detectEvents(currentState, &filteredSensorData);
-    // Action Layer
-    eventManager.executeEvents(&activeEvents);
-    hardware.sendResponses(&responses);
+    TriggeredEvents triggeredEvents = eventManager.detectEvents(currentState, &filteredSensorData);
+    Messages responses = parser.parseAndExecute(&receivedMessages);
+    // Output results
+    hardware.writeCommunicationLinks(&responses);
+    hardware.executeEvents(&triggeredEvents);
 }

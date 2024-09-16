@@ -8,10 +8,10 @@ class CommunicationLink {
 
 };
 
-class RadioTransmitter : public CommunicationLink {
+class RadioTransmitterLink : public CommunicationLink {
 };
 
-class SerialConnection : public CommunicationLink {
+class SerialConnectionLink : public CommunicationLink {
 
 };
 

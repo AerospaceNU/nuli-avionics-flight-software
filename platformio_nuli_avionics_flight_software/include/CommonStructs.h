@@ -9,15 +9,11 @@ struct FilteredSensorData {
 
 };
 
-struct ActiveEvents {
+struct TriggeredEvents {
 
 };
 
 struct Messages {
-    char* messages[4];
-};
-
-struct Responses {
     char* messages[4];
 };
 
