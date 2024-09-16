@@ -57,10 +57,14 @@ void setup() {
  *      - It's super clear what access the hardware (The logger and configuration will too, but they are abstracted)
  *      - The flow of data is clear: input -> process -> decide -> output
  * Current concerns:
+ *      - Performance: there is virtual methods and copying here
  *      - How is offload handled
  *      - How are multiple communication links handled in messages/responses
  *      - How are multiple sensors and sensors that don't exist handled in RawSensorData
+ *          - Fixed vs dynamic QTY?
  *      - How are events passed
+ *          - Index mapping?
+ *          - Standard types?
  */
 
 void loop() {
