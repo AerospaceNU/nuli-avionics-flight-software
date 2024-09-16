@@ -4,14 +4,14 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-class MessageInterface {
+class CommunicationLink {
 
 };
 
-class RadioTransmitter : public MessageInterface {
+class RadioTransmitter : public CommunicationLink {
 };
 
-class SerialConnection : public MessageInterface {
+class SerialConnection : public CommunicationLink {
 
 };
 

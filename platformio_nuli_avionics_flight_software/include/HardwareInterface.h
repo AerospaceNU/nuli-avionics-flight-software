@@ -25,8 +25,8 @@ public:
 
     }
 
-    void addMessageInterface(MessageInterface* messageInterface) {
-        m_messageInterfaces[0] = messageInterface;
+    void addCommunicationLink(CommunicationLink* communicationLink) {
+        m_communicationLinks[0] = communicationLink;
     }
 
     void addPyro(Pyro* pyro) {
@@ -66,7 +66,7 @@ private:
     Gyroscope* m_gyroscopes[4];
     GPS* m_gps[4];
     FlashMemory* m_flashMemory[4];
-    MessageInterface* m_messageInterfaces[4];
+    CommunicationLink* m_communicationLinks[4];
 
 };
 

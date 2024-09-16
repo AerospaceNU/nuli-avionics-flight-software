@@ -38,8 +38,9 @@ void setup() {
     hardware.addMagnetometer(nineAxisIMU.getMagnetometer());
     hardware.addGPS(&gps);
     hardware.addFlashMemory(&flashMemory);
-    hardware.addMessageInterface(&radioTransmitter);
-    hardware.addMessageInterface(&serialConnection);
+    // Communication links
+    hardware.addCommunicationLink(&radioTransmitter);
+    hardware.addCommunicationLink(&serialConnection);
     hardware.setup();       // Finish initializing all hardware
     // Set up the rest of the core
     configuration.setup(&hardware);
