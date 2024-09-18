@@ -27,6 +27,9 @@ before declarations of classes, enums, struts, etc (only the relevant lines).
 
 ```cpp
     /**
+     * @class ClassName
+     * @struct StructName_s
+     * @enum EnumName_e
      * @brief A brief description
      * @details A detailed description (optional)
      * @param localVarName Argument description
@@ -72,6 +75,7 @@ int32_t useFixedWithIntegers;
 
 ```cpp
 /**
+ * @class ClassName
  * @brief A brief description
  * @details A detailed description (optional)
  * @tparam TTemplateType Template argument description
@@ -124,6 +128,7 @@ int32_t ClassName<TTemplateType>::methodName(double localVarName) {
 
 ```cpp
 /**
+ * @struct StructName_s
  * @brief A brief description
  * @details A detailed description (optional)
  */

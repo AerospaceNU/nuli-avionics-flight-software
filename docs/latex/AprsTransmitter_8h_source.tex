@@ -1,0 +1,74 @@
+\hypertarget{AprsTransmitter_8h_source}{}\doxysection{Aprs\+Transmitter.\+h}
+\label{AprsTransmitter_8h_source}\index{nuli\_avionics\_flight\_software/platformio\_nuli\_avionics\_flight\_software/include/AprsTransmitter.h@{nuli\_avionics\_flight\_software/platformio\_nuli\_avionics\_flight\_software/include/AprsTransmitter.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PLATFORMIO\_NULI\_AVIONICS\_FLIGHT\_SOFTWARE\_APRSTRANSMITTER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PLATFORMIO\_NULI\_AVIONICS\_FLIGHT\_SOFTWARE\_APRSTRANSMITTER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Based\ on:\ https://github.com/ocrdu/Arduino\_SAMD21\_Audio\_Player/blob/master/src/AudioPlayer.cpp}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ License:\ GNU\ General\ Public\ License\ v3.0\ (same\ as\ project)}}
+\DoxyCodeLine{00006\ }
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00008\ \textcolor{comment}{}}
+\DoxyCodeLine{00009\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ @struct\ BitSinTable\_s}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ @brief\ Holds\ a\ reference\ to\ the\ segment\ of\ a\ sin\ waveform\ representing\ a\ single\ bit\ of\ data}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00013\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structBitSinTable__s}{BitSinTable\_s}}\ \{}
+\DoxyCodeLine{00014\ \ \ \ \ \textcolor{keyword}{const}\ uint8\_t*\ \mbox{\hyperlink{structBitSinTable__s_a682e82d9e81a6607d51a18e84d57f5ab}{start}};\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Pointer\ to\ somewhere\ in\ one\ of\ the\ pre-\/generated\ sin\ tables}}
+\DoxyCodeLine{00015\ \ \ \ \ uint32\_t\ \mbox{\hyperlink{structBitSinTable__s_ae48a6d977709515f8faef0fccf55276c}{length}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ How\ long\ of\ a\ segment\ to\ use\ from\ the\ table.\ Should\ always\ be\ SAMPLE\_FREQUENCY\ /\ BOD\_RATE}}
+\DoxyCodeLine{00016\ \};}
+\DoxyCodeLine{00017\ \textcolor{comment}{}}
+\DoxyCodeLine{00018\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ @class\ AprsTransmitter}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ @brief\ Turns\ binary\ data\ into\ sin\ waves,\ output-\/ed\ on\ the\ DAC}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ @details\ To\ modulate\ the\ signal,\ precomputed\ 1200\ hz\ and\ 2200\ hz\ sin\ tables\ were\ computed.\ 2200\ represents\ a\ one\ and\ 1200\ represents\ a\ zero.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ To\ provide\ a\ smooth\ transition\ between\ the\ two\ frequency's,\ you\ must\ start\ the\ next\ frequency\ at\ the\ same\ value\ and\ direction\ as\ the\ current\ one.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ This\ class\ handles\ computing\ where\ to\ start\ in\ each\ sin\ table\ for\ each\ bit,\ and\ then\ uses\ timers/interrupts\ to\ accurately\ modulate\ the\ DAC/}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classAprsTransmitter}{AprsTransmitter}}\ \{}
+\DoxyCodeLine{00026\ \textcolor{keyword}{public}:\textcolor{comment}{}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Initializes\ the\ hardware\ timers\ needed\ for\ modulating\ the\ signal\ accurately.\ Must\ be\ called\ only\ once,\ before\ any\ other\ methods\ are\ called.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classAprsTransmitter_a2008e02d271fa6e804ef354fa5a5ed89}{configure}}();}
+\DoxyCodeLine{00031\ \textcolor{comment}{}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Transmits\ binary\ data\ through\ the\ DAC}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ \ \ \ *\ @param\ data\ Binary\ data\ to\ transmit}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ \ \ \ *\ @param\ length\ How\ many\ bytes\ to\ transmit}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classAprsTransmitter_a2e4dd4622fad3a638bfaad22854798db}{send}}(\textcolor{keyword}{const}\ uint8\_t*\ data,\ int32\_t\ length);}
+\DoxyCodeLine{00038\ \textcolor{comment}{}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Begins\ a\ transition\ of\ the\ last\ data\ sent}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classAprsTransmitter_a96c7703a8f1766c55020a1cc357c662e}{beginTransmission}}();}
+\DoxyCodeLine{00043\ \textcolor{comment}{}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ \ \ \ *\ Returns\ if\ the\ signal\ modulation\ is\ active}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ \ \ \ *\ @return\ if\ the\ signal\ modulation\ is\ active}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classAprsTransmitter_a76a01cb277f95d778928a0b422c395e6}{isCurrentlyTransmitting}}();}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{comment}{//\ Member\ variables\ are\ public\ because\ the\ IRS\ needs\ to\ access\ them}}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_ad3742d1c3d24b2300f515617bf7ef338}{BOD\_RATE}}\ =\ 1200;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ APRS\ bod\ rate\ in\ bits/second}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_ac3f6a73f10a751297fa0be8362908bf7}{SAMPLE\_FREQUENCY}}\ =\ 240000;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Sample\ frequency\ of\ the\ sin\ tables\ in\ samples/second}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_a4011c0bca8ef9398ad2d11e0a07fd9ca}{MAXIMUM\_BITS}}\ =\ 500;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Maximum\ message\ length\ in\ bits}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{volatile}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classAprsTransmitter_a36a6e9265ef7bb2c1cf1f7371ba9bd6c}{m\_transmitActive}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Tracks\ if\ the\ IRS\ is\ active}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{comment}{//\ The\ current\ bit's\ waveform}}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint8\_t*\ \mbox{\hyperlink{classAprsTransmitter_a2eb71daae27e9a72bca9b594d9bf2728}{m\_currentSample}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Pointer\ to\ the\ currently\ active\ sin\ table\ (might\ not\ point\ at\ the\ start\ of\ the\ table)}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_ac4e3eba9ea71859fdb249a1be101d973}{m\_currentSampleSize}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Length\ of\ the\ current\ sample\ (should\ always\ be\ SAMPLE\_FREQUENCY\ /\ BOD\_RATE)}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{static}\ uint16\_t\ \mbox{\hyperlink{classAprsTransmitter_ad76d55d881f736fdaa7c1b21a0521b1e}{currentSampleValue}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ @todo\ is\ this\ needed\ to\ be\ a\ member?\ Can\ probably\ be\ local\ or\ deleted}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_a469600acbd54642f0116f03a2da40274}{sampleIndex}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Index\ within\ the\ sin\ table}}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ Array\ of\ all\ bit's\ waveforms}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_a76fbad79c512b3da4fc777b17c5aa9d1}{bitIndex}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Which\ bit\ we\ are\ currently\ sending}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{static}\ uint32\_t\ \mbox{\hyperlink{classAprsTransmitter_a0d90156cae9015521882ce72c2aa5320}{m\_transmissionBitWaveformsNum}};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ How\ many\ bits\ we\ have\ to\ send}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structBitSinTable__s}{BitSinTable\_s}}\ \mbox{\hyperlink{classAprsTransmitter_a937953627c5b87cb17ac49d38a20259b}{m\_transmissionBitWaveforms}}[\mbox{\hyperlink{classAprsTransmitter_a4011c0bca8ef9398ad2d11e0a07fd9ca}{MAXIMUM\_BITS}}];\ \ \textcolor{comment}{///<\ Datastructure\ containing\ the\ sin\ table\ windows\ for\ every\ bit\ we\ will\ transmit}}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//PLATFORMIO\_NULI\_AVIONICS\_FLIGHT\_SOFTWARE\_APRSTRANSMITTER\_H}}
+
+\end{DoxyCode}
