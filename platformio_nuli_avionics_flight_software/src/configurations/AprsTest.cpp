@@ -11,7 +11,7 @@ void setup() {
     uint8_t data[3] = {0b10101010, 0b11110000, 0b00111010};
     AprsTransmitter::configure();
     AprsTransmitter::send(&data[0], 3);
-    while (AprsTransmitter::m_transmitActive);
+    while (AprsTransmitter::isCurrentlyTransmitting());
 
     Serial.println("done");
 }
