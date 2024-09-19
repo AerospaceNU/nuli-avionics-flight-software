@@ -82,6 +82,7 @@ void TC4_Handler() {                                                            
         if (AprsTransmitter::bitIndex >= AprsTransmitter::m_transmissionBitWaveformsNum) {
             REG_TC4_CTRLA &= ~TC_CTRLA_ENABLE;                  // Disable timer TC4
             while (TC4->COUNT16.STATUS.bit.SYNCBUSY);           // Wait for synchronization
+            DACWrite(0);
             AprsTransmitter::m_transmitActive = false;
         } else {
             // Set up the next bit

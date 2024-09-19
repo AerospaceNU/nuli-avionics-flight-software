@@ -50,7 +50,7 @@ public:
     // Member variables are public because the IRS needs to access them
     static constexpr uint32_t BOD_RATE = 1200;                      ///< APRS bod rate in bits/second
     static constexpr uint32_t SAMPLE_FREQUENCY = 240000;            ///< Sample frequency of the sin tables in samples/second
-    static constexpr uint32_t MAXIMUM_BITS = 500;                   ///< Maximum message length in bits
+    static constexpr uint32_t MAXIMUM_BITS = 1000;                   ///< Maximum message length in bits
 
     static volatile bool m_transmitActive;                          ///< Tracks if the IRS is active
     // The current bit's waveform
