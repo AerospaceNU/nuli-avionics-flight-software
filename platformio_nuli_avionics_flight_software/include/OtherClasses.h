@@ -5,32 +5,6 @@
 #include <CommonHardware.h>
 #include <HardwareInterface.h>
 
-class Configuration {
-public:
-    void setup(HardwareInterface* hardware) {
-        m_hardware = hardware;
-    }
-
-private:
-    HardwareInterface* m_hardware;
-};
-
-class Logger {
-public:
-    void setup(HardwareInterface* hardware, Configuration* configuration) {
-        m_hardware = hardware;
-        m_configuration = configuration;
-    }
-
-    void log() {
-
-    }
-
-private:
-    Configuration* m_configuration;
-    HardwareInterface* m_hardware;
-};
-
 class CommandLineParser {
 public:
     void setup(Configuration* configuration, Logger* logger) {

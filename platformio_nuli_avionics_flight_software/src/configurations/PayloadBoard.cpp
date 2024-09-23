@@ -1,4 +1,5 @@
 #include <Arduino.h>
+#include <AvionicsCore.h>
 #include <HardwareInterface.h>
 #include <CommonHardware.h>
 #include <CommonStructs.h>
@@ -6,9 +7,7 @@
 
 // Hardware devices
 Pyro pyro1(1, A0, 500);
-Pyro pyro2(2, A1, 500);
-Pyro pyro3(3, A2, Pyro::USE_DIGITAL_CONTINUITY);
-Pyro pyro4(4, A3, Pyro::USE_DIGITAL_CONTINUITY);
+Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
 Barometer barometer;
 NineAxisIMU nineAxisIMU;
 GPS gps;
@@ -20,36 +19,42 @@ SerialConnectionLink serialConnectionLink;
 HardwareInterface hardware;
 Configuration configuration;
 Logger logger;
-// Layer objects
+// Components, declared here to use dependency injection
 Filters filter;
 CommandLineParser parser;
 StateMachine stateMachine;
 EventManager eventManager;
 
+// The core
+AvionicsCore avionicsCore;
+
 void setup() {
-    // Add all devices to the core
+    // Add all hardware
     hardware.addPyro(&pyro1);
     hardware.addPyro(&pyro2);
-    hardware.addPyro(&pyro3);
-    hardware.addPyro(&pyro4);
     hardware.addBarometer(&barometer);
     hardware.addAccelerometer(nineAxisIMU.getAccelerometer());
     hardware.addGyroscope(nineAxisIMU.getGyroscope());
     hardware.addMagnetometer(nineAxisIMU.getMagnetometer());
     hardware.addGPS(&gps);
     hardware.addFlashMemory(&flashMemory);
-    // Communication links
     hardware.addCommunicationLink(&radioTransmitterLink);
     hardware.addCommunicationLink(&serialConnectionLink);
+    // Initialize globals
     hardware.setup();       // Finish initializing all hardware
-    // Set up the rest of the core
     configuration.setup(&hardware);
     logger.setup(&hardware, &configuration);
-    // Initialize all devices
+    // Initialize components
     filter.setup(&configuration, &logger);
     parser.setup(&configuration, &logger);
     stateMachine.setup(&configuration, &logger);
     eventManager.setup(&hardware, &configuration, &logger);
+    // Initialize core
+    avionicsCore.setup(&hardware, &configuration, &logger, &filter, &parser, &stateMachine, &eventManager);
+}
+
+void loop() {
+    avionicsCore.loopOnce();
 }
 
 /*
@@ -66,17 +71,3 @@ void setup() {
  *          - Index mapping?
  *          - Standard types?
  */
-
-void loop() {
-    // Read in sensor data
-    RawSensorData rawSensorData = hardware.readAllSensors();
-    Messages receivedMessages = hardware.readCommunicationLinks();
-    // Process data to determine outputs
-    FilteredSensorData filteredSensorData = filter.runFilterOnce(&rawSensorData);
-    State currentState = stateMachine.updateState(&filteredSensorData);
-    TriggeredEvents triggeredEvents = eventManager.detectEvents(currentState, &filteredSensorData);
-    Messages responses = parser.parseAndExecute(&receivedMessages);
-    // Output results
-    hardware.writeCommunicationLinks(&responses);
-    hardware.executeEvents(&triggeredEvents);
-}

@@ -1,7 +1,8 @@
 #include <iostream>
 
 int main() {
-    std::cout << "hi" << std::endl;
+    volatile int a;
+    std::cout << a << std::endl;
 }
 
 

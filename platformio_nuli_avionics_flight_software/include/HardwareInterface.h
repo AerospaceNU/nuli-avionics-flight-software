@@ -1,7 +1,7 @@
 #ifndef DESKTOP_HARDWAREMANAGER_H
 #define DESKTOP_HARDWAREMANAGER_H
 
-#include <stdint.h>
+#include <cstdint>
 #include <Arduino.h>
 #include <CommonHardware.h>
 #include <CommonStructs.h>
@@ -71,7 +71,6 @@ private:
     GPS* m_gps[4];
     FlashMemory* m_flashMemory[4];
     CommunicationLink* m_communicationLinks[4];
-
 };
 
 

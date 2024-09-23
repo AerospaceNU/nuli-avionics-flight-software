@@ -95,7 +95,7 @@ public:
         if (m_continuityThreshold == USE_DIGITAL_CONTINUITY) {
             m_hasContinuity = digitalRead(m_continuityPin);
         } else {
-            m_hasContinuity = analogRead(m_continuityPin) >= m_continuityThreshold;
+            m_hasContinuity = analogRead(m_continuityPin) >= uint32_t(m_continuityThreshold);
         }
     }
 

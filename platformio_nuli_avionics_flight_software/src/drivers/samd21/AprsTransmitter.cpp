@@ -1,6 +1,6 @@
 #include "AprsTransmitter.h"
 #include <Arduino.h>
-#include <SinTables.h>
+#include "APRSSinTables.h"
 
 // Based on: https://github.com/ocrdu/Arduino_SAMD21_Audio_Player/blob/master/src/AudioPlayer.cpp
 // License: GNU General Public License v3.0 (same as project)
