@@ -9,7 +9,7 @@
 #include <Pyro.h>
 #include <AvionicsCore.h>
 #include <HardwareAbstraction.h>
-#include <OtherClasses.h>
+#include <Filters.h>
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
 #include "drivers/arduino/ICM20948.h"
@@ -30,9 +30,6 @@ Configuration configuration;
 Logger logger;
 // Components, declared here to use dependency injection
 Filters filter;
-CommandLineParser parser;
-StateMachine stateMachine;
-EventManager eventManager;
 
 // The core
 AvionicsCore avionicsCore;
@@ -60,11 +57,8 @@ void setup() {
     logger.setup(&hardware, &configuration);
     // Initialize components
     filter.setup(&configuration, &logger);
-    parser.setup(&configuration, &logger);
-    stateMachine.setup(&configuration, &logger);
-    eventManager.setup(&hardware, &configuration, &logger);
     // Initialize core
-    avionicsCore.setup(&hardware, &configuration, &logger, &filter, &parser, &stateMachine, &eventManager);
+    avionicsCore.setup(&hardware, &configuration, &logger, &filter);
 }
 
 void loop() {

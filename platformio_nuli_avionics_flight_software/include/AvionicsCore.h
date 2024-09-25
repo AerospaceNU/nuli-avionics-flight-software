@@ -5,7 +5,7 @@
 #include <HardwareAbstraction.h>
 #include <Configuration.h>
 #include <Logger.h>
-#include <OtherClasses.h>
+#include <Filters.h>
 
 /**
  * @class AvionicsCore
@@ -24,10 +24,7 @@ public:
      * @param stateMachine State machine
      * @param eventManager Event manager
      */
-    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger, Filters* filter,
-               CommandLineParser* parser,
-               StateMachine* stateMachine,
-               EventManager* eventManager);
+    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger, Filters* filter);
 
     /**
      * @brief Run one tick of the core
@@ -42,10 +39,6 @@ private:
 
     // Local
     Filters* m_filter;
-    CommandLineParser* m_parser;
-    StateMachine* m_stateMachine;
-    EventManager* m_eventManager;
-
 };
 
 

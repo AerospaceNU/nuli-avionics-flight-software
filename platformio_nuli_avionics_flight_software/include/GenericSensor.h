@@ -4,7 +4,7 @@
 #include <Avionics.h>
 
 /**
- * @class Base sensor
+ * @class GenericSensor
  * @brief Underlying interface to all sensors
  * @details Provide virtual methods for common sensor function. Currently this is not a used feature, but is
  * implemented for future code that may require a BaseSensor class
