@@ -4,8 +4,12 @@
 #include <stdint.h>
 #include <Arduino.h>
 
-class CommunicationLink {
 
+
+class CommunicationLink {
+public:
+    void setup(){}
+    void read(){}
 };
 
 class RadioTransmitterLink : public CommunicationLink {
@@ -16,69 +20,14 @@ class SerialConnectionLink : public CommunicationLink {
 };
 
 
-class GPS {
-
-};
 
 class FlashMemory {
-
-};
-
-class Magnetometer {
-
-};
-
-class Accelerometer {
-
-};
-
-class Gyroscope {
-
-};
-
-class NineAxisIMU {
 public:
-    Gyroscope* getGyroscope() {
-        return &m_gyroscope;
-    }
+    virtual void read() {}
 
-    Magnetometer* getMagnetometer() {
-        return &m_magnetometer;
-    }
-
-    Accelerometer* getAccelerometer() {
-        return &m_accelerometer;
-    }
-
-private:
-    Gyroscope m_gyroscope;
-    Accelerometer m_accelerometer;
-    Magnetometer m_magnetometer;
+    virtual void setup() {}
 };
 
-class SixAxis {
-
-};
-
-class Barometer {
-public:
-    Barometer() = default;
-
-    virtual void read() {
-
-    }
-
-protected:
-    void calculateAltitude() {
-
-    }
-
-private:
-    double m_temperatureC = 0;
-    double m_humidity = 0;
-    double m_altitudeM = 0;
-    double m_pressureAtm = 0;
-};
 
 class Pyro {
 public:
@@ -90,6 +39,8 @@ public:
         pinMode(firePin, OUTPUT);
         disable();
     }
+
+    void setup(){};
 
     void read() {
         if (m_continuityThreshold == USE_DIGITAL_CONTINUITY) {

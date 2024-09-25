@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['hardwareinterface_0',['HardwareInterface',['../classHardwareInterface.html',1,'']]]
+  ['hardwareabstraction_0',['HardwareAbstraction',['../classHardwareAbstraction.html',1,'']]]
 ];

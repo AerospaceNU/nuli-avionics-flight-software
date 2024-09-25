@@ -1,6 +1,6 @@
 #include "Configuration.h"
-#include "HardwareInterface.h"
+#include "HardwareAbstraction.h"
 
-void Configuration::setup(HardwareInterface* hardware) {
+void Configuration::setup(HardwareAbstraction* hardware) {
     m_hardware = hardware;
 }

@@ -1,6 +1,7 @@
 #include <Arduino.h>
+#include <Avionics.h>
 #include <AvionicsCore.h>
-#include <HardwareInterface.h>
+#include <HardwareAbstraction.h>
 #include <CommonHardware.h>
 #include <CommonStructs.h>
 #include <OtherClasses.h>
@@ -16,7 +17,7 @@ RadioTransmitterLink radioTransmitterLink;
 SerialConnectionLink serialConnectionLink;
 
 // Core objects accessible by all components
-HardwareInterface hardware;
+HardwareAbstraction hardware;
 Configuration configuration;
 Logger logger;
 // Components, declared here to use dependency injection
@@ -54,7 +55,7 @@ void setup() {
 }
 
 void loop() {
-    avionicsCore.loopOnce();
+//    avionicsCore.loopOnce();
 }
 
 /*

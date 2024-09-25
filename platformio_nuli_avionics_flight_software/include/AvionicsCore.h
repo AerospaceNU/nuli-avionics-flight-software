@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CORE_H
 
 #include <Avionics.h>
-#include <HardwareInterface.h>
+#include <HardwareAbstraction.h>
 #include <Configuration.h>
 #include <Logger.h>
 #include <OtherClasses.h>
@@ -17,7 +17,7 @@ class AvionicsCore {
 public:
     /**
      * @brief Inject hardware, configuration and logger
-     * @param hardwareInterface Board specific hardware
+     * @param hardware Board specific hardware
      * @param configuration Configuration
      * @param logger Logger
      * @param filter Filters
@@ -25,7 +25,7 @@ public:
      * @param stateMachine State machine
      * @param eventManager Event manager
      */
-    void setup(HardwareInterface* hardwareInterface, Configuration* configuration, Logger* logger, Filters* filter,
+    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger, Filters* filter,
                CommandLineParser* parser,
                StateMachine* stateMachine,
                EventManager* eventManager);
@@ -37,7 +37,7 @@ public:
 
 private:
     // Global
-    HardwareInterface* m_hardware;
+    HardwareAbstraction* m_hardware;
     Configuration* m_configuration;
     Logger* m_logger;
 

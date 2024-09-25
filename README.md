@@ -20,6 +20,12 @@
 - Using dynamic memory on embedded systems
 - Using reference variables that persist beyond a function
 - Minimize complex object inheritance
+### Allowed Acronyms and Abbreviations
+- GPS (Global positioning system)
+- Num (Number)
+- IMU (Inertial measurement unit)
+- Pyro (Pyrotechnic Charge)
+- 
 ### Doxygen
 Doxygen is a code documentation generator. By formatting comments specifically, 
 documentation can be easily generated. The following code block should be placed

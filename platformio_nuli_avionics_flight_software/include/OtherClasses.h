@@ -3,7 +3,7 @@
 
 #include <CommonStructs.h>
 #include <CommonHardware.h>
-#include <HardwareInterface.h>
+#include <HardwareAbstraction.h>
 
 class CommandLineParser {
 public:
@@ -23,7 +23,7 @@ private:
 
 class EventManager {
 public:
-    void setup(HardwareInterface* hardware, Configuration* configuration, Logger* logger) {
+    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger) {
         m_hardware = hardware;
         m_configuration = configuration;
         m_logger = logger;
@@ -39,7 +39,7 @@ public:
 
 private:
     Configuration* m_configuration;
-    HardwareInterface* m_hardware;
+    HardwareAbstraction* m_hardware;
     Logger* m_logger;
 };
 
