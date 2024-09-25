@@ -8,7 +8,7 @@
 #include <OtherClasses.h>
 
 /**
- * @class Avionics Core
+ * @class AvionicsCore
  * @brief Core class that runs the Avionics Arduino codebase
  * @details Plz add details
  */

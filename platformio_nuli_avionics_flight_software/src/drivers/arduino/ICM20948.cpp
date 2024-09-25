@@ -7,10 +7,10 @@ void ICM20948::setSpiClass(SPIClass* spiClass) {
 }
 
 void ICM20948::setup() {
-    if (m_spiClass != nullptr) {
-        sparkfunIcm20948.begin(m_chipSelectPin, *m_spiClass);
-    } else {
+    if (m_spiClass == nullptr) {
         sparkfunIcm20948.begin(m_chipSelectPin);
+    } else {
+        sparkfunIcm20948.begin(m_chipSelectPin, *m_spiClass);
     }
 }
 

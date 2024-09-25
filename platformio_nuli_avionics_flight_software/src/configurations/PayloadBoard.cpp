@@ -19,7 +19,7 @@ Pyro pyro1(1, A0, 500);
 Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
 Barometer barometer;
 ICM20948 icm20948(5);
-GPS gps;
+GPS gps(9600);
 FlashMemory flashMemory;
 RadioTransmitterLink radioTransmitterLink;
 SerialConnectionLink serialConnectionLink;
@@ -44,18 +44,18 @@ void setup() {
     hardware.addPyro(&pyro1);
     hardware.addPyro(&pyro2);
     hardware.addBarometer(&barometer);
-
-    hardware.addGenericSensor(&icm20948);
-    hardware.addAccelerometer(icm20948.getAccelerometer());
-    hardware.addGyroscope(icm20948.getGyroscope());
-    hardware.addMagnetometer(icm20948.getMagnetometer());
-
     hardware.addGPS(&gps);
     hardware.addFlashMemory(&flashMemory);
     hardware.addCommunicationLink(&radioTransmitterLink);
     hardware.addCommunicationLink(&serialConnectionLink);
-    // Initialize globals
-    hardware.setup();       // Finish initializing all hardware
+    // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
+    hardware.addGenericSensor(&icm20948);
+    hardware.addAccelerometer(icm20948.getAccelerometer());
+    hardware.addGyroscope(icm20948.getGyroscope());
+    hardware.addMagnetometer(icm20948.getMagnetometer());
+    // Finish initializing all hardware
+    hardware.setup();
+    // Initialize other globals
     configuration.setup(&hardware);
     logger.setup(&hardware, &configuration);
     // Initialize components

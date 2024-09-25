@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['updatelooptimestamp_0',['updateLoopTimestamp',['../classHardwareAbstraction.html#a4c4bfececd417d21ba304fe9ffc92b1f',1,'HardwareAbstraction']]]
+  ['looponce_0',['loopOnce',['../classAvionicsCore.html#a55b34aa872a06687c97179308335cf9f',1,'AvionicsCore']]]
 ];

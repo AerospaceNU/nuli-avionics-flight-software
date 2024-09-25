@@ -4,39 +4,43 @@
 #include <Avionics.h>
 #include <HardwareAbstraction.h>
 
-#define CreateGetter(memberVariableName) decltype(memberVariableName) get##memberVariableName() const { return memberVariableName; }
-#define CreateSetter(memberVariableName) void set##memberVariableName(decltype(memberVariableName) newValue) { memberVariableName = newValue; m_flashWriteRequired = true; }
-#define CreateGetterSetter(memberVariableName) CreateGetter(memberVariableName) CreateSetter(memberVariableName)
+/**
+ * This macro generates getter and setter for member variables
+ *
+ * ## works as string concatenation in macros, allowing for the type name to be injected into the method names
+ */
+#define GENERATE_GET_SET_METHODS_MACRO(Type, Name, memberVariable)      \
+inline void set##Name(Type value) {                                     \
+    (memberVariable) = value;                                           \
+    m_flashWriteRequired = true;                                        \
+}                                                                       \
+inline Type get##Name() {                                               \
+    return memberVariable;                                              \
+}
 
 class Configuration {
-private:
-    // Naming standard is broken to allow for automatic creating on getter/setter methods
-    struct {
-        double LaunchAltitude = 0;
-        double AmbientTemperatureC = 20;
-        int32_t RadioChannel = 1;
-    } remove_padding;
-
-    bool m_flashWriteRequired = false;
-
 public:
     void setup(HardwareAbstraction* hardware);
 
-    CreateGetterSetter(LaunchAltitude)
+    GENERATE_GET_SET_METHODS_MACRO(double, LaunchAltitude, m_launchAltitude)
 
-    CreateGetterSetter(AmbientTemperatureC)
+    GENERATE_GET_SET_METHODS_MACRO(double, AmbientTemperatureK, m_ambientTemperatureK)
 
-    CreateGetterSetter(RadioChannel)
+    GENERATE_GET_SET_METHODS_MACRO(double, RadioChannel, m_radioChannel)
 
-    void updateFlash() const {
-        if (m_flashWriteRequired) {
-//            m_hardware.
-        }
-    }
+    void writeFlashIfUpdated() const;
 
 private:
+    struct {
+        double m_launchAltitude = 0;
+        double m_ambientTemperatureK = 20;
+        int32_t m_radioChannel = 1;
+    } remove_padding;
+
+    bool m_flashWriteRequired = false;
     HardwareAbstraction* m_hardware = nullptr;
 };
 
+#undef GENERATE_GET_SET_METHODS_MACRO
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATION_H

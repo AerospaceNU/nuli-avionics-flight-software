@@ -24,7 +24,7 @@ void AvionicsCore::loopOnce() {
     m_hardware->readAllSensors();
     m_hardware->readAllCommunicationLinks();
 
-
+    m_configuration->writeFlashIfUpdated();
     // Process data to determine outputs
 //    FilteredSensorData filteredSensorData = m_filter->runFilterOnce(&rawSensorData);
 //    State currentState = m_stateMachine->updateState(&filteredSensorData);

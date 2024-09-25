@@ -22,7 +22,7 @@
  *
  * ## works as string concatenation in macros, allowing for the type name to be injected into the method names
  */
-#define GENERATE_GET_ADD_METHODS_MACRO(Type, arrayVariable, numVariable, MaxNum) \
+#define GENERATE_GET_ADD_METHODS_MACRO(Type, arrayVariable, numVariable, MaxNum)    \
 void add##Type(Type* instance) {                                                    \
     if(numVariable >= MaxNum) return;                                               \
     arrayVariable[numVariable] = instance;                                          \
@@ -33,7 +33,7 @@ inline uint8_t getNum##Type##s() const {                                        
 }                                                                                   \
 inline Type* get##Type##Array() {                                                   \
     return arrayVariable[0];                                                        \
-}                                                                                   \
+}
 
 
 /**

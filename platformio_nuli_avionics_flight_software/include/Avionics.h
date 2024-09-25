@@ -2,7 +2,6 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H
 
 #include <cstdint>
-#include <array>
 #include <cmath>
 
 /**
@@ -11,8 +10,6 @@
  */
 
 #define remove_padding __attribute__((packed))
-
-//using std::array;
 
 const double ATMOSPHERIC_PRESSURE_PA = 101325;
 const double GRAVITATIONAL_ACCELERATION_M_SS = 9.80665;
