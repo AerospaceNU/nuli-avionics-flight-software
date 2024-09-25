@@ -1,33 +1,8 @@
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_COMMONHARDWARE_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_COMMONHARDWARE_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H
 
-#include <stdint.h>
-#include <Arduino.h>
-
-
-
-class CommunicationLink {
-public:
-    void setup(){}
-    void read(){}
-};
-
-class RadioTransmitterLink : public CommunicationLink {
-};
-
-class SerialConnectionLink : public CommunicationLink {
-
-};
-
-
-
-class FlashMemory {
-public:
-    virtual void read() {}
-
-    virtual void setup() {}
-};
-
+#include <Avionics.h>
+#include <BaseSensor.h>
 
 class Pyro {
 public:
@@ -40,7 +15,7 @@ public:
         disable();
     }
 
-    void setup(){};
+    void setup() {};
 
     void read() {
         if (m_continuityThreshold == USE_DIGITAL_CONTINUITY) {
@@ -71,4 +46,4 @@ private:
     const int32_t m_continuityThreshold;
 };
 
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_COMMONHARDWARE_H
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H

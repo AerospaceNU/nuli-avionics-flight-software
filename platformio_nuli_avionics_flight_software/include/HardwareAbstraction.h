@@ -1,13 +1,18 @@
 #ifndef DESKTOP_HARDWAREMANAGER_H
 #define DESKTOP_HARDWAREMANAGER_H
 
-#include <cstdint>
 #include <Arduino.h>
 #include <Avionics.h>
-#include <CommonHardware.h>
-#include <GenericSensors.h>
-#include <CommonStructs.h>
-#include <array>
+#include <BaseSensor.h>
+#include <Barometer.h>
+#include <Accelerometer.h>
+#include <GPS.h>
+#include <Gyroscope.h>
+#include <Magnetometer.h>
+#include <Pyro.h>
+#include <FlashMemory.h>
+#include <CommunicationLink.h>
+
 
 /**
  * This macro generates three methods for a given type of hardware:
@@ -59,7 +64,9 @@ public:
      * @details This should only be called in once, and only in the Core
      */
     inline void updateLoopTimestamp() {
-        m_currentLoopTimestamp = getRuntimeMs();
+        uint32_t lastTime = m_currentLoopTimestampMs;
+        m_currentLoopTimestampMs = getRuntimeMs();
+        m_loopDtMs = m_currentLoopTimestampMs - lastTime;
     }
 
     /**
@@ -67,11 +74,19 @@ public:
      * @return time in ms
      */
     inline uint32_t getLoopTimestampMs() const {
-        return m_currentLoopTimestamp;
+        return m_currentLoopTimestampMs;
     }
 
     /**
-     * Gets the runtime of the system
+     * @brief Gets the time since the start of the last loop
+     * @return Loop time in ms
+     */
+    inline uint32_t getLoopDtMs() const {
+        return m_loopDtMs;
+    }
+
+    /**
+     * @brief Gets the runtime of the system
      * @return runtime in ms
      */
     inline uint32_t getRuntimeMs() {
@@ -95,7 +110,8 @@ public:
     GENERATE_GET_ADD_METHODS_MACRO(CommunicationLink, m_communicationLinkArray, m_numCommunicationLinks, MAX_COMMUNICATION_LINK_NUM)
 
 private:
-    uint32_t m_currentLoopTimestamp = 0;                ///< Tracks the start time of each loop
+    uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
+    uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
 
     uint8_t m_numPyros = 0;                             ///< Number of Pyros in the system
     uint8_t m_numBarometers = 0;                        ///< Number of Barometers in the system

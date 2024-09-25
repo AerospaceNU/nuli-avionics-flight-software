@@ -1,16 +1,25 @@
 #include <Arduino.h>
 #include <Avionics.h>
+#include <BaseSensor.h>
+#include <Barometer.h>
+#include <Accelerometer.h>
+#include <GPS.h>
+#include <Gyroscope.h>
+#include <Magnetometer.h>
+#include <Pyro.h>
 #include <AvionicsCore.h>
 #include <HardwareAbstraction.h>
-#include <CommonHardware.h>
-#include <CommonStructs.h>
 #include <OtherClasses.h>
+#include <FlashMemory.h>
+#include <CommunicationLink.h>
 
 // Hardware devices
 Pyro pyro1(1, A0, 500);
 Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
 Barometer barometer;
-NineAxisIMU nineAxisIMU;
+Accelerometer accelerometer;
+Magnetometer magnetometer;
+Gyroscope gyroscope;
 GPS gps;
 FlashMemory flashMemory;
 RadioTransmitterLink radioTransmitterLink;
@@ -34,9 +43,9 @@ void setup() {
     hardware.addPyro(&pyro1);
     hardware.addPyro(&pyro2);
     hardware.addBarometer(&barometer);
-    hardware.addAccelerometer(nineAxisIMU.getAccelerometer());
-    hardware.addGyroscope(nineAxisIMU.getGyroscope());
-    hardware.addMagnetometer(nineAxisIMU.getMagnetometer());
+    hardware.addAccelerometer(&accelerometer);
+    hardware.addGyroscope(&gyroscope);
+    hardware.addMagnetometer(&magnetometer);
     hardware.addGPS(&gps);
     hardware.addFlashMemory(&flashMemory);
     hardware.addCommunicationLink(&radioTransmitterLink);
@@ -55,20 +64,5 @@ void setup() {
 }
 
 void loop() {
-//    avionicsCore.loopOnce();
+    avionicsCore.loopOnce();
 }
-
-/*
- * What I really like, and would not change:
- *      - It's super clear what access the hardware (The logger and configuration will too, but they are abstracted)
- *      - The flow of data is clear: input -> process -> decide -> output
- * Current concerns:
- *      - Performance: there is virtual methods and copying here
- *      - How is offload handled
- *      - How are multiple communication links handled in messages/responses
- *      - How are multiple sensors and sensors that don't exist handled in RawSensorData
- *          - Fixed vs dynamic QTY?
- *      - How are events passed
- *          - Index mapping?
- *          - Standard types?
- */

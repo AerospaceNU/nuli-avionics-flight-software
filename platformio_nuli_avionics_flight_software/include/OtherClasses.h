@@ -1,10 +1,27 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_OTHERCLASSES_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_OTHERCLASSES_H
 
-#include <CommonStructs.h>
-#include <CommonHardware.h>
 #include <HardwareAbstraction.h>
+struct RawSensorData {
 
+};
+
+struct FilteredSensorData {
+
+};
+
+struct TriggeredEvents {
+
+};
+
+struct Messages {
+    char* messages[4];
+};
+
+enum State {
+    IDLE,
+    RUNNING,
+};
 class CommandLineParser {
 public:
     void setup(Configuration* configuration, Logger* logger) {

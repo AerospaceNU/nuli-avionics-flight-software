@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include <AprsTransmitter.h>
+#include "drivers/samd21/AprsTransmitter.h"
 
 /**
  * @todo pls make sure you can't transmit messages that are too long

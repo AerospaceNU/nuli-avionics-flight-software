@@ -6,7 +6,6 @@
 #include <Configuration.h>
 #include <Logger.h>
 #include <OtherClasses.h>
-#include <CommonHardware.h>
 
 /**
  * @class Avionics Core
