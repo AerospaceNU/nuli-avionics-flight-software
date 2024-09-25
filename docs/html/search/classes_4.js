@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['filteredsensordata_0',['FilteredSensorData',['../structFilteredSensorData.html',1,'']]],
-  ['filters_1',['Filters',['../classFilters.html',1,'']]],
-  ['flashmemory_2',['FlashMemory',['../classFlashMemory.html',1,'']]]
+  ['genericsensor_0',['GenericSensor',['../classGenericSensor.html',1,'']]],
+  ['gps_1',['GPS',['../classGPS.html',1,'']]],
+  ['gyroscope_2',['Gyroscope',['../classGyroscope.html',1,'']]]
 ];

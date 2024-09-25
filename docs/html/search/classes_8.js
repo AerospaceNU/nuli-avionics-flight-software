@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['logger_0',['Logger',['../classLogger.html',1,'']]]
+  ['magnetometer_0',['Magnetometer',['../classMagnetometer.html',1,'']]]
 ];
