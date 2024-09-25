@@ -50,11 +50,13 @@ public:
 
     /**
      * @brief Reads all communications links to buffers
+     * @details Calls read on each communication link, and does something???? with the data
      */
     void readAllCommunicationLinks();
 
     /**
      * @brief Called at the beginning of each loop to track change in time between loops
+     * @details This should only be called in once, and only in the Core
      */
     inline void updateLoopTimestamp() {
         m_currentLoopTimestamp = getRuntimeMs();
