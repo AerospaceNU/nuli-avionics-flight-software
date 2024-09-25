@@ -1,6 +1,6 @@
 #include <Arduino.h>
 #include <Avionics.h>
-#include <BaseSensor.h>
+#include <GenericSensor.h>
 #include <Barometer.h>
 #include <Accelerometer.h>
 #include <GPS.h>
@@ -12,14 +12,13 @@
 #include <OtherClasses.h>
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
+#include "drivers/arduino/ICM20948.h"
 
 // Hardware devices
 Pyro pyro1(1, A0, 500);
 Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
 Barometer barometer;
-Accelerometer accelerometer;
-Magnetometer magnetometer;
-Gyroscope gyroscope;
+ICM20948 icm20948(5);
 GPS gps;
 FlashMemory flashMemory;
 RadioTransmitterLink radioTransmitterLink;
@@ -39,13 +38,18 @@ EventManager eventManager;
 AvionicsCore avionicsCore;
 
 void setup() {
+    // Arduino setup
+    SPI.begin();
     // Add all hardware
     hardware.addPyro(&pyro1);
     hardware.addPyro(&pyro2);
     hardware.addBarometer(&barometer);
-    hardware.addAccelerometer(&accelerometer);
-    hardware.addGyroscope(&gyroscope);
-    hardware.addMagnetometer(&magnetometer);
+
+    hardware.addGenericSensor(&icm20948);
+    hardware.addAccelerometer(icm20948.getAccelerometer());
+    hardware.addGyroscope(icm20948.getGyroscope());
+    hardware.addMagnetometer(icm20948.getMagnetometer());
+
     hardware.addGPS(&gps);
     hardware.addFlashMemory(&flashMemory);
     hardware.addCommunicationLink(&radioTransmitterLink);

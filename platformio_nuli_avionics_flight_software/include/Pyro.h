@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H
 
 #include <Avionics.h>
-#include <BaseSensor.h>
+#include <GenericSensor.h>
 
 class Pyro {
 public:

@@ -2,14 +2,14 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BAROMETER_H
 
 #include <Avionics.h>
-#include <BaseSensor.h>
+#include <GenericSensor.h>
 
 /**
  * @class Barometer
  * @brief Generic Barometer
  * @details Base class for all barometers. Can also be used as an "injected" class, where an external source provides the data (i.e. desktop sim)
  */
-class Barometer : public BaseSensor {
+class Barometer : public GenericSensor {
 public:
     /**
      * @brief Injects sensor data directly
@@ -18,7 +18,7 @@ public:
      * @param humidityPercent Humidity in percent
      * @param pressurePa Pressure in pascals
      */
-    void inject(double temperatureK, double humidityPercent, double pressurePa) {
+    inline void inject(double temperatureK, double humidityPercent, double pressurePa) {
         m_temperatureK = temperatureK;
         m_humidityPercent = humidityPercent;
         m_pressurePa = pressurePa;

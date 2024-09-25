@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['triggeredevents_0',['TriggeredEvents',['../structTriggeredEvents.html',1,'']]]
+  ['serialconnectionlink_0',['SerialConnectionLink',['../classSerialConnectionLink.html',1,'']]],
+  ['statemachine_1',['StateMachine',['../classStateMachine.html',1,'']]]
 ];

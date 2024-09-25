@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_FLASHMEMORY_H
 
 #include <Avionics.h>
-#include <BaseSensor.h>
+#include <GenericSensor.h>
 
 class FlashMemory {
 public:

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include <Avionics.h>
-#include <BaseSensor.h>
+#include <GenericSensor.h>
 #include <Barometer.h>
 #include <Accelerometer.h>
 #include <GPS.h>
@@ -34,6 +34,7 @@ inline uint8_t getNum##Type##s() const {                                        
 inline Type* get##Type##Array() {                                                   \
     return arrayVariable[0];                                                        \
 }                                                                                   \
+
 
 /**
  * @class HardwareAbstraction
@@ -109,6 +110,8 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(CommunicationLink, m_communicationLinkArray, m_numCommunicationLinks, MAX_COMMUNICATION_LINK_NUM)
 
+    GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
+
 private:
     uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
     uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
@@ -121,6 +124,7 @@ private:
     uint8_t m_numGps = 0;                               ///< Number of Gps in the system
     uint8_t m_numFlashMemory = 0;                       ///< Number of FlashMemory in the system
     uint8_t m_numCommunicationLinks = 0;                ///< Number of CommunicationLinks in the system
+    uint8_t m_numGenericSensors = 0;                    ///< Number of generic sensors
     Pyro* m_pyroArray[MAX_PYRO_NUM] = {nullptr};                                ///< Array containing all the Pyros in the system
     Barometer* m_barometerArray[MAX_BAROMETER_NUM] = {nullptr};                 ///< Array containing all the Barometers in the system
     Accelerometer* m_accelerometerArray[MAX_ACCELEROMETER_NUM] = {nullptr};     ///< Array containing all the Accelerometers in the system
@@ -129,6 +133,7 @@ private:
     GPS* m_gpsArray[MAX_GPS_NUM] = {nullptr};                                   ///< Array containing all the Gps in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
     CommunicationLink* m_communicationLinkArray[MAX_COMMUNICATION_LINK_NUM] = {nullptr};    ///< Array containing all the CommunicationLinks in the system
+    GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};       ///< Array containing all generic sensors
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file

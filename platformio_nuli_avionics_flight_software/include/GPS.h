@@ -2,9 +2,9 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GPS_H
 
 #include <Avionics.h>
-#include <BaseSensor.h>
+#include <GenericSensor.h>
 
-class GPS : public BaseSensor {
+class GPS : public GenericSensor {
 public:
     void read() override {
 

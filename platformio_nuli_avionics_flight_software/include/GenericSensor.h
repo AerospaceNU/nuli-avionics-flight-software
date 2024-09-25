@@ -1,5 +1,5 @@
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BASESENSOR_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BASESENSOR_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GENERICSENSOR_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GENERICSENSOR_H
 
 #include <Avionics.h>
 
@@ -9,7 +9,7 @@
  * @details Provide virtual methods for common sensor function. Currently this is not a used feature, but is
  * implemented for future code that may require a BaseSensor class
  */
-class BaseSensor {
+class GenericSensor {
 public:
     /**
      * @brief Initialize the sensor
@@ -25,4 +25,4 @@ public:
     virtual void read() {}
 };
 
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BASESENSOR_H
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GENERICSENSOR_H
