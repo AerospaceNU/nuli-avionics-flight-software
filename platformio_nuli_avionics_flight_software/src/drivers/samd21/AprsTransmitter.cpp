@@ -80,6 +80,10 @@ void TC4_Handler() {                                                            
         AprsTransmitter::bitIndex++;
         // Check if we have finished the transmission
         if (AprsTransmitter::bitIndex >= AprsTransmitter::m_transmissionBitWaveformsNum) {
+//            AprsTransmitter::bitIndex = 0;
+//            AprsTransmitter::sampleIndex = 0;
+//            AprsTransmitter::m_currentSample = AprsTransmitter::m_transmissionBitWaveforms[AprsTransmitter::bitIndex].start;
+//            AprsTransmitter::m_currentSampleSize = AprsTransmitter::m_transmissionBitWaveforms[AprsTransmitter::bitIndex].length;
             REG_TC4_CTRLA &= ~TC_CTRLA_ENABLE;                  // Disable timer TC4
             while (TC4->COUNT16.STATUS.bit.SYNCBUSY);           // Wait for synchronization
             DACWrite(0);

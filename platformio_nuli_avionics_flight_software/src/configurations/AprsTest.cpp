@@ -1,5 +1,6 @@
 #include <Arduino.h>
 #include "drivers/samd21/AprsTransmitter.h"
+#include "drivers/samd21/AprsModulation.h"
 
 /**
  * @todo pls make sure you can't transmit messages that are too long
@@ -14,28 +15,26 @@
 void setup() {
     // Initialize the USB connection
     Serial.begin(9600);
-//    while (!Serial);
-//    Serial.println("starting");
-//
-//    // Send the data
-//    uint8_t data[3] = {0b10101010, 0b11110000, 0b00111010};
-//    AprsTransmitter::configure();
-//    AprsTransmitter::send(&data[0], 3);
-//    while (AprsTransmitter::isCurrentlyTransmitting());
-//
-//    Serial.println("done");
+    while (!Serial);
+
 }
 
 void loop() {
+//    delay(1000);
     Serial.println("starting");
 
     // Send the data
-    uint8_t data[3] = {0b10101010, 0b11110000, 0b00111010};
+//    uint8_t data[3] = {0b10101010, 0b11110000, 0b00111010};
+    uint8_t data[10] = {0b01111110, 0b01111110, 0b01111110, 0b10001100, 0b10001100, 0b00111110, 0b01011011, 0b10001101, 0b10011011, 0b10001101};
+//    uint8_t data[10] = {0};
+
     AprsTransmitter::configure();
-    AprsTransmitter::send(&data[0], 3);
+    AprsTransmitter::send(&data[0], sizeof(data));
     while (AprsTransmitter::isCurrentlyTransmitting());
 
     Serial.println("done");
 
-    delay(300);
+    delay(2000);
+
+//    while (true);
 }
