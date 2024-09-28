@@ -2,7 +2,7 @@
 #include "drivers/samd21/AprsModulation.h"
 
 char message[3000];
-AprsModulation aprsModulation(A0);
+AprsModulation aprsModulation(A0, "AERONU");
 
 void setup() {
     // Start APRS
@@ -36,9 +36,7 @@ void loop() {
         Serial.println(message);
 
         // Send the message
-        Serial.println(millis());
-        aprsModulation.transmit(message, strlen(message));
-        Serial.println(millis());
+        aprsModulation.transmit(message);
         Serial.println();
 
         Serial.println("Please enter a message:");

@@ -21,22 +21,14 @@
  */
 
 // Defines the Square Wave Output Pin
-#define OUT_PIN A0
-
 #define _1200   1
 #define _2400   0
-
 #define APRS_FLAG       0x7e
 #define APRS_CTRL_ID    0x03
 #define APRS_PID        0xf0
-#define APRS_DT_EXP     ','
 #define APRS_DT_STATUS  '>'
-#define APRS_DT_POS     '!'
 
-#define APRS_FIX_POS         1
-#define APRS_STATUS         2
-#define APRS_FIX_POS_STATUS  3
-
+uint8_t OUT_PIN = 0;
 bool nada = _2400;
 
 /*
@@ -77,27 +69,16 @@ unsigned int tc2400 = (unsigned int) (0.5 * adj_2400 * 1000000.0 / 2400.0);
 /*
  * This strings will be used to generate AFSK signals, over and over again.
  */
-const char* mycall = "MYCALL";
-char myssid = 1;
+const char* myCallsign = "MYCALL";
+char mySsid = 1;
 
 const char* dest = "APRS";
 
 const char* digi = "WIDE2";
-char digissid = 1;
+char digiSsid = 1;
 
-const char* myStatus = "hi";
-
-const char* lat = "0610.55S";
-const char* lon = "10649.62E";
-const char sym_ovl = 'H';
-const char sym_tab = 'a';
-
-unsigned int tx_delay = 5000;
-unsigned int str_len = 400;
-
-char bit_stuff = 0;
+char bitStuff = 0;
 unsigned short crc = 0xffff;
-
 
 
 void setNada1200();
@@ -114,20 +95,13 @@ void calcCrc(bool in_bit);
 
 void sendCrc();
 
-void sendPacket(char packet_type);
+void sendPacket(const char *myStatus);
 
 void sendFlag(unsigned char flag_len);
 
 void sendHeader();
 
-void sendPayload(char type);
-
-void printDebug(char type);
-
-
-/*
- *
- */
+void sendPayload(const char *myStatus);
 
 void setNada1200() {
     digitalWrite(OUT_PIN, HIGH);
@@ -215,14 +189,14 @@ void sendHeader() {
 
 
     /********* SOURCE *********/
-    temp = strlen(mycall);
+    temp = strlen(myCallsign);
     for (int j = 0; j < temp; j++)
-        sendCharNRZI(mycall[j] << 1, HIGH);
+        sendCharNRZI(myCallsign[j] << 1, HIGH);
     if (temp < 6) {
         for (int j = 0; j < (6 - temp); j++)
             sendCharNRZI(' ' << 1, HIGH);
     }
-    sendCharNRZI((myssid + '0') << 1, HIGH);
+    sendCharNRZI((mySsid + '0') << 1, HIGH);
 
 
     /********* DIGI ***********/
@@ -233,75 +207,28 @@ void sendHeader() {
         for (int j = 0; j < (6 - temp); j++)
             sendCharNRZI(' ' << 1, HIGH);
     }
-    sendCharNRZI(((digissid + '0') << 1) + 1, HIGH);
+    sendCharNRZI(((digiSsid + '0') << 1) + 1, HIGH);
 
     /***** CTRL FLD & PID *****/
     sendCharNRZI(APRS_CTRL_ID, HIGH);
     sendCharNRZI(APRS_PID, HIGH);
 }
 
-void sendPayload(char type) {
+void sendPayload(const char *myStatus) {
     /*
      * APRS AX.25 Payloads
-     *
-     * TYPE : POSITION
-     * ........................................................
-     * |DATA TYPE |    LAT   |SYMB. OVL.|    LON   |SYMB. TBL.|
-     * --------------------------------------------------------
-     * |  1 byte  |  8 bytes |  1 byte  |  9 bytes |  1 byte  |
-     * --------------------------------------------------------
-     *
-     * DATA TYPE  : !
-     * LAT        : ddmm.ssN or ddmm.ssS
-     * LON        : dddmm.ssE or dddmm.ssW
-     *
-     *
      * TYPE : STATUS
      * ..................................
      * |DATA TYPE |    STATUS TEXT      |
      * ----------------------------------
      * |  1 byte  |       N bytes       |
      * ----------------------------------
-     *
-     * DATA TYPE  : >
-     * STATUS TEXT: Free form text
-     *
-     *
-     * TYPE : POSITION & STATUS
-     * ..............................................................................
-     * |DATA TYPE |    LAT   |SYMB. OVL.|    LON   |SYMB. TBL.|    STATUS TEXT      |
-     * ------------------------------------------------------------------------------
-     * |  1 byte  |  8 bytes |  1 byte  |  9 bytes |  1 byte  |       N bytes       |
-     * ------------------------------------------------------------------------------
-     *
-     * DATA TYPE  : !
-     * LAT        : ddmm.ssN or ddmm.ssS
-     * LON        : dddmm.ssE or dddmm.ssW
-     * STATUS TEXT: Free form text
-     *
-     *
-     * All of the data are sent in the form of ASCII Text, not shifted.
-     *
+     * DATA TYPE  : > STATUS TEXT: Free form text
+     * All the data are sent in the form of ASCII Text, not shifted.
      */
-    if (type == APRS_FIX_POS) {
-        sendCharNRZI(APRS_DT_POS, HIGH);
-        sendStringLen(lat, strlen(lat));
-        sendCharNRZI(sym_ovl, HIGH);
-        sendStringLen(lon, strlen(lon));
-        sendCharNRZI(sym_tab, HIGH);
-    } else if (type == APRS_STATUS) {
-        sendCharNRZI(APRS_DT_STATUS, HIGH);
-        sendStringLen(myStatus, strlen(myStatus));
-    } else if (type == APRS_FIX_POS_STATUS) {
-        sendCharNRZI(APRS_DT_POS, HIGH);
-        sendStringLen(lat, strlen(lat));
-        sendCharNRZI(sym_ovl, HIGH);
-        sendStringLen(lon, strlen(lon));
-        sendCharNRZI(sym_tab, HIGH);
 
-        sendCharNRZI(' ', HIGH);
-        sendStringLen(myStatus, strlen(myStatus));
-    }
+    sendCharNRZI(APRS_DT_STATUS, HIGH);
+    sendStringLen(myStatus, strlen(myStatus));
 }
 
 /*
@@ -322,19 +249,19 @@ void sendCharNRZI(unsigned char in_byte, bool enBitStuff) {
 
         if (bits) {
             setNada(nada);
-            bit_stuff++;
+            bitStuff++;
 
-            if ((enBitStuff) && (bit_stuff == 5)) {
+            if ((enBitStuff) && (bitStuff == 5)) {
                 nada ^= 1;
                 setNada(nada);
 
-                bit_stuff = 0;
+                bitStuff = 0;
             }
         } else {
             nada ^= 1;
             setNada(nada);
 
-            bit_stuff = 0;
+            bitStuff = 0;
         }
 
         in_byte >>= 1;
@@ -351,33 +278,13 @@ void sendFlag(unsigned char flag_len) {
         sendCharNRZI(APRS_FLAG, LOW);
 }
 
-void preamble() {
-    setNada2400();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada2400();
-
-    setNada2400();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada1200();
-    setNada2400();
-}
-
 /*
  * In this preliminary test, a packet is consists of FLAG(s) and PAYLOAD(s).
  * Standard APRS FLAG is 0x7e character sent over and over again as a packet
  * delimiter. In this example, 100 flags is used the preamble and 3 flags as
  * the postamble.
  */
-void sendPacket(char packet_type) {
+void sendPacket(const char *myStatus) {
 
     /*
      * AX25 FRAME
@@ -394,12 +301,10 @@ void sendPacket(char packet_type) {
      * FCS      : 2 bytes calculated from HEADER + PAYLOAD
      */
 
-    /// @todo add preamble??????
-    preamble();
     sendFlag(100);
     crc = 0xffff;
     sendHeader();
-    sendPayload(packet_type);
+    sendPayload(myStatus);
     sendCrc();
     sendFlag(3);
 }
@@ -416,15 +321,22 @@ void sendPacket(char packet_type) {
 
 
 
-AprsModulation::AprsModulation(uint8_t transmitPin) {
+AprsModulation::AprsModulation(uint8_t transmitPin, const char *callsign) {
+    uint32_t i = 0;
+    for(; i < sizeof(m_callsign) - 1 && callsign[i] != '\0'; i++) {
+        m_callsign[i] = callsign[i];
+    }
+    m_callsign[i] = '\0';
+    myCallsign = m_callsign;
+
     m_transmitPin = transmitPin;
+    OUT_PIN = m_transmitPin;
 }
 
 void AprsModulation::setup() const {
     pinMode(m_transmitPin, OUTPUT);
 }
 
-void AprsModulation::transmit(const char* str, uint32_t length) {
-    myStatus = str;
-    sendPacket(APRS_STATUS);
+void AprsModulation::transmit(const char* str) {
+    sendPacket(str);
 }

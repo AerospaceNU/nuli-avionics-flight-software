@@ -4,7 +4,7 @@ project(desktop)
 set(CMAKE_CXX_STANDARD 11)
 
 #include_directories(platformio_nuli_avionics_flight_software/include)
-set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp)
+set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp platformio_nuli_avionics_flight_software/src/drivers/samd21/AprsModulation.cpp)
 
 add_executable(desktop ${desktopSimFiles})
 

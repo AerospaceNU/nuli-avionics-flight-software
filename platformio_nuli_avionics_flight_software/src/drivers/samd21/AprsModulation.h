@@ -3,17 +3,17 @@
 
 #include <Avionics.h>
 
-
 class AprsModulation {
 public:
-    explicit AprsModulation(uint8_t transmitPin);
+    explicit AprsModulation(uint8_t transmitPin, const char *callsign);
 
     void setup() const;
 
-    void transmit(const char *str, uint32_t length);
+    void transmit(const char* str);
 
 private:
     uint8_t m_transmitPin;
+    char m_callsign[10];
 };
 
 
