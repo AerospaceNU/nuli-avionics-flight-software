@@ -12,17 +12,17 @@
 #include <Filters.h>
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
-#include "drivers/arduino/ICM20948.h"
+#include "drivers/arduino/icm20948/ICM20948.h"
 
 // Hardware devices
-Pyro pyro1(1, A0, 500);
-Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
-Barometer barometer;
+//Pyro pyro1(1, A0, 500);
+//Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
+//Barometer barometer;
 ICM20948 icm20948(5);
-GPS gps(9600);
-FlashMemory flashMemory;
-RadioTransmitterLink radioTransmitterLink;
-SerialConnectionLink serialConnectionLink;
+//GPS gps(9600);
+//FlashMemory flashMemory;
+//RadioTransmitterLink radioTransmitterLink;
+//SerialConnectionLink serialConnectionLink;
 
 // Core objects accessible by all components
 HardwareAbstraction hardware;
@@ -36,15 +36,17 @@ AvionicsCore avionicsCore;
 
 void setup() {
     // Arduino setup
-    SPI.begin();
+//    SPI.begin();
+//    pinMode(8, OUTPUT);
+//    digitalWrite(8, HIGH);
     // Add all hardware
-    hardware.addPyro(&pyro1);
-    hardware.addPyro(&pyro2);
-    hardware.addBarometer(&barometer);
-    hardware.addGPS(&gps);
-    hardware.addFlashMemory(&flashMemory);
-    hardware.addCommunicationLink(&radioTransmitterLink);
-    hardware.addCommunicationLink(&serialConnectionLink);
+//    hardware.addPyro(&pyro1);
+//    hardware.addPyro(&pyro2);
+//    hardware.addBarometer(&barometer);
+//    hardware.addGPS(&gps);
+//    hardware.addFlashMemory(&flashMemory);
+//    hardware.addCommunicationLink(&radioTransmitterLink);
+//    hardware.addCommunicationLink(&serialConnectionLink);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
     hardware.addGenericSensor(&icm20948);
     hardware.addAccelerometer(icm20948.getAccelerometer());
