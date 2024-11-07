@@ -1,16 +1,15 @@
-#include <iostream>
-#include <cmath>
-#include <cstring>
-
-#include "../drivers/samd21/AprsModulation.h"
-
-int main() {
-    AprsModulation aprsModulation(1);
-//    aprsModulation.setup()
-    const char* str = "asdf345";
-    aprsModulation.transmit(str, strlen(str));
-    std::cout << "\n";
-}
+//#include <cmath>
+//#include <cstring>
+//
+//#include "../drivers/samd21/AprsModulation.h"
+//
+//int main() {
+//    AprsModulation aprsModulation(1);
+////    aprsModulation.setup()
+//    const char* str = "asdf345";
+//    aprsModulation.transmit(str, strlen(str));
+//    std::cout << "\n";
+//}
 
 //const double ATMOSPHERIC_PRESSURE_PA = 101325;
 //const double GRAVITATIONAL_CONSTANT_M_SS = 9.80665;
@@ -25,8 +24,8 @@ int main() {
 //
 //double calculateAltitude2(double m_temperatureK, double m_pressurePa) {
 //    // @todo add
-//    return (m_temperatureK / LAPSE_RATE_CONSTANT_K_M) *
-//           (pow(m_pressurePa / ATMOSPHERIC_PRESSURE_PA, -GAS_CONSTANT_J_KG_K * LAPSE_RATE_CONSTANT_K_M / GRAVITATIONAL_CONSTANT_M_SS) - 1);
+//    return (m_temperatureK / -LAPSE_RATE_CONSTANT_K_M) *
+//           (pow(m_pressurePa / ATMOSPHERIC_PRESSURE_PA, -(GAS_CONSTANT_J_KG_K * -LAPSE_RATE_CONSTANT_K_M) / GRAVITATIONAL_CONSTANT_M_SS) - 1);
 //}
 //
 //int main() {
