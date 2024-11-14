@@ -19,7 +19,7 @@ public:
 
     void read() override {
         while (m_gpsSerial->available()) {
-            Serial.read();
+            m_gpsSerial->read();
         }
     }
 

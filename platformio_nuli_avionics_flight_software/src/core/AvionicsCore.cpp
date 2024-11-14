@@ -14,6 +14,8 @@ void AvionicsCore::setup(HardwareAbstraction* hardware,
 void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
     m_hardware->updateLoopTimestamp();
+    // Initializing
+    m_hardware->setup();
     // Read in sensor data. This data is accessible through
     m_hardware->readAllSensors();
     m_hardware->readAllCommunicationLinks();

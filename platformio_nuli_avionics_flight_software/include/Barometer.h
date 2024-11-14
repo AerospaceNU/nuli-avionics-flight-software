@@ -42,6 +42,14 @@ public:
     }
 
     /**
+     * @brief Gets the absolute humidity
+     * @return Humidity in g/m^3
+     */
+    inline double getAbsoluteHumidity() const {
+        return m_absoluteHumidity;
+    }
+
+    /**
      * @brief Gets the current pressure
      * @return Pressure in atmospheres
      */
@@ -71,8 +79,26 @@ protected:
 //                      (1 - pow(m_pressurePa / ATMOSPHERIC_PRESSURE_PA, (GAS_CONSTANT_J_KG_K * LAPSE_RATE_K_M) / GRAVITATIONAL_ACCELERATION_M_SS));
     }
 
+    /**
+     * @brief Calculates the absolute humidity in g/m^3 from relative humidity and temperature
+     * @details Used the Clausius–Clapeyron for the calculation of saturation vapour pressure. And
+     */
+    void calculateAbsoluteHumidity() {
+        // @todo use a constant for conversion to and from kelvin
+        // https://www.omnicalculator.com/physics/absolute-humidity
+        // comes from https://en.wikipedia.org/wiki/Clausius%E2%80%93Clapeyron_relation#Meteorology_and_climatology
+        // direct source https://digital.library.unt.edu/ark:/67531/metadc693874/m1/15/ (eq. 25)
+        // this is also an approximation
+        double saturationVapourPressure =  6.1094 * exp((17.625 * (m_temperatureK - 273.15)) / ((m_temperatureK - 273.15) + 243.04));   // in hPa
+        // equation can be seen from here (re-arrange RH) http://www.atmo.arizona.edu/students/courselinks/fall12/atmo336/lectures/sec1/humidity.html
+        double vapourPressure = (m_humidityPercent/100) * saturationVapourPressure;
+
+        m_absoluteHumidity = (216.7 * (vapourPressure)) / m_temperatureK;
+    }
+
     double m_temperatureK = 0;          ///<The measured temperature
-    double m_humidityPercent = 0;       ///< The measured humidity
+    double m_humidityPercent = 0;       ///< The measured humidity (%rh)
+    double m_absoluteHumidity = 0;      ///< The calculated absolute humidity
     double m_pressurePa = 0;            ///< The measured pressure
     double m_altitudeM = 0;             ///< The calculated altitude
 };
