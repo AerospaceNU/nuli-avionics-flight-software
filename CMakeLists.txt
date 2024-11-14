@@ -3,7 +3,7 @@ project(desktop)
 
 set(CMAKE_CXX_STANDARD 20)
 
-#include_directories(platformio_nuli_avionics_flight_software/include)
+include_directories(platformio_nuli_avionics_flight_software/include)
 set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp)
 
 add_executable(desktop ${desktopSimFiles})
