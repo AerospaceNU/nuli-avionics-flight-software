@@ -15,6 +15,5 @@ var searchData=
   ['m_5fvelocitiesrads_12',['m_velocitiesRadS',['../classGyroscope.html#afe6003bb25f78698360f876b47579780',1,'Gyroscope']]],
   ['magnetometer_13',['Magnetometer',['../classMagnetometer.html',1,'']]],
   ['maximum_5fbits_14',['MAXIMUM_BITS',['../classAprsTransmitter.html#a4011c0bca8ef9398ad2d11e0a07fd9ca',1,'AprsTransmitter']]],
-  ['ms8607driver_15',['MS8607driver',['../classMS8607driver.html',1,'']]],
-  ['ms8607sensor_16',['MS8607Sensor',['../classMS8607Sensor.html',1,'']]]
+  ['ms8607sensor_15',['MS8607Sensor',['../classMS8607Sensor.html',1,'']]]
 ];

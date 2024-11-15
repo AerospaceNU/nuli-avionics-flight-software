@@ -9,7 +9,7 @@
 #include <ICM_20948.h>
 
 /**
- * @class ICM20948
+ * @class ICM20948Sensor
  * @brief Driver for ICM20948
  * @details Uses the sparkfun Arduino ICM20948 library, and abstracts it to our sensor formats
  */

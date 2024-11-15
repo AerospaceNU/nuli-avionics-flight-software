@@ -7,7 +7,7 @@
 #include <SparkFun_PHT_MS8607_Arduino_Library.h>    // library for MS8607
 
 /**
- * @class MS8607driver
+ * @class MS8607Sensor
  * @brief An implementation of Barometer for the MS8607 barometer.
  * @details Uses the SparkFun PHT MS8607 Arduino library and implements an abstraction layer for our format.
  * The datasheet can be found here: https://cdn.sparkfun.com/assets/b/a/f/b/f/MS8607_Datasheet.pdf
