@@ -1,12 +1,12 @@
-#include "ICM20948.h"
+#include "ICM20948Sensor.h"
 
-ICM20948::ICM20948(uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {}
+ICM20948Sensor::ICM20948Sensor(uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {}
 
-void ICM20948::setSpiClass(SPIClass* spiClass) {
+void ICM20948Sensor::setSpiClass(SPIClass* spiClass) {
     m_spiClass = spiClass;
 }
 
-void ICM20948::setup() {
+void ICM20948Sensor::setup() {
     Serial.println("Starting ICM20948 sensors");
     if (m_spiClass == nullptr) {
         sparkfunIcm20948.begin(m_chipSelectPin);
@@ -15,7 +15,7 @@ void ICM20948::setup() {
     }
 }
 
-void ICM20948::read() {
+void ICM20948Sensor::read() {
     Serial.println("Running");
     if (sparkfunIcm20948.dataReady()) {
         // Actually get the data from the sensor
@@ -79,15 +79,15 @@ void ICM20948::read() {
     Serial.println();
 }
 
-Accelerometer* ICM20948::getAccelerometer() {
+Accelerometer* ICM20948Sensor::getAccelerometer() {
     return &m_accelerometer;
 }
 
-Gyroscope* ICM20948::getGyroscope() {
+Gyroscope* ICM20948Sensor::getGyroscope() {
     return &m_gyroscope;
 }
 
-Magnetometer* ICM20948::getMagnetometer() {
+Magnetometer* ICM20948Sensor::getMagnetometer() {
     return &m_magnetometer;
 }
 

@@ -4,40 +4,58 @@
 #include <Avionics.h>
 #include <HardwareAbstraction.h>
 
-/**
- * This macro generates getter and setter for member variables
- *
- * ## works as string concatenation in macros, allowing for the type name to be injected into the method names
- */
-#define GENERATE_GET_SET_METHODS_MACRO(Type, Name, memberVariable)      \
-inline void set##Name(Type value) {                                     \
-    (memberVariable) = value;                                           \
-    m_flashWriteRequired = true;                                        \
-}                                                                       \
-inline Type get##Name() {                                               \
-    return memberVariable;                                              \
-}
-
 class Configuration {
 public:
     void setup(HardwareAbstraction* hardware);
 
-    GENERATE_GET_SET_METHODS_MACRO(double, LaunchAltitude, m_launchAltitude)
+//    template<typename T>
+//    uint32_t newConfigurable(const char* name, T* storage) {
+//        m_config[m_configureNum].name = name;
+//        m_config[m_configureNum].storage = storage;
+//        m_config[m_configureNum].size = sizeof(T);
+//        m_configureNum++;
+//        return m_configureNum - 1;
+//    }
+//
+//    template<typename T>
+//    const T* getPtr(uint32_t id) {
+//        // Make sure T is the right size
+//        if (id >= m_configureNum || sizeof(T) != m_config[id].size) return nullptr;
+//        // Set the value
+//        return (T*) (m_config[id].storage);
+//    }
+//
+//    template<typename T>
+//    T get(uint32_t id) {
+//        // Make sure T is the right size
+//        if (id >= m_configureNum || sizeof(T) != m_config[id].size) return T();
+//        // Set the value
+//        return *((T*) (m_config[id].storage));
+//    }
+//
+//
+//    template<typename T>
+//    void set(uint32_t id, T value) {
+//        // Make sure T is the right size
+//        if (id >= m_configureNum || sizeof(T) != m_config[id].size) return;
+//        // Set the value
+//        *((T*) (m_config[id].storage)) = value;
+//        m_config[id].updatePending = true;
+//    }
 
-    GENERATE_GET_SET_METHODS_MACRO(double, AmbientTemperatureK, m_ambientTemperatureK)
-
-    GENERATE_GET_SET_METHODS_MACRO(double, RadioChannel, m_radioChannel)
-
-    void writeFlashIfUpdated() const;
+    void writeFlashIfUpdated();
 
 private:
-    struct {
-        double m_launchAltitude = 0;
-        double m_ambientTemperatureK = 20;
-        int32_t m_radioChannel = 1;
-    } remove_padding;
+    struct ConfigurableInfo_s {
+        const char* name = "";
+        void* storage = nullptr;
+        uint32_t size = 0;
+        bool updatePending = false;
+    };
 
-    bool m_flashWriteRequired = false;
+    uint32_t m_configureNum = 0;
+    ConfigurableInfo_s m_config[20];
+
     HardwareAbstraction* m_hardware = nullptr;
 };
 

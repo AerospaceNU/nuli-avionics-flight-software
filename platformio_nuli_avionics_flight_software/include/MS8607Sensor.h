@@ -1,12 +1,9 @@
-//
-// Created by chris on 10/21/2024.
-//
-
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607DRIVER_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607DRIVER_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607SENSOR_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607SENSOR_H
 
 #include "Barometer.h"
 #include <Wire.h>
+#define SerialUSB Serial
 #include <SparkFun_PHT_MS8607_Arduino_Library.h>    // library for MS8607
 
 /**
@@ -16,7 +13,7 @@
  * The datasheet can be found here: https://cdn.sparkfun.com/assets/b/a/f/b/f/MS8607_Datasheet.pdf
  *
  */
-class MS8607driver : public Barometer {
+class MS8607Sensor : public Barometer {
 public:
     /**
      * @brief Initialize the sensor
@@ -31,9 +28,8 @@ public:
      */
     void read() override;
 
-protected:
 private:
     MS8607 barometricSensor;    // the library that handles all the messy stuff for the MS8607 sensor
 };
 
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607DRIVER_H
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607SENSOR_H

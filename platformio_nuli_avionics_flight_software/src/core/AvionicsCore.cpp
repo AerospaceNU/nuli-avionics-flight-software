@@ -10,12 +10,12 @@ void AvionicsCore::setup(HardwareAbstraction* hardware,
     m_logger = logger;
     m_filter = filter;
 
-    double groundLevelStorage = 123.21;
-    int groundLevelId = m_configuration->newConfigurable("test", &groundLevelStorage);
-
-    const int * result = m_configuration->getPtr<int>(groundLevelId);
-    int result2 = m_configuration->get<int>(groundLevelId);
-    m_configuration->set<int>(groundLevelId, 5);
+//    double groundLevelStorage = 123.21;
+//    int groundLevelId = m_configuration->newConfigurable("test", &groundLevelStorage);
+//
+//    const int * result = m_configuration->getPtr<int>(groundLevelId);
+//    int result2 = m_configuration->get<int>(groundLevelId);
+//    m_configuration->set<int>(groundLevelId, 5);
 
 }
 

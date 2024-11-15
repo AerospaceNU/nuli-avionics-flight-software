@@ -1,5 +1,5 @@
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20948_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20948_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20948SENSOR_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20948SENSOR_H
 
 #include <Avionics.h>
 #include <GenericSensor.h>
@@ -13,13 +13,13 @@
  * @brief Driver for ICM20948
  * @details Uses the sparkfun Arduino ICM20948 library, and abstracts it to our sensor formats
  */
-class ICM20948 final : public GenericSensor {
+class ICM20948Sensor final : public GenericSensor {
 public:
     /**
      * @brief Creates a ICM20948
      * @param chipSelectPin Chip select pin for the SPI bus
      */
-    explicit ICM20948(uint8_t chipSelectPin);
+    explicit ICM20948Sensor(uint8_t chipSelectPin);
 
     /**
      * @brief Sets the SPI object to use
@@ -76,4 +76,4 @@ private:
 };
 
 
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20948_H
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20948SENSOR_H

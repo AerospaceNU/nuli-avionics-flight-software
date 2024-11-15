@@ -1,6 +1,5 @@
 #include <Arduino.h>
-#include "drivers/samd21/sin_fsk/AprsTransmitter.h"
-//#include "drivers/samd21/AprsModulation.h"
+#include "AprsTransmitter.h"
 
 /**
  * @todo pls make sure you can't transmit messages that are too long

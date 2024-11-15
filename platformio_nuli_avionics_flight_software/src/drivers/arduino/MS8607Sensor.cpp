@@ -1,13 +1,10 @@
-//
-// Created by chris on 10/21/2024.
-//
-#include "MS8607driver.h"
+#include "MS8607Sensor.h"
 
 /**
  * @brief Initialize the sensor
  * @details Enabling any peripherals, confirm sensor is talking, set configuration registers on the sensor
  */
-void MS8607driver::setup() {
+void MS8607Sensor::setup() {
     Wire.begin();
     Serial.println("Starting barometric sensor");
     while(!barometricSensor.begin()) {
@@ -21,7 +18,7 @@ void MS8607driver::setup() {
  * @details Read in one reading from the sensor, and convert the data to usefully units/numbers.
  * Current implemented functionality are: pressure (Pa), temperature (K), humidity (%rh), and altitude (m).
  */
-void MS8607driver::read() {
+void MS8607Sensor::read() {
     // it sounds like the barometric sensor reports pressure in terms of millibars, but we want to convert to Pascals
     m_pressurePa = barometricSensor.getPressure() * 100.0;  // reported in mbar, converting to pascals  @TODO convert to global constant
     m_temperatureK = barometricSensor.getTemperature() + 273.15;    // reported in C @TODO convert to global constant

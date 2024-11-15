@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "drivers/arduino/aprs/AprsModulation.h"
+#include "AprsModulation.h"
 
 char message[3000];
 AprsModulation aprsModulation(A0, "AERONU");
