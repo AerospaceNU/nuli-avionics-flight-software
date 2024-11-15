@@ -12,12 +12,23 @@
 #include <Filters.h>
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
+
+#include "drivers/arduino/ICM20948.h"
+#include "drivers/arduino/MS8607driver.h"
+
+// Hardware devices
+Pyro pyro1(1, A0, 500);
+Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
+//Barometer barometer();            // <-------------------   work here
+MS8607driver barometer;       // TODO: Added barometer here
+
 #include "drivers/arduino/icm20948/ICM20948.h"
 
 // Hardware devices
 //Pyro pyro1(1, A0, 500);
 //Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
 //Barometer barometer;
+
 ICM20948 icm20948(5);
 //GPS gps(9600);
 //FlashMemory flashMemory;
@@ -35,6 +46,9 @@ Filters filter;
 AvionicsCore avionicsCore;
 
 void setup() {
+    Serial.begin(9600);
+    while(!Serial);
+    Serial.println("Serial successfully started");
     // Arduino setup
 //    SPI.begin();
 //    pinMode(8, OUTPUT);
@@ -65,4 +79,5 @@ void setup() {
 
 void loop() {
     avionicsCore.loopOnce();
+    delay(500);
 }
