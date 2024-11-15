@@ -1,5 +1,5 @@
 #include <Arduino.h>
-#include "drivers/samd21/AprsModulation.h"
+#include "drivers/arduino/aprs/AprsModulation.h"
 
 AprsModulation aprsModulation(A0, "AERONU");
 

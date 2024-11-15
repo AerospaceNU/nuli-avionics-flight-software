@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.27.1)
 project(desktop)
 
-set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD 20)
 
-#include_directories(platformio_nuli_avionics_flight_software/include)
-set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp platformio_nuli_avionics_flight_software/src/drivers/samd21/AprsModulation.cpp)
+include_directories(platformio_nuli_avionics_flight_software/include)
+set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp)
 
 add_executable(desktop ${desktopSimFiles})
 
