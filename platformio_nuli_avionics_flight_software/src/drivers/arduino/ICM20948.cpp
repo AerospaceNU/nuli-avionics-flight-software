@@ -14,7 +14,7 @@ void ICM20948::setup() {
     }
 }
 
-void ICM20948::read() {
+void ICM20948::read() { 
     if (sparkfunIcm20948.dataReady()) {
         // Actually get the data from the sensor
         sparkfunIcm20948.getAGMT();

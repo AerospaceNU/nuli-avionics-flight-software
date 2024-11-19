@@ -13,13 +13,15 @@
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
 #include "drivers/arduino/ICM20948.h"
+#include "drivers/arduino/UART_GPS.h"
 
 // Hardware devices
 Pyro pyro1(1, A0, 500);
 Pyro pyro2(2, A1, Pyro::USE_DIGITAL_CONTINUITY);
 Barometer barometer;
 ICM20948 icm20948(5);
-GPS gps(9600);
+//GPS gps();
+UART_GPS gps(&Serial1);
 FlashMemory flashMemory;
 RadioTransmitterLink radioTransmitterLink;
 SerialConnectionLink serialConnectionLink;
@@ -37,6 +39,19 @@ AvionicsCore avionicsCore;
 void setup() {
     // Arduino setup
     SPI.begin();
+    Wire.begin();
+    delay(2000);
+    
+   /*
+    Serial.begin(115200);
+    Serial.println("helooo");
+    SPI.begin();
+    Wire.begin();
+    delay(2000);
+    
+    while (!Serial);      // Wait for Serial Monitor to connect (only for boards with native USB)
+    Serial.println("Setting up hardware and components...");
+    */
     // Add all hardware
     hardware.addPyro(&pyro1);
     hardware.addPyro(&pyro2);
@@ -59,8 +74,36 @@ void setup() {
     filter.setup(&configuration, &logger);
     // Initialize core
     avionicsCore.setup(&hardware, &configuration, &logger, &filter);
+    gps.setup();
+    Serial.println("GPS setup complete.");
+
 }
 
 void loop() {
     avionicsCore.loopOnce();
+    // Read GPS data
+    gps.read();
+
+    // Check if GPS data fits within buffer
+    if (gps.checkDataFit()) {
+        Serial.println("GPS data fits within the buffer:");
+    } else {
+        Serial.println("GPS data exceeds the buffer size!");
+    }
+
+    // Print the last received GPS data
+    String lastData = gps.getLastGPSData();
+    Serial.println("Last GPS Data:");
+    Serial.println(lastData);
+
+    // Print additional GPS information
+    Serial.print("Latitude: "); Serial.println(gps.getLatitude());
+    Serial.print("Longitude: "); Serial.println(gps.getLongitude());
+    Serial.print("Altitude: "); Serial.println(gps.getAltitude());
+    Serial.print("Fix Quality: "); Serial.println(gps.getFixQuality());
+    Serial.print("Satellites Tracked: "); Serial.println(gps.getSatellitesTracked());
+    Serial.print("HDOP: "); Serial.println(gps.getHDOP());
+
+    // Delay to avoid flooding the Serial Monitor
+    delay(1000);
 }
