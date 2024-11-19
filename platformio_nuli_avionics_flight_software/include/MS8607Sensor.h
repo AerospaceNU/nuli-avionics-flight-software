@@ -3,6 +3,8 @@
 
 #include "Barometer.h"
 #include <Wire.h>
+
+// This define is required to make the following lib compile for some reason
 #define SerialUSB Serial
 #include <SparkFun_PHT_MS8607_Arduino_Library.h>    // library for MS8607
 
@@ -29,7 +31,7 @@ public:
     void read() override;
 
 private:
-    MS8607 barometricSensor;    // the library that handles all the messy stuff for the MS8607 sensor
+    MS8607 m_barometricSensor;    // the library that handles all the messy stuff for the MS8607 sensor
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607SENSOR_H

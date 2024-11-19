@@ -30,6 +30,9 @@ AvionicsCore avionicsCore;
 void setup() {
     Serial.begin(9600);
     while(!Serial);
+    SPI.begin();
+    Wire.begin();
+
     Serial.println("Serial successfully started");
 
     hardware.addBarometer(&barometer);
@@ -49,7 +52,11 @@ void setup() {
     avionicsCore.setup(&hardware, &configuration, &logger, &filter);
 }
 
+uint32_t lastTime = 0;
+
 void loop() {
     avionicsCore.loopOnce();
-    delay(500);
+    uint32_t time = millis();
+    Serial.println(time - lastTime);
+    lastTime = time;
 }

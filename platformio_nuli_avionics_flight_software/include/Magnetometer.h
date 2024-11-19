@@ -14,11 +14,11 @@ public:
     /**
      * @brief Injects sensor data directly
      * @details If a sensor can't be directly read from, you can inject data directly to the class
-     * @param magneticFieldGauss Magnetic field in gauss
+     * @param magneticFieldTesla Magnetic field in gauss
      * @param temperatureK Temperature in kelvin
      */
-    inline void inject(Vector3D_s magneticFieldGauss, double temperatureK) {
-        m_magneticFieldGauss = magneticFieldGauss;
+    inline void inject(Vector3D_s magneticFieldTesla, double temperatureK) {
+        m_magneticFieldTesla = magneticFieldTesla;
         m_temperatureK = temperatureK;
     }
 
@@ -26,8 +26,8 @@ public:
      * @brief Gets the Magnetic field
      * @return Magnetic field in gauss
      */
-    inline Vector3D_s getMagneticFieldGauss() const {
-        return m_magneticFieldGauss;
+    inline Vector3D_s getMagneticFieldTesla() const {
+        return m_magneticFieldTesla;
     }
 
     /**
@@ -39,7 +39,7 @@ public:
     }
 
 protected:
-    Vector3D_s m_magneticFieldGauss = {};       ///< Sensor data vector
+    Vector3D_s m_magneticFieldTesla = {};       ///< Sensor data vector
     double m_temperatureK = 0;                  ///< Sensor temperature
 };
 

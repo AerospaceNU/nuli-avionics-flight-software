@@ -3,6 +3,7 @@
 
 #include <Avionics.h>
 #include <GenericSensor.h>
+#include "ConstantsUnits.h"
 
 /**
  * @class Barometer
@@ -71,12 +72,8 @@ protected:
      * @details Specific algorithm used??????
      */
     void calculateAltitude() {
-        // STM32 Calculation    @todo figure out most accurate calculation
-        m_altitudeM = (m_temperatureK / LAPSE_RATE_K_M) *
-                      (pow(m_pressurePa / ATMOSPHERIC_PRESSURE_PA, -GAS_CONSTANT_J_KG_K * LAPSE_RATE_K_M / GRAVITATIONAL_ACCELERATION_M_SS) - 1);
-        // Chatgpt formula, confirmed here: https://www.mide.com/air-pressure-at-altitude-calculator
-//        m_altitudeM = (m_temperatureK / LAPSE_RATE_K_M) *
-//                      (1 - pow(m_pressurePa / ATMOSPHERIC_PRESSURE_PA, (GAS_CONSTANT_J_KG_K * LAPSE_RATE_K_M) / GRAVITATIONAL_ACCELERATION_M_SS));
+        m_altitudeM = (m_temperatureK / Constants::LAPSE_RATE_K_M) *
+                      (pow(m_pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * -Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
     }
 
     /**
@@ -89,9 +86,10 @@ protected:
         // comes from https://en.wikipedia.org/wiki/Clausius%E2%80%93Clapeyron_relation#Meteorology_and_climatology
         // direct source https://digital.library.unt.edu/ark:/67531/metadc693874/m1/15/ (eq. 25)
         // this is also an approximation
-        double saturationVapourPressure =  6.1094 * exp((17.625 * (m_temperatureK - 273.15)) / ((m_temperatureK - 273.15) + 243.04));   // in hPa
+
+        double saturationVapourPressure = 6.1094 * exp((17.625 * (m_temperatureK - Units::C_TO_K)) / ((m_temperatureK - Units::C_TO_K) + 243.04));   // in hPa
         // equation can be seen from here (re-arrange RH) http://www.atmo.arizona.edu/students/courselinks/fall12/atmo336/lectures/sec1/humidity.html
-        double vapourPressure = (m_humidityPercent/100) * saturationVapourPressure;
+        double vapourPressure = (m_humidityPercent / 100) * saturationVapourPressure;
 
         m_absoluteHumidity = (216.7 * (vapourPressure)) / m_temperatureK;
     }
