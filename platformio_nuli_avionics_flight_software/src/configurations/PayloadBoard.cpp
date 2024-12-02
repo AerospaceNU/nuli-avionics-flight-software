@@ -12,8 +12,10 @@
 #include <Filters.h>
 #include "ICM20948Sensor.h"
 #include "MS8607Sensor.h"
+#include "ArduinoSystemClock.h"
 
 // Hardware devices
+ArduinoSystemClock arduinoClock;
 MS8607Sensor barometer;
 ICM20948Sensor icm20948(5);
 
@@ -35,6 +37,7 @@ void setup() {
 
     Serial.println("Serial successfully started");
 
+    hardware.addSystemClock(&arduinoClock);
     hardware.addBarometer(&barometer);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
     hardware.addGenericSensor(&icm20948);
