@@ -339,4 +339,5 @@ void AprsModulation::setup() const {
 
 void AprsModulation::transmit(const char* str) {
     sendPacket(str);
+    digitalWrite(OUT_PIN, LOW);
 }
