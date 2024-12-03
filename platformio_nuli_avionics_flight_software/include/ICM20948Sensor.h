@@ -68,7 +68,7 @@ private:
     // Hardware facing
     const uint8_t m_chipSelectPin;          ///< The chip select pin for the SPI bus
     SPIClass* m_spiClass = nullptr;         ///< Which SPI bus to use
-    ICM_20948_SPI sparkfunIcm20948;         ///< The library object which handles registers/read/write/all the messy stuff
+    ICM_20948_SPI m_sparkfunIcm20948;         ///< The library object which handles registers/read/write/all the messy stuff
     // Abstraction
     Accelerometer m_accelerometer;          ///< Injector class used to pass data to the HardwareAbstraction
     Gyroscope m_gyroscope;                  ///< Injector class used to pass data to the HardwareAbstraction

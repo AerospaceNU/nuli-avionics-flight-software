@@ -10,39 +10,39 @@ void ICM20948Sensor::setSpiClass(SPIClass* spiClass) {
 void ICM20948Sensor::setup() {
     Serial.println("Starting ICM20948 sensors");
     if (m_spiClass == nullptr) {
-        sparkfunIcm20948.begin(m_chipSelectPin);
+        m_sparkfunIcm20948.begin(m_chipSelectPin);
     } else {
-        sparkfunIcm20948.begin(m_chipSelectPin, *m_spiClass);
+        m_sparkfunIcm20948.begin(m_chipSelectPin, *m_spiClass);
     }
 }
 
 void ICM20948Sensor::read() {
-    if (sparkfunIcm20948.dataReady()) {
+    if (m_sparkfunIcm20948.dataReady()) {
         // Actually get the data from the sensor
-        sparkfunIcm20948.getAGMT();
+        m_sparkfunIcm20948.getAGMT();
 
 
-        double temperatureK = sparkfunIcm20948.temp() + Units::C_TO_K;
+        double temperatureK = m_sparkfunIcm20948.temp() + Units::C_TO_K;
 
         // provided in milli g --> converting to m/s^2
         Vector3D_s accelerationsMSS = {
-                sparkfunIcm20948.accX() * Units::MILLI_TO_BASE * Constants::G_EARTH_MSS,
-                sparkfunIcm20948.accY() * Units::MILLI_TO_BASE * Constants::G_EARTH_MSS,
-                sparkfunIcm20948.accZ() * Units::MILLI_TO_BASE * Constants::G_EARTH_MSS,
+                m_sparkfunIcm20948.accX() * Units::MILLI_TO_BASE * Constants::G_EARTH_MSS,
+                m_sparkfunIcm20948.accY() * Units::MILLI_TO_BASE * Constants::G_EARTH_MSS,
+                m_sparkfunIcm20948.accZ() * Units::MILLI_TO_BASE * Constants::G_EARTH_MSS,
         };
 
         // provided in degrees per second --> converting to radians per second (* 0.017453)
         Vector3D_s velocitiesRadS = {
-                sparkfunIcm20948.gyrX() * Units::DEGS_TO_RAD,
-                sparkfunIcm20948.gyrY() * Units::DEGS_TO_RAD,
-                sparkfunIcm20948.gyrZ() * Units::DEGS_TO_RAD,
+                m_sparkfunIcm20948.gyrX() * Units::DEGS_TO_RAD,
+                m_sparkfunIcm20948.gyrY() * Units::DEGS_TO_RAD,
+                m_sparkfunIcm20948.gyrZ() * Units::DEGS_TO_RAD,
         };
 
         // provided in micro tesla --> converting to teslas ( /10^6)
         Vector3D_s magneticFieldTesla = {
-                sparkfunIcm20948.magX() * Units::MICRO_TO_BASE,
-                sparkfunIcm20948.magY() * Units::MICRO_TO_BASE,
-                sparkfunIcm20948.magZ() * Units::MICRO_TO_BASE,
+                m_sparkfunIcm20948.magX() * Units::MICRO_TO_BASE,
+                m_sparkfunIcm20948.magY() * Units::MICRO_TO_BASE,
+                m_sparkfunIcm20948.magZ() * Units::MICRO_TO_BASE,
         };
 
         m_accelerometer.inject(accelerationsMSS, temperatureK);

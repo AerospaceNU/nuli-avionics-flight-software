@@ -12,6 +12,7 @@
 #include <Pyro.h>
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
+#include <SystemClock.h>
 
 
 /**
@@ -65,7 +66,7 @@ public:
      * @details This should only be called in once, and only in the Core
      */
     inline void updateLoopTimestamp() {
-        uint32_t lastTime = m_currentLoopTimestampMs;
+        uint_avionics_time_t lastTime = m_currentLoopTimestampMs;
         m_currentLoopTimestampMs = getRuntimeMs();
         m_loopDtMs = m_currentLoopTimestampMs - lastTime;
     }
@@ -74,7 +75,7 @@ public:
      * Get the runtime at the start of this loop
      * @return time in ms
      */
-    inline uint32_t getLoopTimestampMs() const {
+    inline uint_avionics_time_t getLoopTimestampMs() const {
         return m_currentLoopTimestampMs;
     }
 
@@ -82,7 +83,7 @@ public:
      * @brief Gets the time since the start of the last loop
      * @return Loop time in ms
      */
-    inline uint32_t getLoopDtMs() const {
+    inline uint_avionics_time_t getLoopDtMs() const {
         return m_loopDtMs;
     }
 
@@ -91,7 +92,10 @@ public:
      * @return runtime in ms
      */
     inline uint32_t getRuntimeMs() {
-        return millis();
+        if(m_numSystemClocks > 0) {
+            return m_systemClock[0]->currentRuntimeMs();
+        }
+        return 0;
     }
 
     GENERATE_GET_ADD_METHODS_MACRO(Pyro, m_pyroArray, m_numPyros, MAX_PYRO_NUM)
@@ -112,9 +116,12 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
+    GENERATE_GET_ADD_METHODS_MACRO(SystemClock, m_systemClock, m_numSystemClocks, MAX_SYSTEM_CLOCK_NUM)
+
 private:
     uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
     uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
+    uint8_t m_numSystemClocks = 0;                      ///< Number of SystemClocks in the system (max 1)
 
     uint8_t m_numPyros = 0;                             ///< Number of Pyros in the system
     uint8_t m_numBarometers = 0;                        ///< Number of Barometers in the system
@@ -134,6 +141,7 @@ private:
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
     CommunicationLink* m_communicationLinkArray[MAX_COMMUNICATION_LINK_NUM] = {nullptr};    ///< Array containing all the CommunicationLinks in the system
     GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};       ///< Array containing all generic sensors
+    SystemClock* m_systemClock[MAX_SYSTEM_CLOCK_NUM] = {nullptr};                                  ///< Array containing all system clocks. There can only be one, but an array is used to maintain common syntax
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file
