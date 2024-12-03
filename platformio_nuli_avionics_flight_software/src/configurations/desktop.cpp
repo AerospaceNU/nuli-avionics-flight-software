@@ -26,23 +26,20 @@ Filters filter;
 AvionicsCore avionicsCore;
 
 int main(int argc, char *argv[]) {
-    CustomCsvParser parserObject = CustomCsvParser();
+    CustomCsvParser dataCsv = CustomCsvParser();
     std::string inputFile = R"(C:\Users\chris\Documents\AerospaceNU\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\src\drivers\desktop\output-post.csv)";
-    if (parserObject.parse(inputFile, true) < 0) {
+    if (dataCsv.parse(inputFile, true) < 0) {
         printf("Failed\n");
         return -1;
     }
-
-    for (aeroCsvRow_s row : parserObject.m_csv) {
-        printf("Timestamp ms: %u, imu2 accelerometer: %.11lf\n", row.timestamp_s, row.baro1_pres);
-    }
-
 
 
     hardware.addBarometer(&barometer);
     hardware.addAccelerometer(&accelerometer);
     hardware.addGyroscope(&gyroscope);
     hardware.addMagnetometer(&magnetometer);
+
+    avionicsCore.setup(&hardware, &configuration, &logger, &filter);
 
 
 
@@ -58,8 +55,17 @@ int main(int argc, char *argv[]) {
      */
 
 
-//    while (true) {
-//        avionicsCore.loopOnce();
-//        accelerometer.inject({0, 0, 0}, 0);
-    }
+    // inject data values into simulation
+    // reset once simulation completes
+//    while(true) {
+        for (size_t i = 0; i < dataCsv.getSize(); ++i) {
+            avionicsCore.loopOnce();
+            CustomCsvParser::FlightDataRow_s row = dataCsv.getRow(i);
+
+            barometer.inject(row.baro1_s.temp, 0, row.baro1_s.pres);
+            accelerometer.inject({row.imu1_accel_s.x, row.imu1_accel_s.y, row.imu1_accel_s.z}, row.baro1_s.temp);
+            gyroscope.inject({row.imu1_gyro_s.x, row.imu1_gyro_s.y, row.imu1_gyro_s.z}, row.baro1_s.temp);
+            magnetometer.inject({row.imu1_mag_s.x, row.imu1_mag_s.y, row.imu1_mag_s.z}, row.baro1_s.temp);
+        }
+//    }
 }

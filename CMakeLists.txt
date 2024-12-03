@@ -5,7 +5,13 @@ set(CMAKE_CXX_STANDARD 20)
 
 include_directories(platformio_nuli_avionics_flight_software/include)
 set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp
-        platformio_nuli_avionics_flight_software/src/drivers/desktop/CustomCsvParser.cpp)
+        platformio_nuli_avionics_flight_software/src/drivers/desktop/CustomCsvParser.cpp
+        platformio_nuli_avionics_flight_software/src/core/AvionicsCore.cpp
+        platformio_nuli_avionics_flight_software/src/core/Configuration.cpp
+        platformio_nuli_avionics_flight_software/src/core/HardwareAbstraction.cpp
+        platformio_nuli_avionics_flight_software/src/core/Logger.cpp
+        platformio_nuli_avionics_flight_software/src/drivers/desktop/CommandLineParser.cpp
+        platformio_nuli_avionics_flight_software/include/CommandLineParser.h)
 
 add_executable(desktop ${desktopSimFiles})
 
