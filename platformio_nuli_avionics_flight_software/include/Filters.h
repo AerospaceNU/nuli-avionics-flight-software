@@ -24,4 +24,13 @@ private:
     Logger* m_logger;
 };
 
+
+/**
+ * Kalman:
+ * - Perdict(accel)
+ * - Calc gains
+ * - Correct
+ * -
+ */
+
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_FILTERS_H

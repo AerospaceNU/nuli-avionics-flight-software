@@ -19,6 +19,15 @@ void AvionicsCore::loopOnce() {
     m_hardware->readAllCommunicationLinks();
     // Filter sensors
     m_filter->runFilterOnce();
+    // ^ sensorData = m_filter->runFilterOnce();
+    // state = updateState();
+    // for i in detectors
+    //    detector.detect()
+
+    // for i in outputs
+    //
+
+
     // End by pushing configuration updates to flash
     m_configuration->writeFlashIfUpdated();
 }

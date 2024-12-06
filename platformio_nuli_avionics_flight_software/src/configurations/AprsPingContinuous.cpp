@@ -1,7 +1,7 @@
 #include <Arduino.h>
 #include "AprsModulation.h"
 
-AprsModulation aprsModulation(6, "AERONU");
+AprsModulation aprsModulation(A0, "AERONU");
 
 char msg[200];
 uint32_t nextTime = 0;
