@@ -27,6 +27,9 @@ public:
      * @brief   A single row of the input CSV.
      */
     typedef struct {
+        //@TODO: Not a huge fan of this, maybe update later on. Possibility of having an array per imu?
+        //@TODO:
+
         uint32_t timestamp_s;
         uint32_t timestamp_ms;
 
@@ -91,7 +94,7 @@ public:
         } gps_s;
 
         double battery_voltage;
-        uint8_t pyro_cont;  // @TODO: These values were zero on the provided CSV, assuming to be implemented
+        uint8_t pyro_cont;
         uint8_t heading;
         uint8_t vtg;
 

@@ -9,9 +9,7 @@ set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/
         platformio_nuli_avionics_flight_software/src/core/AvionicsCore.cpp
         platformio_nuli_avionics_flight_software/src/core/Configuration.cpp
         platformio_nuli_avionics_flight_software/src/core/HardwareAbstraction.cpp
-        platformio_nuli_avionics_flight_software/src/core/Logger.cpp
-        platformio_nuli_avionics_flight_software/src/drivers/desktop/CommandLineParser.cpp
-        platformio_nuli_avionics_flight_software/include/CommandLineParser.h)
+        platformio_nuli_avionics_flight_software/src/core/Logger.cpp)
 
 add_executable(desktop ${desktopSimFiles})
 

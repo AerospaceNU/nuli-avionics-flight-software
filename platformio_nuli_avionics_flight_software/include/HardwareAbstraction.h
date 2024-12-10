@@ -1,7 +1,6 @@
 #ifndef DESKTOP_HARDWAREMANAGER_H
 #define DESKTOP_HARDWAREMANAGER_H
 
-#include <Arduino.h>
 #include <Avionics.h>
 #include <GenericSensor.h>
 #include <Barometer.h>
