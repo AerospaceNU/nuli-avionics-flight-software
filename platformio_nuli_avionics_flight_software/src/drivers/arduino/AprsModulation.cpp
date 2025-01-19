@@ -301,7 +301,7 @@ void sendPacket(const char *myStatus) {
      * FCS      : 2 bytes calculated from HEADER + PAYLOAD
      */
 
-    sendFlag(100);
+    sendFlag(60);      // was: 100
     crc = 0xffff;
     sendHeader();
     sendPayload(myStatus);

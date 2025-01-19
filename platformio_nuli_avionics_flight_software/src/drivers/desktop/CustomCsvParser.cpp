@@ -1,7 +1,3 @@
-//
-// Created by chris on 11/18/2024.
-//
-
 #include "CustomCsvParser.h"
 #include <fstream>
 #include <sstream>
