@@ -12,11 +12,15 @@
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
 #include "CustomCsvParser.h"
+#include <iostream>
+#include <DesktopDebug.h>
 
 Barometer barometer;
 Accelerometer accelerometer;
 Gyroscope gyroscope;
 Magnetometer magnetometer;
+
+DesktopDebug desktopDebug;
 
 // Core objects accessible by all components
 HardwareAbstraction hardware;
@@ -25,15 +29,20 @@ Logger logger;
 Filters filter;
 AvionicsCore avionicsCore;
 
-int main(int argc, char *argv[]) {
+int main(int argc, char* argv[]) {
     CustomCsvParser dataCsv = CustomCsvParser();
     std::string inputFile = R"(C:\Users\chris\Documents\AerospaceNU\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\src\drivers\desktop\output-post.csv)";
+    if (argc >= 2) {
+        inputFile = argv[1];
+        std::cout << inputFile << "\n";
+    }
     if (dataCsv.parse(inputFile, true) < 0) {
         printf("Failed\n");
         return -1;
     }
 
 
+    hardware.addDebugStream(&desktopDebug);
     hardware.addBarometer(&barometer);
     hardware.addAccelerometer(&accelerometer);
     hardware.addGyroscope(&gyroscope);
@@ -57,15 +66,15 @@ int main(int argc, char *argv[]) {
 
     // inject data values into simulation
     // reset once simulation completes
-//    while(true) {
-        for (size_t i = 0; i < dataCsv.getSize(); ++i) {
-            avionicsCore.loopOnce();
-            CustomCsvParser::FlightDataRow_s row = dataCsv.getRow(i);
+    for (size_t i = 0; i < dataCsv.getSize(); ++i) {
+        CustomCsvParser::FlightDataRow_s row = dataCsv.getRow(i);
 
-            barometer.inject(row.baro1_s.temp, 0, row.baro1_s.pres);
-            accelerometer.inject({row.imu1_accel_s.x, row.imu1_accel_s.y, row.imu1_accel_s.z}, row.baro1_s.temp);
-            gyroscope.inject({row.imu1_gyro_s.x, row.imu1_gyro_s.y, row.imu1_gyro_s.z}, row.baro1_s.temp);
-            magnetometer.inject({row.imu1_mag_s.x, row.imu1_mag_s.y, row.imu1_mag_s.z}, row.baro1_s.temp);
-        }
-//    }
+        barometer.inject(row.baro1_s.temp, 0, row.baro1_s.pres);
+        accelerometer.inject({row.imu1_accel_s.x, row.imu1_accel_s.y, row.imu1_accel_s.z}, row.baro1_s.temp);
+        gyroscope.inject({row.imu1_gyro_s.x, row.imu1_gyro_s.y, row.imu1_gyro_s.z}, row.baro1_s.temp);
+        magnetometer.inject({row.imu1_mag_s.x, row.imu1_mag_s.y, row.imu1_mag_s.z}, row.baro1_s.temp);
+
+        avionicsCore.loopOnce();
+        avionicsCore.printDump();
+    }
 }

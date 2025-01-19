@@ -12,6 +12,7 @@
 #include <FlashMemory.h>
 #include <CommunicationLink.h>
 #include <SystemClock.h>
+#include <DebugStream.h>
 
 
 /**
@@ -117,10 +118,13 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(SystemClock, m_systemClock, m_numSystemClocks, MAX_SYSTEM_CLOCK_NUM)
 
+    GENERATE_GET_ADD_METHODS_MACRO(DebugStream, m_debugStream, m_numDebugStreams, MAX_DEBUG_STREAM_NUM)
+
 private:
     uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
     uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
     uint8_t m_numSystemClocks = 0;                      ///< Number of SystemClocks in the system (max 1)
+    uint8_t m_numDebugStreams = 0;                      ///< Number of SystemClocks in the system (max 1)
 
     uint8_t m_numPyros = 0;                             ///< Number of Pyros in the system
     uint8_t m_numBarometers = 0;                        ///< Number of Barometers in the system
@@ -141,6 +145,8 @@ private:
     CommunicationLink* m_communicationLinkArray[MAX_COMMUNICATION_LINK_NUM] = {nullptr};    ///< Array containing all the CommunicationLinks in the system
     GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};       ///< Array containing all generic sensors
     SystemClock* m_systemClock[MAX_SYSTEM_CLOCK_NUM] = {nullptr};                                  ///< Array containing all system clocks. There can only be one, but an array is used to maintain common syntax
+    DebugStream* m_debugStream[MAX_DEBUG_STREAM_NUM] = {nullptr};                                  ///< Array containing all system clocks. There can only be one, but an array is used to maintain common syntax
+    DebugStream voidDump;
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file

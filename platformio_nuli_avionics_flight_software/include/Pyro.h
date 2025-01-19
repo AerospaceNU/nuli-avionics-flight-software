@@ -71,10 +71,10 @@ public:
 //    static constexpr int32_t USE_DIGITAL_CONTINUITY = -1;           ///< Flag value for the analog threshold to allow for continuity to be read digitally
 
 private:
-    bool m_hasContinuity = false;               ///< Tracks if the pyro has continuity
-    const uint8_t m_firePin;                    ///< Pin for firing the pyro
-    const uint8_t m_continuityPin;              ///< Pin for reading pyro continuity
-    const int32_t m_continuityThreshold;        ///< Analog threshold for determining if a pin has continuity
+//    bool m_hasContinuity = false;               ///< Tracks if the pyro has continuity
+//    const uint8_t m_firePin;                    ///< Pin for firing the pyro
+//    const uint8_t m_continuityPin;              ///< Pin for reading pyro continuity
+//    const int32_t m_continuityThreshold;        ///< Analog threshold for determining if a pin has continuity
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H

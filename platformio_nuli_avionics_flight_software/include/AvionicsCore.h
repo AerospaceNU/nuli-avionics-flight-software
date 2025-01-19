@@ -31,6 +31,8 @@ public:
      */
     void loopOnce();
 
+    void printDump();
+
 private:
     // Global
     HardwareAbstraction* m_hardware;
