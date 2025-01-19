@@ -1,6 +1,6 @@
 var searchData=
 [
-  ['filteredsensordata_0',['FilteredSensorData',['../structFilteredSensorData.html',1,'']]],
-  ['filters_1',['Filters',['../classFilters.html',1,'']]],
-  ['flashmemory_2',['FlashMemory',['../classFlashMemory.html',1,'']]]
+  ['debugstream_0',['DebugStream',['../classDebugStream.html',1,'']]],
+  ['desktopdebug_1',['DesktopDebug',['../classDesktopDebug.html',1,'']]],
+  ['detector_2',['Detector',['../classDetector.html',1,'']]]
 ];

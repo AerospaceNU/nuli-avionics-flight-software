@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['x_0',['x',['../structVector3D__s.html#a9de10ab1c2a3554a79714a4b006334aa',1,'Vector3D_s']]]
+  ['units_0',['Units',['../classUnits.html',1,'']]],
+  ['updatelooptimestamp_1',['updateLoopTimestamp',['../classHardwareAbstraction.html#a4c4bfececd417d21ba304fe9ffc92b1f',1,'HardwareAbstraction']]]
 ];

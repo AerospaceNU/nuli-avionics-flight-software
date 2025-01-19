@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['length_0',['length',['../structBitSinTable__s.html#ae48a6d977709515f8faef0fccf55276c',1,'BitSinTable_s']]]
+  ['sample_5ffrequency_0',['SAMPLE_FREQUENCY',['../classAprsTransmitter.html#ac3f6a73f10a751297fa0be8362908bf7',1,'AprsTransmitter']]]
 ];
