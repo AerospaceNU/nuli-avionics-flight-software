@@ -1,0 +1,38 @@
+//
+// Created by chris on 1/6/2025.
+//
+
+#include <stdexcept>
+#include <sstream>
+#include "Flag.h"
+
+
+
+
+
+SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required)
+        : m_name(name), m_helpText(helpText), m_set(false), m_required(required) {}
+
+const char* SimpleFlag::name() const {
+    return m_name;
+}
+
+const char* SimpleFlag::help() const {
+    return m_helpText;
+}
+
+void SimpleFlag::parse(const char* value) {
+    m_set = true;
+}
+
+bool SimpleFlag::isSet() const {
+    return m_set;
+}
+
+bool SimpleFlag::isRequired() const {
+    return m_required;
+}
+
+// //////////////////////
+// //  Argument Flags  //
+// //////////////////////
