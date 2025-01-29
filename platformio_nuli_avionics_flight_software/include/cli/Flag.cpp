@@ -6,9 +6,16 @@
 #include <sstream>
 #include "Flag.h"
 
-
-
-
+bool BaseFlag::verify() const { //@TODO: Check if this is bad design
+    /*
+     isRequired isSet               not
+     yes        no     --> yes  --> no
+     yes        yes    --> no   --> yes
+     no         no     --> no   --> yes
+     no         yes    --> no   --> yes
+    */
+    return !(this->isRequired() && !this->isSet());
+}
 
 SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required)
         : m_name(name), m_helpText(helpText), m_set(false), m_required(required) {}
@@ -21,7 +28,7 @@ const char* SimpleFlag::help() const {
     return m_helpText;
 }
 
-void SimpleFlag::parse(const char* value) {
+void SimpleFlag::parse(int argc, char* argv[], int &argvPos) {
     m_set = true;
 }
 
@@ -33,6 +40,6 @@ bool SimpleFlag::isRequired() const {
     return m_required;
 }
 
-// //////////////////////
-// //  Argument Flags  //
-// //////////////////////
+void SimpleFlag::resetFlag() {
+    m_set = false;
+}

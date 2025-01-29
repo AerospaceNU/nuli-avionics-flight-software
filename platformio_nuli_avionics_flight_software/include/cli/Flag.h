@@ -20,11 +20,15 @@ public:
 
     virtual const char* help() const = 0;
 
-    virtual void parse(const char* value) = 0;
+    virtual void parse(int argc, char* argv[], int &argvPos) = 0;
 
     virtual bool isSet() const = 0;
 
     virtual bool isRequired() const = 0;
+
+    virtual void resetFlag() = 0;
+
+    bool verify() const;
 
     template <typename T>
     T getValue();
@@ -47,16 +51,17 @@ public:
 
     const char* help() const override;
 
-    void parse(const char* value) override;
+    void parse(int argc, char* argv[], int &argvPos) override;
 
     bool isSet() const override;
 
     bool isRequired() const override;
 
+    void resetFlag() override;
+
     bool getValueDerived() const {
         return isSet();
     }
-
 protected:
 private:
     bool m_set;
@@ -75,26 +80,31 @@ class ArgumentFlag : public BaseFlag {
 public:
     ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required);
 
+    ArgumentFlag(const char* name, const char* helpText, bool m_required);
+
     const char* name() const override;
 
     const char* help() const override;
 
-    void parse(const char* value) override;
+    void parse(int argc, char* argv[], int &argvPos) override;
 
     bool isSet() const override;
 
     bool isRequired() const override;
 
+    void resetFlag() override;
+
     T getValueDerived() const {
         return m_argument;
     }
-
 protected:
 private:
     bool m_set;
     bool m_required;
+    bool m_defaultSet;
     const char* m_name;
     const char* m_helpText;
+    T m_defaultValue;
     T m_argument;
 };
 

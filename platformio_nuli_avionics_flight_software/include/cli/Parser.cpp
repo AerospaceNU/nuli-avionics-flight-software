@@ -5,46 +5,61 @@
 #include <cstring>
 #include <stdexcept>
 
-void Parser::addFlag(BaseFlag& flag) {
-    if (m_numFlags < MAX_FLAGS) {
-        m_flags[m_numFlags++] = &flag;
-    } else {
-        throw std::invalid_argument("Too many arguments");
-    }
-}
-
+// parses inputs into appropriate flags.
 void Parser::parse(int argc, char** argv) {
-    for (int i = 1; i < argc; ++i) {
-        const char* currArg = argv[i];
+    if (m_numFlagGroups == 0) {
+        throw std::runtime_error("No flag groups present");
+    }
+
+    if (argc <= 1) {
+        throw std::invalid_argument("No flag provided");
+    }
+
+    int argvPos = 1;
+
+    // retrieve flag group and set primary flag
+    FlagGroup* flagGroup;
+    const char* flagGroupName = argv[argvPos++];    // The flag group's name should always be the first argument
+    bool matchedPrimary = false;
+    for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
+        if (std::strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
+            // flag group has been identified
+            matchedPrimary = true;
+            flagGroup = &m_flagGroups[i];
+
+            // set and parse the primary flag
+            BaseFlag* primaryFlag = flagGroup->getPrimary();
+            primaryFlag->parse(argc, argv, argvPos);
+        }
+    }
+
+    if (! matchedPrimary) {
+        throw std::invalid_argument("Primary flag not found!"); //@TODO: Change naming to "leader flag"
+    }
+
+    // if any, go through rest of arguments
+    for (; argvPos < argc; ++argvPos) {
+        const char* currArg = argv[argvPos];
         bool matched = false;
-        // finding the flag
-        for (uint8_t j = 0; j < m_numFlags; ++j) {
-            if (std::strcmp(currArg, m_flags[j]->name()) == 0) {
+
+        // find the matching flag
+        for (uint8_t i = 0; i < flagGroup->numFlags_s; ++i) {
+            if (std::strcmp(currArg, flagGroup->flags_s[i]->name()) == 0) {
                 matched = true;
 
-                // @TODO: Currently if a flag that requires an argument does not have the required argument, it fails
-                if (i + 1 < argc && argv[i + 1][0] != '-') {
-                    m_flags[j]->parse(argv[++i]);   // pass the next argument as this flag's value
-                } else {
-                    m_flags[j]->parse(nullptr);
-                }
-
-                break;
+                flagGroup->flags_s[i]->parse(argc, argv, argvPos);
             }
         }
 
         // unknown flag
-        if (!matched) {
+        if (! matched) {
             throw std::invalid_argument("Unknown flag!");
         }
     }
 
-    // verify required flags present
-    for (uint8_t i = 0; i < m_numFlags; ++i) {
-        if (m_flags[i]->isRequired() && !m_flags[i]->isSet()) {
-            throw std::invalid_argument("Missing required argument");
-        }
-    }
+    // verify all required flags are set for this FlagGroup
+    // **note**: conditional requirements are not checked for   //@TODO: Perhaps implement a system for this?
+    flagGroup->verifyFlags();
 }
 
 void Parser::parse(char* input) {
@@ -52,7 +67,6 @@ void Parser::parse(char* input) {
     input[std::strcspn(input, "\n")] = 0;
 
     // parsing into argc and argv
-    // @TODO: I don't know if setting to 1 is best. Bit of a magic number
     int argc = 1;   // compatibility with command-line argc/argv
     char *argv[255] = {nullptr};
     char *savePtr;
@@ -68,18 +82,54 @@ void Parser::parse(char* input) {
     this->parse(argc, argv);
 }
 
-BaseFlag* Parser::getFlag(const char* flagName) {
-    for (uint8_t i = 0; i < m_numFlags; ++i) {
-        if (strcmp(m_flags[i]->name(), flagName) == 0) {
-            return m_flags[i];
+void Parser::printHelp() const {
+    // loop through each FlagGroup
+    for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
+        // loop through each set of flags within a FlagGroup
+        for (uint8_t j = 0; j < m_flagGroups[i].numFlags_s; ++j) {
+            printf("%s: %s\n", m_flagGroups[i].flags_s[j]->name(), m_flagGroups[i].flags_s[j]->help());
+        }
+        printf("\n");
+    }
+}
+
+
+// ///////////////////////////
+/* WORKING WITH FLAG GROUPS */
+// ///////////////////////////
+BaseFlag* Parser::FlagGroup::getPrimary() {
+    if (numFlags_s < 1) {
+        throw std::runtime_error("No flag groups added");
+    }
+
+    return flags_s[0];
+}
+
+bool Parser::FlagGroup::verifyFlags() {
+    for (uint8_t i = 0; i < this->numFlags_s; ++i) {
+        if (! this->flags_s[i]->verify()) {
+            throw std::invalid_argument("Missing required argument");
         }
     }
 
-    return nullptr;
+    return true;
 }
 
-void Parser::printHelp() const {
-    for (size_t i = 0; i < m_numFlags; ++i) {
-        printf("%s: %s\n", m_flags[i]->name(), m_flags[i]->help());
+void Parser::resetFlags() {
+    // loop through each FlagGroup
+    for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
+        // loop through each set of flags within a FlagGroup
+        for (uint8_t j = 0; j < m_flagGroups[i].numFlags_s; ++j) {
+            m_flagGroups[i].flags_s[j]->resetFlag();
+        }
+        printf("\n");
     }
+}
+
+void Parser::addFlagGroup(Parser::FlagGroup &flagGroup) {
+    if (m_numFlagGroups >= MAX_FLAG_GROUPS) {
+        throw std::invalid_argument("Max number of flag groups exceeded");
+    }
+
+    m_flagGroups[m_numFlagGroups++] = flagGroup;
 }
