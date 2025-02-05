@@ -6,19 +6,8 @@
 #include <sstream>
 #include "Flag.h"
 
-bool BaseFlag::verify() const { //@TODO: Check if this is bad design
-    /*
-     isRequired isSet               not
-     yes        no     --> yes  --> no
-     yes        yes    --> no   --> yes
-     no         no     --> no   --> yes
-     no         yes    --> no   --> yes
-    */
-    return !(this->isRequired() && !this->isSet());
-}
-
 SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required)
-        : m_name(name), m_helpText(helpText), m_set(false), m_required(required) {}
+        : BaseFlag(name, helpText, required) {}
 
 const char* SimpleFlag::name() const {
     return m_name;
@@ -28,8 +17,9 @@ const char* SimpleFlag::help() const {
     return m_helpText;
 }
 
-void SimpleFlag::parse(int argc, char* argv[], int &argvPos) {
+int8_t SimpleFlag::parse(int argc, char* argv[], int &argvPos) {
     m_set = true;
+    return 0;
 }
 
 bool SimpleFlag::isSet() const {
@@ -40,6 +30,24 @@ bool SimpleFlag::isRequired() const {
     return m_required;
 }
 
-void SimpleFlag::resetFlag() {
+void SimpleFlag::reset() {
     m_set = false;
 }
+
+bool SimpleFlag::verify() const {
+    /*
+     isRequired isSet               not
+     yes        no     --> yes  --> no
+     yes        yes    --> no   --> yes
+     no         no     --> no   --> yes
+     no         yes    --> no   --> yes
+    */
+    return !(this->isRequired() && !this->isSet());
+}
+
+bool SimpleFlag::getValueDerived() const {
+    return isSet();
+}
+
+BaseFlag::BaseFlag(const char* name, const char* helpText, bool required) :
+        m_name(name), m_helpText(helpText), m_required(required), m_set(false) {}

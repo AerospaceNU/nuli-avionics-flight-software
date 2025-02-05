@@ -53,16 +53,9 @@
 --version  Send Git version and tag info
  */
 
-const uint8_t MAX_FLAG_GROUPS = 255;
+const uint8_t MAX_INPUT = 64;
 const uint8_t MAX_FLAGS = 255;
-
-/*
- * How the input should look like
- *  addFlag(primaryFlag, flagHelper, ...);
- *      - primaryFlag is never required, but the flagHelpers will be associated with a primaryFlag
- *      -
- *
- */
+const uint8_t MAX_FLAG_GROUPS = 255;
 
 /**
  * @class
@@ -76,54 +69,49 @@ public:
     ~Parser() = default;
 
     /* methods */
-    void parse(int argc, char* argv[]);
+    template<uint8_t n> // @TODO: Three options. 1: put in .tpp file. 2. put in header with declaration. 3. put definition at bottom of header
+    void addFlagGroup(BaseFlag* (&flagGroup)[n]) {
+        // bounds checks
+        if (n == 0) {
+            throw std::invalid_argument("No flag group provided");
+        }
 
-    void parse(char* input);
+        if (m_numFlagGroups > MAX_FLAG_GROUPS) {
+            throw std::invalid_argument("Maximum flag groups exceeded");
+        }
+
+        FlagGroup_s newFlagGroup(flagGroup, flagGroup[0]->name(), n);
+        m_flagGroups[m_numFlagGroups++] = newFlagGroup;
+    }
+
+    int8_t parse(int argc, char* argv[]);
+
+    int8_t parse(char* input);
 
     void printHelp() const;
 
-    // ///////////////////////////
-    /* WORKING WITH FLAG GROUPS */
-    // ///////////////////////////
-    struct FlagGroup {
-        const char* flagGroupName_s = {nullptr};
-        BaseFlag* flags_s[MAX_FLAGS] = {nullptr};
-        uint8_t numFlags_s;
-
-        FlagGroup() : flagGroupName_s{nullptr}, flags_s{}, numFlags_s(0) {}
-
-        template<uint8_t n>
-        explicit FlagGroup(BaseFlag* (&flagGroup)[n]) {
-            if (n == 0) {
-                throw std::invalid_argument("No flag group provided");
-            }
-
-            if (n > MAX_FLAGS) {
-                throw std::invalid_argument("Maximum flag count exceeded");
-            }
-
-            for (uint8_t i = 0; i < n; ++i) {
-                flags_s[i] = flagGroup[i]; // Copy each element
-            }
-
-            flagGroupName_s = flagGroup[0]->name();
-            numFlags_s = n;
-        }
-
-        BaseFlag* getPrimary();
-
-        bool verifyFlags();
-
-    };
     void resetFlags();
-
-    void addFlagGroup(FlagGroup& flagGroup);
-
 
 protected:
 private:
-    FlagGroup m_flagGroups[MAX_FLAG_GROUPS];
-    uint8_t m_numFlagGroups;
+    struct FlagGroup_s {
+        BaseFlag* flags_s[MAX_FLAGS] = {nullptr};
+        const char* flagGroupName_s = {nullptr};
+        uint8_t numFlags_s;
+
+        FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{}, numFlags_s(0) {}
+
+        FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags);
+
+        BaseFlag* getLeader();
+
+        int8_t verifyFlags();
+
+        void resetFlags();
+    };
+
+    FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];
+    uint8_t m_numFlagGroups = 0;
 };
 
 #endif //DESKTOP_PARSER_H
