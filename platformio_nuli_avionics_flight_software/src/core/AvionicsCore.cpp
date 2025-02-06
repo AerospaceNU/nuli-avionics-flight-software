@@ -14,6 +14,8 @@ void AvionicsCore::setup(HardwareAbstraction* hardware,
 }
 
 bool takenOff = false;
+double groundElevation = 500;
+uint32_t takeoffTimer = 0;
 
 void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
@@ -22,7 +24,16 @@ void AvionicsCore::loopOnce() {
     m_hardware->readAllSensors();
 
     double altitudeM = m_hardware->getBarometer(0)->getAltitudeM();
-    
+
+    if(altitudeM > groundElevation) {
+        if(takeoffTimer == 0) {
+            takeoffTimer = m_hardware->getRuntimeMs() + 2000;
+        }
+    } else {
+        takeoffTimer = 0;
+    }
+
+    if(takenOff)
 
 }
 
