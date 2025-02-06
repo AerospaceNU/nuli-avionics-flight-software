@@ -13,8 +13,11 @@
 #include "ICM20948Sensor.h"
 #include "MS8607Sensor.h"
 #include "ArduinoSystemClock.h"
+#include "SerialDebug.h"
 
 // Hardware devices
+SerialDebug debug;
+
 ArduinoSystemClock arduinoClock;
 MS8607Sensor barometer;
 ICM20948Sensor icm20948(5);
@@ -29,7 +32,27 @@ Filters filter;
 // The core
 AvionicsCore avionicsCore;
 
+/**
+ * Payload logging requirements:
+ *
+ * Barometer: 3
+ * IMU: 9
+ * Clock: 1
+ * GPS: 3
+ * Battery: 1
+ * Pyro: 1
+ *
+ * Lets just log one page at a time
+ */
+
+
+
+
 void setup() {
+    pinMode(8, OUTPUT);
+    digitalWrite(8, HIGH);
+    pinMode(A5, OUTPUT);
+    digitalWrite(A5, HIGH);
     Serial.begin(9600);
     while(!Serial);
     SPI.begin();
@@ -37,7 +60,8 @@ void setup() {
 
     Serial.println("Serial successfully started");
 
-    hardware.addSystemClock(&arduinoClock);
+    hardware.setDebugStream(&debug);
+    hardware.setSystemClock(&arduinoClock);
     hardware.addBarometer(&barometer);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
     hardware.addGenericSensor(&icm20948);
@@ -46,20 +70,15 @@ void setup() {
     hardware.addMagnetometer(icm20948.getMagnetometer());
     // Finish initializing all hardware
     hardware.setup();
-    // Initialize other globals
-    configuration.setup(&hardware);
-    logger.setup(&hardware, &configuration);
-    // Initialize components
-    filter.setup(&configuration, &logger);
+//    logger.setup(&hardware, &configuration);
+//    // Initialize components
+//    filter.setup(&configuration, &logger);
     // Initialize core
     avionicsCore.setup(&hardware, &configuration, &logger, &filter);
 }
 
-uint32_t lastTime = 0;
 
 void loop() {
     avionicsCore.loopOnce();
-    uint32_t time = millis();
-    Serial.println(time - lastTime);
-    lastTime = time;
+    avionicsCore.printDump();
 }

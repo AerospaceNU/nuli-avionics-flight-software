@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
     }
 
 
-    hardware.addDebugStream(&desktopDebug);
+    hardware.setDebugStream(&desktopDebug);
     hardware.addBarometer(&barometer);
     hardware.addAccelerometer(&accelerometer);
     hardware.addGyroscope(&gyroscope);

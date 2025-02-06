@@ -9,6 +9,8 @@ class S25FL512 {
 public:
     explicit S25FL512(uint8_t chipSelectPin, SPIClass* spiClass = &SPI);
 
+    void setup() const;
+
     static uint32_t getMemorySize();
 
     static uint32_t getSectorSize();
@@ -21,9 +23,9 @@ public:
 
     bool waitForReady(uint32_t timeout = 1000) const;
 
-    void write(uint32_t address, const uint8_t *buffer, uint32_t length, bool waitForCompletion = true) const;
+    void write(uint32_t address, const uint8_t* buffer, uint32_t length, bool waitForCompletion = true) const;
 
-    void read(uint32_t address, uint8_t *buffer, uint32_t length) const;
+    void read(uint32_t address, uint8_t* buffer, uint32_t length) const;
 
     uint8_t read(uint32_t address) const;
 
@@ -33,15 +35,15 @@ public:
 
     void eraseSector(uint32_t sectorNumber, bool waitForCompletion = true) const;
 
+    uint8_t readStatusRegister() const;
 
 protected:
-    void pageProgram(uint32_t address, const uint8_t *buffer, uint32_t length) const;
+    void pageProgram(uint32_t address, const uint8_t* buffer, uint32_t length) const;
 
     inline bool waitForWriteCompletion(uint32_t timeout = 1000) const;
 
     inline bool isWriteInProgress() const;
 
-    inline uint8_t readStatusRegister() const;
 
     inline void enableWrite() const;
 
