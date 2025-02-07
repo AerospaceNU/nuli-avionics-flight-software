@@ -66,11 +66,11 @@ T BaseFlag::getValue() {
 
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required)
-        : BaseFlag(name, helpText, required), m_defaultValue(defaultValue), m_defaultSet(true) {}
+        : BaseFlag(name, helpText, required), m_defaultValue(defaultValue) {}
 
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required)
-        : BaseFlag(name, helpText, required), m_defaultSet(false) {}
+        : BaseFlag(name, helpText, required) {}
 
 template<typename T>
 const char* ArgumentFlag<T>::name() const {
@@ -86,11 +86,11 @@ template<typename T>
 int8_t ArgumentFlag<T>::parse(int argc, char* argv[], int &argvPos) { //@TODO: Maybe change to return new argvPos?
     // early exit
     if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') { //@TODO: Maybe change to passing in the next argument (which can be nullptr)
-        if (m_defaultSet) {
+        if (m_defaultValue) {
             // use default argument
             m_argument = m_defaultValue;
         } else {
-            fprintf(stderr, "Default argument not set, value required");
+            fprintf(stderr, "Default argument not set, value required\n");
             return -1;
         }
 

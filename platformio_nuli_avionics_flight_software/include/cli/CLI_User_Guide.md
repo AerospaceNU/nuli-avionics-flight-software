@@ -22,13 +22,12 @@ ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in met
 > ArgumentFlag. While the compiler can *sometimes* infer the type when given
 > a default value, this is finicky and unreliable.
 
-### 3. Add Flags to FlagGroup
+### 3. Add Flags to list of flags
 ```c++
-BaseFlag* group1[]{&config, &config_trigger, &config_pulseWidth, &config_elevation};
-Parser::FlagGroup configGroup(group1);
+BaseFlag* configGroup[]{&config, &config_trigger, &config_pulseWidth, &config_elevation};
 ```
 
-### 4. Add FlagGroup to Parser
+### 4. Add flag list to Parser
 ```c++
 myParser.addFlagGroup(configGroup);
 ```
@@ -36,3 +35,37 @@ myParser.addFlagGroup(configGroup);
 ### 5. Repeat
 
 Repeat for more FlagGroups. 
+
+## Testing
+### CLion
+Use the run configurations panel
+### Linux
+Build the project with coverage flags enabled:
+```shell
+rm -rf build
+cmake -S . -B build -DENABLE_COVERAGE=ON
+cmake --build build
+```
+
+Running the project
+```shell
+cd build
+ctest --verbose
+```
+#### Code Coverage
+Generating coverage data 
+```shell
+lcov --capture --directory . --output-file coverage.info
+```
+
+Filter out system files
+```shell
+lcov --remove coverage.info '/usr/*' '*/tests/*' --output-file coverage_filtered.info
+```
+
+Generate HTML report:
+```shell
+genhtml coverage_filtered.info --output-directory coverage_report --demangle-cpp
+```
+### Windows/MacOS
+Idk.

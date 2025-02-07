@@ -5,20 +5,16 @@
 #include <cstring>
 #include <stdexcept>
 
-//@TODO create a side-command that prints all flags with their set value
-
 // parses inputs into appropriate flags.
 int8_t Parser::parse(int argc, char** argv) {
     if (m_numFlagGroups == 0) {
         fprintf(stderr, "No flag group present\n");
         return -1;
-        throw std::runtime_error("No flag groups present");
     }
 
     if (argc <= 1) {
         fprintf(stderr, "No flag provided\n");
         return -1;
-        throw std::invalid_argument("No flag provided");
     }
 
     int argvPos = 1;
@@ -109,14 +105,10 @@ void Parser::printHelp() const {
     }
 }
 
-
-// ///////////////////////////
-/* WORKING WITH FLAG GROUPS */
-// ///////////////////////////
 BaseFlag* Parser::FlagGroup_s::getLeader() {
     if (numFlags_s < 1) {
+        fprintf(stderr, "No flag group added\n");
         return nullptr;
-        throw std::runtime_error("No flag groups added");
     }
 
     return flags_s[0];
@@ -127,7 +119,6 @@ int8_t Parser::FlagGroup_s::verifyFlags() {
         if (!this->flags_s[i]->verify()) {
             fprintf(stderr, "Missing required arguments\n");
             return -1;
-            throw std::invalid_argument("Missing required argument");
         }
     }
 

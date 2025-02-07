@@ -6,82 +6,71 @@
 #define DESKTOP_PARSER_H
 #include "Flag.h"
 
-/*
- * Project Requirements:
- * Use C strings
- * Current ideas might be to implement a method where it has a generic commands
- * class. And then when parse is called on it, you add an instance of the
- * commands class in.
+/**
+ * @TODO: Formalize error handling. Currently, some errors are printed at their
+ *          source, while in other places, they are printed out by the parent
+ *          method.
  *
---config -t int*1 Configure a trigger with additional flag:                     <--- the below are required (-m -p -d -w -C -D -N)
-         -m int*1 Trigger type (required)
-                  Type 1 = pyro
-                  Type 2 = line cutter
-                  Type 3 = digital on (on pyro)
-                  Type 4 = digital off (on pyro)
-                  Type 5 = pwm (on pyro)
-         -p int*1 Pyro num or cut channel (required)
-         -d float*1 Duration (required for pyro and pwm)
-         -w float*1 Pulse width (required for pwm)
-         -C string*1 Configuration using expression notation, required. Must be in quotes
-         -D Delete this trigger
-         -N Disallow manual triggering
- -e float*1 Configure ground elevation (in meters)                  <--- these are optional
- -r float*1 Configure ground temperature (in celsius)
- -c int*1 Configure radio channel (in multiples of bandwidth), negative numbers allowed
- -h Help for config. Prints current configuration values
-
---create_flight  Clear state log and move back to preflight
-
---erase  Fully erases on-board flash
-
---help  FCB produces standard command line help string
-
---linecutter -i int*1 Send linecutter cut with given ID (required)
- -c string*1 Send a command (required)
-
---offload  Offloads the last flight recorded on the board
- -f int*1 Offload a specific flight number off the board
- -h Help for offload. Prints info about each flight
-
---triggerfire -t int*1 IMMEDIATELY fires the given trigger number
-
---sense  Reads back most recent sensor data
-
---sim  Simulate past flights in hardware
-
---version  Send Git version and tag info
+ * @TODO: Formalize handling of template methods. Currently, sometimes they are
+ *          1. put in the header file with the declaration, 2. defined at the
+ *          bottom of the header file, 3. in a separate .tpp file.
+ *
+ * @TODO: create a side-command that prints all flags with their set value
+ *
+ * @TODO: increase validation.
+ *          ex: no duplicate Leader flags
+ *          ex: no duplicate flags within a FlagGroup
+ *          ex: co-dependencies (this might be a nice to add)
  */
 
-const uint8_t MAX_INPUT = 64;
-const uint8_t MAX_FLAGS = 255;
-const uint8_t MAX_FLAG_GROUPS = 255;
+const uint8_t MAX_FLAG_GROUPS = 255;    ///< Maximum number of FlagGroups
+const uint8_t MAX_FLAGS = 255;          ///< Maximum number of flags per FlagGroup
 
 /**
- * @class
- * @brief
+ * @class Parser
+ * @brief Parses command line inputs into pre-defined FlagGroups and Flags
+ * @details This class parses a user's input, either from the command-line
+ * arguments or from input from stdin into FlagGroups containing sets of flags.
+ * A user should use the addFlagGroup method to add sets of flags to a group.
+ * \n\n
+ * A FlagGroup is defined as a set of Flags. The first flag in a FlagGroup is
+ * defined as a FlagGroup's "leader". Among FlagGroups, only the leader flag
+ * must be unique, collision is permitted for members of a single FlagGroup
+ * with another members of a different FlagGroup.
  */
 class Parser {
 public:
-    /* constructors/destructors */
+    /**
+     * @brief Default constructor
+     */
     Parser() = default;
 
     ~Parser() = default;
 
-    /* methods */
-    template<uint8_t n> // @TODO: Three options. 1: put in .tpp file. 2. put in header with declaration. 3. put definition at bottom of header
-    void addFlagGroup(BaseFlag* (&flagGroup)[n]) {
+    /**
+     * @brief Adds a set of Flags into a FlagGroup
+     * @details Creates a new FlagGroup
+     * @tparam n Number of flags provided (not user inputted)
+     * @param flagGroup An array of flags
+     * @return 0 if successful
+     */
+    template<uint8_t n>
+    int8_t addFlagGroup(BaseFlag* (&flagGroup)[n]) {
         // bounds checks
         if (n == 0) {
-            throw std::invalid_argument("No flag group provided");
+            fprintf(stderr, "No flag group provided\n");
+            return -1;
         }
 
         if (m_numFlagGroups > MAX_FLAG_GROUPS) {
-            throw std::invalid_argument("Maximum flag groups exceeded");
+            fprintf(stderr, "Maximum flag groups exceeded\n");
+            return -1;
         }
 
         FlagGroup_s newFlagGroup(flagGroup, flagGroup[0]->name(), n);
         m_flagGroups[m_numFlagGroups++] = newFlagGroup;
+
+        return 0;
     }
 
     int8_t parse(int argc, char* argv[]);
@@ -94,13 +83,25 @@ public:
 
 protected:
 private:
+    /**
+     * @struct FlagGroup_s
+     * @brief Represents a set of Flags
+     * @details This is an internal organization tool and should not be exposed
+     * to the user. Provides functionality to interact with flags within group.
+     */
     struct FlagGroup_s {
-        BaseFlag* flags_s[MAX_FLAGS] = {nullptr};
-        const char* flagGroupName_s = {nullptr};
-        uint8_t numFlags_s;
+        /**
+         * @brief Default constructor
+         * @warning Constructor for internal use only
+         */
+        FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{nullptr}, numFlags_s(0) {}
 
-        FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{}, numFlags_s(0) {}
-
+        /**
+         * @brief Constructor
+         * @param flags A constant size array of flags
+         * @param flagGroupName The reference for this FlagGroup
+         * @param numFlags The number of flags added
+         */
         FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags);
 
         BaseFlag* getLeader();
@@ -108,6 +109,11 @@ private:
         int8_t verifyFlags();
 
         void resetFlags();
+
+        BaseFlag* flags_s[MAX_FLAGS] = {nullptr};   ///< The flags within this FlagGroup
+        const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
+        uint8_t numFlags_s;                         ///< number of flags within FlagGroup
+
     };
 
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];
