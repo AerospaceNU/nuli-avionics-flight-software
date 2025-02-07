@@ -27,14 +27,15 @@ ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in met
 BaseFlag* configGroup[]{&config, &config_trigger, &config_pulseWidth, &config_elevation};
 ```
 
+> Note: naming preference should be `[leaderFlagName]Group` for readability.
+
 ### 4. Add flag list to Parser
 ```c++
 myParser.addFlagGroup(configGroup);
 ```
 
 ### 5. Repeat
-
-Repeat for more FlagGroups. 
+Repeat for more groups of flags. 
 
 ## Testing
 ### CLion

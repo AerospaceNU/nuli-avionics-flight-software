@@ -65,7 +65,6 @@ int8_t Parser::parse(int argc, char** argv) {
         if (!matched) {
             fprintf(stderr, "Unknown flag\n");
             return -1;
-            throw std::invalid_argument("Unknown flag!");
         }
     }
 
@@ -97,10 +96,7 @@ int8_t Parser::parse(char* input) {
 void Parser::printHelp() const {
     // loop through each FlagGroup_s
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
-        // loop through each set of flags within a FlagGroup_s
-        for (uint8_t j = 0; j < m_flagGroups[i].numFlags_s; ++j) {
-            printf("%s: %s\n", m_flagGroups[i].flags_s[j]->name(), m_flagGroups[i].flags_s[j]->help());
-        }
+        m_flagGroups[i].printHelp();
         printf("\n");
     }
 }
@@ -125,11 +121,18 @@ int8_t Parser::FlagGroup_s::verifyFlags() {
     return 0;
 }
 
-void Parser::FlagGroup_s::resetFlags() {
-    for (uint8_t i = 0; i < numFlags_s; ++i) {
-        flags_s[i]->reset();
+void Parser::resetFlags() {
+    // loop through each FlagGroup_s
+    for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
+        // reset each flag group
+        m_flagGroups[i].resetFlags();
     }
 }
+
+
+/* /////////////// */
+/* / FlagGroup_s / */
+/* /////////////// */
 
 Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags)
         : flagGroupName_s(flagGroupName), numFlags_s(numFlags) {
@@ -141,10 +144,15 @@ Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, u
     std::copy(flags, flags + numFlags, flags_s);
 }
 
-void Parser::resetFlags() {
-    // loop through each FlagGroup_s
-    for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
-        // reset each flag group
-        m_flagGroups[i].resetFlags();
+void Parser::FlagGroup_s::printHelp() const {
+    // loop through each set of flags within a FlagGroup_s
+    for (uint8_t i = 0; i < numFlags_s; ++i) {
+        printf("%s: %s\n", flags_s[i]->name(), flags_s[i]->help());
+    }
+}
+
+void Parser::FlagGroup_s::resetFlags() {
+    for (uint8_t i = 0; i < numFlags_s; ++i) {
+        flags_s[i]->reset();
     }
 }

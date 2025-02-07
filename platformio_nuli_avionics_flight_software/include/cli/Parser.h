@@ -45,6 +45,9 @@ public:
      */
     Parser() = default;
 
+    /**
+     * @brief Default destructor
+     */
     ~Parser() = default;
 
     /**
@@ -73,14 +76,40 @@ public:
         return 0;
     }
 
+    /**
+     * @brief Parses program argument inputs into FlagGroups
+     * @details Alternative to <code>parse(char* input)</code>. Useful in cases
+     * where the user is taking inputs directly from program arguments.
+     * @param argc Number of arguments
+     * @param argv char* array of arguments
+     * @return 0 if successful
+     */
     int8_t parse(int argc, char* argv[]);
 
+    /**
+     * @brief Parses command line input into FlagGroups
+     * @details Alternative to <code>parse(int argc, char* argv[])</code>.
+     * Useful in cases where the user wants to take a char* input. This method
+     * simply parses the input into a form usable by the aforementioned parse
+     * method then passes the appropriate arguments to that method.
+     * @param input a char* stream
+     * @return 0 if successful
+     */
     int8_t parse(char* input);
 
+    /**
+     * @brief Prints help text for each FlagGroup
+     */
     void printHelp() const;
 
+    /**
+     * @brief Resets all flags their default states for each FlagGroup
+     * @details Changes a flag's state to before it was parsed. This does
+     * not effect core parameters such as a flag's name or help text. This
+     * only changes parameters that were set after Parser.parse(...) was
+     * called.
+     */
     void resetFlags();
-
 protected:
 private:
     /**
@@ -104,10 +133,30 @@ private:
          */
         FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags);
 
+        /**
+         * @brief Retrieves the leader's flag
+         * @return A BaseFlag pointer to the leader
+         */
         BaseFlag* getLeader();
 
+        /**
+         * @brief Ensures all member flag parameters are correctly set
+         * @return 0 if successful
+         */
         int8_t verifyFlags();
 
+        /**
+         * @brief Prints help text for each Flag
+         */
+        void printHelp() const;
+
+        /**
+         * @brief Resets all flags within the group to their default states
+         * @details Changes a flag's state to before it was parsed. This does
+         * not effect core parameters such as a flag's name or help text. This
+         * only changes parameters that were set after Parser.parse(...) was
+         * called.
+         */
         void resetFlags();
 
         BaseFlag* flags_s[MAX_FLAGS] = {nullptr};   ///< The flags within this FlagGroup
@@ -116,8 +165,8 @@ private:
 
     };
 
-    FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];
-    uint8_t m_numFlagGroups = 0;
+    FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
+    uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
 };
 
 #endif //DESKTOP_PARSER_H
