@@ -5,7 +5,9 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-class S25FL512 {
+#include "FlashMemory.h"
+
+class S25FL512: public FlashMemory {
 public:
     explicit S25FL512(uint8_t chipSelectPin, SPIClass* spiClass = &SPI);
 

@@ -8,40 +8,40 @@ class Configuration {
 public:
     void setup(HardwareAbstraction* hardware);
 
-//    template<typename T>
-//    uint32_t newConfigurable(const char* name, T* storage) {
-//        m_config[m_configureNum].name = name;
-//        m_config[m_configureNum].storage = storage;
-//        m_config[m_configureNum].size = sizeof(T);
-//        m_configureNum++;
-//        return m_configureNum - 1;
-//    }
-//
-//    template<typename T>
-//    const T* getPtr(uint32_t id) {
-//        // Make sure T is the right size
-//        if (id >= m_configureNum || sizeof(T) != m_config[id].size) return nullptr;
-//        // Set the value
-//        return (T*) (m_config[id].storage);
-//    }
-//
-//    template<typename T>
-//    T get(uint32_t id) {
-//        // Make sure T is the right size
-//        if (id >= m_configureNum || sizeof(T) != m_config[id].size) return T();
-//        // Set the value
-//        return *((T*) (m_config[id].storage));
-//    }
-//
-//
-//    template<typename T>
-//    void set(uint32_t id, T value) {
-//        // Make sure T is the right size
-//        if (id >= m_configureNum || sizeof(T) != m_config[id].size) return;
-//        // Set the value
-//        *((T*) (m_config[id].storage)) = value;
-//        m_config[id].updatePending = true;
-//    }
+   template<typename T>
+   uint32_t newConfigurable(const char* name, T* storage) {
+       m_config[m_configureNum].name = name;
+       m_config[m_configureNum].storage = storage;
+       m_config[m_configureNum].size = sizeof(T);
+       m_configureNum++;
+       return m_configureNum - 1;
+   }
+
+   template<typename T>
+   const T* getPtr(uint32_t id) {
+       // Make sure T is the right size
+       if (id >= m_configureNum || sizeof(T) != m_config[id].size) return nullptr;
+       // Set the value
+       return (T*) (m_config[id].storage);
+   }
+
+   template<typename T>
+   T get(uint32_t id) {
+       // Make sure T is the right size
+       if (id >= m_configureNum || sizeof(T) != m_config[id].size) return T();
+       // Set the value
+       return *((T*) (m_config[id].storage));
+   }
+
+
+   template<typename T>
+   void set(uint32_t id, T value) {
+       // Make sure T is the right size
+       if (id >= m_configureNum || sizeof(T) != m_config[id].size) return;
+       // Set the value
+       *((T*) (m_config[id].storage)) = value;
+       m_config[id].updatePending = true;
+   }
 
     void writeFlashIfUpdated();
 

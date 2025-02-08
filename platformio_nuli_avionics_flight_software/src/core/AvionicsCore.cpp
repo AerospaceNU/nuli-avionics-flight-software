@@ -1,6 +1,7 @@
 #include "AvionicsCore.h"
 #include <Barometer.h>
 #include <Accelerometer.h>
+#include <Arduino.h>
 
 void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
@@ -28,6 +29,8 @@ void AvionicsCore::loopOnce() {
 
     // for i in outputs
     //
+
+    m_logger->log();
 
 
     // End by pushing configuration updates to flash

@@ -10,9 +10,12 @@ public:
 
     void log();
 
+    uint32_t offloadData(uint32_t readAddress, uint8_t* buffer, const uint32_t length);
+
 private:
     Configuration* m_configuration;
     HardwareAbstraction* m_hardware;
+    uint32_t m_logWriteAddress;
 };
 
 
