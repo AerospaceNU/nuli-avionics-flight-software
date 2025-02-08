@@ -18,7 +18,7 @@ void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) 
     m_configuration = configuration;
     m_logWriteAddress = 0;
 
-    FlashMemory* flash = m_hardware->getFlashMemoryArray();
+    FlashMemory* flash = m_hardware->getFlashMemory(0);
 
     bool foundEmptyPacket = false;
     
@@ -44,12 +44,12 @@ void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) 
 }
 
 void Logger::log() {
-    FlashMemory* flash = m_hardware->getFlashMemoryArray();
+    FlashMemory* flash = m_hardware->getFlashMemory(0);
 
 
-    logData.baroAltitudeM = m_hardware->getBarometerArray()->getAltitudeM();
-    logData.baroPressurePa = m_hardware->getBarometerArray()->getPressurePa();
-    logData.baroTemperatureK = m_hardware->getBarometerArray()->getTemperatureK();
+    logData.baroAltitudeM = m_hardware->getBarometer(0)->getAltitudeM();
+    logData.baroPressurePa = m_hardware->getBarometer(0)->getPressurePa();
+    logData.baroTemperatureK = m_hardware->getBarometer(0)->getTemperatureK();
     logData.timestamp = m_hardware->getLoopTimestampMs();
 
     // Serial.println(logData.timestamp);
@@ -60,7 +60,7 @@ void Logger::log() {
 }
 
 uint32_t Logger::offloadData(uint32_t readAddress, uint8_t* buffer, const uint32_t length) {
-    FlashMemory* flash = m_hardware->getFlashMemoryArray();
+    FlashMemory* flash = m_hardware->getFlashMemory(0);
     uint32_t readLength = min(length, max(0, m_logWriteAddress - readAddress));
     flash->read(readAddress, buffer, length);
     return readLength;
