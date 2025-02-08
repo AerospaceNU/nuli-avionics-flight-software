@@ -31,6 +31,12 @@ S25FL512::S25FL512(uint8_t chipSelectPin, SPIClass* spiClass) : m_chipSelectPin(
     m_spiBus = spiClass;
 }
 
+
+void S25FL512::setup() const {
+    pinMode(m_chipSelectPin, OUTPUT);
+}
+
+
 uint32_t S25FL512::getMemorySize() {
     return MEMORY_SIZE;
 }

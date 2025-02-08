@@ -6,6 +6,7 @@
 #include <Configuration.h>
 #include <Logger.h>
 #include <Filters.h>
+#include <USLI2025Payload.h>
 
 /**
  * @class AvionicsCore
@@ -24,7 +25,7 @@ public:
      * @param stateMachine State machine
      * @param eventManager Event manager
      */
-    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger, Filters* filter);
+    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger, Filters* filter, USLI2025Payload *payload);
 
     /**
      * @brief Run one tick of the core
@@ -38,6 +39,7 @@ private:
     HardwareAbstraction* m_hardware;
     Configuration* m_configuration;
     Logger* m_logger;
+    USLI2025Payload *m_payload;
 
     // Local
     Filters* m_filter;

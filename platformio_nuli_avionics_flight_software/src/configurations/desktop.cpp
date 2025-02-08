@@ -14,6 +14,9 @@
 #include "CustomCsvParser.h"
 #include <iostream>
 #include <DesktopDebug.h>
+#include "USLI2025Payload.h"
+
+SystemClock systemClock;
 
 Barometer barometer;
 Accelerometer accelerometer;
@@ -28,6 +31,7 @@ Configuration configuration;
 Logger logger;
 Filters filter;
 AvionicsCore avionicsCore;
+USLI2025Payload payload("TEST");
 
 int main(int argc, char* argv[]) {
     CustomCsvParser dataCsv = CustomCsvParser();
@@ -42,13 +46,13 @@ int main(int argc, char* argv[]) {
     }
 
 
-    hardware.addDebugStream(&desktopDebug);
+    hardware.setDebugStream(&desktopDebug);
     hardware.addBarometer(&barometer);
     hardware.addAccelerometer(&accelerometer);
     hardware.addGyroscope(&gyroscope);
     hardware.addMagnetometer(&magnetometer);
 
-    avionicsCore.setup(&hardware, &configuration, &logger, &filter);
+    avionicsCore.setup(&hardware, &configuration, &logger, &filter, &payload);
 
 
 

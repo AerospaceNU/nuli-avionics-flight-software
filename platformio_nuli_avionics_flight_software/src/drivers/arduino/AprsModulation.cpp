@@ -341,3 +341,7 @@ void AprsModulation::transmit(const char* str) {
     sendPacket(str);
     digitalWrite(OUT_PIN, LOW);
 }
+
+const char* AprsModulation::getCallsign() {
+    return m_callsign;
+}

@@ -6,40 +6,34 @@
 void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
                          Logger* logger,
-                         Filters* filter) {
+                         Filters* filter,USLI2025Payload *payload) {
 
     m_hardware = hardware;
     m_configuration = configuration;
     m_logger = logger;
     m_filter = filter;
+    m_payload = payload;
 }
+
+
 
 void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
     m_hardware->updateLoopTimestamp();
     // Read in sensor data. This data is accessible through
     m_hardware->readAllSensors();
-    m_hardware->readAllCommunicationLinks();
-    // Filter sensors
-    m_filter->runFilterOnce();
-    // ^ sensorData = m_filter->runFilterOnce();
-    // state = updateState();
-    // for i in detectors
-    //    detector.detect()
 
-    // for i in outputs
-    //
+    double altitudeM = m_hardware->getBarometer(0)->getAltitudeM();
+
 
     m_logger->log();
 
 
-    // End by pushing configuration updates to flash
-    m_configuration->writeFlashIfUpdated();
 }
 
 
 void AvionicsCore::printDump() {
-    DebugStream *debug = m_hardware->getDebugStreamArray();
+    DebugStream *debug = m_hardware->getDebugStream();
 
     debug->print("time,");
     for (int i = 0; i < m_hardware->getNumBarometers(); i++)
@@ -54,7 +48,7 @@ void AvionicsCore::printDump() {
     debug->print(m_hardware->getLoopDtMs());
     debug->print(',');
     for (int i = 0; i < m_hardware->getNumBarometers(); i++) {
-        Barometer *barometer = &m_hardware->getBarometerArray()[i];
+        Barometer *barometer = m_hardware->getBarometer(i);
         debug->print(barometer->getPressurePa());
         debug->print(',');
         debug->print(barometer->getTemperatureK());
@@ -64,7 +58,7 @@ void AvionicsCore::printDump() {
     }
 
     for (int i = 0; i < m_hardware->getNumAccelerometers(); i++) {
-        Accelerometer *accelerometer = &m_hardware->getAccelerometerArray()[i];
+        Accelerometer *accelerometer = m_hardware->getAccelerometer(i);
         debug->print(accelerometer->getAccelerationsMSS().x);
         debug->print(',');
         debug->print(accelerometer->getAccelerationsMSS().y);
@@ -73,7 +67,7 @@ void AvionicsCore::printDump() {
         debug->print(',');
     }
     for (int i = 0; i < m_hardware->getNumGyroscopes(); i++) {
-        Gyroscope *gyroscope = &m_hardware->getGyroscopeArray()[i];
+        Gyroscope *gyroscope = m_hardware->getGyroscope(i);
         debug->print(gyroscope->getVelocitiesRadS().x);
         debug->print(',');
         debug->print(gyroscope->getVelocitiesRadS().y);

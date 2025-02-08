@@ -1,10 +1,11 @@
 #include "HardwareAbstraction.h"
 
 void HardwareAbstraction::setup() {
-    if(m_numDebugStreams == 0) {
-        addDebugStream(&voidDump);
+    if(m_debugStream == nullptr) {
+        setDebugStream(&voidDump);
     }
 
+    m_debugStream->setup();
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->setup();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->setup();
     for (int i = 0; i < m_numAccelerometers; i++) m_accelerometerArray[i]->setup();
@@ -14,7 +15,7 @@ void HardwareAbstraction::setup() {
     for (int i = 0; i < m_numCommunicationLinks; i++) m_communicationLinkArray[i]->setup();
     for (int i = 0; i < m_numFlashMemory; i++) m_flashMemoryArray[i]->setup();
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->setup();
-    for (int i = 0; i < m_numDebugStreams; i++) m_debugStream[i]->setup();
+    for (int i = 0; i < m_numConfigurations; i++) m_configurationArray[i]->setup();
 }
 
 void HardwareAbstraction::readAllSensors() {
