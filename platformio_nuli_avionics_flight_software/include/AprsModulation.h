@@ -11,6 +11,8 @@ public:
 
     void transmit(const char* str);
 
+    const char *getCallsign();
+
 private:
     uint8_t m_transmitPin;
     char m_callsign[10];

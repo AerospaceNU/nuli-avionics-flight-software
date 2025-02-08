@@ -5,17 +5,16 @@
 void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
                          Logger* logger,
-                         Filters* filter) {
+                         Filters* filter,USLI2025Payload *payload) {
 
     m_hardware = hardware;
     m_configuration = configuration;
     m_logger = logger;
     m_filter = filter;
+    m_payload = payload;
 }
 
-bool takenOff = false;
-double groundElevation = 500;
-uint32_t takeoffTimer = 0;
+
 
 void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
@@ -25,15 +24,7 @@ void AvionicsCore::loopOnce() {
 
     double altitudeM = m_hardware->getBarometer(0)->getAltitudeM();
 
-    if(altitudeM > groundElevation) {
-        if(takeoffTimer == 0) {
-            takeoffTimer = m_hardware->getRuntimeMs() + 2000;
-        }
-    } else {
-        takeoffTimer = 0;
-    }
 
-    if(takenOff)
 
 }
 

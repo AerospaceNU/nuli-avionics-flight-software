@@ -14,9 +14,10 @@
 #include "MS8607Sensor.h"
 #include "ArduinoSystemClock.h"
 #include "SerialDebug.h"
+#include "USLI2025Payload.h"
 
 // Hardware devices
-SerialDebug debug;
+SerialDebug debug(false);
 
 ArduinoSystemClock arduinoClock;
 MS8607Sensor barometer;
@@ -31,6 +32,7 @@ Filters filter;
 
 // The core
 AvionicsCore avionicsCore;
+USLI2025Payload payload("KC1UAW");
 
 /**
  * Payload logging requirements:
@@ -44,9 +46,15 @@ AvionicsCore avionicsCore;
  *
  * Lets just log one page at a time
  */
+#include <RadioLib.h>
 
+SX1276 radio = new Module(8, 3, 4);  // (CS, INT, RST)
 
+volatile bool operationDone = false;
 
+void setFlag() {
+    operationDone = true; // we sent or received  packet, set the flag
+}
 
 void setup() {
     pinMode(8, OUTPUT);
@@ -54,11 +62,24 @@ void setup() {
     pinMode(A5, OUTPUT);
     digitalWrite(A5, HIGH);
     Serial.begin(9600);
-    while(!Serial);
+//    while(!Serial);
     SPI.begin();
     Wire.begin();
+    payload.setup();
 
     Serial.println("Serial successfully started");
+
+    int state = radio.begin(905.0, 125.0, 12);
+    radio.setOutputPower(20);
+    if (state == RADIOLIB_ERR_NONE) {
+        Serial.println(F("success!"));
+    } else {
+        Serial.print(F("failed, code "));
+        Serial.println(state);
+    }
+    radio.setDio0Action(setFlag, RISING);
+    radio.startReceive();
+
 
     hardware.setDebugStream(&debug);
     hardware.setSystemClock(&arduinoClock);
@@ -74,11 +95,43 @@ void setup() {
 //    // Initialize components
 //    filter.setup(&configuration, &logger);
     // Initialize core
-    avionicsCore.setup(&hardware, &configuration, &logger, &filter);
+    avionicsCore.setup(&hardware, &configuration, &logger, &filter, &payload);
+//    delay(5000);
+//    payload.deployLegs();
 }
 
 
 void loop() {
     avionicsCore.loopOnce();
-    avionicsCore.printDump();
+//    avionicsCore.printDump();
+
+    if (operationDone) {
+        operationDone = false;
+
+        String str;
+        int state = radio.readData(str);
+
+        Serial.println("fads");
+
+        if (state == RADIOLIB_ERR_NONE) {
+            // packet was successfully received
+            Serial.println(F("[SX1278] Received packet!"));
+
+            // print data of the packet
+            Serial.print(F("[SX1278] Data:\t\t"));
+            Serial.println(str);
+
+            if (str.startsWith("d")) {
+                payload.deployLegs();
+            } else if (str.startsWith("e")) {
+
+            } else if (str.startsWith("l")) {
+
+            } else if(str.startsWith("t")) {
+                payload.sendTransmission(millis());
+            }
+        }
+
+        radio.startReceive();
+    }
 }

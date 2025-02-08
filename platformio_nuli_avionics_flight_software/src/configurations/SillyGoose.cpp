@@ -36,10 +36,10 @@ void setup() {
     Serial1.begin(9600);
     Serial.println("Starting");
 
-//    uint8_t num = flash.read(0);
-//    Serial.println(int(num));
-//    flash.eraseSector(0);
-//    flash.write(0, num + 1);
+    uint8_t num = flash.read(0);
+    Serial.println(int(num));
+    flash.eraseSector(0);
+    flash.write(0, num + 1);
 
 //    Serial.println(flash.readStatusRegister());
 //    Serial.println((int) flash.read(3));
@@ -63,9 +63,9 @@ void setup() {
 }
 
 void loop() {
-    if(Serial1.available()) {
-        Serial.write(Serial1.read());
-    }
+//    if(Serial1.available()) {
+//        Serial.write(Serial1.read());
+//    }
 
 //    avionicsCore.loopOnce();
 //    avionicsCore.printDump();

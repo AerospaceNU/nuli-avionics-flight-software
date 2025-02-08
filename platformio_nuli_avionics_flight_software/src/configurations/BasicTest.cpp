@@ -1,15 +1,7 @@
-/*
-  RadioLib SX127x Ping-Pong Example
 
-  This example is intended to run on two SX126x radios,
-  and send packets between the two.
 
-  For default module settings, see the wiki page
-  https://github.com/jgromes/RadioLib/wiki/Default-configuration#sx127xrfm9x---lora-modem
 
-  For full API reference, see the GitHub Pages
-  https://jgromes.github.io/RadioLib/
-*/
+
 
 // include the library
 #include <RadioLib.h>
@@ -31,7 +23,7 @@ void setFlag() {
 
 void setup() {
     Serial.begin(9600);
-    while (!Serial);
+//    while (!Serial);
 
     // initialize SX1278 with default settings
     Serial.print(F("[SX1278] Initializing ... "));
@@ -76,57 +68,61 @@ void loop() {
         // reset flag
         operationDone = false;
 
-        if (transmitFlag) {
-            // the previous operation was transmission, listen for response
-            // print the result
-            if (transmissionState == RADIOLIB_ERR_NONE) {
-                // packet was successfully sent
-                Serial.println(F("transmission finished!"));
-
-            } else {
-                Serial.print(F("failed, code "));
-                Serial.println(transmissionState);
-
-            }
-
-            // listen for response
-            radio.startReceive();
-            transmitFlag = false;
+//        if (transmitFlag) {
+        // the previous operation was transmission, listen for response
+        // print the result
+        if (transmissionState == RADIOLIB_ERR_NONE) {
+            // packet was successfully sent
+            Serial.println(F("transmission finished!"));
 
         } else {
-            // the previous operation was reception
-            // print data and send another packet
-            String str;
-            int state = radio.readData(str);
+            Serial.print(F("failed, code "));
+            Serial.println(transmissionState);
 
-            if (state == RADIOLIB_ERR_NONE) {
-                // packet was successfully received
-                Serial.println(F("[SX1278] Received packet!"));
-
-                // print data of the packet
-                Serial.print(F("[SX1278] Data:\t\t"));
-                Serial.println(str);
-
-                // print RSSI (Received Signal Strength Indicator)
-                Serial.print(F("[SX1278] RSSI:\t\t"));
-                Serial.print(radio.getRSSI());
-                Serial.println(F(" dBm"));
-
-                // print SNR (Signal-to-Noise Ratio)
-                Serial.print(F("[SX1278] SNR:\t\t"));
-                Serial.print(radio.getSNR());
-                Serial.println(F(" dB"));
-
-            }
-
-            // wait a second before transmitting again
-            delay(1000);
-
-            // send another one
-            Serial.print(F("[SX1278] Sending another packet ... "));
-            transmissionState = radio.startTransmit("Hello World!");
-            transmitFlag = true;
         }
+
+        // listen for response
+//            radio.startReceive();
+//            transmitFlag = false;
+//
+//        } else {
+//            // the previous operation was reception
+//            // print data and send another packet
+//            String str;
+//            int state = radio.readData(str);
+//
+//            if (state == RADIOLIB_ERR_NONE) {
+//                // packet was successfully received
+//                Serial.println(F("[SX1278] Received packet!"));
+//
+//                // print data of the packet
+//                Serial.print(F("[SX1278] Data:\t\t"));
+//                Serial.println(str);
+//
+//                // print RSSI (Received Signal Strength Indicator)
+//                Serial.print(F("[SX1278] RSSI:\t\t"));
+//                Serial.print(radio.getRSSI());
+//                Serial.println(F(" dBm"));
+//
+//                // print SNR (Signal-to-Noise Ratio)
+//                Serial.print(F("[SX1278] SNR:\t\t"));
+//                Serial.print(radio.getSNR());
+//                Serial.println(F(" dB"));
+//
+//            }
+//
+//            // wait a second before transmitting again
+//            delay(1000);
+
+        // send another one
+//        delay(1000);
+        while (!Serial.available());
+        String input = Serial.readString();  // Read entire input as a string
+
+        Serial.print(F("[SX1278] Sending another packet ... "));
+        transmissionState = radio.startTransmit(input.c_str());
+        transmitFlag = true;
+//        }
     }
 }
 
