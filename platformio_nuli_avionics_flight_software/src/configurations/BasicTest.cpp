@@ -1,8 +1,6 @@
 
 
 
-
-
 // include the library
 #include <RadioLib.h>
 
@@ -116,7 +114,33 @@ void loop() {
 
         // send another one
 //        delay(1000);
-        while (!Serial.available());
+        radio.startReceive();
+        while (!Serial.available()) {
+            String str;
+            int state = radio.readData(str);
+            if (operationDone) {
+                operationDone = false;
+                if (state == RADIOLIB_ERR_NONE) {
+                    // packet was successfully received
+                    Serial.println(F("[SX1278] Received packet!"));
+
+                    // print data of the packet
+                    Serial.print(F("[SX1278] Data:\t\t"));
+                    Serial.println(str);
+
+                    // print RSSI (Received Signal Strength Indicator)
+                    Serial.print(F("[SX1278] RSSI:\t\t"));
+                    Serial.print(radio.getRSSI());
+                    Serial.println(F(" dBm"));
+
+                    // print SNR (Signal-to-Noise Ratio)
+                    Serial.print(F("[SX1278] SNR:\t\t"));
+                    Serial.print(radio.getSNR());
+                    Serial.println(F(" dB"));
+
+                }
+            }
+        }
         String input = Serial.readString();  // Read entire input as a string
 
         Serial.print(F("[SX1278] Sending another packet ... "));

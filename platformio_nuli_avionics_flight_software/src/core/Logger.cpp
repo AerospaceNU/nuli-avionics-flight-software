@@ -65,3 +65,9 @@ uint32_t Logger::offloadData(uint32_t readAddress, uint8_t* buffer, const uint32
     flash->read(readAddress, buffer, length);
     return readLength;
 }
+
+void Logger::erase() {
+    FlashMemory* flash = m_hardware->getFlashMemory(0);
+    flash->eraseAll();
+    m_logWriteAddress = 0;
+}

@@ -10,6 +10,8 @@ public:
 
     void log();
 
+    void erase();
+
     uint32_t offloadData(uint32_t readAddress, uint8_t* buffer, const uint32_t length);
 
 private:

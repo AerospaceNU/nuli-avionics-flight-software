@@ -26,8 +26,9 @@ void AvionicsCore::loopOnce() {
     double altitudeM = m_hardware->getBarometer(0)->getAltitudeM();
 
 
-    m_logger->log();
-
+    if(log) {
+        m_logger->log();
+    }
 
 }
 

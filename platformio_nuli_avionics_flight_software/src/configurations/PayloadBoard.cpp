@@ -56,13 +56,13 @@ void cliTick() {
         if (c == '\n' || bufferIndex >= BUFFER_SIZE - 1) {
             serialInputBuffer[bufferIndex] = '\0'; // Null-terminate string
             bufferIndex = 0;  // Reset buffer for next message
-            
+
             // Check if the received string matches "offload"
             if (true || strcmp(serialInputBuffer, "offload") == 0) {
                 isOffloading = true;
                 currentOffloadAddress = 0;
             }
-        } 
+        }
     }
 
     while (isOffloading) {
@@ -144,7 +144,7 @@ void setup() {
     // s25fl512.eraseAll();
     // Serial.println("erase complete");
 
-    
+
     // Finish initializing all hardware
     hardware.setup();
     // Initialize other globals
@@ -180,13 +180,34 @@ void loop() {
             Serial.print(F("[SX1278] Data:\t\t"));
             Serial.println(str);
 
-            if (str.startsWith("d")) {
+            if (str.startsWith("p")) {
+                radio.startTransmit("pong");
+                while (!operationDone);
+                operationDone = false;
+            } else if (str.startsWith("d")) {
+                radio.startTransmit("deploying");
+                while (!operationDone);
+                operationDone = false;
                 payload.deployLegs();
             } else if (str.startsWith("e")) {
-
+                radio.startTransmit("erasing");
+                while (!operationDone);
+                operationDone = false;
+                logger.erase();
             } else if (str.startsWith("l")) {
-
-            } else if(str.startsWith("t")) {
+                radio.startTransmit("started logging");
+                while (!operationDone);
+                operationDone = false;
+                avionicsCore.log = true;
+            } else if (str.startsWith("s")) {
+                radio.startTransmit("stopped logging");
+                while (!operationDone);
+                operationDone = false;
+                avionicsCore.log = false;
+            } else if (str.startsWith("t")) {
+                radio.startTransmit("transmitting");
+                while (!operationDone);
+                operationDone = false;
                 payload.sendTransmission(millis());
             }
         }
