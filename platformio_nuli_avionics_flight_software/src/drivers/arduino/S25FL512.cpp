@@ -27,7 +27,7 @@
  */
 
 S25FL512::S25FL512(uint8_t chipSelectPin, SPIClass* spiClass) : m_chipSelectPin(chipSelectPin) {
-//    pinMode(chipSelectPin, OUTPUT);
+    pinMode(chipSelectPin, OUTPUT);
     m_spiBus = spiClass;
 }
 
@@ -61,9 +61,34 @@ bool S25FL512::ready() const {
 
 
 void S25FL512::write(uint32_t address, const uint8_t* buffer, uint32_t length, bool waitForCompletion) const {
-    pageProgram(address, buffer, length);
-    if (waitForCompletion) {
-        waitForWriteCompletion();
+    // pageProgram(address, buffer, length);
+    // if (waitForCompletion) {
+    //     waitForWriteCompletion();
+    // }
+    uint32_t currentPageEnd;
+    uint32_t currentPageBytes;
+    uint32_t bufferOffset = 0;
+    while (length > 0) {
+        // We need to wait for the previous write to finish, regardless of waitForCompletion
+        if (!ready()) {
+            waitForReady();
+        }
+        // Get the end of the current page
+        currentPageEnd = (address - (address % getPageSize())) + getPageSize();
+        // Number of bytes we can write to this page
+        currentPageBytes = min(length, currentPageEnd - address);
+        // Serial.print("Writing ");
+        // Serial.print(currentPageBytes);
+        // Serial.print(" to address ");
+        // Serial.println(address);
+        pageProgram(address, (buffer + bufferOffset), currentPageBytes);
+        if (waitForCompletion) {
+            waitForReady();
+        }
+        // Track that we wrote a certain number of bytes
+        length -= currentPageBytes;
+        address += currentPageBytes;
+        bufferOffset += currentPageBytes;
     }
 }
 
@@ -79,9 +104,9 @@ void S25FL512::pageProgram(uint32_t address, const uint8_t* buffer, uint32_t len
 
     enableWrite();
     enableSelectPin();
-    SPI.transfer(pageProgramHeader, sizeof(pageProgramHeader));
+    m_spiBus->transfer(pageProgramHeader, sizeof(pageProgramHeader));
     for (size_t i = 0; i < length; i++) {
-        SPI.transfer(buffer[i]);
+        m_spiBus->transfer(buffer[i]);
     }
     disableSelectPin();
 }
@@ -96,9 +121,9 @@ void S25FL512::read(uint32_t address, uint8_t* buffer, uint32_t length) const {
     };
 
     enableSelectPin();
-    SPI.transfer(readCommandHeader, sizeof(readCommandHeader));
+    m_spiBus->transfer(readCommandHeader, sizeof(readCommandHeader));
     for (size_t i = 0; i < length; i++) {
-        buffer[i] = SPI.transfer(CLOCK_SPI_DATA);  // Read data into the buffer
+        buffer[i] = m_spiBus->transfer(CLOCK_SPI_DATA);  // Read data into the buffer
     }
     disableSelectPin();
 }
@@ -116,7 +141,7 @@ void S25FL512::write(uint32_t address, uint8_t byte) const {
 void S25FL512::eraseAll(bool waitForCompletion) const {
     enableWrite();
     enableSelectPin();
-    SPI.transfer(CHIP_ERASE_CMD);
+    m_spiBus->transfer(CHIP_ERASE_CMD);
     disableSelectPin();
     if (waitForCompletion) {
         waitForWriteCompletion(ERASE_ALL_TIME);
@@ -135,7 +160,7 @@ void S25FL512::eraseSector(uint32_t sectorNumber, bool waitForCompletion) const 
 
     enableWrite();
     enableSelectPin();
-    SPI.transfer(pageProgramHeader, sizeof(pageProgramHeader));
+    m_spiBus->transfer(pageProgramHeader, sizeof(pageProgramHeader));
     disableSelectPin();
     if (waitForCompletion) {
         waitForWriteCompletion();
@@ -160,8 +185,8 @@ bool S25FL512::isWriteInProgress() const {
 uint8_t S25FL512::readStatusRegister() const {
     uint8_t status;
     enableSelectPin();
-    SPI.transfer(STATUS_CMD);  // Read Status Register (RDSR) command
-    status = SPI.transfer(CLOCK_SPI_DATA);  // Dummy byte to clock out the status register
+    m_spiBus->transfer(STATUS_CMD);  // Read Status Register (RDSR) command
+    status = m_spiBus->transfer(CLOCK_SPI_DATA);  // Dummy byte to clock out the status register
     disableSelectPin();
     return status;
 }

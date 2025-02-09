@@ -15,6 +15,7 @@
  */
 class AvionicsCore {
 public:
+    bool log = false;
     /**
      * @brief Inject hardware, configuration and logger
      * @param hardware Board specific hardware

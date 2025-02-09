@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
     if (argc >= 2) {
         inputFile = argv[1];
         std::cout << inputFile << "\n";
-    }
+    }  
     if (dataCsv.parse(inputFile, true) < 0) {
         printf("Failed\n");
         return -1;

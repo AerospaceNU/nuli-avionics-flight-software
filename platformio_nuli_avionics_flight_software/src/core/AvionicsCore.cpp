@@ -1,6 +1,7 @@
 #include "AvionicsCore.h"
 #include <Barometer.h>
 #include <Accelerometer.h>
+#include <Arduino.h>
 
 void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
@@ -25,6 +26,9 @@ void AvionicsCore::loopOnce() {
     double altitudeM = m_hardware->getBarometer(0)->getAltitudeM();
 
 
+    if(log) {
+        m_logger->log();
+    }
 
 }
 
