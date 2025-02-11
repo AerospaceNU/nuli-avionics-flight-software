@@ -41,13 +41,11 @@ public:
      */
     virtual const char* help() const = 0;
 
-    /**
-     * @brief Parses a single flag of the input.
-     * @param argc Total number of arguments
-     * @param argv Input array
-     * @param argvPos Current parsing position in input array
-     * @return 0 if success, negative for failure
-     */
+     /**
+      * @brief Parses a single flag of the input.
+      * @param arg argument to parse into flag, is nullable
+      * @return 0 if success, negative for failure
+      */
     virtual int8_t parse(char* arg) = 0;
 
     /**
@@ -136,9 +134,8 @@ public:
 
     /**
      * @brief Parses a single flag of the input.
-     * @param argc Total number of arguments
-     * @param argv Input array
-     * @param argvPos Current parsing position in input array
+     * @details for SimpleFlag, the argument is not needed
+     * @param arg argument to parse into flag, is nullable
      * @return 0 if success, negative for failure
      */
     int8_t parse(char* arg) override;
@@ -234,6 +231,14 @@ public:
      * @param argvPos Current parsing position in input array
      * @return 0 if success, negative for failure
      */
+
+    /**
+     * @brief Parses a single flag of the input.
+     * @details for ArgumentFlag, the argument is optional only if a
+     * default argument was provided when constructing the flag.
+     * @param arg argument to parse into flag, is nullable
+     * @return 0 if success, negative for failure
+     */
     int8_t parse(char* arg) override;
 
     /**
@@ -270,7 +275,7 @@ public:
 
 protected:
 private:
-    bool m_defaultValueSet = false;
+    bool m_defaultValueSet = false; ///< if a default value has been set
     T m_defaultValue;   ///< default value when not provided by the user
     T m_argument;       ///< value of the flag
 };

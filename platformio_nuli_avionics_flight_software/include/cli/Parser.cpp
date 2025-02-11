@@ -17,11 +17,12 @@ int8_t Parser::parse(int argc, char** argv) {
         return -1;
     }
 
+//    argv++; // removing the first argument (program name)
     int argvPos = 1;
 
     // retrieve flag group and set leader flag
     FlagGroup_s* flagGroup;
-    const char* flagGroupName = argv[argvPos++];    // The flag group's name should always be the first argument
+    const char* flagGroupName = argv[argvPos];    // The flag group's name should always be the first argument
     bool matchedLeader = false;
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
         if (std::strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
@@ -31,14 +32,18 @@ int8_t Parser::parse(int argc, char** argv) {
 
             // set and parse the leader flag
             BaseFlag* leaderFlag = flagGroup->getLeader();
-            if (!leaderFlag) {
-                fprintf(stderr, "Unable to retrieve leader flag\n");
-                return -1;
-            }
 
-            if (leaderFlag->parse(argc, argv, argvPos) < 0) {
-                return -1;
+            // these branches don't represent SimpleFlag or ArgumentFlag
+            if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') {
+                leaderFlag->parse(nullptr);
+            } else {
+                leaderFlag->parse(argv[argvPos + 1]);
+                argvPos += 2;
             }
+        }
+
+        if (matchedLeader) {
+            break;
         }
     }
 
@@ -48,7 +53,7 @@ int8_t Parser::parse(int argc, char** argv) {
     }
 
     // if any, go through rest of arguments
-    for (; argvPos < argc; ++argvPos) {
+    for (argvPos; argvPos < argc; ++argvPos) {
         const char* currArg = argv[argvPos];
         bool matched = false;
 
@@ -57,13 +62,27 @@ int8_t Parser::parse(int argc, char** argv) {
             if (std::strcmp(currArg, flagGroup->flags_s[i]->name()) == 0) {
                 matched = true;
 
-                flagGroup->flags_s[i]->parse(argc, argv, argvPos);
+                int8_t parseResult;
+                // these branches don't represent SimpleFlag or ArgumentFlag
+                if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') {
+                    parseResult = flagGroup->flags_s[i]->parse(nullptr);
+                } else {
+                    parseResult = flagGroup->flags_s[i]->parse(argv[argvPos + 1]);
+                    argvPos++;
+                }
+
+                if (parseResult < 0) {
+                    return -1;
+                }
+            }
+
+            if (matched) {
+                break;
             }
         }
 
-        // unknown flag
         if (!matched) {
-            fprintf(stderr, "Unknown flag\n");
+            fprintf(stderr, "Unknown flag: %s\n", currArg);
             return -1;
         }
     }
@@ -102,18 +121,13 @@ void Parser::printHelp() const {
 }
 
 BaseFlag* Parser::FlagGroup_s::getLeader() {
-    if (numFlags_s < 1) {
-        fprintf(stderr, "No flag group added\n");
-        return nullptr;
-    }
-
     return flags_s[0];
 }
 
 int8_t Parser::FlagGroup_s::verifyFlags() {
     for (uint8_t i = 0; i < this->numFlags_s; ++i) {
         if (!this->flags_s[i]->verify()) {
-            fprintf(stderr, "Missing required arguments\n");
+            fprintf(stderr, "Missing required argument: %s\n", this->flags_s[i]->name());
             return -1;
         }
     }
@@ -147,7 +161,7 @@ Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, u
 void Parser::FlagGroup_s::printHelp() const {
     // loop through each set of flags within a FlagGroup_s
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        printf("%s: %s\n", flags_s[i]->name(), flags_s[i]->help());
+        printf("%s [%s]: %s\n", flags_s[i]->name(), flags_s[i]->isRequired() ? "Required" : "Optional", flags_s[i]->help());
     }
 }
 
