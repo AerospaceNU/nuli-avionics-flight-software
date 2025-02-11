@@ -2,8 +2,6 @@
 // Created by chris on 1/6/2025.
 //
 
-#include <stdexcept>
-#include <sstream>
 #include "Flag.h"
 
 SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required)
@@ -17,7 +15,7 @@ const char* SimpleFlag::help() const {
     return m_helpText;
 }
 
-int8_t SimpleFlag::parse(int argc, char* argv[], int &argvPos) {
+int8_t SimpleFlag::parse(char* arg) {
     m_set = true;
     return 0;
 }

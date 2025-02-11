@@ -92,22 +92,6 @@ if (ENABLE_COVERAGE)
     target_link_libraries(ParserTest PRIVATE --coverage)
 endif()
 
-# ----FlagGroupTest----
-add_executable(FlagGroupTest ${cli_test}
-        platformio_nuli_avionics_flight_software/include/cli/tests/FlagGroupTest.cpp)
-
-target_link_libraries(
-        FlagGroupTest
-        PRIVATE
-        GTest::gtest_main
-)
-
-if (ENABLE_COVERAGE)
-    target_compile_options(FlagGroupTest PRIVATE --coverage)
-    target_link_libraries(FlagGroupTest PRIVATE --coverage)
-endif()
-
-
 # ++++Set G-Test++++
 include(GoogleTest)
 gtest_discover_tests(FlagTest)

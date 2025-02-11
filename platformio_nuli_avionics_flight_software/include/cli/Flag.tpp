@@ -14,7 +14,15 @@ int8_t BaseFlag::parseArgument(const char* value, T &result) {
     std::istringstream iss(value);
     iss >> result;
     if (iss.fail()) {
-        fprintf(stderr, "Failed to parse argument. Likely incorrect type.\n");
+        fprintf(stderr, "Failed to parse argument: %s\n", value);
+        return -1;
+    }
+
+    // Check for leftover characters (ensures complete parsing)
+    char leftover;
+    if (iss >> leftover) {
+        fprintf(stderr, "Failed to parse argument (extra characters found): %s\n", value);
+        fflush(stderr);
         return -1;
     }
 
@@ -31,17 +39,17 @@ inline int8_t BaseFlag::parseArgument<const char*>(const char* value, const char
 
 //@TODO: Need to make a specific version that works with const char*
 //@TODO: Or just deprecate this thing
-template<typename T>
-T BaseFlag::getValue() {
-    if (SimpleFlag* simpleFlag = dynamic_cast<SimpleFlag*>(this)) {
-        return simpleFlag->getValueDerived();
-    } else if (ArgumentFlag<T>* argFlag = dynamic_cast<ArgumentFlag<T>*>(this)) {
-        return argFlag->getValueDerived();
-    } else {
-//        return nullptr;
-        throw std::invalid_argument("Invalid Argument");
-    }
-}
+//template<typename T>
+//T BaseFlag::getValue() {
+//    if (SimpleFlag* simpleFlag = dynamic_cast<SimpleFlag*>(this)) {
+//        return simpleFlag->getValueDerived();
+//    } else if (ArgumentFlag<T>* argFlag = dynamic_cast<ArgumentFlag<T>*>(this)) {
+//        return argFlag->getValueDerived();
+//    } else {
+////        return nullptr;
+//        throw std::invalid_argument("Invalid Argument");
+//    }
+//}
 
 //template<>
 //const char* BaseFlag::getValue() {
@@ -66,7 +74,7 @@ T BaseFlag::getValue() {
 
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required)
-        : BaseFlag(name, helpText, required), m_defaultValue(defaultValue) {}
+        : BaseFlag(name, helpText, required), m_defaultValue(defaultValue), m_defaultValueSet(true) {}
 
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required)
@@ -83,27 +91,26 @@ const char* ArgumentFlag<T>::help() const {
 }
 
 template<typename T>
-int8_t ArgumentFlag<T>::parse(int argc, char* argv[], int &argvPos) { //@TODO: Maybe change to return new argvPos?
+int8_t ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to return new argvPos?
     // early exit
-    if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') { //@TODO: Maybe change to passing in the next argument (which can be nullptr)
-        if (m_defaultValue) {
+    if (arg == nullptr) {
+        if (m_defaultValueSet) {
             // use default argument
             m_argument = m_defaultValue;
+            m_set = true;
+            return 0;   // success
         } else {
-            fprintf(stderr, "Default argument not set, value required\n");
+            fprintf(stderr, "Default argument not set, value required for %s\n", this->name());
             return -1;
         }
-
-        m_set = true;
-        return 0;   // success
     }
 
     // set identifiers
-    if (this->parseArgument(argv[++argvPos], m_argument) < 0) {
+    if (this->parseArgument(arg, m_argument) < 0) {
         return -1;
     }
-    m_set = true;
 
+    m_set = true;
     return 0;
 }
 

@@ -61,7 +61,7 @@ lcov --capture --directory . --output-file coverage.info
 
 Filter out system files
 ```shell
-lcov --remove coverage.info '/usr/*' '*/tests/*' --output-file coverage_filtered.info
+lcov --remove coverage.info '/usr/*' '*/tests/*' '*/gtest/*' --output-file coverage_filtered.info
 ```
 
 Generate HTML report:

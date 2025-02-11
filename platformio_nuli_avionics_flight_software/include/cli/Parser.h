@@ -14,6 +14,7 @@
  * @TODO: Formalize handling of template methods. Currently, sometimes they are
  *          1. put in the header file with the declaration, 2. defined at the
  *          bottom of the header file, 3. in a separate .tpp file.
+ *          Read here: https://softwareengineering.stackexchange.com/questions/373916/c-preferred-method-of-dealing-with-implementation-for-large-templates
  *
  * @TODO: create a side-command that prints all flags with their set value
  *

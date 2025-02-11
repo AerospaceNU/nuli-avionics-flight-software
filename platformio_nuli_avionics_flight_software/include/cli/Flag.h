@@ -12,6 +12,8 @@
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
  *          argc, argv, and argvPos are very hack-ey.
+ *
+ * @TODO: If a flag is not set, don't allow operations such as getValueDerived
  */
 
 
@@ -46,7 +48,7 @@ public:
      * @param argvPos Current parsing position in input array
      * @return 0 if success, negative for failure
      */
-    virtual int8_t parse(int argc, char* argv[], int &argvPos) = 0;
+    virtual int8_t parse(char* arg) = 0;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -139,7 +141,7 @@ public:
      * @param argvPos Current parsing position in input array
      * @return 0 if success, negative for failure
      */
-    int8_t parse(int argc, char* argv[], int &argvPos) override;
+    int8_t parse(char* arg) override;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -232,7 +234,7 @@ public:
      * @param argvPos Current parsing position in input array
      * @return 0 if success, negative for failure
      */
-    int8_t parse(int argc, char* argv[], int &argvPos) override;
+    int8_t parse(char* arg) override;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -268,6 +270,7 @@ public:
 
 protected:
 private:
+    bool m_defaultValueSet = false;
     T m_defaultValue;   ///< default value when not provided by the user
     T m_argument;       ///< value of the flag
 };
