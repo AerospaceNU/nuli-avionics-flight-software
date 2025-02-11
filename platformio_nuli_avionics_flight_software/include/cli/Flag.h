@@ -226,14 +226,6 @@ public:
 
     /**
      * @brief Parses a single flag of the input.
-     * @param argc Total number of arguments
-     * @param argv Input array
-     * @param argvPos Current parsing position in input array
-     * @return 0 if success, negative for failure
-     */
-
-    /**
-     * @brief Parses a single flag of the input.
      * @details for ArgumentFlag, the argument is optional only if a
      * default argument was provided when constructing the flag.
      * @param arg argument to parse into flag, is nullable
