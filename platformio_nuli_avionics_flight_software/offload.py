@@ -5,7 +5,7 @@ import serial.tools.list_ports
 import csv
 
 # Define the LogData struct format
-LOG_DATA_FORMAT = "<Iddd"  # Little-endian: uint32, double, double, double
+LOG_DATA_FORMAT = "<Idddddddddd"  # Little-endian: uint32, double, double, double
 LOG_DATA_SIZE = struct.calcsize(LOG_DATA_FORMAT)
 
 print("dassdadsadassdasad")
@@ -35,20 +35,20 @@ def select_serial_port():
 
 def parse_log_data(data):
     """Unpack binary data into LogData struct fields."""
-    # timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM, ax, ay, az, vx, vy, vz, batt = struct.unpack(LOG_DATA_FORMAT, data)
-    timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM = struct.unpack(LOG_DATA_FORMAT, data)
+    timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM, ax, ay, az, vx, vy, vz, batt = struct.unpack(LOG_DATA_FORMAT, data)
+    # timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM = struct.unpack(LOG_DATA_FORMAT, data)
     return {
         "timestamp": timestamp,
         "baroPressurePa": baroPressurePa,
         "baroTemperatureK": baroTemperatureK,
         "baroAltitudeM": baroAltitudeM,
-        # "ax" : ax,
-        # "ay" : ay,
-        # "az" : az,
-        # "vx" : vx,
-        # "vy" : vy,
-        # "vz" : vz,
-        # "batt" : batt
+        "ax" : ax,
+        "ay" : ay,
+        "az" : az,
+        "vx" : vx,
+        "vy" : vy,
+        "vz" : vz,
+        "batt" : batt
     }
 
 def main():
@@ -61,8 +61,8 @@ def main():
         print(f"Connected to {port}")
 
         # Setup CSV writer
-        # csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM", "ax", "ay", "az", "vx", "vy", "vz", "batt"])
-        csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM"])
+        csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM", "ax", "ay", "az", "vx", "vy", "vz", "batt"])
+        # csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM"])
         csv_writer.writeheader()  # Write CSV header
 
         # Send "offload" command

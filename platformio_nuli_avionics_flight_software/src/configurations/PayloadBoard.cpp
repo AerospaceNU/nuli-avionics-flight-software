@@ -170,7 +170,7 @@ void loop() {
         String str;
         int state = radio.readData(str);
 
-        Serial.println("fads");
+        //Serial.println("fads");
 
         if (state == RADIOLIB_ERR_NONE) {
             // packet was successfully received
@@ -205,12 +205,15 @@ void loop() {
                 operationDone = false;
                 avionicsCore.log = false;
             } else if (str.startsWith("t")) {
+
                 radio.startTransmit("transmitting");
                 while (!operationDone);
                 operationDone = false;
                 payload.sendTransmission(millis());
+
                 radio.startTransmit(payload.getTransmitStr());
                 while (!operationDone);
+                operationDone = false;
             }
         }
 

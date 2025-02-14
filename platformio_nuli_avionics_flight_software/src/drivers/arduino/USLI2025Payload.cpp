@@ -72,7 +72,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
 
 void USLI2025Payload::updateGroundData(double temp, double batteryVoltage, double orientationRad) {
     m_payloadData.ort = (int32_t) orientationRad;
-    m_payloadData.battery = (int32_t) batteryVoltage * 10;
+    m_payloadData.battery = (int32_t) double(batteryVoltage * 10.0);
     m_payloadData.temp = (int32_t) temp;
 }
 
@@ -95,7 +95,7 @@ void USLI2025Payload::begin(const char* callsign) {
 }
 
 void USLI2025Payload::addStr(const char* str) {
-    m_transmitStringLocation += sprintf(m_transmitStringLocation, "%s", str);
+    m_transmitStringLocation += sprintf(m_transmitStringLocation, ";%s", str);
 }
 
 void USLI2025Payload::addInt(int num) {
@@ -103,6 +103,7 @@ void USLI2025Payload::addInt(int num) {
 }
 
 void USLI2025Payload::sendTransmission(uint32_t runtime) {
+//    KC1UAW;36;302;30;4501;0;21;5;8;99KC1UAW
     begin(m_aprsModulation.getCallsign());
     addInt((int) double(double(runtime - m_payloadData.time) / 1000.0));
     addInt(m_payloadData.temp);

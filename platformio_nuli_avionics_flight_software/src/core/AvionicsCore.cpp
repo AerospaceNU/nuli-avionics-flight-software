@@ -23,7 +23,8 @@ void AvionicsCore::setup(HardwareAbstraction* hardware,
 
 double calculateTilt(double ax, double ay, double az) {
     double magnitude = sqrt(ax * ax + ay * ay + az * az);
-    return acos(fabs(ay) / magnitude) * RAD_TO_DEG_2; // Use fabs(ay) to ensure correct angle
+    double angle = acos(ay / magnitude) * RAD_TO_DEG_2; // Remove fabs(ay) to get correct range
+    return angle; // Now it correctly returns values from 0 to 180 degrees
 }
 
 RunningMedian altitudeFilter = RunningMedian(10);
@@ -48,13 +49,6 @@ void AvionicsCore::loopOnce() {
 
     Vector3D_s accelerationsMss = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
 
-//    Serial.print(velocitiesRadS.x);
-//    Serial.print('\t');
-//    Serial.print(velocitiesRadS.y);
-//    Serial.print('\t');
-//    Serial.print(velocitiesRadS.z);
-//    Serial.print('\t');
-
     double tilt = calculateTilt(accelerationsMss.x, accelerationsMss.y, accelerationsMss.z);
 
     altitudeFilter.add((float) m_hardware->getBarometer(0)->getAltitudeM());
@@ -76,22 +70,22 @@ void AvionicsCore::loopOnce() {
     double temp = temperatureFilter.getMedian();
     double batteryVoltage = batteryFilter.getMedian();
 
-    Serial.print(runtime);
-    Serial.print('\t');
-    Serial.print(dt);
-    Serial.print('\t');
-    Serial.print(altitudeM);
-    Serial.print('\t');
-    Serial.print(velocityMS);
-    Serial.print('\t');
-    Serial.print(netAccelMSS);
-    Serial.print('\t');
-    Serial.print(orientationDeg);
-    Serial.print('\t');
-    Serial.print(temp);
-    Serial.print('\t');
-    Serial.print(batteryVoltage);
-    Serial.println('\t');
+//    Serial.print(runtime);
+//    Serial.print('\t');
+//    Serial.print(dt);
+//    Serial.print('\t');
+//    Serial.print(altitudeM);
+//    Serial.print('\t');
+//    Serial.print(velocityMS);
+//    Serial.print('\t');
+//    Serial.print(netAccelMSS);
+//    Serial.print('\t');
+//    Serial.print(orientationDeg);
+//    Serial.print('\t');
+//    Serial.print(temp);
+//    Serial.print('\t');
+//    Serial.print(batteryVoltage);
+//    Serial.println('\t');
 
     m_payload->loopOnce(runtime, dt, altitudeM, velocityMS, netAccelMSS, orientationDeg, temp, batteryVoltage);
 
