@@ -4,7 +4,9 @@
 #include "AprsModulation.h"
 
 #ifdef PLATFORMIO
+
 #include "Arduino.h"
+
 #else
 
 #include <thread>
@@ -34,15 +36,15 @@ enum FlightState_e {
 };
 
 struct PayloadData {
-    uint32_t time = 0;
-    int32_t temp = 0;
-    int32_t battery = 0;
-    int32_t alt = 0;
-    int32_t ort = 0;
-    int32_t maxVel = 0;
-    int32_t landVel = 0;
-    int32_t accel = 0;
-    int32_t suviv = 0;
+    uint32_t time = 1;
+    int32_t temp = 273;
+    int32_t battery = 12;
+    int32_t alt = 4501;
+    int32_t ort = 3;
+    int32_t maxVel = 21;
+    int32_t landVel = 5;
+    int32_t accel = 8;
+    int32_t suviv = 99;
 };
 
 class USLI2025Payload {
@@ -51,11 +53,13 @@ public:
 
     void setup();
 
-    void loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationRad, double temp, double batteryVoltage);
+    void loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationDeg, double temp, double batteryVoltage);
 
     void deployLegs() const;
 
     void sendTransmission(uint32_t runtime);
+
+    const char* getTransmitStr();
 
 private:
     void updateGroundData(double temp, double batteryVoltage, double orientationRad);
@@ -65,6 +69,7 @@ private:
     void addStr(const char* str);
 
     void addInt(int num);
+
 
     char m_transmitBuffer[300];
     char* m_transmitStringLocation = m_transmitBuffer;
@@ -78,7 +83,7 @@ private:
 
     FlightState_e m_flightState = PRE_FLIGHT;
     bool takenOff = false;
-    double takeoffThresholdM = 500;
+    double takeoffThresholdM = 300;
     uint32_t takeoffTimer = 0;
 };
 

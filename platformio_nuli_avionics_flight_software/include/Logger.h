@@ -8,7 +8,7 @@ class Logger {
 public:
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    void log();
+    void log(double voltage);
 
     void erase();
 

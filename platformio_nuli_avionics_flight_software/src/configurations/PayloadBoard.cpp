@@ -71,6 +71,7 @@ void cliTick() {
             isOffloading = false;
         } else {
             Serial.write(offloadReadBuffer, readLength);
+            delay(5);
         }
         currentOffloadAddress += readLength;
     }
@@ -141,7 +142,7 @@ void setup() {
     digitalWrite(A5, HIGH);
     digitalWrite(8, HIGH);
 
-    // s25fl512.eraseAll();
+//     s25fl512.eraseAll();
     // Serial.println("erase complete");
 
 
@@ -161,7 +162,6 @@ void setup() {
 
 void loop() {
     avionicsCore.loopOnce();
-    uint32_t time = millis();
     cliTick();
 
     if (operationDone) {
@@ -209,6 +209,8 @@ void loop() {
                 while (!operationDone);
                 operationDone = false;
                 payload.sendTransmission(millis());
+                radio.startTransmit(payload.getTransmitStr());
+                while (!operationDone);
             }
         }
 

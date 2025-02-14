@@ -120,6 +120,7 @@ void loop() {
             int state = radio.readData(str);
             if (operationDone) {
                 operationDone = false;
+                delay(1000);
                 if (state == RADIOLIB_ERR_NONE) {
                     // packet was successfully received
                     Serial.println(F("[SX1278] Received packet!"));

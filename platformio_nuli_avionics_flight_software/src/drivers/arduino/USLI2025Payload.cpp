@@ -6,7 +6,10 @@ USLI2025Payload::USLI2025Payload(const char* callsign) : m_aprsModulation(m_tran
 
 //#include "iostream"
 
-void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationRad, double temp, double batteryVoltage) {
+void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationDeg, double temp, double batteryVoltage) {
+
+    updateGroundData(temp, batteryVoltage, orientationDeg);
+
     /**
      * Pre-flight state
      * Detect launch
@@ -23,7 +26,6 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         if (takeoffTimer != 0 && runtime > takeoffTimer) {
             m_flightState = FLIGHT;
             takeoffTimer = runtime + (1000 * 60 * 3);
-//            std::cout << "adsf\n\n\n\n\n\n\n\n";
         }
     }
 
@@ -55,7 +57,6 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
             m_nextDeployTime = runtime + 15000;
             deployLegs();
             delay(2000);
-            updateGroundData(temp, batteryVoltage, orientationRad);
         }
 
         if (runtime > m_nextTransmitTime) {
@@ -70,7 +71,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
 }
 
 void USLI2025Payload::updateGroundData(double temp, double batteryVoltage, double orientationRad) {
-    m_payloadData.ort = (int32_t) double(orientationRad * 57.2958);
+    m_payloadData.ort = (int32_t) orientationRad;
     m_payloadData.battery = (int32_t) batteryVoltage * 10;
     m_payloadData.temp = (int32_t) temp;
 }
@@ -84,7 +85,7 @@ void USLI2025Payload::setup() {
 
 void USLI2025Payload::deployLegs() const {
     digitalWrite(m_deployPin, HIGH);
-    delay(250);
+    delay(350);
     digitalWrite(m_deployPin, LOW);
 }
 
@@ -103,7 +104,7 @@ void USLI2025Payload::addInt(int num) {
 
 void USLI2025Payload::sendTransmission(uint32_t runtime) {
     begin(m_aprsModulation.getCallsign());
-    addInt(runtime - m_payloadData.time);
+    addInt((int) double(double(runtime - m_payloadData.time) / 1000.0));
     addInt(m_payloadData.temp);
     addInt(m_payloadData.battery);
     addInt(m_payloadData.alt);
@@ -114,6 +115,10 @@ void USLI2025Payload::sendTransmission(uint32_t runtime) {
     addInt(m_payloadData.suviv);
     addStr(m_aprsModulation.getCallsign());
     m_aprsModulation.transmit(m_transmitBuffer);
+}
+
+const char* USLI2025Payload::getTransmitStr() {
+    return m_transmitBuffer;
 }
 
 

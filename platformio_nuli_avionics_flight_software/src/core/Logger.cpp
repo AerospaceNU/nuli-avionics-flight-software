@@ -7,13 +7,20 @@ typedef struct __attribute__((packed)) {
     double baroPressurePa;
     double baroTemperatureK;
     double baroAltitudeM;
+//    double ax;
+//    double ay;
+//    double az;
+//    double vx;
+//    double vy;
+//    double vz;
+//    double battery;
 } LogData;
 
 static LogData logData;
 
 static uint8_t logDataBuffer[sizeof(LogData)];
 
-void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration)  {
+void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
     m_configuration = configuration;
     m_logWriteAddress = 0;
@@ -21,7 +28,7 @@ void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) 
     FlashMemory* flash = m_hardware->getFlashMemory(0);
 
     bool foundEmptyPacket = false;
-    
+
     while (true) {
         // Serial.print("Checking ");
         // Serial.println(m_logWriteAddress);
@@ -38,14 +45,24 @@ void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) 
             break;
         }
         m_logWriteAddress += sizeof(logDataBuffer);
+//        Serial.println("")
     }
     Serial.print("Starting logging at ");
     Serial.println(m_logWriteAddress);
 }
 
-void Logger::log() {
+void Logger::log(double voltage) {
     FlashMemory* flash = m_hardware->getFlashMemory(0);
 
+//    Vector3D_s accelerationsMss = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
+//    Vector3D_s velocitiesRadS = m_hardware->getGyroscope(0)->getVelocitiesRadS();
+//    logData.ax = accelerationsMss.x;
+//    logData.ay = accelerationsMss.y;
+//    logData.az = accelerationsMss.z;
+//    logData.vx = velocitiesRadS.x;
+//    logData.vy = velocitiesRadS.y;
+//    logData.vz = velocitiesRadS.z;
+//    logData.battery = voltage;
 
     logData.baroAltitudeM = m_hardware->getBarometer(0)->getAltitudeM();
     logData.baroPressurePa = m_hardware->getBarometer(0)->getPressurePa();
@@ -53,9 +70,11 @@ void Logger::log() {
     logData.timestamp = m_hardware->getLoopTimestampMs();
 
     // Serial.println(logData.timestamp);
-    // Serial.println(sizeof(logData));
+//     Serial.println(sizeof(logData));
 
-    flash->write(m_logWriteAddress, (uint8_t*)&logData, sizeof(logData), true);
+//    int a = sizeof(logData);
+
+    flash->write(m_logWriteAddress, (uint8_t*) &logData, sizeof(logData), true);
     m_logWriteAddress += sizeof(logData);
 }
 
