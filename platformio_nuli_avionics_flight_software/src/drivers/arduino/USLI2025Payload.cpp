@@ -4,10 +4,8 @@ USLI2025Payload::USLI2025Payload(const char* callsign) : m_aprsModulation(m_tran
 
 }
 
-//#include "iostream"
-
 void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationDeg, double temp, double batteryVoltage) {
-
+    // Save the current temperature, battery voltage, and orientation
     updateGroundData(temp, batteryVoltage, orientationDeg);
 
     /**
@@ -24,15 +22,16 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         }
 
         if (takeoffTimer != 0 && runtime > takeoffTimer) {
+            Serial.println("takeoff");
             m_flightState = FLIGHT;
             takeoffTimer = runtime + (1000 * 60 * 3);
         }
     }
 
-        /**
-         * Flight state
-         * Record data
-         */
+    /**
+     * Flight state
+     * Record data
+     */
     else if (m_flightState == FLIGHT) {
         if (altitudeM > m_payloadData.alt) {
             m_payloadData.alt = (int32_t) altitudeM;
@@ -43,6 +42,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         }
 
         if (runtime > takeoffTimer) {
+            Serial.println("landed");
             m_payloadData.time = (int32_t) runtime;
             m_flightState = LANDED;
         }
@@ -54,17 +54,20 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
      */
     else if (m_flightState == LANDED) {
         if (runtime > m_nextDeployTime) {
-            m_nextDeployTime = runtime + 15000;
+            Serial.println("deploy");
+            m_nextDeployTime = runtime + 20000;
             deployLegs();
             delay(2000);
         }
 
         if (runtime > m_nextTransmitTime) {
+            Serial.println("transmit");
             m_nextTransmitTime = runtime + 5000;
             sendTransmission(runtime);
         }
     }
-        // Should never happen
+
+    // Should never happen
     else {
         m_flightState = PRE_FLIGHT;
     }
@@ -103,7 +106,6 @@ void USLI2025Payload::addInt(int num) {
 }
 
 void USLI2025Payload::sendTransmission(uint32_t runtime) {
-//    KC1UAW;36;302;30;4501;0;21;5;8;99KC1UAW
     begin(m_aprsModulation.getCallsign());
     addInt((int) double(double(runtime - m_payloadData.time) / 1000.0));
     addInt(m_payloadData.temp);
@@ -121,11 +123,6 @@ void USLI2025Payload::sendTransmission(uint32_t runtime) {
 const char* USLI2025Payload::getTransmitStr() {
     return m_transmitBuffer;
 }
-
-
-
-
-
 
 
 

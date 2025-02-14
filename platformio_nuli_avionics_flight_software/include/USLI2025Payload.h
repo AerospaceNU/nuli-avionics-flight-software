@@ -70,7 +70,6 @@ private:
 
     void addInt(int num);
 
-
     char m_transmitBuffer[300];
     char* m_transmitStringLocation = m_transmitBuffer;
     const uint8_t m_transmitPin = A0;
@@ -82,8 +81,7 @@ private:
     PayloadData m_payloadData;
 
     FlightState_e m_flightState = PRE_FLIGHT;
-    bool takenOff = false;
-    double takeoffThresholdM = 300;
+    double takeoffThresholdM = 500.0;
     uint32_t takeoffTimer = 0;
 };
 

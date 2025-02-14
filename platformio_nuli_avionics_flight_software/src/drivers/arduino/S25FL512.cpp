@@ -27,6 +27,7 @@
  */
 
 S25FL512::S25FL512(uint8_t chipSelectPin, SPIClass* spiClass) : m_chipSelectPin(chipSelectPin) {
+    /// @todo remove this
     pinMode(chipSelectPin, OUTPUT);
     m_spiBus = spiClass;
 }

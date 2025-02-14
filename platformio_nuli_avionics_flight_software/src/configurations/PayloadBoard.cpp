@@ -82,18 +82,6 @@ void cliTick() {
 AvionicsCore avionicsCore;
 USLI2025Payload payload("KC1UAW");
 
-/**
- * Payload logging requirements:
- *
- * Barometer: 3
- * IMU: 9
- * Clock: 1
- * GPS: 3
- * Battery: 1
- * Pyro: 1
- *
- * Lets just log one page at a time
- */
 #include <RadioLib.h>
 
 SX1276 radio = new Module(8, 3, 4);  // (CS, INT, RST)
@@ -128,7 +116,6 @@ void setup() {
     radio.setDio0Action(setFlag, RISING);
     radio.startReceive();
 
-
     hardware.setDebugStream(&debug);
     hardware.setSystemClock(&arduinoClock);
     hardware.addBarometer(&barometer);
@@ -142,10 +129,6 @@ void setup() {
     digitalWrite(A5, HIGH);
     digitalWrite(8, HIGH);
 
-//     s25fl512.eraseAll();
-    // Serial.println("erase complete");
-
-
     // Finish initializing all hardware
     hardware.setup();
     // Initialize other globals
@@ -156,7 +139,6 @@ void setup() {
     filter.setup(&configuration, &logger);
     // Initialize core
     avionicsCore.setup(&hardware, &configuration, &logger, &filter, &payload);
-
 }
 
 
@@ -169,8 +151,6 @@ void loop() {
 
         String str;
         int state = radio.readData(str);
-
-        //Serial.println("fads");
 
         if (state == RADIOLIB_ERR_NONE) {
             // packet was successfully received
@@ -205,10 +185,10 @@ void loop() {
                 operationDone = false;
                 avionicsCore.log = false;
             } else if (str.startsWith("t")) {
-
                 radio.startTransmit("transmitting");
                 while (!operationDone);
                 operationDone = false;
+
                 payload.sendTransmission(millis());
 
                 radio.startTransmit(payload.getTransmitStr());
