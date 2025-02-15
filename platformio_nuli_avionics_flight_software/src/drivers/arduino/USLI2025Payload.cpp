@@ -56,14 +56,18 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         if (runtime > m_nextDeployTime) {
             Serial.println("deploy");
             m_nextDeployTime = runtime + 20000;
-            deployLegs();
-            delay(2000);
+            if(m_transmitAllowed) {
+                deployLegs();
+                delay(2000);
+            }
         }
 
         if (runtime > m_nextTransmitTime) {
             Serial.println("transmit");
             m_nextTransmitTime = runtime + 5000;
-            sendTransmission(runtime);
+            if(m_transmitAllowed) {
+                sendTransmission(runtime);
+            }
         }
     }
 
@@ -88,7 +92,7 @@ void USLI2025Payload::setup() {
 
 void USLI2025Payload::deployLegs() const {
     digitalWrite(m_deployPin, HIGH);
-    delay(350);
+    delay(250);
     digitalWrite(m_deployPin, LOW);
 }
 

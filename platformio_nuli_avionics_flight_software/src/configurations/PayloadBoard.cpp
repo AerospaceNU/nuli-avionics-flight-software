@@ -191,9 +191,16 @@ void loop() {
 
                 payload.sendTransmission(millis());
 
+                payload.m_transmitAllowed = true;
                 radio.startTransmit(payload.getTransmitStr());
                 while (!operationDone);
                 operationDone = false;
+            } else if (str.startsWith("w")) {
+                radio.startTransmit("stopping");
+                while (!operationDone);
+                operationDone = false;
+
+                payload.m_transmitAllowed = false;
             }
         }
 

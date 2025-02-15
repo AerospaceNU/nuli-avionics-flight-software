@@ -49,6 +49,8 @@ struct PayloadData {
 
 class USLI2025Payload {
 public:
+    bool m_transmitAllowed = true;
+
     explicit USLI2025Payload(const char* callsign);
 
     void setup();
@@ -81,7 +83,7 @@ private:
     PayloadData m_payloadData;
 
     FlightState_e m_flightState = PRE_FLIGHT;
-    double takeoffThresholdM = 500.0;
+    double takeoffThresholdM = 230.0;
     uint32_t takeoffTimer = 0;
 };
 
