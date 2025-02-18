@@ -5,6 +5,11 @@ There are two types of flags supported which both inherit from `BaseFlag`.
 2. `ArgumentFlag`: A flag with one argument. There are two constructors. One with a default argument and one without.
 
 ## Usage
+### 0. Include 
+```c++
+#include "Parser.h"
+```
+
 ### 1. Create Parser Object
 ```c++
 Parser myParser = Parser();
@@ -16,11 +21,14 @@ SimpleFlag config("--config", "Configure a trigger with additional flags_s", tru
 ArgumentFlag<int> config_trigger("-t", 0, "Trigger number", true);
 ArgumentFlag<float> config_pulseWidth("-w", 0.0, "Pulse width (required for pwm)", false);
 ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in meters)", false);
+ArgumentFlag<const char*> config_notation("-C", "Configuration using expression notation", false);
 ```
 
 > Note: While not required by C++, always explicitly signify the type of 
 > ArgumentFlag. While the compiler can *sometimes* infer the type when given
 > a default value, this is finicky and unreliable.
+
+> Note: `char*` not permitted, only `const char*`
 
 ### 3. Add Flags to list of flags
 ```c++
@@ -36,6 +44,11 @@ myParser.addFlagGroup(configGroup);
 
 ### 5. Repeat
 Repeat for more groups of flags. 
+
+### 6. Run on input
+```c++
+myParser.parse(<input>);
+```
 
 ## Testing
 ### CLion
