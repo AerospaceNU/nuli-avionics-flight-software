@@ -39,9 +39,9 @@ struct PayloadData {
     uint32_t time = 1;
     int32_t temp = 273;
     int32_t battery = 12;
-    int32_t alt = 4501;
-    int32_t ort = 3;
-    int32_t maxVel = 21;
+    int32_t alt = 0;
+    int32_t ort = 0;
+    int32_t maxVel = 0;
     int32_t landVel = 5;
     int32_t accel = 8;
     int32_t suviv = 99;

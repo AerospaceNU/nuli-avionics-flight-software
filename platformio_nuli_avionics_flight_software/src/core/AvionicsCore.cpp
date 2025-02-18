@@ -70,22 +70,22 @@ void AvionicsCore::loopOnce() {
     double temp = temperatureFilter.getMedian();
     double batteryVoltage = batteryFilter.getMedian();
 
-//    Serial.print(runtime);
-//    Serial.print('\t');
-//    Serial.print(dt);
-//    Serial.print('\t');
-//    Serial.print(altitudeM);
-//    Serial.print('\t');
-//    Serial.print(velocityMS);
-//    Serial.print('\t');
-//    Serial.print(netAccelMSS);
-//    Serial.print('\t');
-//    Serial.print(orientationDeg);
-//    Serial.print('\t');
-//    Serial.print(temp);
-//    Serial.print('\t');
-//    Serial.print(batteryVoltage);
-//    Serial.println('\t');
+    Serial.print(runtime);
+    Serial.print('\t');
+    Serial.print(dt);
+    Serial.print('\t');
+    Serial.print(altitudeM);
+    Serial.print('\t');
+    Serial.print(velocityMS);
+    Serial.print('\t');
+    Serial.print(netAccelMSS);
+    Serial.print('\t');
+    Serial.print(orientationDeg);
+    Serial.print('\t');
+    Serial.print(temp);
+    Serial.print('\t');
+    Serial.print(batteryVoltage);
+    Serial.println('\t');
 
     m_payload->loopOnce(runtime, dt, altitudeM, velocityMS, netAccelMSS, orientationDeg, temp, batteryVoltage);
 
