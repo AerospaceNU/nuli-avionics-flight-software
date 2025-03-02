@@ -4,7 +4,8 @@
 
 #ifndef DESKTOP_PARSER_H
 #define DESKTOP_PARSER_H
-#include "Flag.h"
+
+#include "BaseFlag.h"
 
 /**
  * @TODO: Formalize error handling. Currently, some errors are printed at their
@@ -15,6 +16,7 @@
  *          1. put in the header file with the declaration, 2. defined at the
  *          bottom of the header file, 3. in a separate .tpp file.
  *          Read here: https://softwareengineering.stackexchange.com/questions/373916/c-preferred-method-of-dealing-with-implementation-for-large-templates
+ *          -- chosen to use .tpp files
  *
  * @TODO: create a side-command that prints all flags with their set value
  *
@@ -22,6 +24,9 @@
  *          ex: no duplicate Leader flags
  *          ex: no duplicate flags within a FlagGroup
  *          ex: co-dependencies (this might be a nice to add)
+ *
+ * @FIXME: Parser splits quoted string into multiple.
+ *          E.g. "hello me" --> ["hello] [me"]
  */
 
 const uint8_t MAX_FLAG_GROUPS = 255;    ///< Maximum number of FlagGroups
@@ -47,35 +52,28 @@ public:
     Parser() = default;
 
     /**
+     * @brief Constructor with defined streams
+     * @param inputSteam Input
+     * @param outputStream Output
+     * @param errorStream Error
+     */
+    Parser(FILE* inputSteam, FILE* outputStream, FILE* errorStream);
+
+    /**
      * @brief Default destructor
      */
     ~Parser() = default;
 
     /**
      * @brief Adds a set of Flags into a FlagGroup
-     * @details Creates a new FlagGroup
+     * @details Creates a new FlagGroup and automatically sets each flag's
+     *          stdin, stdout, and stderr to the Parser's streams.
      * @tparam n Number of flags provided (not user inputted)
      * @param flagGroup An array of flags
      * @return 0 if successful
      */
     template<uint8_t n>
-    int8_t addFlagGroup(BaseFlag* (&flagGroup)[n]) {
-        // bounds checks
-        if (n == 0) {
-            fprintf(stderr, "No flag group provided\n");
-            return -1;
-        }
-
-        if (m_numFlagGroups > MAX_FLAG_GROUPS) {
-            fprintf(stderr, "Maximum flag groups exceeded\n");
-            return -1;
-        }
-
-        FlagGroup_s newFlagGroup(flagGroup, flagGroup[0]->name(), n);
-        m_flagGroups[m_numFlagGroups++] = newFlagGroup;
-
-        return 0;
-    }
+    int8_t addFlagGroup(BaseFlag* (&flagGroup)[n]);
 
     /**
      * @brief Parses program argument inputs into FlagGroups
@@ -99,6 +97,18 @@ public:
     int8_t parse(char* input);
 
     /**
+     * @brief Retrieves a flag's value given its name and its flag group name
+     * @tparam T Type of the flag
+     * @param flagGroupName Name of its flag group
+     * @param flagName Name of the flag
+     * @param value location to store value returned
+     * @return 0 if successful
+     */
+    template<typename T>
+    int8_t getValue(const char* flagGroupName, const char* flagName, T &value);
+
+
+    /**
      * @brief Prints help text for each FlagGroup
      */
     void printHelp() const;
@@ -111,6 +121,7 @@ public:
      * called.
      */
     void resetFlags();
+
 protected:
 private:
     /**
@@ -124,7 +135,8 @@ private:
          * @brief Default constructor
          * @warning Constructor for internal use only
          */
-        FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{nullptr}, numFlags_s(0) {}
+        FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{nullptr}, numFlags_s(0),
+                        inputStream_s(stdin), outputStream_s(stdout), errorStream_s(stderr) {}
 
         /**
          * @brief Constructor
@@ -132,13 +144,16 @@ private:
          * @param flagGroupName The reference for this FlagGroup
          * @param numFlags The number of flags added
          */
-        FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags);
+        FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags,
+                    FILE* inputStream, FILE* outputStream, FILE* errorStream);
 
         /**
          * @brief Retrieves the leader's flag
          * @return A BaseFlag pointer to the leader
          */
         BaseFlag* getLeader();
+
+        int8_t getFlag(const char* flagName, BaseFlag** flag);
 
         /**
          * @brief Ensures all member flag parameters are correctly set
@@ -164,10 +179,21 @@ private:
         const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
         uint8_t numFlags_s;                         ///< number of flags within FlagGroup
 
+        FILE* inputStream_s;    ///< Input stream
+        FILE* outputStream_s;   ///< Output stream
+        FILE* errorStream_s;    ///< Error stream
     };
+
+    int8_t getFlagGroup(const char* flagGroupName, FlagGroup_s** flagGroup);
 
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
+
+    FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin
+    FILE* m_outputStream = stdout;  ///< Output stream, defaults to stdout
+    FILE* m_errorStream = stderr;   ///< Error stream, defaults to stderr
 };
+
+#include "Parser.tpp"
 
 #endif //DESKTOP_PARSER_H

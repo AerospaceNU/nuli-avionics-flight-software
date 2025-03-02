@@ -1,8 +1,8 @@
 //
-// Created by chris on 1/6/2025.
+// Created by chris on 2/24/2025.
 //
 
-#include "Flag.h"
+#include "SimpleFlag.h"
 
 SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required)
         : BaseFlag(name, helpText, required) {}
@@ -46,6 +46,3 @@ bool SimpleFlag::verify() const {
 bool SimpleFlag::getValueDerived() const {
     return isSet();
 }
-
-BaseFlag::BaseFlag(const char* name, const char* helpText, bool required) :
-        m_name(name), m_helpText(helpText), m_required(required), m_set(false) {}

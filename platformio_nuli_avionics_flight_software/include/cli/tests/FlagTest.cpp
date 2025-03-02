@@ -3,7 +3,9 @@
 //
 
 #include <gtest/gtest.h>
-#include "cli/Flag.h"
+#include "cli/BaseFlag.h"
+#include "cli/SimpleFlag.h"
+#include "cli/ArgumentFlag.h"
 
 // https://google.github.io/googletest/primer.html
 // https://github.com/google/googletest/blob/main/googletest/samples/sample3_unittest.cc

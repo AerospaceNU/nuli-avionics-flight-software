@@ -5,6 +5,9 @@
 #include <cstring>
 #include <stdexcept>
 
+Parser::Parser(FILE* inputSteam, FILE* outputStream, FILE* errorStream) :
+        m_inputStream(inputSteam), m_outputStream(outputStream), m_errorStream(errorStream) {};
+
 // parses inputs into appropriate flags.
 int8_t Parser::parse(int argc, char** argv) {
     if (m_numFlagGroups == 0) {
@@ -17,7 +20,6 @@ int8_t Parser::parse(int argc, char** argv) {
         return -1;
     }
 
-//    argv++; // removing the first argument (program name)
     int argvPos = 1;
 
     // retrieve flag group and set leader flag
@@ -94,21 +96,85 @@ int8_t Parser::parse(int argc, char** argv) {
 
 int8_t Parser::parse(char* input) {
     // removing '\n'
-    input[std::strcspn(input, "\n")] = 0;
 
-    // parsing into argc and argv
+    /* Diagram represent how the parser works without dynamic memory allocation.
+     *   [--config 5 -C "hello world"]
+     *           |- null
+     *           |  |- null
+     *           |  |   |- null
+     *           |  |   |            |- null
+     *           v  v   v            v
+     *   --config\05\0-C\0hello world\0
+     *   ^         ^   ^  ^
+     *   |         |   |  |- pointer
+     *   |         |   |- pointer
+     *   |         |- pointer
+     *   |-- pointer
+     */
+
     int argc = 1;   // compatibility with command-line argc/argv
     char* argv[255] = {nullptr};
-    char* savePtr;
 
-    char* p = strtok_r(input, " ", &savePtr);   // strtok is disgusting
-    while (p && argc < 255 - 1) {
-        argv[argc++] = p;
-        p = strtok_r(nullptr, " ", &savePtr);
+    char* p = input;
+
+    while(*p) {
+        switch(*p) {
+            case '\t':
+            case '\n':
+            case ' ':
+                *p = '\0';  // mark the end of a character
+                p++;
+                break;
+            case '"':
+                p++;    // skip the quote
+                argv[argc++] = p;
+
+                // loop until end of quote or input
+                while(*p != '\0' && *p != '"') {
+                    p++;
+                }
+
+                if (*p) {
+                    *p = '\0';
+                    p++;
+                }
+
+                break;
+            default:
+                argv[argc++] = p;
+
+                // loop until end of word
+                while(*p && *p != ' ') {
+                    p++;
+                }
+
+                if (*p) {
+                    *p = '\0';
+                    p++;
+                }
+
+                break;
+        }
     }
 
-    argv[argc] = nullptr;
 
+
+//    // removing '\n'
+//    input[std::strcspn(input, "\n")] = 0;
+//
+//    // parsing into argc and argv
+//    int argc = 1;   // compatibility with command-line argc/argv
+//    char* argv[255] = {nullptr};
+//    char* savePtr;
+//
+//    char* p = strtok_r(input, " ", &savePtr);   // strtok is disgusting
+//    while (p && argc < 255 - 1) {
+//        argv[argc++] = p;
+//        p = strtok_r(nullptr, " ", &savePtr);
+//    }
+//
+    argv[argc] = nullptr;
+//
     return this->parse(argc, argv);
 }
 
@@ -118,10 +184,6 @@ void Parser::printHelp() const {
         m_flagGroups[i].printHelp();
         printf("\n");
     }
-}
-
-BaseFlag* Parser::FlagGroup_s::getLeader() {
-    return flags_s[0];
 }
 
 int8_t Parser::FlagGroup_s::verifyFlags() {
@@ -143,25 +205,58 @@ void Parser::resetFlags() {
     }
 }
 
+int8_t Parser::getFlagGroup(const char* flagGroupName, Parser::FlagGroup_s** flagGroup) {
+    for (int i = 0; i < m_numFlagGroups; ++i) {
+        if (std::strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
+            *flagGroup = &m_flagGroups[i];
+            return 0;
+        }
+    }
+
+    return -1;
+}
 
 /* /////////////// */
 /* / FlagGroup_s / */
 /* /////////////// */
 
-Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags)
-        : flagGroupName_s(flagGroupName), numFlags_s(numFlags) {
+Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags,
+                                 FILE* inputStream, FILE* outputStream, FILE* errorStream)
+        : flagGroupName_s(flagGroupName), numFlags_s(numFlags),
+          inputStream_s(inputStream), outputStream_s(outputStream), errorStream_s(errorStream) {
+    // check flag count
     if (numFlags > MAX_FLAGS) {
         throw std::invalid_argument("Maximum flag count exceeded");
     }
 
     // copy flags into flags_s
     std::copy(flags, flags + numFlags, flags_s);
+
+    // set each flag's streams
+    for (uint8_t i = 0; i < numFlags_s; ++i) {
+        flags_s[i]->setStreams(inputStream_s, outputStream_s, errorStream_s);
+    }
+}
+
+BaseFlag* Parser::FlagGroup_s::getLeader() {
+    return flags_s[0];
+}
+
+int8_t Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** flag) {
+    for (int i = 0; i < numFlags_s; ++i) {
+        if (std::strcmp(flagName, flags_s[i]->name()) == 0) {
+            *flag = flags_s[i];
+            return 0;
+        }
+    }
+
+    return -1;
 }
 
 void Parser::FlagGroup_s::printHelp() const {
     // loop through each set of flags within a FlagGroup_s
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        printf("%s [%s]: %s\n", flags_s[i]->name(), flags_s[i]->isRequired() ? "Required" : "Optional", flags_s[i]->help());
+        fprintf(outputStream_s, "%s [%s]: %s\n", flags_s[i]->name(), flags_s[i]->isRequired() ? "Required" : "Optional", flags_s[i]->help());
     }
 }
 

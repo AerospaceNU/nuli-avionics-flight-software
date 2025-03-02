@@ -4,6 +4,8 @@
 
 #include <gtest/gtest.h>
 #include "cli/Parser.h"
+#include "cli/SimpleFlag.h"
+#include "cli/ArgumentFlag.h"
 
 TEST(ParserTest, TestBasic) {
     // basic parsing with a SimpleFlag

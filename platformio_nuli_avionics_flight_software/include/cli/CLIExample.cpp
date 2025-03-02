@@ -7,6 +7,8 @@
 
 
 #include "Parser.h"
+#include "SimpleFlag.h"
+#include "ArgumentFlag.h"
 
 /*
 --config
@@ -52,13 +54,13 @@
  */
 
 int main() {
-    Parser myParser = Parser();
+    Parser myParser = Parser(stdin, stdout, stderr);
 
     /* config group */
     SimpleFlag config("--config", "Configure a trigger with additional flag", true);
-    ArgumentFlag<int8_t> config_trigger("-t", "Trigger to configure", true);
-    ArgumentFlag<int8_t> config_triggerType("-m", "Trigger type", false);
-    ArgumentFlag<int8_t> config_pyro("-p", "Pyro num or cut channel", false);
+    ArgumentFlag<int> config_trigger("-t", "Trigger to configure", false);
+    ArgumentFlag<int> config_triggerType("-m", "Trigger type", false);
+    ArgumentFlag<int> config_pyro("-p", "Pyro num or cut channel", false);
     ArgumentFlag<float> config_duration("-d", "Duration", false);
     ArgumentFlag<float> config_pulse("-w", "Pulse width", false);
     ArgumentFlag<const char*> config_configuration("-C", "Configuration using expression notation. Must be in quotes", false);
@@ -66,7 +68,7 @@ int main() {
     SimpleFlag config_manual("-N", "Disallow manual triggering", false);
     ArgumentFlag<float> config_elevation("-e", "Configure ground elevation (in meters)", false);
     ArgumentFlag<float> config_groundTemp("-r", "Configure ground temperature (in celsius)", false);
-    ArgumentFlag<int8_t> config_channel("-c","Configure radio channel (in multiples of bandwidth), negative numbers allowed", false);
+    ArgumentFlag<int> config_channel("-c","Configure radio channel (in multiples of bandwidth), negative numbers allowed", false);
     BaseFlag* configGroup[]{&config, &config_trigger, &config_triggerType,
                             &config_pyro, &config_duration, &config_pulse,
                             &config_configuration, &config_deleteT,
@@ -87,19 +89,19 @@ int main() {
 
     /* linecutter group */
     SimpleFlag linecutter("--linecutter", "Send linecutter cut with given", true);
-    ArgumentFlag<int8_t> linecutter_id("-i", "Send linecutter cut with given ID", true);
+    ArgumentFlag<int> linecutter_id("-i", "Send linecutter cut with given ID", true);
     ArgumentFlag<const char*> linecutter_command("-c", "Send a command", true);
     BaseFlag* linecutterGroup[](&linecutter, &linecutter_id, &linecutter_command);
 
     /* offload group */
     SimpleFlag offload("--offload", "Offloads the last flight recorded on the board", true);
-    ArgumentFlag<int8_t> offload_flightNum("-f", "Offload a specific flight number off the board", false);
+    ArgumentFlag<int> offload_flightNum("-f", "Offload a specific flight number off the board", false);
     SimpleFlag offload_help("-h", "Help for offload. Prints info about each flight", true);
     BaseFlag* offloadGroup[](&offload, &offload_flightNum, &offload_help);
 
     /* triggerfire group */
     SimpleFlag triggerfire("--triggerfire", "IMMEDIATELY fires the given trigger number", true);
-    ArgumentFlag<int8_t> triggerfire_triggerNum("-t", "Trigger number to fire", true);
+    ArgumentFlag<int> triggerfire_triggerNum("-t", "Trigger number to fire", true);
     BaseFlag* triggerfireGroup[](&triggerfire, &triggerfire_triggerNum);
 
     /* sense group */
@@ -128,12 +130,54 @@ int main() {
     myParser.addFlagGroup(versionGroup);
 
     while(true) {
-        myParser.printHelp();
+//        myParser.printHelp();
 
         char input[64] = {0};
         fgets(input, 64, stdin);
-        myParser.parse(input);
 
+        // parses user input
+        if (myParser.parse(input) < 0) {
+            continue;
+        }
+
+        printf("Parsed!\n");
+
+        // set 1
+        // when retrieving a value, you should always check if the flag is set.
+        // otherwise, undefined behaviour can occur.
+        bool returnBool;
+        if (myParser.getValue<bool>(config.name(), config.name(), returnBool) < 0) {
+            continue;
+        }
+        printf("Config set: %d\n", returnBool);
+
+        int returnInt;
+        if (myParser.getValue<int>(config.name(), config_trigger.name(), returnInt) < 0) {
+            printf("get value failed\n");
+            continue;
+        }
+        printf("Trigger Num is: %d\n", returnInt);
+
+        const char* returnChar;
+        if (myParser.getValue<const char*>(config.name(), config_configuration.name(), returnChar) < 0) {
+            continue;
+        }
+        printf("Configuration is: %s\n\n", returnChar);
+
+
+        // set 2, should be same as set 1
+        bool config_set = config.getValue<bool>();
+        printf("Config set: %d\n", config_set);
+
+        int triggerNum = config_trigger.getValue<int>();
+        printf("Trigger Num is: %d\n", triggerNum);
+
+        const char* configuration = config_configuration.getValue<const char*>();
+        printf("Configuration is: %s\n", configuration);
+
+        // resetting all flags to default values.
+        // --> all flags are unset
+        // --> all inputted data is reset to nothing (theoretically, instead just isSet is set to false)
         myParser.resetFlags();
     }
 

@@ -8,7 +8,7 @@ buildCoverageReport() {
   local pid=$!
 
   {
-#    cd ../../../../   # assuming in platformio_nuli_avionics_flight_software > include > cli > tests (yes this is shit implementation)
+    cd ../../../../   # assuming in platformio_nuli_avionics_flight_software > include > cli > tests (yes this is shit implementation)
 
     rm -rf build
 

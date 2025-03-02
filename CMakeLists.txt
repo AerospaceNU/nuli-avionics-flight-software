@@ -13,9 +13,15 @@ set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/
         platformio_nuli_avionics_flight_software/src/core/Logger.cpp
         platformio_nuli_avionics_flight_software/include/cli/Parser.cpp
         platformio_nuli_avionics_flight_software/include/cli/Parser.h
-        platformio_nuli_avionics_flight_software/include/cli/Flag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/Flag.h
-        platformio_nuli_avionics_flight_software/include/cli/Flag.tpp)
+        platformio_nuli_avionics_flight_software/include/cli/Parser.tpp
+        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.cpp
+        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.h
+        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.tpp
+        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.cpp
+        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.h
+        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.h
+        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
+)
 
 add_executable(desktop ${desktopSimFiles})
 
@@ -48,12 +54,17 @@ FetchContent_MakeAvailable(googletest)
 enable_testing()
 
 # setting required files
-set(cli_test
+set(cliSimFiles
         platformio_nuli_avionics_flight_software/include/cli/Parser.cpp
         platformio_nuli_avionics_flight_software/include/cli/Parser.h
-        platformio_nuli_avionics_flight_software/include/cli/Flag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/Flag.h
-        platformio_nuli_avionics_flight_software/include/cli/Flag.tpp
+        platformio_nuli_avionics_flight_software/include/cli/Parser.tpp
+        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.cpp
+        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.h
+        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.tpp
+        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.cpp
+        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.h
+        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.h
+        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
 )
 
 # Enable Code Coverage Options
@@ -61,7 +72,7 @@ option(ENABLE_COVERAGE "Enable coverage reporting" ON)
 
 
 # ----FlagTest----
-add_executable(FlagTest ${cli_test}
+add_executable(FlagTest ${cliSimFiles}
         platformio_nuli_avionics_flight_software/include/cli/tests/FlagTest.cpp)
 
 target_link_libraries(
@@ -78,7 +89,7 @@ endif()
 
 
 # ----ParserTest----
-add_executable(ParserTest ${cli_test}
+add_executable(ParserTest ${cliSimFiles}
         platformio_nuli_avionics_flight_software/include/cli/tests/ParserTest.cpp)
 
 target_link_libraries(
@@ -96,3 +107,7 @@ endif()
 include(GoogleTest)
 gtest_discover_tests(FlagTest)
 gtest_discover_tests(ParserTest)
+
+# ========cli example configuration========
+add_executable(cli ${cliSimFiles}
+        platformio_nuli_avionics_flight_software/include/cli/CLIExample.cpp)

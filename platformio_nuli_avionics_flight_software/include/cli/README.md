@@ -3,11 +3,12 @@
 There are two types of flags supported which both inherit from `BaseFlag`. 
 1. `SimpleFlag`: A typical boolean flag. There is one constructor.
 2. `ArgumentFlag`: A flag with one argument. There are two constructors. One with a default argument and one without.
+   1. IMPORTANT: Only fundamental types (`int, double, float, etc.`) and `const char*` are allowed.
 
 ## Usage
 ### 0. Include 
 ```c++
-#include "Parser.h"
+#include "Parser.h" 
 ```
 
 ### 1. Create Parser Object
@@ -25,17 +26,13 @@ ArgumentFlag<const char*> config_notation("-C", "Configuration using expression 
 ```
 
 > Note: While not required by C++, always explicitly signify the type of 
-> ArgumentFlag. While the compiler can *sometimes* infer the type when given
-> a default value, this is finicky and unreliable.
-
-> Note: `char*` not permitted, only `const char*`
+> ArgumentFlag. The compiler can *sometimes* infer the type when given
+> a default value, but is finicky and unreliable.
 
 ### 3. Add Flags to list of flags
 ```c++
 BaseFlag* configGroup[]{&config, &config_trigger, &config_pulseWidth, &config_elevation};
 ```
-
-> Note: naming preference should be `[leaderFlagName]Group` for readability.
 
 ### 4. Add flag list to Parser
 ```c++
@@ -54,6 +51,8 @@ myParser.parse(<input>);
 ### CLion
 Use the run configurations panel
 ### Linux
+> A shell script is provided under cli > tests > flagTesting.sh which simply packages up the commands listed below.
+
 Build the project with coverage flags enabled:
 ```shell
 rm -rf build
