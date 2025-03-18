@@ -41,10 +41,26 @@ protected:
     // for Foo.
 };
 
+void hello(bool a, int8_t b) {
+
+}
+
+void hello2(int a, int8_t b) {
+
+}
+
+void hello3(double a, int8_t b) {
+
+}
+
+void hello4(const char* a, int8_t b) {
+
+}
+
 // Demonstrate some basic assertions.
 // TEST(TestSuiteName, TestName)
 TEST(SimpleFlag, TestAccessors) {
-    SimpleFlag testA("--testA", "some help text", true);    // testing with required flags
+    SimpleFlag testA("--testA", "some help text", true, hello);    // testing with required flags
 
     // retrieve basic attributes
     EXPECT_STREQ(testA.name(), "--testA");
@@ -55,7 +71,7 @@ TEST(SimpleFlag, TestAccessors) {
 }
 
 TEST(SimpleFlag, TestParse) {
-    SimpleFlag testA("--testA", "some help text", true);    // testing with required flags
+    SimpleFlag testA("--testA", "some help text", true, hello);    // testing with required flags
 
     ASSERT_EQ(testA.parse(nullptr), 0); // should not fail, simple flags have no arguments to parse
     EXPECT_TRUE(testA.isSet());
@@ -74,7 +90,7 @@ TEST(SimpleFlag, TestParse) {
 
 TEST(ArgumentFlag, TestAccessors) {
     // "normal" flag
-    ArgumentFlag<int> testA("--testA", 5, "some help text", true);
+    ArgumentFlag<int> testA("--testA", 5, "some help text", true, hello2);
     EXPECT_STREQ(testA.name(), "--testA");
     EXPECT_STREQ(testA.help(), "some help text");
     EXPECT_TRUE(testA.isRequired());
@@ -82,7 +98,7 @@ TEST(ArgumentFlag, TestAccessors) {
     EXPECT_FALSE(testA.verify());
 
     // special case of const char* input
-    ArgumentFlag<const char*> testB("--testB", "defaultTest", "some help text", false);
+    ArgumentFlag<const char*> testB("--testB", "defaultTest", "some help text", false, hello4);
     EXPECT_STREQ(testB.name(), "--testB");
     EXPECT_STREQ(testB.help(), "some help text");
     EXPECT_FALSE(testB.isRequired());
@@ -90,7 +106,7 @@ TEST(ArgumentFlag, TestAccessors) {
     EXPECT_TRUE(testB.verify());
 
     // no default value provided
-    ArgumentFlag<double> testC("--testC", "some help text", true);
+    ArgumentFlag<double> testC("--testC", "some help text", true, hello3);
     EXPECT_STREQ(testC.name(), "--testC");
     EXPECT_STREQ(testC.help(), "some help text");
     EXPECT_TRUE(testC.isRequired());
@@ -100,7 +116,7 @@ TEST(ArgumentFlag, TestAccessors) {
 
 TEST(ArgumentFlag, TestParse) {
     // "normal" flag, forced to use default
-    ArgumentFlag<int> testA("--testA", 0, "some help text", true);
+    ArgumentFlag<int> testA("--testA", 0, "some help text", true, hello2);
 
     ASSERT_EQ(testA.parse(nullptr), 0); // should not fail when given no argument due to default argument
     EXPECT_TRUE(testA.isSet());
@@ -116,7 +132,7 @@ TEST(ArgumentFlag, TestParse) {
 
 
     // special case of const char* input
-    ArgumentFlag<const char*> testB("--testB", "defaultTest", "some help text", true);
+    ArgumentFlag<const char*> testB("--testB", "defaultTest", "some help text", true, hello4);
     char argB[12] = "changedText";
 
     ASSERT_EQ(testB.parse(argB), 0); // should not fail, argument given
@@ -125,7 +141,7 @@ TEST(ArgumentFlag, TestParse) {
 
 
     // no default value provided
-    ArgumentFlag<double> testC("--testC", "some help text", true);
+    ArgumentFlag<double> testC("--testC", "some help text", true, hello3);
     char argC[4] = "5.1";
 
     ASSERT_EQ(testC.parse(argC), 0); // should not fail, no default argument but argument provided
@@ -135,7 +151,7 @@ TEST(ArgumentFlag, TestParse) {
 
 TEST(ArgumentFlag, TestFailure) {
     // no default argument passed in
-    ArgumentFlag<int> testA("--testA", "some help text", true);
+    ArgumentFlag<int> testA("--testA", "some help text", true, hello2);
     ::testing::internal::CaptureStderr();
     ASSERT_EQ(testA.parse(nullptr), -1); // should fail, no default argument provided and no argument provided
     std::string outputA = ::testing::internal::GetCapturedStderr();
@@ -143,7 +159,7 @@ TEST(ArgumentFlag, TestFailure) {
     EXPECT_EQ(outputA, expectedA);
 
     // parsing error, wrong type input
-    ArgumentFlag<int> testB("--testB", 0, "some help text", true);
+    ArgumentFlag<int> testB("--testB", 0, "some help text", true, hello2);
     char argB[4] = "abc";
     ::testing::internal::CaptureStderr();
     ASSERT_EQ(testB.parse(argB), -1);
@@ -152,7 +168,7 @@ TEST(ArgumentFlag, TestFailure) {
     EXPECT_EQ(outputB, expectedB);
 
     // parsing error, mixed input
-    ArgumentFlag<double> testC("--testC", 5.0, "some help text", true);
+    ArgumentFlag<double> testC("--testC", 5.0, "some help text", true, hello3);
     char argC[7] = "123abc";
     ::testing::internal::CaptureStderr();
     ASSERT_EQ(testC.parse(argC), -1); // should fail, argument provided cannot map to a fundamental type (or const char*)

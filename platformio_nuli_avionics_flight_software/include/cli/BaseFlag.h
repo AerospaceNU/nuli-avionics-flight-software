@@ -54,6 +54,11 @@ public:
     virtual int8_t parse(char* arg) = 0;
 
     /**
+     * @brief Dispatches to a pre-set m_callback function.
+     */
+    virtual void run(int8_t uid) = 0;
+
+    /**
      * @brief Tells the caller if this flag has been set.
      * @return true if set
      */
@@ -77,6 +82,14 @@ public:
     virtual bool verify() const = 0;
 
     /**
+     * @brief Sets the Flag's streams
+     * @param inputStream Input
+     * @param outputStream Output
+     * @param errorStream Error
+     */
+    virtual void setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) = 0;
+
+    /**
      * @brief Retrieves the value of the flag.
      * @details When retrieving the value of a flag, a user must check if the
      * flag's value is set.
@@ -85,20 +98,6 @@ public:
      */
     template<typename T>
     T getValue();
-
-    /**
-     * @brief Retrieves the flag of a flag from a derived class
-     * @param outValue Output
-     */
-    virtual void getValueRaw(void* outValue) const = 0;
-
-    /**
-     * @brief Sets the Flag's streams
-     * @param inputStream Input
-     * @param outputStream Output
-     * @param errorStream Error
-     */
-    void setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream);
 
 protected:
     /**
@@ -130,6 +129,12 @@ protected:
      */
     template<typename T>
     inline int8_t parseArgument(const char* value, T &result);
+
+    /**
+     * @brief Retrieves the flag of a flag from a derived class
+     * @param outValue Output
+     */
+    virtual void getValueRaw(void* outValue) const = 0;
 
     const char* m_name;         ///< Name, or calling sign, of the flag
     const char* m_helpText;     ///< A flag's help text

@@ -12,7 +12,7 @@ buildCoverageReport() {
 
     rm -rf build
 
-    cmake -S . -B build -DENABLE_COVERAGE=ON
+    cmake -S . -B build -DENABLE_COVERAGE=ON -DBUILD_DOC=OFF
 
     cmake --build build
 

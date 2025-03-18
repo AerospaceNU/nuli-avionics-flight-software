@@ -5,12 +5,12 @@
 #include "ArgumentFlag.h"
 
 template<typename T>
-ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required)
-        : BaseFlag(name, helpText, required), m_defaultValue(defaultValue), m_defaultValueSet(true) {}
+ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, void (*callback)(T, int8_t))
+        : BaseFlag(name, helpText, required), m_defaultValue(defaultValue), m_defaultValueSet(true), m_callback(callback) {}
 
 template<typename T>
-ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required)
-        : BaseFlag(name, helpText, required) {}
+ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required, void (*callback)(T, int8_t))
+        : BaseFlag(name, helpText, required), m_defaultValueSet(false), m_callback(callback) {}
 
 template<typename T>
 const char* ArgumentFlag<T>::name() const {
@@ -47,6 +47,11 @@ int8_t ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to return new a
 }
 
 template<typename T>
+void ArgumentFlag<T>::run(int8_t uid) {
+    if (m_callback) m_callback(m_argument, uid);
+}
+
+template<typename T>
 bool ArgumentFlag<T>::isSet() const {
     return m_set;
 }
@@ -68,12 +73,24 @@ bool ArgumentFlag<T>::verify() const {
 }
 
 template<typename T>
+void ArgumentFlag<T>::setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) {
+    m_inputStream = inputStream;
+    m_outputStream = outputStream;
+    m_errorStream = errorStream;
+}
+
+template<typename T>
 T ArgumentFlag<T>::getValueDerived() const {
     if (this->isSet()) {
         return m_argument;
     } else {
         return m_defaultValue;
     }
+}
+
+template<typename T>
+void ArgumentFlag<T>::getValueRaw(void* outValue) const  {
+    *static_cast<T*>(outValue) = m_argument;  // Cast and assign
 }
 
 #endif // DESKTOP_ARGUMENTFLAG_TPP

@@ -30,7 +30,7 @@ add_executable(desktop ${desktopSimFiles})
 # ========Doxygen Build Configuration========
 option(BUILD_DOC "Build documentation" ON)
 find_package(Doxygen)
-if (DOXYGEN_FOUND)
+if (BUILD_DOC AND DOXYGEN_FOUND)
     add_custom_target(create_doxygen ALL
             COMMAND ${DOXYGEN_EXECUTABLE} Doxyfile
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs/

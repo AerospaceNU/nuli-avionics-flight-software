@@ -22,7 +22,7 @@ public:
      * @param helpText Name, or calling sign, of the flag
      * @param m_required If a flag is required
      */
-    SimpleFlag(const char* name, const char* helpText, bool m_required);
+    SimpleFlag(const char* name, const char* helpText, bool m_required, void (*callback)(bool, int8_t));
 
     /**
      * @brief Retrieves the flag's name
@@ -43,6 +43,11 @@ public:
      * @return 0 if success, negative for failure
      */
     int8_t parse(char* arg) override;
+
+    /**
+     * @brief Dispatches to a pre-set m_callback function.
+     */
+    void run(int8_t uid) override;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -68,21 +73,29 @@ public:
     bool verify() const override;
 
     /**
-     * @brief Retrieves the value of the flag
+     * @brief Sets the Flag's streams
+     * @param inputStream Input
+     * @param outputStream Output
+     * @param errorStream Error
+     */
+    void setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) override;
+
+    /**
+     * @brief Retrieves the value of a derived flag
      * @tparam T type of the value
      * @return A flag's value
      */
     bool getValueDerived() const;
 
+protected:
     /**
     * @brief Retrieves the flag of a flag from a derived class
     * @param outValue Output
     */
-    void getValueRaw(void* outValue) const override {
-        *static_cast<bool*>(outValue) = m_set;
-    }
+    void getValueRaw(void* outValue) const override;
 
 private:
+    void (*m_callback)(bool, int8_t);
 };
 
 

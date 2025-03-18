@@ -55,7 +55,7 @@ int8_t Parser::parse(int argc, char** argv) {
     }
 
     // if any, go through rest of arguments
-    for (argvPos; argvPos < argc; ++argvPos) {
+    for (; argvPos < argc; ++argvPos) {
         const char* currArg = argv[argvPos];
         bool matched = false;
 
@@ -95,8 +95,6 @@ int8_t Parser::parse(int argc, char** argv) {
 }
 
 int8_t Parser::parse(char* input) {
-    // removing '\n'
-
     /* Diagram represent how the parser works without dynamic memory allocation.
      *   [--config 5 -C "hello world"]
      *           |- null
@@ -122,7 +120,7 @@ int8_t Parser::parse(char* input) {
             case '\t':
             case '\n':
             case ' ':
-                *p = '\0';  // mark the end of a character
+                *p = '\0';  // mark the end of a string
                 p++;
                 break;
             case '"':
@@ -130,52 +128,34 @@ int8_t Parser::parse(char* input) {
                 argv[argc++] = p;
 
                 // loop until end of quote or input
-                while(*p != '\0' && *p != '"') {
-                    p++;
-                }
-
-                if (*p) {
-                    *p = '\0';
-                    p++;
-                }
+                p = getString(p, '"');
 
                 break;
             default:
                 argv[argc++] = p;
 
                 // loop until end of word
-                while(*p && *p != ' ') {
-                    p++;
-                }
-
-                if (*p) {
-                    *p = '\0';
-                    p++;
-                }
+                p = getString(p, ' ');
 
                 break;
         }
     }
 
-
-
-//    // removing '\n'
-//    input[std::strcspn(input, "\n")] = 0;
-//
-//    // parsing into argc and argv
-//    int argc = 1;   // compatibility with command-line argc/argv
-//    char* argv[255] = {nullptr};
-//    char* savePtr;
-//
-//    char* p = strtok_r(input, " ", &savePtr);   // strtok is disgusting
-//    while (p && argc < 255 - 1) {
-//        argv[argc++] = p;
-//        p = strtok_r(nullptr, " ", &savePtr);
-//    }
-//
     argv[argc] = nullptr;
-//
     return this->parse(argc, argv);
+}
+
+char* Parser::getString(char* p, char target) const { // NOLINT(*-convert-member-functions-to-static)
+    while(*p && *p != target) {
+        p++;
+    }
+
+    if (*p) {
+        *p = '\0';
+        p++;
+    }
+
+    return p;
 }
 
 void Parser::printHelp() const {
@@ -203,6 +183,8 @@ void Parser::resetFlags() {
         // reset each flag group
         m_flagGroups[i].resetFlags();
     }
+
+    m_latestFlagGroup = -1;
 }
 
 int8_t Parser::getFlagGroup(const char* flagGroupName, Parser::FlagGroup_s** flagGroup) {
@@ -216,14 +198,37 @@ int8_t Parser::getFlagGroup(const char* flagGroupName, Parser::FlagGroup_s** fla
     return -1;
 }
 
+Parser::FlagGroup_s* Parser::getFlagGroup(int8_t uid) {
+    for (int i = 0; i < m_numFlagGroups; ++i) {
+        if (m_flagGroups[i].uid_s == uid) {
+            return &m_flagGroups[i];
+        }
+    }
+
+    return nullptr;
+}
+
+int8_t Parser::runFlags() {
+    // retrieve the most recent flag group
+    FlagGroup_s *flagGroup = getFlagGroup(m_latestFlagGroup);
+    if (! flagGroup) {
+        return -1;
+    }
+
+    flagGroup->runFlags();
+    return 0;
+}
+
 /* /////////////// */
 /* / FlagGroup_s / */
 /* /////////////// */
 
 Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags,
-                                 FILE* inputStream, FILE* outputStream, FILE* errorStream)
+                                 FILE* inputStream, FILE* outputStream, FILE* errorStream,
+                                 int8_t uid)
         : flagGroupName_s(flagGroupName), numFlags_s(numFlags),
-          inputStream_s(inputStream), outputStream_s(outputStream), errorStream_s(errorStream) {
+          inputStream_s(inputStream), outputStream_s(outputStream), errorStream_s(errorStream),
+          uid_s(uid) {
     // check flag count
     if (numFlags > MAX_FLAGS) {
         throw std::invalid_argument("Maximum flag count exceeded");
@@ -264,4 +269,13 @@ void Parser::FlagGroup_s::resetFlags() {
     for (uint8_t i = 0; i < numFlags_s; ++i) {
         flags_s[i]->reset();
     }
+}
+
+int8_t Parser::FlagGroup_s::runFlags() {
+
+    for (uint8_t i = 0; i < numFlags_s; ++i) {
+        if (flags_s[i]->isSet()) flags_s[i]->run(uid_s);
+    }
+
+    return 0;
 }

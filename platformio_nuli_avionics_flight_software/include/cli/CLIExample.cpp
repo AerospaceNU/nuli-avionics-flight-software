@@ -50,84 +50,101 @@
 --sim  Simulate past flights in hardware
 
 --version  Send Git version and tag info
-
  */
+
+void hello(bool a, int8_t b) {
+    printf("callback! hello!\n");
+    printf("my group uid is: %d", b);
+}
+
+void hello2(int a, int8_t b) {
+
+}
+
+void hello3(float a, int8_t b) {
+
+}
+
+void hello4(const char* a, int8_t b) {
+
+}
+
 
 int main() {
     Parser myParser = Parser(stdin, stdout, stderr);
 
     /* config group */
-    SimpleFlag config("--config", "Configure a trigger with additional flag", true);
-    ArgumentFlag<int> config_trigger("-t", "Trigger to configure", false);
-    ArgumentFlag<int> config_triggerType("-m", "Trigger type", false);
-    ArgumentFlag<int> config_pyro("-p", "Pyro num or cut channel", false);
-    ArgumentFlag<float> config_duration("-d", "Duration", false);
-    ArgumentFlag<float> config_pulse("-w", "Pulse width", false);
-    ArgumentFlag<const char*> config_configuration("-C", "Configuration using expression notation. Must be in quotes", false);
-    SimpleFlag config_deleteT("-D", "Delete this trigger", false);
-    SimpleFlag config_manual("-N", "Disallow manual triggering", false);
-    ArgumentFlag<float> config_elevation("-e", "Configure ground elevation (in meters)", false);
-    ArgumentFlag<float> config_groundTemp("-r", "Configure ground temperature (in celsius)", false);
-    ArgumentFlag<int> config_channel("-c","Configure radio channel (in multiples of bandwidth), negative numbers allowed", false);
+    SimpleFlag config("--config", "Configure a trigger with additional flag", true, hello);
+    ArgumentFlag<int> config_trigger("-t", "Trigger to configure", false, hello2);
+    ArgumentFlag<int> config_triggerType("-m", 2, "Trigger type", false, hello2);
+    ArgumentFlag<int> config_pyro("-p", "Pyro num or cut channel", false, hello2);
+    ArgumentFlag<float> config_duration("-d", "Duration", false, hello3);
+    ArgumentFlag<float> config_pulse("-w", "Pulse width", false, hello3);
+    ArgumentFlag<const char*> config_configuration("-C", "Configuration using expression notation. Must be in quotes", false, hello4);
+    SimpleFlag config_deleteT("-D", "Delete this trigger", false, hello);
+    SimpleFlag config_manual("-N", "Disallow manual triggering", false, hello);
+    ArgumentFlag<float> config_elevation("-e", "Configure ground elevation (in meters)", false, hello3);
+    ArgumentFlag<float> config_groundTemp("-r", "Configure ground temperature (in celsius)", false, hello3);
+    ArgumentFlag<int> config_channel("-c","Configure radio channel (in multiples of bandwidth), negative numbers allowed", false, hello2);
     BaseFlag* configGroup[]{&config, &config_trigger, &config_triggerType,
                             &config_pyro, &config_duration, &config_pulse,
                             &config_configuration, &config_deleteT,
                             &config_manual, &config_elevation,
                             &config_groundTemp, &config_channel};
 
-    /* create group */
-    SimpleFlag createFlight("--create_flight", "Clear state log and move back to preflight", true);
-    BaseFlag* createFlightGroup[](&createFlight);
-
-    /* erase group */
-    SimpleFlag erase("--erase", "Fully erases on-board flash", true);
-    BaseFlag* eraseGroup[](&erase);
-
-    /* help group */
-    SimpleFlag help("--help", "FCB produces standard command line help string", true);
-    BaseFlag* helpGroup[](&help);
-
-    /* linecutter group */
-    SimpleFlag linecutter("--linecutter", "Send linecutter cut with given", true);
-    ArgumentFlag<int> linecutter_id("-i", "Send linecutter cut with given ID", true);
-    ArgumentFlag<const char*> linecutter_command("-c", "Send a command", true);
-    BaseFlag* linecutterGroup[](&linecutter, &linecutter_id, &linecutter_command);
-
-    /* offload group */
-    SimpleFlag offload("--offload", "Offloads the last flight recorded on the board", true);
-    ArgumentFlag<int> offload_flightNum("-f", "Offload a specific flight number off the board", false);
-    SimpleFlag offload_help("-h", "Help for offload. Prints info about each flight", true);
-    BaseFlag* offloadGroup[](&offload, &offload_flightNum, &offload_help);
-
-    /* triggerfire group */
-    SimpleFlag triggerfire("--triggerfire", "IMMEDIATELY fires the given trigger number", true);
-    ArgumentFlag<int> triggerfire_triggerNum("-t", "Trigger number to fire", true);
-    BaseFlag* triggerfireGroup[](&triggerfire, &triggerfire_triggerNum);
-
-    /* sense group */
-    SimpleFlag sense("--sense", "Reads back most recent sensor data", true);
-    BaseFlag* senseGroup[](&sense);
-
-    /* sim group */
-    SimpleFlag sim("--sim", "Simulate past flights in hardware", true);
-    BaseFlag* simGroup[](&sim);
-
-    /* version group */
-    SimpleFlag version("--version", "Send Git version and tag info", true);
-    BaseFlag* versionGroup[](&version);
+//    /* create group */
+//    SimpleFlag createFlight("--create_flight", "Clear state log and move back to preflight", true);
+//    BaseFlag* createFlightGroup[](&createFlight);
+//
+//    /* erase group */
+//    SimpleFlag erase("--erase", "Fully erases on-board flash", true);
+//    BaseFlag* eraseGroup[](&erase);
+//
+//    /* help group */
+//    SimpleFlag help("--help", "FCB produces standard command line help string", true);
+//    BaseFlag* helpGroup[](&help);
+//
+//    /* linecutter group */
+//    SimpleFlag linecutter("--linecutter", "Send linecutter cut with given", true);
+//    ArgumentFlag<int> linecutter_id("-i", "Send linecutter cut with given ID", true);
+//    ArgumentFlag<const char*> linecutter_command("-c", "Send a command", true);
+//    BaseFlag* linecutterGroup[](&linecutter, &linecutter_id, &linecutter_command);
+//
+//    /* offload group */
+//    SimpleFlag offload("--offload", "Offloads the last flight recorded on the board", true);
+//    ArgumentFlag<int> offload_flightNum("-f", "Offload a specific flight number off the board", false);
+//    SimpleFlag offload_help("-h", "Help for offload. Prints info about each flight", true);
+//    BaseFlag* offloadGroup[](&offload, &offload_flightNum, &offload_help);
+//
+//    /* triggerfire group */
+//    SimpleFlag triggerfire("--triggerfire", "IMMEDIATELY fires the given trigger number", true);
+//    ArgumentFlag<int> triggerfire_triggerNum("-t", "Trigger number to fire", true);
+//    BaseFlag* triggerfireGroup[](&triggerfire, &triggerfire_triggerNum);
+//
+//    /* sense group */
+//    SimpleFlag sense("--sense", "Reads back most recent sensor data", true);
+//    BaseFlag* senseGroup[](&sense);
+//
+//    /* sim group */
+//    SimpleFlag sim("--sim", "Simulate past flights in hardware", true);
+//    BaseFlag* simGroup[](&sim);
+//
+//    /* version group */
+//    SimpleFlag version("--version", "Send Git version and tag info", true);
+//    BaseFlag* versionGroup[](&version);
 
 
     // adding to parser
     myParser.addFlagGroup(configGroup);
-    myParser.addFlagGroup(createFlightGroup);
-    myParser.addFlagGroup(eraseGroup);
-    myParser.addFlagGroup(helpGroup);
-    myParser.addFlagGroup(linecutterGroup);
-    myParser.addFlagGroup(offloadGroup);
-    myParser.addFlagGroup(triggerfireGroup);
-    myParser.addFlagGroup(senseGroup);
-    myParser.addFlagGroup(simGroup);
-    myParser.addFlagGroup(versionGroup);
+//    myParser.addFlagGroup(createFlightGroup);
+//    myParser.addFlagGroup(eraseGroup);
+//    myParser.addFlagGroup(helpGroup);
+//    myParser.addFlagGroup(linecutterGroup);
+//    myParser.addFlagGroup(offloadGroup);
+//    myParser.addFlagGroup(triggerfireGroup);
+//    myParser.addFlagGroup(senseGroup);
+//    myParser.addFlagGroup(simGroup);
+//    myParser.addFlagGroup(versionGroup);
 
     while(true) {
 //        myParser.printHelp();
@@ -174,6 +191,9 @@ int main() {
 
         const char* configuration = config_configuration.getValue<const char*>();
         printf("Configuration is: %s\n", configuration);
+
+        printf("Doing callbacks!\n");
+        myParser.runFlags();
 
         // resetting all flags to default values.
         // --> all flags are unset

@@ -12,21 +12,14 @@
  *          source, while in other places, they are printed out by the parent
  *          method.
  *
- * @TODO: Formalize handling of template methods. Currently, sometimes they are
- *          1. put in the header file with the declaration, 2. defined at the
- *          bottom of the header file, 3. in a separate .tpp file.
- *          Read here: https://softwareengineering.stackexchange.com/questions/373916/c-preferred-method-of-dealing-with-implementation-for-large-templates
- *          -- chosen to use .tpp files
- *
- * @TODO: create a side-command that prints all flags with their set value
+ * @TODO: create a help-command that prints all flags with their set value
  *
  * @TODO: increase validation.
  *          ex: no duplicate Leader flags
  *          ex: no duplicate flags within a FlagGroup
  *          ex: co-dependencies (this might be a nice to add)
  *
- * @FIXME: Parser splits quoted string into multiple.
- *          E.g. "hello me" --> ["hello] [me"]
+ * @TODO: Observe memory usage between `template<uint8_t n>` and passing in `n`
  */
 
 const uint8_t MAX_FLAG_GROUPS = 255;    ///< Maximum number of FlagGroups
@@ -46,6 +39,12 @@ const uint8_t MAX_FLAGS = 255;          ///< Maximum number of flags per FlagGro
  */
 class Parser {
 public:
+    enum EXIT_STATUS_E : uint8_t {
+        EXIT_NORMAL = 0,
+        EXIT_FAIL = 1,
+        EXIT_FATAL = 2
+    };
+
     /**
      * @brief Default constructor
      */
@@ -107,6 +106,12 @@ public:
     template<typename T>
     int8_t getValue(const char* flagGroupName, const char* flagName, T &value);
 
+    /**
+     * @brief Runs the set of flags most recently passed in
+     * @details Uses the provided m_callback functions to run the flags which
+     * were most recently passed in.
+     */
+    int8_t runFlags();
 
     /**
      * @brief Prints help text for each FlagGroup
@@ -136,7 +141,8 @@ private:
          * @warning Constructor for internal use only
          */
         FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{nullptr}, numFlags_s(0),
-                        inputStream_s(stdin), outputStream_s(stdout), errorStream_s(stderr) {}
+                        inputStream_s(stdin), outputStream_s(stdout), errorStream_s(stderr),
+                        uid_s(-1) {}
 
         /**
          * @brief Constructor
@@ -145,7 +151,8 @@ private:
          * @param numFlags The number of flags added
          */
         FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags,
-                    FILE* inputStream, FILE* outputStream, FILE* errorStream);
+                    FILE* inputStream, FILE* outputStream, FILE* errorStream,
+                    int8_t uid);
 
         /**
          * @brief Retrieves the leader's flag
@@ -153,6 +160,12 @@ private:
          */
         BaseFlag* getLeader();
 
+        /**
+         * @brief Retrieves specified flag from group
+         * @param flagName The desired flag
+         * @param flag Returned flag
+         * @return 0 if success
+         */
         int8_t getFlag(const char* flagName, BaseFlag** flag);
 
         /**
@@ -160,6 +173,8 @@ private:
          * @return 0 if successful
          */
         int8_t verifyFlags();
+
+        int8_t runFlags();
 
         /**
          * @brief Prints help text for each Flag
@@ -178,16 +193,24 @@ private:
         BaseFlag* flags_s[MAX_FLAGS] = {nullptr};   ///< The flags within this FlagGroup
         const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
         uint8_t numFlags_s;                         ///< number of flags within FlagGroup
+        int8_t uid_s{};                              ///< unique number identifying FlagGroup
 
         FILE* inputStream_s;    ///< Input stream
         FILE* outputStream_s;   ///< Output stream
         FILE* errorStream_s;    ///< Error stream
     };
 
+
+    char* getString(char* p, char target) const;
+
     int8_t getFlagGroup(const char* flagGroupName, FlagGroup_s** flagGroup);
+
+    FlagGroup_s* getFlagGroup(int8_t uid);
 
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
+    uint8_t m_uidIdentifier = 0;                ///< index of uids
+    int8_t m_latestFlagGroup = -1;              ///< the last flag group processed
 
     FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin
     FILE* m_outputStream = stdout;  ///< Output stream, defaults to stdout

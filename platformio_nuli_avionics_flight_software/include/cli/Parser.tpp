@@ -17,7 +17,8 @@ int8_t Parser::addFlagGroup(BaseFlag* (&flagGroup)[n]) {
     }
 
     FlagGroup_s newFlagGroup(flagGroup, flagGroup[0]->name(), n,
-                             m_inputStream, m_outputStream, m_errorStream);
+                             m_inputStream, m_outputStream, m_errorStream,
+                             ++m_latestFlagGroup);
 
     m_flagGroups[m_numFlagGroups++] = newFlagGroup;
 

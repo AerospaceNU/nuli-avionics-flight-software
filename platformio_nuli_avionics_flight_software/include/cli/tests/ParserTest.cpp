@@ -7,10 +7,26 @@
 #include "cli/SimpleFlag.h"
 #include "cli/ArgumentFlag.h"
 
+void hello(bool a, int8_t b) {
+
+}
+
+void hello2(int a, int8_t b) {
+
+}
+
+void hello3(double a, int8_t b) {
+
+}
+
+void hello4(const char* a, int8_t b) {
+
+}
+
 TEST(ParserTest, TestBasic) {
     // basic parsing with a SimpleFlag
     Parser testParserA = Parser();
-    SimpleFlag testA("--testA", "some help text", true);
+    SimpleFlag testA("--testA", "some help text", true, hello);
     BaseFlag* testAGroup[] = {&testA};
     testParserA.addFlagGroup(testAGroup);
 
@@ -22,7 +38,7 @@ TEST(ParserTest, TestBasic) {
 
     // basic parsing with an ArgumentFlag
     Parser testParserB = Parser();
-    ArgumentFlag<int> testB("--testB", 5, "some help text", true);
+    ArgumentFlag<int> testB("--testB", 5, "some help text", true, hello2);
     BaseFlag* testBGroup[] = {&testB};
     testParserB.addFlagGroup(testBGroup);
 
@@ -36,9 +52,9 @@ TEST(ParserTest, TestBasic) {
 TEST(ParserTest, TestMultiple) {
     // parsing with multiple SimpleFlags
     Parser testParserA = Parser();
-    SimpleFlag testA_1("--testA", "some help text", true);
-    SimpleFlag testA_2("-a", "help", true);
-    SimpleFlag testA_3("-b", "help", false);
+    SimpleFlag testA_1("--testA", "some help text", true, hello);
+    SimpleFlag testA_2("-a", "help", true, hello);
+    SimpleFlag testA_3("-b", "help", false, hello);
     BaseFlag* testGroupA[] = {&testA_1, &testA_2, &testA_3};
     testParserA.addFlagGroup(testGroupA);
 
@@ -52,9 +68,9 @@ TEST(ParserTest, TestMultiple) {
 
     // parsing with multiple ArgumentFlags
     Parser testParserB = Parser();
-    ArgumentFlag<int> testB_1("--testB", "some help text", true);
-    ArgumentFlag<int> testB_2("-a", 0, "some help text", false);
-    ArgumentFlag<double> testB_3("-b", "some help text", true);
+    ArgumentFlag<int> testB_1("--testB", "some help text", true, hello2);
+    ArgumentFlag<int> testB_2("-a", 0, "some help text", false, hello2);
+    ArgumentFlag<double> testB_3("-b", "some help text", true, hello3);
     BaseFlag* testGroupB[] = {&testB_1, &testB_2, &testB_3};
     testParserB.addFlagGroup(testGroupB);
 
@@ -62,11 +78,30 @@ TEST(ParserTest, TestMultiple) {
     ASSERT_EQ(testParserB.parse(argsB), 0);
 }
 
+TEST(ParserTest, TestComplex) {
+    Parser testParserA = Parser();
+    SimpleFlag testA_1("--testA", "some help text", true, hello);
+    ArgumentFlag<int> testA_2("-a", "help", true, hello2);
+    ArgumentFlag<const char*> testA_3("-b", "help", true, hello4);
+    SimpleFlag testA_4("-c", "help", true, hello);
+    BaseFlag* testGroupA[] = {&testA_1, &testA_2, &testA_3, &testA_4};
+    testParserA.addFlagGroup(testGroupA);
+
+    char argsA[33] = "--testA -a 5 -b \"hello world\" -c";
+    ASSERT_EQ(testParserA.parse(argsA), 0);
+
+    const char* outputA_3;
+    EXPECT_EQ(testParserA.getValue<const char*>("--testA", "-b", outputA_3), 0);
+    EXPECT_STREQ(testA_3.getValueDerived(), outputA_3);
+    EXPECT_STREQ(outputA_3, "hello world");
+
+}
+
 TEST(ParserTest, TestHelp) {
     // check help text
     Parser testParserA = Parser();
-    SimpleFlag testA_1("--testA", "some help for --testA", true);
-    ArgumentFlag<int> testA_2("-a", 0, "provide an integer", false);
+    SimpleFlag testA_1("--testA", "some help for --testA", true, hello);
+    ArgumentFlag<int> testA_2("-a", 0, "provide an integer", false, hello2);
     BaseFlag* testGroupA[] = {&testA_1, &testA_2};
     testParserA.addFlagGroup(testGroupA);
 
@@ -82,8 +117,8 @@ TEST(ParserTest, TestReset) {
     // test that reset unsets a flag
     // right now, it doesn't really do anything else
     Parser testParserA = Parser();
-    SimpleFlag testA_1("--testA", "some help for --testA", true);
-    ArgumentFlag<int> testA_2("-a", 0, "provide an integer", false);
+    SimpleFlag testA_1("--testA", "some help for --testA", true, hello);
+    ArgumentFlag<int> testA_2("-a", 0, "provide an integer", false, hello2);
     BaseFlag* testGroupA[] = {&testA_1, &testA_2};
     testParserA.addFlagGroup(testGroupA);
 
@@ -111,7 +146,7 @@ TEST(ParserTest, TestFailure1) {
 
     // providing no flags to parse
     Parser testParserB = Parser();
-    ArgumentFlag<int> testB_1("--testB", "some help text", true);
+    ArgumentFlag<int> testB_1("--testB", "some help text", true, hello2);
     BaseFlag* testGroupB[] = {&testB_1};
     testParserB.addFlagGroup(testGroupB);
 
@@ -128,8 +163,8 @@ TEST(ParserTest, TestFailure2) {
     //  maybe fix by adding a way to set the stdout and stderr streams
     // adding flag group, but wrong first flag provided
     Parser testParserC = Parser();
-    ArgumentFlag<int> testC_1("--testC", "some help text", true);
-    ArgumentFlag<int> testC_2("-a", "some help text", true);
+    ArgumentFlag<int> testC_1("--testC", "some help text", true, hello2);
+    ArgumentFlag<int> testC_2("-a", "some help text", true, hello2);
     BaseFlag* testGroupC[] = {&testC_1, &testC_2};
     testParserC.addFlagGroup(testGroupC);
 
@@ -143,8 +178,8 @@ TEST(ParserTest, TestFailure2) {
 
     // parsing a unknown flag
     Parser testParserD = Parser();
-    ArgumentFlag<int> testD_1("--testD", "some help text", true);
-    ArgumentFlag<int> testD_2("-a", "some help text", true);
+    ArgumentFlag<int> testD_1("--testD", "some help text", true, hello2);
+    ArgumentFlag<int> testD_2("-a", "some help text", true, hello2);
     BaseFlag* testGroupD[] = {&testD_1, &testD_2};
     testParserD.addFlagGroup(testGroupD);
 
@@ -159,8 +194,8 @@ TEST(ParserTest, TestFailure2) {
 TEST(ParserTest, TestFailure3) {
     // when missing a required argument
     Parser testParserE = Parser();
-    SimpleFlag testE_1("--testE", "some help text", true);
-    ArgumentFlag<int> testE_2("-a", "some help text", true);
+    SimpleFlag testE_1("--testE", "some help text", true, hello);
+    ArgumentFlag<int> testE_2("-a", "some help text", true, hello2);
     BaseFlag* testGroupD[] = {&testE_1, &testE_2};
     testParserE.addFlagGroup(testGroupD);
 
