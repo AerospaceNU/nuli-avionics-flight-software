@@ -117,7 +117,7 @@ protected:
     void getValueRaw(void* outValue) const override;
 
 private:
-    void (*m_callback)(T, int8_t);    ///< Does the thing
+    void (*m_callback)(T, int8_t);    ///< Does the thing. Takes in a flag's value and its group's uid
     bool m_defaultValueSet = false; ///< if a default value has been set
     T m_defaultValue;   ///< default value when not provided by the user
     T m_argument;       ///< value of the flag

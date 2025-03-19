@@ -18,8 +18,11 @@
  *          ex: no duplicate Leader flags
  *          ex: no duplicate flags within a FlagGroup
  *          ex: co-dependencies (this might be a nice to add)
+ *          ex: flag uid
  *
  * @TODO: Observe memory usage between `template<uint8_t n>` and passing in `n`
+ *          Perhaps get rid of the template for addFlagGroup because right now
+ *          the compiler would create a new instance for every new `n`
  */
 
 const uint8_t MAX_FLAG_GROUPS = 255;    ///< Maximum number of FlagGroups
@@ -39,12 +42,6 @@ const uint8_t MAX_FLAGS = 255;          ///< Maximum number of flags per FlagGro
  */
 class Parser {
 public:
-    enum EXIT_STATUS_E : uint8_t {
-        EXIT_NORMAL = 0,
-        EXIT_FAIL = 1,
-        EXIT_FATAL = 2
-    };
-
     /**
      * @brief Default constructor
      */
@@ -73,6 +70,18 @@ public:
      */
     template<uint8_t n>
     int8_t addFlagGroup(BaseFlag* (&flagGroup)[n]);
+
+    /**
+     * @brief Adds a set of Flags into a FlagGroup
+     * @details Creates a new FlagGroup and automatically sets each flag's
+     *          stdin, stdout, and stderr to the Parser's streams.
+     * @tparam n Number of flags provided (not user inputted)
+     * @param flagGroup An array of flags
+     * @param uid a unique identifier for the flagGroup
+     * @return 0 if successful
+     */
+    template<uint8_t n>
+    int8_t addFlagGroup(BaseFlag* (&flagGroup)[n], int8_t uid);
 
     /**
      * @brief Parses program argument inputs into FlagGroups
@@ -110,6 +119,7 @@ public:
      * @brief Runs the set of flags most recently passed in
      * @details Uses the provided m_callback functions to run the flags which
      * were most recently passed in.
+     * @return 0 if successful
      */
     int8_t runFlags();
 
@@ -174,7 +184,10 @@ private:
          */
         int8_t verifyFlags();
 
-        int8_t runFlags();
+        /**
+         * @brief Runs the callback functions of the most recent flag group set
+         */
+        void runFlags();
 
         /**
          * @brief Prints help text for each Flag
@@ -193,7 +206,7 @@ private:
         BaseFlag* flags_s[MAX_FLAGS] = {nullptr};   ///< The flags within this FlagGroup
         const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
         uint8_t numFlags_s;                         ///< number of flags within FlagGroup
-        int8_t uid_s{};                              ///< unique number identifying FlagGroup
+        int8_t uid_s;                               ///< unique number identifying FlagGroup
 
         FILE* inputStream_s;    ///< Input stream
         FILE* outputStream_s;   ///< Output stream
@@ -201,15 +214,32 @@ private:
     };
 
 
+    /**
+     * @brief Helper function for parse
+     * @param p Pointer to the input character array
+     * @param target The target character (e.g. a quotation mark or space)
+     * @return A pointer to the end of the segment
+     */
     char* getString(char* p, char target) const;
 
+    /**
+     * @brief Retrieves a flag group based on its name
+     * @param flagGroupName Name of the desired flag group
+     * @param flagGroup Placeholder
+     * @return 0 if success
+     */
     int8_t getFlagGroup(const char* flagGroupName, FlagGroup_s** flagGroup);
 
+    /**
+     * @brief Retrieves a flag group based on its identification number
+     * @param uid a (hopefully) unique number identifying the flag group
+     * @return 0 if success
+     */
     FlagGroup_s* getFlagGroup(int8_t uid);
 
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
-    uint8_t m_uidIdentifier = 0;                ///< index of uids
+    uint8_t m_uid = 0;                          ///< index of uids
     int8_t m_latestFlagGroup = -1;              ///< the last flag group processed
 
     FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin

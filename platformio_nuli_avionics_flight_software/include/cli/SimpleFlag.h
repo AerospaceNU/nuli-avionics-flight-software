@@ -95,7 +95,7 @@ protected:
     void getValueRaw(void* outValue) const override;
 
 private:
-    void (*m_callback)(bool, int8_t);
+    void (*m_callback)(bool, int8_t);   ///< Callback function. Takes in if a flag is set and its group's uid
 };
 
 

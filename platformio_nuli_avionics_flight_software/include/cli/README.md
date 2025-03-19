@@ -16,13 +16,30 @@ There are two types of flags supported which both inherit from `BaseFlag`.
 Parser myParser = Parser();
 ```
 
+### 2. Callbacks
+Callbacks must have the return type of `void` and must take in two 
+arguments. For `SimpleFlag`, a `bool` and a `int8_t` and for `ArgumentFlag`
+any fundamental type (plus `const char*`) and a `int8_t`.
+
+```c++
+void callback1(bool a, int8_t b);
+
+void callback2(int a, int8_t b) 
+
+void callback3(float a, int8_t b) 
+
+void callback4(uint8_t a, int8_t b) 
+
+void callback5(const char* a, int8_t b);
+```
+
 ### 2. Declare Flags
 ```c++
-SimpleFlag config("--config", "Configure a trigger with additional flags_s", true);
-ArgumentFlag<int> config_trigger("-t", 0, "Trigger number", true);
-ArgumentFlag<float> config_pulseWidth("-w", 0.0, "Pulse width (required for pwm)", false);
-ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in meters)", false);
-ArgumentFlag<const char*> config_notation("-C", "Configuration using expression notation", false);
+SimpleFlag config("--config", "Configure a trigger with additional flags_s", true, callback1);
+ArgumentFlag<int> config_trigger("-t", 0, "Trigger number", true, callback2);
+ArgumentFlag<float> config_pulseWidth("-w", 0.0, "Pulse width (required for pwm)", false, callback3);
+ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in meters)", false, callback4);
+ArgumentFlag<const char*> config_notation("-C", "Configuration using expression notation", false, callback5);
 ```
 
 > Note: While not required by C++, always explicitly signify the type of 
@@ -35,8 +52,17 @@ BaseFlag* configGroup[]{&config, &config_trigger, &config_pulseWidth, &config_el
 ```
 
 ### 4. Add flag list to Parser
+> Note: The UID allows the parser to identify which flag group was last inputted.
+
+There are two options:
+
+One, default and use auto-incremented uid from 0
 ```c++
 myParser.addFlagGroup(configGroup);
+```
+Two, self set uid
+```c++
+myParser.addFlagGroup(configGroup, 10);
 ```
 
 ### 5. Repeat
@@ -45,6 +71,17 @@ Repeat for more groups of flags.
 ### 6. Run on input
 ```c++
 myParser.parse(<input>);
+```
+
+### 7. Run callbacks
+Run the callbacks for the flag group that was most recently added
+```c++
+myParser.runFlags();
+```
+
+### 8. Reset flags for next run
+```c++
+myParser.resetFlags();
 ```
 
 ## Testing

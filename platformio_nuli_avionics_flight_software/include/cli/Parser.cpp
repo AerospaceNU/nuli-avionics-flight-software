@@ -54,6 +54,9 @@ int8_t Parser::parse(int argc, char** argv) {
         return -1;
     }
 
+    // set latest flag group
+    m_latestFlagGroup = flagGroup->uid_s;
+
     // if any, go through rest of arguments
     for (; argvPos < argc; ++argvPos) {
         const char* currArg = argv[argvPos];
@@ -146,7 +149,7 @@ int8_t Parser::parse(char* input) {
 }
 
 char* Parser::getString(char* p, char target) const { // NOLINT(*-convert-member-functions-to-static)
-    while(*p && *p != target) {
+    while(*p && *p != target && *p != '\n') {
         p++;
     }
 
@@ -184,6 +187,7 @@ void Parser::resetFlags() {
         m_flagGroups[i].resetFlags();
     }
 
+    // set back to unused
     m_latestFlagGroup = -1;
 }
 
@@ -210,6 +214,10 @@ Parser::FlagGroup_s* Parser::getFlagGroup(int8_t uid) {
 
 int8_t Parser::runFlags() {
     // retrieve the most recent flag group
+    if (m_latestFlagGroup < 0) {
+        return -1;
+    }
+
     FlagGroup_s *flagGroup = getFlagGroup(m_latestFlagGroup);
     if (! flagGroup) {
         return -1;
@@ -271,11 +279,8 @@ void Parser::FlagGroup_s::resetFlags() {
     }
 }
 
-int8_t Parser::FlagGroup_s::runFlags() {
-
+void Parser::FlagGroup_s::runFlags() {
     for (uint8_t i = 0; i < numFlags_s; ++i) {
         if (flags_s[i]->isSet()) flags_s[i]->run(uid_s);
     }
-
-    return 0;
 }

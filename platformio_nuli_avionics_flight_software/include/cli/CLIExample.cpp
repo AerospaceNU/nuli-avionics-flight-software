@@ -52,9 +52,10 @@
 --version  Send Git version and tag info
  */
 
+/* Callback functions */
 void hello(bool a, int8_t b) {
     printf("callback! hello!\n");
-    printf("my group uid is: %d", b);
+    printf("my group uid is: %d\n", b);
 }
 
 void hello2(int a, int8_t b) {
@@ -66,7 +67,7 @@ void hello3(float a, int8_t b) {
 }
 
 void hello4(const char* a, int8_t b) {
-
+    printf("hello4 says: %s\n", a);
 }
 
 
@@ -92,9 +93,9 @@ int main() {
                             &config_manual, &config_elevation,
                             &config_groundTemp, &config_channel};
 
-//    /* create group */
-//    SimpleFlag createFlight("--create_flight", "Clear state log and move back to preflight", true);
-//    BaseFlag* createFlightGroup[](&createFlight);
+    /* create group */
+    SimpleFlag createFlight("--create_flight", "Clear state log and move back to preflight", true, hello);
+    BaseFlag* createFlightGroup[](&createFlight);
 //
 //    /* erase group */
 //    SimpleFlag erase("--erase", "Fully erases on-board flash", true);
@@ -135,8 +136,8 @@ int main() {
 
 
     // adding to parser
-    myParser.addFlagGroup(configGroup);
-//    myParser.addFlagGroup(createFlightGroup);
+    myParser.addFlagGroup(configGroup);             // <--- increment from last set uid
+    myParser.addFlagGroup(createFlightGroup, 10);   // <--- manually set uid
 //    myParser.addFlagGroup(eraseGroup);
 //    myParser.addFlagGroup(helpGroup);
 //    myParser.addFlagGroup(linecutterGroup);
