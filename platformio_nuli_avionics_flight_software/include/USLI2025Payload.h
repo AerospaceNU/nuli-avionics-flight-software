@@ -4,6 +4,7 @@
 #include "AprsModulation.h"
 #include "Avionics.h"
 #include "HardwareAbstraction.h"
+#include "Arduino.h"
 
 enum FlightState_e {
     PRE_FLIGHT,

@@ -90,9 +90,11 @@ void USLI2025Payload::setup(HardwareAbstraction *hardware) {
 
 
 void USLI2025Payload::deployLegs() const {
-    m_hardware->getPyro(0)->fire();
-    delay(250);
-    m_hardware->getPyro(0)->disable();
+    if(m_hardware->getNumPyros() > 0) {
+        m_hardware->getPyro(0)->fire();
+        delay(250);
+        m_hardware->getPyro(0)->disable();
+    }
 }
 
 void USLI2025Payload::begin(const char* callsign) {

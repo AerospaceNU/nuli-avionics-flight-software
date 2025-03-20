@@ -10,7 +10,7 @@
 #include <Magnetometer.h>
 #include <Pyro.h>
 #include <FlashMemory.h>
-#include <CommunicationLink.h>
+#include <RadioLink.h>
 #include <SystemClock.h>
 #include <DebugStream.h>
 
@@ -67,7 +67,7 @@ public:
      * @brief Reads all communications links to buffers
      * @details Calls read on each communication link, and does something???? with the data
      */
-    void readAllCommunicationLinks();
+    void readAllRadioLinks();
 
     /**
      * @brief Called at the beginning of each loop to track change in time between loops
@@ -120,7 +120,7 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(FlashMemory, m_flashMemoryArray, m_numFlashMemory, MAX_FLASH_MEMORY_NUM)
 
-    GENERATE_GET_ADD_METHODS_MACRO(CommunicationLink, m_communicationLinkArray, m_numCommunicationLinks, MAX_COMMUNICATION_LINK_NUM)
+    GENERATE_GET_ADD_METHODS_MACRO(RadioLink, m_radioLinkArray, m_numRadioLinks, MAX_RADIO_TRANSMITTER_LINK_NUM)
 
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
@@ -141,7 +141,7 @@ private:
     uint8_t m_numGyroscopes = 0;                        ///< Number of Gyroscopes in the system
     uint8_t m_numGps = 0;                               ///< Number of Gps in the system
     uint8_t m_numFlashMemory = 0;                       ///< Number of FlashMemory in the system
-    uint8_t m_numCommunicationLinks = 0;                ///< Number of CommunicationLinks in the system
+    uint8_t m_numRadioLinks = 0;                ///< Number of CommunicationLinks in the system
     uint8_t m_numGenericSensors = 0;                    ///< Number of generic sensors
     uint8_t m_numConfigurations = 0;                    ///< Number of generic sensors
     Pyro* m_pyroArray[MAX_PYRO_NUM] = {nullptr};                                ///< Array containing all the Pyros in the system
@@ -151,7 +151,7 @@ private:
     Gyroscope* m_gyroscopeArray[MAX_GYROSCOPE_NUM] = {nullptr};                 ///< Array containing all the Gyroscopes in the system
     GPS* m_gpsArray[MAX_GPS_NUM] = {nullptr};                                   ///< Array containing all the Gps in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
-    CommunicationLink* m_communicationLinkArray[MAX_COMMUNICATION_LINK_NUM] = {nullptr};        ///< Array containing all the CommunicationLinks in the system
+    RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr};        ///< Array containing all the CommunicationLinks in the system
     GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};                    ///< Array containing all generic sensors
     GenericSensor* m_configurationArray[MAX_CONFIGURATION_NUM] = {nullptr};                    ///< Array containing all generic sensors
     SystemClock* m_systemClock = nullptr;                                                       ///< System clocks

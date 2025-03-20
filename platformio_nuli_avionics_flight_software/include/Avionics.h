@@ -18,7 +18,7 @@ const uint8_t MAX_MAGNETOMETER_NUM = 4;
 const uint8_t MAX_GYROSCOPE_NUM = 4;
 const uint8_t MAX_GPS_NUM = 4;
 const uint8_t MAX_FLASH_MEMORY_NUM = 4;
-const uint8_t MAX_COMMUNICATION_LINK_NUM = 4;
+const uint8_t MAX_RADIO_TRANSMITTER_LINK_NUM = 4;
 const uint8_t MAX_GENERIC_SENSOR_NUM = 10;
 const uint8_t MAX_CONFIGURATION_NUM = 4;
 
