@@ -1,8 +1,6 @@
 #include "USLI2025Payload.h"
-
-USLI2025Payload::USLI2025Payload(const char* callsign) : m_aprsModulation(m_transmitPin, callsign) {
-
-}
+#include <cstdio>
+#include "../../core/generic_hardware/RadioLink.h"
 
 void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationDeg, double temp, double batteryVoltage) {
     // Save the current temperature, battery voltage, and orientation
@@ -22,16 +20,17 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         }
 
         if (takeoffTimer != 0 && runtime > takeoffTimer) {
-            Serial.println("takeoff");
+            m_hardware->getDebugStream()->print("takeoff");
+            m_hardware->getDebugStream()->println();
             m_flightState = FLIGHT;
             takeoffTimer = runtime + (1000 * 60 * 3);
         }
     }
 
-    /**
-     * Flight state
-     * Record data
-     */
+        /**
+         * Flight state
+         * Record data
+         */
     else if (m_flightState == FLIGHT) {
         if (altitudeM > m_payloadData.alt) {
             m_payloadData.alt = (int32_t) altitudeM;
@@ -42,36 +41,39 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         }
 
         if (runtime > takeoffTimer) {
-            Serial.println("landed");
+            m_hardware->getDebugStream()->print("landed");
+            m_hardware->getDebugStream()->println();
             m_payloadData.time = (int32_t) runtime;
             m_flightState = LANDED;
         }
     }
 
-    /**
-     * Landed state
-     * Transmit data
-     */
+        /**
+         * Landed state
+         * Transmit data
+         */
     else if (m_flightState == LANDED) {
         if (runtime > m_nextDeployTime) {
-            Serial.println("deploy");
+            m_hardware->getDebugStream()->print("deploy");
+            m_hardware->getDebugStream()->println();
             m_nextDeployTime = runtime + 20000;
-            if(m_transmitAllowed) {
+            if (m_transmitAllowed) {
                 deployLegs();
-                delay(2000);
+                m_hardware->delay(2000);
             }
         }
 
         if (runtime > m_nextTransmitTime) {
-            Serial.println("transmit");
+            m_hardware->getDebugStream()->print("transmit");
+            m_hardware->getDebugStream()->println();
             m_nextTransmitTime = runtime + 5000;
-            if(m_transmitAllowed) {
+            if (m_transmitAllowed) {
                 sendTransmission(runtime);
             }
         }
     }
 
-    // Should never happen
+        // Should never happen
     else {
         m_flightState = PRE_FLIGHT;
     }
@@ -83,16 +85,15 @@ void USLI2025Payload::updateGroundData(double temp, double batteryVoltage, doubl
     m_payloadData.temp = (int32_t) temp;
 }
 
-void USLI2025Payload::setup(HardwareAbstraction *hardware) {
+void USLI2025Payload::setup(HardwareAbstraction* hardware) {
     m_hardware = hardware;
-    m_aprsModulation.setup();
 }
 
 
 void USLI2025Payload::deployLegs() const {
-    if(m_hardware->getNumPyros() > 0) {
+    if (m_hardware->getNumPyros() > 0) {
         m_hardware->getPyro(0)->fire();
-        delay(250);
+        m_hardware->delay(250);
         m_hardware->getPyro(0)->disable();
     }
 }
@@ -111,18 +112,22 @@ void USLI2025Payload::addInt(int num) {
 }
 
 void USLI2025Payload::sendTransmission(uint32_t runtime) {
-    begin(m_aprsModulation.getCallsign());
-    addInt((int) double(double(runtime - m_payloadData.time) / 1000.0));
-    addInt(m_payloadData.temp);
-    addInt(m_payloadData.battery);
-    addInt(m_payloadData.alt);
-    addInt(m_payloadData.ort);
-    addInt(m_payloadData.maxVel);
-    addInt(m_payloadData.landVel);
-    addInt(m_payloadData.accel);
-    addInt(m_payloadData.suviv);
-    addStr(m_aprsModulation.getCallsign());
-    m_aprsModulation.transmit(m_transmitBuffer);
+    if (m_hardware->getNumRadioLinks() > 0) {
+        RadioLink* m_aprsModulation = m_hardware->getRadioLink(0);
+
+        begin("KC1UAW");
+        addInt((int) double(double(runtime - m_payloadData.time) / 1000.0));
+        addInt(m_payloadData.temp);
+        addInt(m_payloadData.battery);
+        addInt(m_payloadData.alt);
+        addInt(m_payloadData.ort);
+        addInt(m_payloadData.maxVel);
+        addInt(m_payloadData.landVel);
+        addInt(m_payloadData.accel);
+        addInt(m_payloadData.suviv);
+        addStr("KC1UAW");
+        m_aprsModulation->transmit((uint8_t*) m_transmitBuffer, 0);
+    }
 }
 
 const char* USLI2025Payload::getTransmitStr() {

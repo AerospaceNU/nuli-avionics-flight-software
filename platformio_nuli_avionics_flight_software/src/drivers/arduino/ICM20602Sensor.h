@@ -2,10 +2,10 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20602Sensor_H
 
 #include <Avionics.h>
-#include <GenericSensor.h>
-#include <Accelerometer.h>
-#include <Gyroscope.h>
-#include <Magnetometer.h>
+#include "../../core/generic_hardware/GenericSensor.h"
+#include "../../core/generic_hardware/Accelerometer.h"
+#include "../../core/generic_hardware/Gyroscope.h"
+#include "../../core/generic_hardware/Magnetometer.h"
 
 
 /**

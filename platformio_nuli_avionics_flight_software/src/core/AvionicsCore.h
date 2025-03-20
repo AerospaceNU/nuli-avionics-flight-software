@@ -1,12 +1,12 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CORE_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CORE_H
 
-#include <Avionics.h>
-#include <HardwareAbstraction.h>
-#include <Configuration.h>
-#include <Logger.h>
-#include <Filters.h>
-#include <USLI2025Payload.h>
+#include "Avionics.h"
+#include "HardwareAbstraction.h"
+#include "Configuration.h"
+#include "Logger.h"
+#include "Filters.h"
+#include "../drivers/arduino/USLI2025Payload.h"
 
 /**
  * @class AvionicsCore

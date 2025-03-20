@@ -1,7 +1,7 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607SENSOR_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS8607SENSOR_H
 
-#include "Barometer.h"
+#include "../../core/generic_hardware/Barometer.h"
 #include <Wire.h>
 
 // This define is required to make the following lib compile for some reason

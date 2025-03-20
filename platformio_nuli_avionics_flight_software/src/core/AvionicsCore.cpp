@@ -1,7 +1,6 @@
 #include "AvionicsCore.h"
-#include <Barometer.h>
-#include <Accelerometer.h>
-#include <Arduino.h>
+#include "generic_hardware/Barometer.h"
+#include "generic_hardware/Accelerometer.h"
 
 void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
@@ -41,7 +40,7 @@ void AvionicsCore::loopOnce() {
     // Read in sensor data. This data is accessible through
     m_hardware->readAllSensors();
 
-    float batVolt = float(analogRead(A4)) / float(22.008);
+    float batVolt = (float) m_hardware->getVoltageSensor(0)->getVoltage();  // float(analogRead(A4)) / float(22.008);
 
     if (log) {
         m_logger->log(batVolt);

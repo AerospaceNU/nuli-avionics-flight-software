@@ -5,27 +5,32 @@
 
 #include "Avionics.h"
 #include "ConstantsUnits.h"
-#include "DebugStream.h"
-#include <iostream>
+#include "core/generic_hardware/DebugStream.h"
 
-class DesktopDebug : public DebugStream {
+class SerialDebug : public DebugStream {
 public:
+    explicit SerialDebug(bool wait = true) {
+        m_wait = wait;
+    }
 
     void setup() override {
-
+        Serial.begin(9600);
+        while (m_wait && !Serial);
     }
 
     void print(const char* str) override {
-        std::cout << (str);
+        Serial.print(str);
     }
 
     void print(int64_t num) override {
-        std::cout << (num);
+        Serial.print(num);
     }
 
     void print(double num) override {
-        std::cout << (num);
+        Serial.print(num);
     }
+private:
+    bool m_wait;
 };
 
 

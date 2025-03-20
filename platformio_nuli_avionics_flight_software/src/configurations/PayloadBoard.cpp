@@ -1,22 +1,23 @@
 #include <Arduino.h>
 #include <Avionics.h>
-#include <GenericSensor.h>
-#include <Barometer.h>
-#include <Accelerometer.h>
-#include <GPS.h>
-#include <Gyroscope.h>
-#include <Magnetometer.h>
-#include <Pyro.h>
-#include <AvionicsCore.h>
-#include <HardwareAbstraction.h>
-#include <Filters.h>
-#include "ICM20948Sensor.h"
-#include "MS8607Sensor.h"
-#include "S25FL512.h"
-#include "ArduinoSystemClock.h"
-#include "SerialDebug.h"
-#include "USLI2025Payload.h"
-#include "ArduinoPyro.h"
+#include "../src/core/generic_hardware/GenericSensor.h"
+#include "../src/core/generic_hardware/Barometer.h"
+#include "../src/core/generic_hardware/Accelerometer.h"
+#include "../src/core/generic_hardware/GPS.h"
+#include "../src/core/generic_hardware/Gyroscope.h"
+#include "../src/core/generic_hardware/Magnetometer.h"
+#include "../src/core/generic_hardware/Pyro.h"
+#include "core/AvionicsCore.h"
+#include "core/HardwareAbstraction.h"
+#include "core/Filters.h"
+#include "drivers/arduino/ICM20948Sensor.h"
+#include "drivers/arduino/MS8607Sensor.h"
+#include "drivers/arduino/S25FL512.h"
+#include "drivers/arduino/ArduinoSystemClock.h"
+#include "drivers/arduino/SerialDebug.h"
+#include "drivers/arduino/USLI2025Payload.h"
+#include "drivers/arduino/ArduinoPyro.h"
+#include "drivers/arduino/ArduinoVoltageSensor.h"
 
 const int BUFFER_SIZE = 16;  // Adjust buffer size as needed
 char serialInputBuffer[BUFFER_SIZE];
@@ -82,7 +83,9 @@ void cliTick() {
 
 // The core
 AvionicsCore avionicsCore;
-USLI2025Payload payload("KC1UAW");
+USLI2025Payload payload;
+AprsModulation aprsModulation(A0, "KC1UAW");
+ArduinoVoltageSensor batterySensor(A4, 22.008);
 
 #include <RadioLib.h>
 
@@ -121,12 +124,14 @@ void setup() {
     hardware.setSystemClock(&arduinoClock);
     hardware.addBarometer(&barometer);
     hardware.addPyro(&pyro1);
+    hardware.addVoltageSensor(&batterySensor);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
     hardware.addGenericSensor(&icm20948);
     hardware.addAccelerometer(icm20948.getAccelerometer());
     hardware.addGyroscope(icm20948.getGyroscope());
     hardware.addMagnetometer(icm20948.getMagnetometer());
     hardware.addFlashMemory(&s25fl512);
+    hardware.addRadioLink(&aprsModulation);
     pinMode(A5, OUTPUT);
     digitalWrite(A5, HIGH);
     digitalWrite(8, HIGH);
@@ -144,7 +149,7 @@ void setup() {
 }
 
 
-void loop() { 
+void loop() {
     avionicsCore.loopOnce();
     cliTick();
 

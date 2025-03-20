@@ -1,8 +1,8 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATION_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATION_H
 
-#include <Avionics.h>
-#include <HardwareAbstraction.h>
+#include "Avionics.h"
+#include "HardwareAbstraction.h"
 
 class Configuration {
 public:

@@ -12,6 +12,7 @@
 #define remove_padding __attribute__((packed))
 
 const uint8_t MAX_PYRO_NUM = 10;
+const uint8_t MAX_VOLTAGE_SENSOR_NUM = 10;
 const uint8_t MAX_BAROMETER_NUM = 4;
 const uint8_t MAX_ACCELEROMETER_NUM = 4;
 const uint8_t MAX_MAGNETOMETER_NUM = 4;

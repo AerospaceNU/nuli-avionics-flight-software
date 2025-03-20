@@ -3,8 +3,7 @@
 
 #include "AprsModulation.h"
 #include "Avionics.h"
-#include "HardwareAbstraction.h"
-#include "Arduino.h"
+#include "../../core/HardwareAbstraction.h"
 
 enum FlightState_e {
     PRE_FLIGHT,
@@ -28,7 +27,7 @@ class USLI2025Payload {
 public:
     bool m_transmitAllowed = true;
 
-    explicit USLI2025Payload(const char* callsign);
+    explicit USLI2025Payload() = default;
 
     void setup(HardwareAbstraction *hardware);
 
@@ -51,11 +50,9 @@ private:
 
     HardwareAbstraction *m_hardware = nullptr;
 
-    char m_transmitBuffer[300];
+    char m_transmitBuffer[300]{};
     char* m_transmitStringLocation = m_transmitBuffer;
-    const uint8_t m_transmitPin = A0;
 
-    AprsModulation m_aprsModulation;
     uint32_t m_nextTransmitTime = 0;
     uint32_t m_nextDeployTime = 0;
     PayloadData m_payloadData;

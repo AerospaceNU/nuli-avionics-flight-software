@@ -5,7 +5,7 @@
 #include <Arduino.h>
 #include <SPI.h>
 
-#include "FlashMemory.h"
+#include "core/generic_hardware/FlashMemory.h"
 
 class S25FL512: public FlashMemory {
 public:

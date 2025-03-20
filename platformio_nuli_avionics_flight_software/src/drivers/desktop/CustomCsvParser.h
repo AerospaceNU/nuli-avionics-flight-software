@@ -1,7 +1,3 @@
-//
-// Created by chris on 11/18/2024.
-//
-
 #ifndef DESKTOP_CUSTOMCSVPARSER_H
 #define DESKTOP_CUSTOMCSVPARSER_H
 
