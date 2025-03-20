@@ -35,7 +35,7 @@ void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) 
         // Serial.println(sizeof(logDataBuffer));
         flash->read(m_logWriteAddress, logDataBuffer, sizeof(logDataBuffer));
         foundEmptyPacket = true;
-        for (int i = 0; i < sizeof(logDataBuffer); ++i) {
+        for (unsigned int i = 0; i < sizeof(logDataBuffer); ++i) {
             if (logDataBuffer[i] != 0xFF) {
                 foundEmptyPacket = false;
                 break;
@@ -79,7 +79,7 @@ void Logger::log(float batt) {
 
 uint32_t Logger::offloadData(uint32_t readAddress, uint8_t* buffer, const uint32_t length) {
     FlashMemory* flash = m_hardware->getFlashMemory(0);
-    uint32_t readLength = min(length, max(0, m_logWriteAddress - readAddress));
+    uint32_t readLength = min(length, max((unsigned int) 0, m_logWriteAddress - readAddress));
     flash->read(readAddress, buffer, length);
     return readLength;
 }

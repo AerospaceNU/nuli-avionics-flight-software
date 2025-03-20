@@ -83,17 +83,16 @@ void USLI2025Payload::updateGroundData(double temp, double batteryVoltage, doubl
     m_payloadData.temp = (int32_t) temp;
 }
 
-void USLI2025Payload::setup() {
-    pinMode(m_deployPin, OUTPUT);
-    digitalWrite(m_deployPin, LOW);
+void USLI2025Payload::setup(HardwareAbstraction *hardware) {
+    m_hardware = hardware;
     m_aprsModulation.setup();
 }
 
 
 void USLI2025Payload::deployLegs() const {
-    digitalWrite(m_deployPin, HIGH);
+    m_hardware->getPyro(0)->fire();
     delay(250);
-    digitalWrite(m_deployPin, LOW);
+    m_hardware->getPyro(0)->disable();
 }
 
 void USLI2025Payload::begin(const char* callsign) {

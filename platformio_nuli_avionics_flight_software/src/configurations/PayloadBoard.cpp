@@ -16,6 +16,7 @@
 #include "ArduinoSystemClock.h"
 #include "SerialDebug.h"
 #include "USLI2025Payload.h"
+#include "ArduinoPyro.h"
 
 const int BUFFER_SIZE = 16;  // Adjust buffer size as needed
 char serialInputBuffer[BUFFER_SIZE];
@@ -33,6 +34,7 @@ ArduinoSystemClock arduinoClock;
 MS8607Sensor barometer;
 ICM20948Sensor icm20948(5);
 S25FL512 s25fl512(A5);
+ArduinoPyro pyro1(11, A1, 75);
 
 // Core objects accessible by all components
 HardwareAbstraction hardware;
@@ -101,7 +103,6 @@ void setup() {
 //    while(!Serial);
     SPI.begin();
     Wire.begin();
-    payload.setup();
 
     Serial.println("Serial successfully started");
 
@@ -119,6 +120,7 @@ void setup() {
     hardware.setDebugStream(&debug);
     hardware.setSystemClock(&arduinoClock);
     hardware.addBarometer(&barometer);
+    hardware.addPyro(&pyro1);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
     hardware.addGenericSensor(&icm20948);
     hardware.addAccelerometer(icm20948.getAccelerometer());
@@ -133,7 +135,7 @@ void setup() {
     hardware.setup();
     // Initialize other globals
     configuration.setup();
-
+    payload.setup(&hardware);
     logger.setup(&hardware, &configuration);
     // Initialize components
     filter.setup(&configuration, &logger);
@@ -142,7 +144,7 @@ void setup() {
 }
 
 
-void loop() {
+void loop() { 
     avionicsCore.loopOnce();
     cliTick();
 
