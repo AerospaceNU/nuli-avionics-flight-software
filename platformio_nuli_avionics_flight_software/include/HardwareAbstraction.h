@@ -10,7 +10,7 @@
 #include <Magnetometer.h>
 #include <Pyro.h>
 #include <FlashMemory.h>
-#include <CommunicationLink.h>
+#include <RadioLink.h>
 #include <SystemClock.h>
 #include <DebugStream.h>
 
@@ -32,8 +32,16 @@ void add##Type(Type* instance) {                                                
 inline uint8_t getNum##Type##s() const {                                            \
     return numVariable;                                                             \
 }                                                                                   \
-inline Type* get##Type##Array() {                                                   \
-    return arrayVariable[0];                                                        \
+inline Type* get##Type(uint8_t index) {                                             \
+    return arrayVariable[index];                                                    \
+}
+
+#define GENERATE_GET_SET_METHODS_MACRO(Type, arrayVariable)                         \
+void set##Type(Type* instance) {                                                    \
+    arrayVariable = instance;                                                       \
+}                                                                                   \
+inline Type* get##Type() {                                                          \
+    return arrayVariable;                                                           \
 }
 
 
@@ -59,7 +67,7 @@ public:
      * @brief Reads all communications links to buffers
      * @details Calls read on each communication link, and does something???? with the data
      */
-    void readAllCommunicationLinks();
+    void readAllRadioLinks();
 
     /**
      * @brief Called at the beginning of each loop to track change in time between loops
@@ -92,8 +100,8 @@ public:
      * @return runtime in ms
      */
     inline uint32_t getRuntimeMs() {
-        if(m_numSystemClocks > 0) {
-            return m_systemClock[0]->currentRuntimeMs();
+        if (m_systemClock != nullptr) {
+            return m_systemClock->currentRuntimeMs();
         }
         return 0;
     }
@@ -112,19 +120,19 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(FlashMemory, m_flashMemoryArray, m_numFlashMemory, MAX_FLASH_MEMORY_NUM)
 
-    GENERATE_GET_ADD_METHODS_MACRO(CommunicationLink, m_communicationLinkArray, m_numCommunicationLinks, MAX_COMMUNICATION_LINK_NUM)
+    GENERATE_GET_ADD_METHODS_MACRO(RadioLink, m_radioLinkArray, m_numRadioLinks, MAX_RADIO_TRANSMITTER_LINK_NUM)
 
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
-    GENERATE_GET_ADD_METHODS_MACRO(SystemClock, m_systemClock, m_numSystemClocks, MAX_SYSTEM_CLOCK_NUM)
+//    GENERATE_GET_ADD_METHODS_MACRO(Configuration, m_configurationArray, m_numConfigurations, MAX_CONFIGURATION_NUM)
 
-    GENERATE_GET_ADD_METHODS_MACRO(DebugStream, m_debugStream, m_numDebugStreams, MAX_DEBUG_STREAM_NUM)
+    GENERATE_GET_SET_METHODS_MACRO(SystemClock, m_systemClock)
+
+    GENERATE_GET_SET_METHODS_MACRO(DebugStream, m_debugStream)
 
 private:
     uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
     uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
-    uint8_t m_numSystemClocks = 0;                      ///< Number of SystemClocks in the system (max 1)
-    uint8_t m_numDebugStreams = 0;                      ///< Number of SystemClocks in the system (max 1)
 
     uint8_t m_numPyros = 0;                             ///< Number of Pyros in the system
     uint8_t m_numBarometers = 0;                        ///< Number of Barometers in the system
@@ -133,8 +141,9 @@ private:
     uint8_t m_numGyroscopes = 0;                        ///< Number of Gyroscopes in the system
     uint8_t m_numGps = 0;                               ///< Number of Gps in the system
     uint8_t m_numFlashMemory = 0;                       ///< Number of FlashMemory in the system
-    uint8_t m_numCommunicationLinks = 0;                ///< Number of CommunicationLinks in the system
+    uint8_t m_numRadioLinks = 0;                ///< Number of CommunicationLinks in the system
     uint8_t m_numGenericSensors = 0;                    ///< Number of generic sensors
+    uint8_t m_numConfigurations = 0;                    ///< Number of generic sensors
     Pyro* m_pyroArray[MAX_PYRO_NUM] = {nullptr};                                ///< Array containing all the Pyros in the system
     Barometer* m_barometerArray[MAX_BAROMETER_NUM] = {nullptr};                 ///< Array containing all the Barometers in the system
     Accelerometer* m_accelerometerArray[MAX_ACCELEROMETER_NUM] = {nullptr};     ///< Array containing all the Accelerometers in the system
@@ -142,12 +151,14 @@ private:
     Gyroscope* m_gyroscopeArray[MAX_GYROSCOPE_NUM] = {nullptr};                 ///< Array containing all the Gyroscopes in the system
     GPS* m_gpsArray[MAX_GPS_NUM] = {nullptr};                                   ///< Array containing all the Gps in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
-    CommunicationLink* m_communicationLinkArray[MAX_COMMUNICATION_LINK_NUM] = {nullptr};    ///< Array containing all the CommunicationLinks in the system
-    GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};       ///< Array containing all generic sensors
-    SystemClock* m_systemClock[MAX_SYSTEM_CLOCK_NUM] = {nullptr};                                  ///< Array containing all system clocks. There can only be one, but an array is used to maintain common syntax
-    DebugStream* m_debugStream[MAX_DEBUG_STREAM_NUM] = {nullptr};                                  ///< Array containing all system clocks. There can only be one, but an array is used to maintain common syntax
+    RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr};        ///< Array containing all the CommunicationLinks in the system
+    GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};                    ///< Array containing all generic sensors
+    GenericSensor* m_configurationArray[MAX_CONFIGURATION_NUM] = {nullptr};                    ///< Array containing all generic sensors
+    SystemClock* m_systemClock = nullptr;                                                       ///< System clocks
+    DebugStream* m_debugStream = nullptr;                                                       ///< Debug stream
     DebugStream voidDump;
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file
+#undef GENERATE_GET_SET_METHODS_MACRO
 #endif //DESKTOP_HARDWAREMANAGER_H

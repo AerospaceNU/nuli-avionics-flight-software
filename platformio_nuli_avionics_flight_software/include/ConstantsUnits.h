@@ -6,7 +6,7 @@ public:
     static constexpr double PI_VAL = 3.1415926535897932384626433832795;
     static constexpr double G_EARTH_MSS = 9.80665;
     static constexpr double ATMOSPHERIC_PRESSURE_PA = 101325;
-    static constexpr double LAPSE_RATE_K_M = 0.0065;
+    static constexpr double LAPSE_RATE_K_M = -0.0065;
     static constexpr double GAS_CONSTANT_J_KG_K = 287.0474909;
 };
 

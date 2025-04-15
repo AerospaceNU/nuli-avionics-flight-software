@@ -72,8 +72,11 @@ protected:
      * @details Specific algorithm used??????
      */
     void calculateAltitude() {
-        m_altitudeM = (m_temperatureK / Constants::LAPSE_RATE_K_M) *
-                      (pow(m_pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * -Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+//        m_altitudeM = (m_temperatureK / Constants::LAPSE_RATE_K_M) *
+//                      (pow(m_pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * -Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+        m_altitudeM = (265.0 / Constants::LAPSE_RATE_K_M) *
+                      (pow(m_pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+
     }
 
     /**

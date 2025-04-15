@@ -10,10 +10,13 @@
 #include <HardwareAbstraction.h>
 #include <Filters.h>
 #include <FlashMemory.h>
-#include <CommunicationLink.h>
+#include <RadioLink.h>
 #include "CustomCsvParser.h"
 #include <iostream>
 #include <DesktopDebug.h>
+#include "USLI2025Payload.h"
+
+SystemClock systemClock;
 
 Barometer barometer;
 Accelerometer accelerometer;
@@ -28,6 +31,7 @@ Configuration configuration;
 Logger logger;
 Filters filter;
 AvionicsCore avionicsCore;
+USLI2025Payload payload("TEST");
 
 int main(int argc, char* argv[]) {
     CustomCsvParser dataCsv = CustomCsvParser();
@@ -35,20 +39,20 @@ int main(int argc, char* argv[]) {
     if (argc >= 2) {
         inputFile = argv[1];
         std::cout << inputFile << "\n";
-    }
+    }  
     if (dataCsv.parse(inputFile, true) < 0) {
         printf("Failed\n");
         return -1;
     }
 
 
-    hardware.addDebugStream(&desktopDebug);
+    hardware.setDebugStream(&desktopDebug);
     hardware.addBarometer(&barometer);
     hardware.addAccelerometer(&accelerometer);
     hardware.addGyroscope(&gyroscope);
     hardware.addMagnetometer(&magnetometer);
 
-    avionicsCore.setup(&hardware, &configuration, &logger, &filter);
+    avionicsCore.setup(&hardware, &configuration, &logger, &filter, &payload);
 
 
 

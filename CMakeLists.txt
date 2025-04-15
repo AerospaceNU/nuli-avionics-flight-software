@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.22.1)
+cmake_minimum_required(VERSION 3.27.1)
 project(desktop)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -7,6 +7,7 @@ set(CMAKE_CXX_STANDARD 20)
 include_directories(platformio_nuli_avionics_flight_software/include)
 set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/desktop.cpp
         platformio_nuli_avionics_flight_software/src/drivers/desktop/CustomCsvParser.cpp
+        platformio_nuli_avionics_flight_software/src/drivers/desktop/AprsModulationDesktop.cpp
         platformio_nuli_avionics_flight_software/src/core/AvionicsCore.cpp
         platformio_nuli_avionics_flight_software/src/core/Configuration.cpp
         platformio_nuli_avionics_flight_software/src/core/HardwareAbstraction.cpp
@@ -21,6 +22,8 @@ set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/
         platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.h
         platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.h
         platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
+        platformio_nuli_avionics_flight_software/src/core/Logger.cpp
+        platformio_nuli_avionics_flight_software/src/drivers/arduino/USLI2025Payload.cpp
 )
 
 add_executable(desktop ${desktopSimFiles})
