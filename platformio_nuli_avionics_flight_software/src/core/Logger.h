@@ -8,7 +8,7 @@ class Logger {
 public:
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    void log(float batt);
+    void log();
 
     void erase();
 

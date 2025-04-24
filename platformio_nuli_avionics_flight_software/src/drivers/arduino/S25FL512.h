@@ -9,7 +9,9 @@
 
 class S25FL512: public FlashMemory {
 public:
-    explicit S25FL512(uint8_t chipSelectPin, SPIClass* spiClass = &SPI);
+    explicit S25FL512(uint8_t chipSelectPin);
+
+    void setSpiClass(SPIClass* spiClass);
 
     void setup() const;
 

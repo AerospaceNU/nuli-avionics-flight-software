@@ -26,12 +26,14 @@
  * Handle cross page boundary's
  */
 
-S25FL512::S25FL512(uint8_t chipSelectPin, SPIClass* spiClass) : m_chipSelectPin(chipSelectPin) {
+S25FL512::S25FL512(uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {
     /// @todo remove this
     pinMode(chipSelectPin, OUTPUT);
-    m_spiBus = spiClass;
 }
 
+void S25FL512::setSpiClass(SPIClass* spiClass) {
+    m_spiBus = spiClass;
+}
 
 void S25FL512::setup() const {
     pinMode(m_chipSelectPin, OUTPUT);
@@ -53,7 +55,6 @@ uint32_t S25FL512::getSectorNum() {
 uint32_t S25FL512::getPageSize() {
     return PAGE_SIZE;
 }
-
 
 
 bool S25FL512::ready() const {
@@ -215,6 +216,7 @@ void S25FL512::disableSelectPin() const {
 bool S25FL512::waitForReady(uint32_t timeout) const {
     return waitForWriteCompletion(timeout);
 }
+
 
 
 

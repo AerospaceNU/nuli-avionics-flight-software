@@ -1,12 +1,5 @@
 #include <Arduino.h>
 #include <Avionics.h>
-#include "../src/core/generic_hardware/GenericSensor.h"
-#include "../src/core/generic_hardware/Barometer.h"
-#include "../src/core/generic_hardware/Accelerometer.h"
-#include "../src/core/generic_hardware/GPS.h"
-#include "../src/core/generic_hardware/Gyroscope.h"
-#include "../src/core/generic_hardware/Magnetometer.h"
-#include "../src/core/generic_hardware/Pyro.h"
 #include "core/AvionicsCore.h"
 #include "core/HardwareAbstraction.h"
 #include "core/Filters.h"
