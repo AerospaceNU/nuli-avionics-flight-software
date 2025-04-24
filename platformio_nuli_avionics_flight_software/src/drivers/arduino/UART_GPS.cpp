@@ -1,126 +1,62 @@
-/*
 #include "UART_GPS.h"
+// #define DEBUG_SERIAL Serial
 
-
-UART_GPS::UART_GPS(HardwareSerial* gpsSerial) : 
-    GPS(),  // Call base class constructor
-    m_gps(gpsSerial) {}
-
-
-
+UART_GPS::UART_GPS(HardwareSerial* serial):
+    GPS(),
+    m_gps(new Adafruit_GPS(serial))
+    , m_lastGPSData("") 
+    {
+}
 
 void UART_GPS::setup() {
-    GPS::setup();
-    m_gps.begin(9600); // Set to your GPS baud rate
-    m_gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-    m_gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-}
+    m_gps->begin(9600);
 
+    // m_gps->sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
 
-
-
-void UART_GPS::read() {
-
-    // Process the data if we have a complete sentence
-
-    if (m_gps.newNMEAreceived() && m_gps.parse(m_gps.lastNMEA())) {
-
-        // Update the parent class protected members
-
-        latitude = m_gps.latitudeDegrees;
-
-        longitude = m_gps.longitudeDegrees;
-
-        altitude = m_gps.altitude;
-
-        fixQuality = m_gps.fixquality;
-
-        satsTracked = m_gps.satellites;
-
-        hdop = m_gps.HDOP;
-
-    }
+    delay(1000);
 
 }
 
 
-
-
-/*
 void UART_GPS::read() {
-    m_lastGPSData = "";
+    m_gps->read();  // Read data from GPS module
+    Serial.println("read recipient");
+    //delay(2000);
+
+
     
-    // Clear old data
-    while (m_gps.available()) {
-        m_gps.read();
-    }
-
-    // Read new data
-    unsigned long startTime = millis();
-    do {
-        while (m_gps.available()) {
-            char c = m_gps.read();
-            m_lastGPSData += c;
-            if (c == '\n') {
-                // We have a complete NMEA sentence
-                break;
+    if (m_gps->newNMEAreceived() || true) {
+        m_lastGPSData = m_gps->lastNMEA();  // Store last NMEA sentence
+        Serial.print("Raw GPS data: ");
+        Serial.println(m_lastGPSData);
+        
+       
+            char buffer[m_lastGPSData.length() + 1];
+            strcpy(buffer, m_lastGPSData.c_str());
+    
+            if (m_gps->parse(buffer)) {
+                // Parse successful, update class variables
+                latitude = m_gps->latitudeDegrees;
+                longitude = m_gps->longitudeDegrees;
+                altitude = m_gps->altitude;
+                fixQuality = m_gps->fixquality;
+                satsTracked = m_gps->satellites;
+                hdop = m_gps->HDOP;
+    
+                // Debug output
+                Serial.print("Lat: "); Serial.println(latitude, 6);
+                Serial.print("Lon: "); Serial.println(longitude, 6);
+                Serial.print("Alt: "); Serial.println(altitude);
+                Serial.print("Fix Quality: "); Serial.println(fixQuality);
+                Serial.print("Satellites: "); Serial.println(satsTracked);
+                Serial.print("HDOP: "); Serial.println(hdop);
+            } else {
+                Serial.println("GPS parse failed!");
             }
-        }
-        // Timeout after 1 second
-        if (millis() - startTime > 1000) break;
-    } while (m_lastGPSData.length() < MAX_GPS_BUFFER_SIZE);
-
-    // Process the data if we have a complete sentence
-    if (m_gps.newNMEAreceived()) {
-        m_gps.parse(m_gps.lastNMEA());
-    }
-}
-//initial comment break
-bool UART_GPS::checkDataFit() const {
-    return m_lastGPSData.length() <= MAX_GPS_BUFFER_SIZE;
+        
+    }    
 }
 
-String UART_GPS::getLastGPSData() const {
-    return m_lastGPSData;
-}
-*/
-
-
-
-#include "UART_GPS.h"
-
-UART_GPS::UART_GPS(HardwareSerial* gpsSerial)
-    : GPS(), m_gps(gpsSerial) {}
-
-void UART_GPS::setup() {
-    constexpr int DEFAULT_BAUD_RATE = 9600; // Use a named constant
-    m_gps.begin(DEFAULT_BAUD_RATE);
-    Serial.println("helooo");
-    // Configure NMEA sentence output and update rate
-    m_gps.sendCommand(PMTK_SET_NMEA_OUTPUT_RMCGGA);
-    m_gps.sendCommand(PMTK_SET_NMEA_UPDATE_1HZ);
-}
-
-void UART_GPS::read() {
-    // Check if new data is available and parse it
-    if (m_gps.newNMEAreceived()) {
-        if (m_gps.parse(m_gps.lastNMEA())) {
-            // Update parent class attributes
-            latitude = m_gps.latitudeDegrees;
-            longitude = m_gps.longitudeDegrees;
-            altitude = m_gps.altitude;
-            fixQuality = m_gps.fixquality;
-            satsTracked = m_gps.satellites;
-            hdop = m_gps.HDOP;
-
-            // Store the last received sentence
-            m_lastGPSData = m_gps.lastNMEA();
-        } else {
-            // Handle parse failure 
-            Serial.println("error parsing");
-        }
-    }
-}
 
 bool UART_GPS::checkDataFit() const {
     return m_lastGPSData.length() <= MAX_GPS_BUFFER_SIZE;
@@ -129,4 +65,3 @@ bool UART_GPS::checkDataFit() const {
 String UART_GPS::getLastGPSData() const {
     return m_lastGPSData;
 }
-
