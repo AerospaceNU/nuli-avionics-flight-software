@@ -1,7 +1,3 @@
-//
-// Created by chris on 1/6/2025.
-//
-
 #ifndef DESKTOP_PARSER_H
 #define DESKTOP_PARSER_H
 
@@ -206,7 +202,7 @@ private:
         BaseFlag* flags_s[MAX_FLAGS] = {nullptr};   ///< The flags within this FlagGroup
         const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
         uint8_t numFlags_s;                         ///< number of flags within FlagGroup
-        int8_t uid_s;                               ///< unique number identifying FlagGroup
+        uint8_t uid_s;                              ///< unique number identifying FlagGroup
 
         FILE* inputStream_s;    ///< Input stream
         FILE* outputStream_s;   ///< Output stream

@@ -1,7 +1,3 @@
-//
-// Created by chris on 2/24/2025.
-//
-
 #ifndef DESKTOP_SIMPLEFLAG_H
 #define DESKTOP_SIMPLEFLAG_H
 
@@ -22,7 +18,7 @@ public:
      * @param helpText Name, or calling sign, of the flag
      * @param m_required If a flag is required
      */
-    SimpleFlag(const char* name, const char* helpText, bool m_required, void (*callback)(bool, int8_t));
+    SimpleFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t));
 
     /**
      * @brief Retrieves the flag's name
@@ -47,7 +43,7 @@ public:
     /**
      * @brief Dispatches to a pre-set m_callback function.
      */
-    void run(int8_t uid) override;
+    void run(uint8_t groupUid) override;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -93,9 +89,6 @@ protected:
     * @param outValue Output
     */
     void getValueRaw(void* outValue) const override;
-
-private:
-    void (*m_callback)(bool, int8_t);   ///< Callback function. Takes in if a flag is set and its group's uid
 };
 
 

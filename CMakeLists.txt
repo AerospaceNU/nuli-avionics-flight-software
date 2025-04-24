@@ -12,18 +12,13 @@ set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/
         platformio_nuli_avionics_flight_software/src/core/Configuration.cpp
         platformio_nuli_avionics_flight_software/src/core/HardwareAbstraction.cpp
         platformio_nuli_avionics_flight_software/src/core/Logger.cpp
+        platformio_nuli_avionics_flight_software/src/drivers/arduino/USLI2025Payload.cpp
         platformio_nuli_avionics_flight_software/include/cli/Parser.cpp
-        platformio_nuli_avionics_flight_software/include/cli/Parser.h
         platformio_nuli_avionics_flight_software/include/cli/Parser.tpp
         platformio_nuli_avionics_flight_software/include/cli/BaseFlag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.h
         platformio_nuli_avionics_flight_software/include/cli/BaseFlag.tpp
         platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.h
-        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.h
         platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
-        platformio_nuli_avionics_flight_software/src/core/Logger.cpp
-        platformio_nuli_avionics_flight_software/src/drivers/arduino/USLI2025Payload.cpp
 )
 
 add_executable(desktop ${desktopSimFiles})
@@ -68,6 +63,7 @@ set(cliSimFiles
         platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.h
         platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.h
         platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
+        platformio_nuli_avionics_flight_software/include/CLIEnums.h
 )
 
 # Enable Code Coverage Options

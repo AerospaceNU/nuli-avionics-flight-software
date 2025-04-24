@@ -1,7 +1,3 @@
-//
-// Created by chris on 2/24/2025.
-//
-
 #ifndef DESKTOP_ARGUMENTFLAG_H
 #define DESKTOP_ARGUMENTFLAG_H
 
@@ -30,7 +26,7 @@ public:
      * @param helpText A flag's help text
      * @param m_required If a flag is required
      */
-    ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required, void (*callback)(T, int8_t));
+    ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t));
 
     /**
      * @brief Alternative constructor for an ArgumentFlag
@@ -43,7 +39,7 @@ public:
      * @param m_required If a flag is required
      * @param callback
      */
-    ArgumentFlag(const char* name, const char* helpText, bool m_required, void (*callback)(T, int8_t));
+    ArgumentFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t));
 
     /**
      * @brief Retrieves the flag's name
@@ -69,7 +65,7 @@ public:
     /**
      * @brief Dispatches to a pre-set m_callback function.
      */
-    void run(int8_t uid) override;
+    void run(uint8_t groupUid) override;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -117,7 +113,8 @@ protected:
     void getValueRaw(void* outValue) const override;
 
 private:
-    void (*m_callback)(T, int8_t);    ///< Does the thing. Takes in a flag's value and its group's uid
+    uint32_t myStrlen(const char* str);
+
     bool m_defaultValueSet = false; ///< if a default value has been set
     T m_defaultValue;   ///< default value when not provided by the user
     T m_argument;       ///< value of the flag

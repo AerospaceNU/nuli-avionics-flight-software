@@ -1,11 +1,7 @@
-//
-// Created by chris on 2/24/2025.
-//
-
 #include "SimpleFlag.h"
 
-SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, void (*callback)(bool, int8_t))
-        : BaseFlag(name, helpText, required), m_callback(callback) {}
+SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t))
+        : BaseFlag(name, helpText, required, uid, callback) {}
 
 const char* SimpleFlag::name() const {
     return m_name;
@@ -20,8 +16,17 @@ int8_t SimpleFlag::parse(char* arg) {
     return 0;
 }
 
-void SimpleFlag::run(int8_t uid) {
-    if (m_callback) m_callback(m_set, uid);
+void SimpleFlag::run(uint8_t groupUid) {
+    if (m_callback) {
+        // Create a local buffer to hold the boolean value
+        uint8_t buffer[sizeof(bool)];
+
+        // Copy the boolean value into the buffer
+        buffer[0] = m_set ? 1 : 0;
+
+        // Pass the buffer to the callback
+        m_callback(buffer, sizeof(bool), groupUid, m_identifier);
+    }
 }
 
 

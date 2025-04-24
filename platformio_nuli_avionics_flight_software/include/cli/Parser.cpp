@@ -1,6 +1,3 @@
-//
-// Created by chris on 1/6/2025.
-//
 #include "Parser.h"
 #include <cstring>
 #include <stdexcept>

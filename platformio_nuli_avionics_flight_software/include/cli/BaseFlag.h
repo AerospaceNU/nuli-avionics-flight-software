@@ -1,7 +1,3 @@
-//
-// Created by chris on 1/6/2025.
-//
-
 #ifndef DESKTOP_BASEFLAG_H
 #define DESKTOP_BASEFLAG_H
 
@@ -56,7 +52,7 @@ public:
     /**
      * @brief Dispatches to a pre-set m_callback function.
      */
-    virtual void run(int8_t uid) = 0;
+    virtual void run(uint8_t groupUid) = 0;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -106,7 +102,7 @@ protected:
      * @param helpText A flag's help text
      * @param required If a flag is required
      */
-    BaseFlag(const char* name, const char* helpText, bool required);
+    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t));
 
     /**
      * @brief Constructor with user defined streams
@@ -117,7 +113,7 @@ protected:
      * @param outputStream Output stream
      * @param errorStream Error stream
      */
-    BaseFlag(const char* name, const char* helpText, bool required,
+    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t),
              FILE* inputStream, FILE* outputStream, FILE* errorStream);
 
     /**
@@ -139,7 +135,9 @@ protected:
     const char* m_name;         ///< Name, or calling sign, of the flag
     const char* m_helpText;     ///< A flag's help text
     const bool m_required;      ///< If a flag is required
+    const uint8_t  m_identifier;      ///< command identifier
     bool m_set;                 ///< If a flag is in-use
+    void (*m_callback)(uint8_t*, uint32_t length, uint8_t, uint8_t);   ///< Callback function. Takes in if a flag is set and its group's uid
 
     // defining streams
     FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin
