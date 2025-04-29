@@ -108,6 +108,20 @@ void stringCallback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t f
     }
 }
 
+void doubleCallback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
+    printf("Group UID: %u, Flag UID: %u\n", group_uid, flag_uid);
+
+    if (length >= sizeof(double)) {
+        // Extract the double value from the data buffer
+        double value = 0.0;
+        memcpy(&value, data, sizeof(double));
+
+        printf("Received double value: %f\n", value);
+    } else {
+        printf("Error: Insufficient data for double type\n");
+    }
+}
+
 int main() {
     Parser myParser = Parser(stdin, stdout, stderr);
 

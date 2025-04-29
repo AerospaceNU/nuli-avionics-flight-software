@@ -140,8 +140,11 @@ protected:
     void (*m_callback)(uint8_t*, uint32_t length, uint8_t, uint8_t);   ///< Callback function. Takes in if a flag is set and its group's uid
 
     // defining streams
+    [[deprecated]]
     FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin
+    [[deprecated]]
     FILE* m_outputStream = stdout;  ///< Output stream, defaults to stdout
+    [[deprecated]]
     FILE* m_errorStream = stderr;   ///< Error stream, defaults to stderr
 };
 
