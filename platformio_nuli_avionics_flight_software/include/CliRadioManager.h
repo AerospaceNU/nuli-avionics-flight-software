@@ -15,7 +15,7 @@ class CliRadioManager {
 public:
     CliRadioManager(Parser &parser, RadioLink &radio);
 
-    startCliLoop(char *input);
+    void startCliLoop(char *input);
 
 private:
     Parser m_parserObject;

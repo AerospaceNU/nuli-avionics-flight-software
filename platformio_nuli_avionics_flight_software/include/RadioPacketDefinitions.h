@@ -12,27 +12,16 @@ struct __attribute__((packed)) RadioPacketHeader {
     uint8_t flagId;
 };
 
-
-
-struct __attribute__((packed)) HeaderPacket {
-  uint8_t startByte;        //
-  uint8_t flagGroupUid;     //
-  uint8_t flagUid;          //
-  uint8_t packetLength;     //
-  uint8_t packetNumber;     //
-  uint8_t crc;              //
+struct __attribute__((packed)) GPSPacket {
+    uint8_t packetType;
+    uint32_t dataLength;
+    float altitude;
+    float HDOP;
+    uint8_t fixQuality;
+    float latitude;
+    float longitude;
+    uint8_t satellitesTracked;
 };
-
-typedef struct __attribute__((packed)) {
-  HeaderPacket header;      // 6 bytes
-  uint16_t data;            // 2 bytes
-} RadioPacket;
-
-struct __attribute__((packed)) CliPacket { };
-
-struct __attribute__((packed)) : CliPacket {
-
-} ConfigPacket;
 
 
 

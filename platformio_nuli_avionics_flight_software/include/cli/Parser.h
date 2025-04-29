@@ -146,9 +146,9 @@ private:
          * @brief Default constructor
          * @warning Constructor for internal use only
          */
-        FlagGroup_s() : flagGroupName_s{nullptr}, flags_s{nullptr}, numFlags_s(0),
-                        inputStream_s(stdin), outputStream_s(stdout), errorStream_s(stderr),
-                        uid_s(-1) {}
+        FlagGroup_s() : flags_s{nullptr}, flagGroupName_s{nullptr}, numFlags_s(0),
+                        uid_s(-1), inputStream_s(stdin), outputStream_s(stdout),
+                        errorStream_s(stderr) {}
 
         /**
          * @brief Constructor
