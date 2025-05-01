@@ -43,6 +43,7 @@ double lastAltitude = 0;
 int simFlightDataIndex = 0;
 
 uint32_t runtimeTick = 400;
+uint runtimeAddFudge = 0;
 
 void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
@@ -51,16 +52,22 @@ void AvionicsCore::loopOnce() {
     m_hardware->readAllSensors();
 
 
-    PayloadFlightData tickData = flightData[simFlightDataIndex++];
-    uint32_t lastTimeTick = runtimeTick;
-    runtimeTick = tickData.timestamp;              // m_hardware->getLoopTimestampMs();
-    uint32_t dtTick = runtimeTick - lastTimeTick;  // m_hardware->getLoopDtMs()
 
-    m_hardware->getBarometer(0)->inject(tickData.baroTemperatureK, 9999999, tickData.baroPressurePa);
-    m_hardware->getAccelerometer(0)->inject({tickData.ax, tickData.ay, tickData.az}, 9999999);
+//    if(simFlightDataIndex > sizeof(flightData) / sizeof(PayloadFlightData) - 5) {
+//        simFlightDataIndex = sizeof(flightData) / sizeof(PayloadFlightData) - 5;
+//        runtimeAddFudge += m_hardware->getLoopDtMs();
+//    }
+//
+//    PayloadFlightData tickData = flightData[simFlightDataIndex++];
+//    uint32_t lastTimeTick = runtimeTick;
+//    runtimeTick = tickData.timestamp + runtimeAddFudge;              // m_hardware->getLoopTimestampMs();
+//    uint32_t dtTick = runtimeTick - lastTimeTick;  // m_hardware->getLoopDtMs()
+//
+//    m_hardware->getBarometer(0)->inject(tickData.baroTemperatureK, 9999999, tickData.baroPressurePa);
+//    m_hardware->getAccelerometer(0)->inject({tickData.ax * 6, tickData.ay * 6, tickData.az * 6}, 9999999);
 
-//    runtimeTick = m_hardware->getLoopTimestampMs();
-//    uint32_t dtTick = m_hardware->getLoopDtMs();
+    runtimeTick = m_hardware->getLoopTimestampMs();
+    uint32_t dtTick = m_hardware->getLoopDtMs();
 
     if (log) {
         m_logger->log();
@@ -76,7 +83,6 @@ void AvionicsCore::loopOnce() {
     batteryFilter.add((float) m_hardware->getVoltageSensor(0)->getVoltage());
     orientationFilter.add((float) tilt);
     accelerationFilter.add((float) accel);
-
 
     double filteredAlt = altitudeFilter.getMedian();
     double velocity = double(filteredAlt - lastAltitude) / (double(dtTick) / 1000.0);

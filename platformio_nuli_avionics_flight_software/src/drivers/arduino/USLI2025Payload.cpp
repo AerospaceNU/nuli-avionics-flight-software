@@ -47,11 +47,11 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         updateLandingBuffers(altitudeM, velocityMS, netAccelMSS, runtime);
 
         if (runtime > m_stateTimer || checkLanded()) {
-            if(runtime > m_stateTimer) {
+            if (runtime > m_stateTimer) {
                 m_hardware->getDebugStream()->print("flight timed out");
                 m_hardware->getDebugStream()->println();
             }
-            if(checkLanded()) {
+            if (checkLanded()) {
                 m_hardware->getDebugStream()->print("landing detected");
                 m_hardware->getDebugStream()->println();
             }
@@ -64,7 +64,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
             m_flightState = LANDED;
 
 
-            m_stateTimer = runtime + (1000 * 60 * 5);
+            m_stateTimer = runtime + (1000 * 60 * 4);
         }
     }
 
@@ -77,7 +77,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
             m_hardware->getDebugStream()->print("deploy");
             m_hardware->getDebugStream()->println();
             m_nextDeployTime = runtime + 20000;
-            if (m_transmitAllowed) {
+            if (m_transmitAllowed && runtime < m_stateTimer) {
                 deployLegs();
                 m_hardware->delay(2000);
             }
@@ -137,7 +137,7 @@ void USLI2025Payload::sendTransmission(uint32_t runtime) {
 
         begin("KC1UAW");
         addInt((int) double(runtime / 1000.0));
-        addInt((int) double(m_payloadData.time / 1000.0));
+        addInt((int) double((m_payloadData.time + 3000) / 1000.0));
         addInt(m_payloadData.temp);
         addInt(m_payloadData.battery);
         addInt(m_payloadData.alt);
@@ -193,8 +193,6 @@ void USLI2025Payload::calculateSurvivability(uint32_t runTimeMs, double accelera
 }
 
 
-
-
 void USLI2025Payload::updateLandingBuffers(double altitude, double velocity, double acceleration, uint32_t timeMs) {
     bufferIndex++;
     if (bufferIndex >= BUFF_SIZE) bufferIndex = 0;
@@ -208,12 +206,12 @@ bool USLI2025Payload::checkLanded() {
     int minAlt = 9999999;
     int maxAlt = -999999;
 
-    for(int i = 0; i < 20 * 3; i++) {
+    for (int i = 0; i < 20 * 3; i++) {
         int alt = altitudeBuff[(bufferIndex + BUFF_SIZE - i) % BUFF_SIZE];
-        if(alt > maxAlt) {
+        if (alt > maxAlt) {
             maxAlt = alt;
         }
-        if(alt < minAlt) {
+        if (alt < minAlt) {
             minAlt = alt;
         }
     }

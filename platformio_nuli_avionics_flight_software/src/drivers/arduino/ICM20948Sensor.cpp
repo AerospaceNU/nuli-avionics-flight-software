@@ -18,8 +18,7 @@ void ICM20948Sensor::setup() {
     ICM_20948_fss_t fullScaleSettings;
     fullScaleSettings.a = gpm16;
     m_sparkfunIcm20948.setFullScale(ICM_20948_Internal_Acc, fullScaleSettings);
-    Serial.println(m_sparkfunIcm20948.statusString());
-
+//    Serial.println(m_sparkfunIcm20948.statusString());
 }
 
 void ICM20948Sensor::read() {
