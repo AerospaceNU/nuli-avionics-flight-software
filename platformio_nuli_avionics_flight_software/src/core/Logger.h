@@ -1,14 +1,14 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_LOGGER_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_LOGGER_H
 
-#include <HardwareAbstraction.h>
-#include <Configuration.h>
+#include "HardwareAbstraction.h"
+#include "Configuration.h"
 
 class Logger {
 public:
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    void log(float batt);
+    void log();
 
     void erase();
 

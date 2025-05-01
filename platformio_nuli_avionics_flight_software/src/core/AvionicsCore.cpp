@@ -1,7 +1,7 @@
 #include "AvionicsCore.h"
-#include <Barometer.h>
-#include <Accelerometer.h>
-#include <Arduino.h>
+#include "generic_hardware/Barometer.h"
+#include "generic_hardware/Accelerometer.h"
+#include "drivers/arduino/PayloadFlightData.h"
 
 void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
@@ -27,13 +27,23 @@ double calculateTilt(double ax, double ay, double az) {
     return angle; // Now it correctly returns values from 0 to 180 degrees
 }
 
+double calculateMagnitude(double x, double y, double z) {
+    return sqrt(x * x + y * y + z * z);
+}
+
 RunningMedian altitudeFilter = RunningMedian(10);
 RunningMedian batteryFilter = RunningMedian(10);
 RunningMedian temperatureFilter = RunningMedian(10);
 RunningMedian orientationFilter = RunningMedian(10);
+RunningMedian accelerationFilter = RunningMedian(5);
 RunningMedian velocityFilter = RunningMedian(3);
 
 double lastAltitude = 0;
+
+int simFlightDataIndex = 0;
+
+uint32_t runtimeTick = 400;
+uint runtimeAddFudge = 0;
 
 void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
@@ -41,51 +51,68 @@ void AvionicsCore::loopOnce() {
     // Read in sensor data. This data is accessible through
     m_hardware->readAllSensors();
 
-    float batVolt = float(analogRead(A4)) / float(22.008);
+
+
+//    if(simFlightDataIndex > sizeof(flightData) / sizeof(PayloadFlightData) - 5) {
+//        simFlightDataIndex = sizeof(flightData) / sizeof(PayloadFlightData) - 5;
+//        runtimeAddFudge += m_hardware->getLoopDtMs();
+//    }
+//
+//    PayloadFlightData tickData = flightData[simFlightDataIndex++];
+//    uint32_t lastTimeTick = runtimeTick;
+//    runtimeTick = tickData.timestamp + runtimeAddFudge;              // m_hardware->getLoopTimestampMs();
+//    uint32_t dtTick = runtimeTick - lastTimeTick;  // m_hardware->getLoopDtMs()
+//
+//    m_hardware->getBarometer(0)->inject(tickData.baroTemperatureK, 9999999, tickData.baroPressurePa);
+//    m_hardware->getAccelerometer(0)->inject({tickData.ax * 6, tickData.ay * 6, tickData.az * 6}, 9999999);
+
+    runtimeTick = m_hardware->getLoopTimestampMs();
+    uint32_t dtTick = m_hardware->getLoopDtMs();
 
     if (log) {
-        m_logger->log(batVolt);
+        m_logger->log();
     }
 
     Vector3D_s accelerationsMss = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
 
     double tilt = calculateTilt(accelerationsMss.x, accelerationsMss.y, accelerationsMss.z);
+    double accel = calculateMagnitude(accelerationsMss.x, accelerationsMss.y, accelerationsMss.z);
 
     altitudeFilter.add((float) m_hardware->getBarometer(0)->getAltitudeM());
     temperatureFilter.add((float) m_hardware->getBarometer(0)->getTemperatureK());
-    batteryFilter.add(batVolt);
+    batteryFilter.add((float) m_hardware->getVoltageSensor(0)->getVoltage());
     orientationFilter.add((float) tilt);
-
+    accelerationFilter.add((float) accel);
 
     double filteredAlt = altitudeFilter.getMedian();
-    double velocity = double(filteredAlt - lastAltitude) / (double(m_hardware->getLoopDtMs()) / 1000.0);
+    double velocity = double(filteredAlt - lastAltitude) / (double(dtTick) / 1000.0);
     velocityFilter.add((float) velocity);
 
-    uint32_t runtime = m_hardware->getLoopTimestampMs();
-    uint32_t dt = m_hardware->getLoopDtMs();
+    uint32_t runtime = runtimeTick; //m_hardware->getLoopTimestampMs();
+    uint32_t dt = dtTick;
     double altitudeM = altitudeFilter.getMedian();
     double velocityMS = abs(velocityFilter.getAverage());
-    double netAccelMSS = 0;
+    double netAccelMSS = accelerationFilter.getMedian();
     double orientationDeg = orientationFilter.getMedian();
     double temp = temperatureFilter.getMedian();
     double batteryVoltage = batteryFilter.getMedian();
 
-//    Serial.print(runtime);
-//    Serial.print('\t');
-//    Serial.print(dt);
-//    Serial.print('\t');
-//    Serial.print(altitudeM);
-//    Serial.print('\t');
-//    Serial.print(velocityMS);
-//    Serial.print('\t');
-//    Serial.print(netAccelMSS);
-//    Serial.print('\t');
-//    Serial.print(orientationDeg);
-//    Serial.print('\t');
-//    Serial.print(temp);
-//    Serial.print('\t');
-//    Serial.print(batteryVoltage);
-//    Serial.println('\t');
+    Serial.print(runtime);
+    Serial.print('\t');
+    Serial.print(dt);
+    Serial.print('\t');
+    Serial.print(altitudeM);
+    Serial.print('\t');
+    Serial.print(velocityMS);
+    Serial.print('\t');
+    Serial.print(netAccelMSS);
+    Serial.print('\t');
+    Serial.print(orientationDeg);
+    Serial.print('\t');
+    Serial.print(temp);
+    Serial.print('\t');
+    Serial.print(batteryVoltage);
+    Serial.println('\t');
 
     m_payload->loopOnce(runtime, dt, altitudeM, velocityMS, netAccelMSS, orientationDeg, temp, batteryVoltage);
 

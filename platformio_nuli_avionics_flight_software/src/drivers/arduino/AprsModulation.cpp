@@ -95,13 +95,13 @@ void calcCrc(bool in_bit);
 
 void sendCrc();
 
-void sendPacket(const char *myStatus);
+void sendPacket(const char* myStatus);
 
 void sendFlag(unsigned char flag_len);
 
 void sendHeader();
 
-void sendPayload(const char *myStatus);
+void sendPayload(const char* myStatus);
 
 void setNada1200() {
     digitalWrite(OUT_PIN, HIGH);
@@ -214,7 +214,7 @@ void sendHeader() {
     sendCharNRZI(APRS_PID, HIGH);
 }
 
-void sendPayload(const char *myStatus) {
+void sendPayload(const char* myStatus) {
     /*
      * APRS AX.25 Payloads
      * TYPE : STATUS
@@ -284,7 +284,7 @@ void sendFlag(unsigned char flag_len) {
  * delimiter. In this example, 100 flags is used the preamble and 3 flags as
  * the postamble.
  */
-void sendPacket(const char *myStatus) {
+void sendPacket(const char* myStatus) {
 
     /*
      * AX25 FRAME
@@ -321,9 +321,9 @@ void sendPacket(const char *myStatus) {
 
 
 
-AprsModulation::AprsModulation(uint8_t transmitPin, const char *callsign) {
+AprsModulation::AprsModulation(uint8_t transmitPin, const char* callsign) {
     uint32_t i = 0;
-    for(; i < sizeof(m_callsign) - 1 && callsign[i] != '\0'; i++) {
+    for (; i < sizeof(m_callsign) - 1 && callsign[i] != '\0'; i++) {
         m_callsign[i] = callsign[i];
     }
     m_callsign[i] = '\0';
@@ -333,12 +333,12 @@ AprsModulation::AprsModulation(uint8_t transmitPin, const char *callsign) {
     OUT_PIN = m_transmitPin;
 }
 
-void AprsModulation::setup() const {
+void AprsModulation::setup() {
     pinMode(m_transmitPin, OUTPUT);
 }
 
-void AprsModulation::transmit(const char* str) {
-    sendPacket(str);
+void AprsModulation::transmit(uint8_t* data, uint32_t length) {
+    sendPacket((char*) data);
     digitalWrite(OUT_PIN, LOW);
 }
 

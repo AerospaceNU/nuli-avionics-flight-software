@@ -2,8 +2,8 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINO_PYRO_H
 
 #include <Avionics.h>
-#include <GenericSensor.h>
-#include "Pyro.h"
+#include "../../core/generic_hardware/GenericSensor.h"
+#include "../../core/generic_hardware/Pyro.h"
 
 
 /**

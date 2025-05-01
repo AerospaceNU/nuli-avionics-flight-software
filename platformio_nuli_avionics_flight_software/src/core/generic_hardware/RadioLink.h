@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_RADIOLINK_H
 
 #include <Avionics.h>
-#include <GenericSensor.h>
+#include "GenericSensor.h"
 
 class RadioLink {
 public:

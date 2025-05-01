@@ -7,6 +7,7 @@ void HardwareAbstraction::setup() {
 
     m_debugStream->setup();
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->setup();
+    for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->setup();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->setup();
     for (int i = 0; i < m_numAccelerometers; i++) m_accelerometerArray[i]->setup();
     for (int i = 0; i < m_numMagnetometers; i++) m_magnetometerArray[i]->setup();
@@ -20,6 +21,7 @@ void HardwareAbstraction::setup() {
 
 void HardwareAbstraction::readAllSensors() {
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->read();
+    for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->read();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->read();
     for (int i = 0; i < m_numAccelerometers; i++) m_accelerometerArray[i]->read();
     for (int i = 0; i < m_numMagnetometers; i++) m_magnetometerArray[i]->read();

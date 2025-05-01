@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BAROMETER_H
 
 #include <Avionics.h>
-#include <GenericSensor.h>
+#include "GenericSensor.h"
 #include "ConstantsUnits.h"
 
 /**

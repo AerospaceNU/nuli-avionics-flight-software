@@ -50,7 +50,7 @@ void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) 
     Serial.println(m_logWriteAddress);
 }
 
-void Logger::log(float batt) {
+void Logger::log() {
     FlashMemory* flash = m_hardware->getFlashMemory(0);
 
 
@@ -69,7 +69,7 @@ void Logger::log(float batt) {
     logData.vx = velocitiesRadS.x;
     logData.vy = velocitiesRadS.y;
     logData.vz = velocitiesRadS.z;
-    logData.batt = batt;
+    logData.batt = m_hardware->getVoltageSensor(0)->getVoltage();
     // Serial.println(logData.timestamp);
     // Serial.println(sizeof(logData));
 

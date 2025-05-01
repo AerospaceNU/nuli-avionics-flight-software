@@ -3,8 +3,9 @@
 
 #include "AprsModulation.h"
 #include "Avionics.h"
-#include "HardwareAbstraction.h"
-#include "Arduino.h"
+#include "../../core/HardwareAbstraction.h"
+
+#define BUFF_SIZE (20*8)
 
 enum FlightState_e {
     PRE_FLIGHT,
@@ -28,9 +29,9 @@ class USLI2025Payload {
 public:
     bool m_transmitAllowed = true;
 
-    explicit USLI2025Payload(const char* callsign);
+    explicit USLI2025Payload() = default;
 
-    void setup(HardwareAbstraction *hardware);
+    void setup(HardwareAbstraction* hardware);
 
     void loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationDeg, double temp, double batteryVoltage);
 
@@ -49,20 +50,42 @@ private:
 
     void addInt(int num);
 
-    HardwareAbstraction *m_hardware = nullptr;
+    void calculateSurvivability(uint32_t runTimeMs, double acceleration);
 
-    char m_transmitBuffer[300];
+    void updateLandingBuffers(double altitude, double velocity, double acceleration, uint32_t timeMs);
+
+    bool checkLanded();
+
+    uint16_t getLandingVelocity();
+
+    uint16_t getLandingAccelG();
+
+    HardwareAbstraction* m_hardware = nullptr;
+
+    uint32_t m_liftoffTime = 0;
+
+    char m_transmitBuffer[300]{};
     char* m_transmitStringLocation = m_transmitBuffer;
-    const uint8_t m_transmitPin = A0;
 
-    AprsModulation m_aprsModulation;
     uint32_t m_nextTransmitTime = 0;
     uint32_t m_nextDeployTime = 0;
     PayloadData m_payloadData;
 
     FlightState_e m_flightState = PRE_FLIGHT;
-    double takeoffThresholdM = 230.0;
-    uint32_t takeoffTimer = 0;
+    double m_takeoffThresholdM = 230.0;
+    uint32_t m_stateTimer = 0;
+
+    // Survivability vars]
+    // tracks 10 seconds worth
+    int m_redLine[10] = {300, 260, 230, 210, 200, 195, 190, 185, 180, 170};
+    int m_accelThreshold[10] = {90, 85, 80, 75, 70, 65, 60, 55, 50, 45};
+    uint32_t m_survivabilityTotalTime = 0;
+    int m_survivabilityStartTime = -1;
+
+    int16_t altitudeBuff[BUFF_SIZE];
+    int32_t timeMsBuff[BUFF_SIZE];
+    int16_t accelerationBuff[BUFF_SIZE];
+    int16_t bufferIndex = BUFF_SIZE;
 };
 
 
