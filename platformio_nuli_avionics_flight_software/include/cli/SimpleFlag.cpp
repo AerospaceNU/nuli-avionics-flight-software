@@ -53,12 +53,6 @@ bool SimpleFlag::verify() const {
     return !(this->isRequired() && !this->isSet());
 }
 
-void SimpleFlag::setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) {
-    m_inputStream = inputStream;
-    m_outputStream = outputStream;
-    m_errorStream = errorStream;
-}
-
 
 bool SimpleFlag::getValueDerived() const {
     return isSet();

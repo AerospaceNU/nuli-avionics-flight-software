@@ -3,7 +3,6 @@
 
 #include <string>
 #include <cstdint>
-#include <sstream>
 
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
@@ -78,14 +77,6 @@ public:
     virtual bool verify() const = 0;
 
     /**
-     * @brief Sets the Flag's streams
-     * @param inputStream Input
-     * @param outputStream Output
-     * @param errorStream Error
-     */
-    virtual void setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) = 0;
-
-    /**
      * @brief Retrieves the value of the flag.
      * @details When retrieving the value of a flag, a user must check if the
      * flag's value is set.
@@ -103,18 +94,6 @@ protected:
      * @param required If a flag is required
      */
     BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t));
-
-    /**
-     * @brief Constructor with user defined streams
-     * @param name Name of a flag
-     * @param helpText A flag's help text
-     * @param required If a flag is required
-     * @param inputStream Input stream
-     * @param outputStream Output stream
-     * @param errorStream Error stream
-     */
-    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t),
-             FILE* inputStream, FILE* outputStream, FILE* errorStream);
 
     /**
      * @brief Parses an input into the expected type
@@ -138,14 +117,6 @@ protected:
     const uint8_t  m_identifier;      ///< command identifier
     bool m_set;                 ///< If a flag is in-use
     void (*m_callback)(uint8_t*, uint32_t length, uint8_t, uint8_t);   ///< Callback function. Takes in if a flag is set and its group's uid
-
-    // defining streams
-    [[deprecated]]
-    FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin
-    [[deprecated]]
-    FILE* m_outputStream = stdout;  ///< Output stream, defaults to stdout
-    [[deprecated]]
-    FILE* m_errorStream = stderr;   ///< Error stream, defaults to stderr
 };
 
 #include "BaseFlag.tpp"

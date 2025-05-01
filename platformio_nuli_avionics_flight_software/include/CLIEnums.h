@@ -16,6 +16,9 @@ enum FlagGroupEnum_e {
     SENS = 7,
     SIM = 8,
     VERSION = 9,
+    START = 10,
+    STOP = 11,
+    GPS = 12,
 };
 
 enum ConfigCommands_e {
@@ -31,6 +34,11 @@ enum ConfigCommands_e {
     CONFIG_ELEVATION = 9,
     CONFIG_GROUND_TEMP = 10,
     CONFIG_CHANNEL = 11,
+};
+
+enum PayloadData_e {
+    END = 1,
+    CONTINUE = 2,
 };
 
 enum ConfigConfiguration_e {

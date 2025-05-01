@@ -10,14 +10,14 @@ int8_t BaseFlag::parseArgument(const char* value, T &result) {
     std::istringstream iss(value);
     iss >> result;
     if (iss.fail()) {
-        fprintf(m_errorStream, "Failed to parse argument: %s\n", value);
+        fprintf(stderr, "Failed to parse argument: %s\n", value);
         return -1;
     }
 
     // Check for leftover characters (ensures complete parsing)
     char leftover;
     if (iss >> leftover) {
-        fprintf(m_errorStream, "Failed to parse argument (extra characters found): %s\n", value);
+        fprintf(stderr, "Failed to parse argument (extra characters found): %s\n", value);
         return -1;
     }
 

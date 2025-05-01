@@ -2,9 +2,6 @@
 #include <cstring>
 #include <stdexcept>
 
-Parser::Parser(FILE* inputSteam, FILE* outputStream, FILE* errorStream) :
-        m_inputStream(inputSteam), m_outputStream(outputStream), m_errorStream(errorStream) {};
-
 // parses inputs into appropriate flags.
 int8_t Parser::parse(int argc, char** argv) {
     if (m_numFlagGroups == 0) {
@@ -229,23 +226,17 @@ int8_t Parser::runFlags() {
 /* /////////////// */
 
 Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags,
-                                 FILE* inputStream, FILE* outputStream, FILE* errorStream,
                                  int8_t uid)
         : flagGroupName_s(flagGroupName), numFlags_s(numFlags),
-          inputStream_s(inputStream), outputStream_s(outputStream), errorStream_s(errorStream),
           uid_s(uid) {
     // check flag count
     if (numFlags > MAX_FLAGS) {
-        throw std::invalid_argument("Maximum flag count exceeded");
+//        throw std::invalid_argument("Maximum flag count exceeded");
+        return; // @TODO: Added because PlatformIO config doesn't like exceptions
     }
 
     // copy flags into flags_s
     std::copy(flags, flags + numFlags, flags_s);
-
-    // set each flag's streams
-    for (uint8_t i = 0; i < numFlags_s; ++i) {
-        flags_s[i]->setStreams(inputStream_s, outputStream_s, errorStream_s);
-    }
 }
 
 BaseFlag* Parser::FlagGroup_s::getLeader() {
@@ -266,7 +257,7 @@ int8_t Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** flag) {
 void Parser::FlagGroup_s::printHelp() const {
     // loop through each set of flags within a FlagGroup_s
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        fprintf(outputStream_s, "%s [%s]: %s\n", flags_s[i]->name(), flags_s[i]->isRequired() ? "Required" : "Optional", flags_s[i]->help());
+        printf("%s [%s]: %s\n", flags_s[i]->name(), flags_s[i]->isRequired() ? "Required" : "Optional", flags_s[i]->help());
     }
 }
 

@@ -123,7 +123,7 @@ void doubleCallback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t f
 }
 
 int main() {
-    Parser myParser = Parser(stdin, stdout, stderr);
+    Parser myParser = Parser();
 
     /* config group */
     SimpleFlag config("--config", "Configure a trigger with additional flag", true, CONFIG_STARTER, boolCallback);

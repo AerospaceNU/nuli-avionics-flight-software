@@ -26,8 +26,7 @@ void UART_GPS::read() {
 
     
     if (m_gps->newNMEAreceived() || true) {
-        m_lastGPSData = "Hello there from GPS!";
-//        m_lastGPSData = m_gps->lastNMEA();  // Store last NMEA sentence
+        m_lastGPSData = m_gps->lastNMEA();  // Store last NMEA sentence
         Serial.print("Raw GPS data: ");
         Serial.println(m_lastGPSData);
         

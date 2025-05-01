@@ -21,8 +21,8 @@
  *          the compiler would create a new instance for every new `n`
  */
 
-const uint8_t MAX_FLAG_GROUPS = 255;    ///< Maximum number of FlagGroups
-const uint8_t MAX_FLAGS = 255;          ///< Maximum number of flags per FlagGroup
+const uint8_t MAX_FLAG_GROUPS = 16;    ///< Maximum number of FlagGroups
+const uint8_t MAX_FLAGS = 16;          ///< Maximum number of flags per FlagGroup
 
 /**
  * @class Parser
@@ -44,22 +44,13 @@ public:
     Parser() = default;
 
     /**
-     * @brief Constructor with defined streams
-     * @param inputSteam Input
-     * @param outputStream Output
-     * @param errorStream Error
-     */
-    Parser(FILE* inputSteam, FILE* outputStream, FILE* errorStream);
-
-    /**
      * @brief Default destructor
      */
     ~Parser() = default;
 
     /**
      * @brief Adds a set of Flags into a FlagGroup
-     * @details Creates a new FlagGroup and automatically sets each flag's
-     *          stdin, stdout, and stderr to the Parser's streams.
+     * @details Creates a new FlagGroup
      * @tparam n Number of flags provided (not user inputted)
      * @param flagGroup An array of flags
      * @return 0 if successful
@@ -69,8 +60,7 @@ public:
 
     /**
      * @brief Adds a set of Flags into a FlagGroup
-     * @details Creates a new FlagGroup and automatically sets each flag's
-     *          stdin, stdout, and stderr to the Parser's streams.
+     * @details Creates a new FlagGroup
      * @tparam n Number of flags provided (not user inputted)
      * @param flagGroup An array of flags
      * @param uid a unique identifier for the flagGroup
@@ -147,8 +137,7 @@ private:
          * @warning Constructor for internal use only
          */
         FlagGroup_s() : flags_s{nullptr}, flagGroupName_s{nullptr}, numFlags_s(0),
-                        uid_s(-1), inputStream_s(stdin), outputStream_s(stdout),
-                        errorStream_s(stderr) {}
+                        uid_s(-1) {}
 
         /**
          * @brief Constructor
@@ -157,7 +146,6 @@ private:
          * @param numFlags The number of flags added
          */
         FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, uint8_t numFlags,
-                    FILE* inputStream, FILE* outputStream, FILE* errorStream,
                     int8_t uid);
 
         /**
@@ -203,10 +191,6 @@ private:
         const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
         uint8_t numFlags_s;                         ///< number of flags within FlagGroup
         uint8_t uid_s;                              ///< unique number identifying FlagGroup
-
-        FILE* inputStream_s;    ///< Input stream
-        FILE* outputStream_s;   ///< Output stream
-        FILE* errorStream_s;    ///< Error stream
     };
 
 
@@ -237,10 +221,6 @@ private:
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
     uint8_t m_uid = 0;                          ///< index of uids
     int8_t m_latestFlagGroup = -1;              ///< the last flag group processed
-
-    FILE* m_inputStream = stdin;    ///< Input stream, defaults to stdin
-    FILE* m_outputStream = stdout;  ///< Output stream, defaults to stdout
-    FILE* m_errorStream = stderr;   ///< Error stream, defaults to stderr
 };
 
 #include "Parser.tpp"

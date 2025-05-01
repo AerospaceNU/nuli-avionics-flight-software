@@ -69,14 +69,6 @@ public:
     bool verify() const override;
 
     /**
-     * @brief Sets the Flag's streams
-     * @param inputStream Input
-     * @param outputStream Output
-     * @param errorStream Error
-     */
-    void setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) override;
-
-    /**
      * @brief Retrieves the value of a derived flag
      * @tparam T type of the value
      * @return A flag's value

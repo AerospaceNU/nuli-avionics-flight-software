@@ -32,7 +32,7 @@ int8_t ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to return new a
             m_set = true;
             return 0;   // success
         } else {
-            fprintf(m_errorStream, "Default argument not set, value required for %s\n", this->name());
+            fprintf(stderr, "Default argument not set, value required for %s\n", this->name());
             return -1;
         }
     }
@@ -110,13 +110,6 @@ void ArgumentFlag<T>::reset() {
 template<typename T>
 bool ArgumentFlag<T>::verify() const {
     return !(this->isRequired() && !this->isSet());
-}
-
-template<typename T>
-void ArgumentFlag<T>::setStreams(FILE* inputStream, FILE* outputStream, FILE* errorStream) {
-    m_inputStream = inputStream;
-    m_outputStream = outputStream;
-    m_errorStream = errorStream;
 }
 
 template<typename T>

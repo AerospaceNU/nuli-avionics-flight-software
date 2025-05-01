@@ -13,8 +13,6 @@ struct __attribute__((packed)) RadioPacketHeader {
 };
 
 struct __attribute__((packed)) GPSPacket {
-    uint8_t packetType;
-    uint32_t dataLength;
     float altitude;
     float HDOP;
     uint8_t fixQuality;
