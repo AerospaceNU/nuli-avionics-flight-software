@@ -6,7 +6,6 @@
 #include "../include/cli/Parser.h"
 #include "cli/SimpleFlag.h"
 #include "CLIEnums.h"
-#include "../include/CliRadioManager.h"
 
 #define GPS_SERIAL Serial1
 #define MAX_PACKET_SIZE 128
@@ -27,7 +26,7 @@ uint8_t packetNum = 0;
  * @param group_uid Which group this flag belongs to
  * @param flag_uid Which flag this data belongs to
  */
-void callback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
     uint8_t packetBuffer[MAX_PACKET_SIZE];
 
     // total packet size (header size + data size)
@@ -52,12 +51,63 @@ void callback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_ui
     radio.transmit(packetBuffer, totalPacketSize);
 }
 
+/**
+ * @param name
+ * @param data
+ * @param length
+ * @param group_uid
+ * @param flag_uid
+ * @note Each callback is provided more information than needed,
+ */
+void callback_name(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
+    // Create a formatted message
+    char message[128];  //@TODO Make global constant
+    snprintf(message, sizeof(message), "Processed flag: %s", name);
+
+    uint32_t messageLength = strlen(message) + 1;
+
+    uint8_t packetBuffer[MAX_PACKET_SIZE];
+
+    // total packet size (header size + data size)
+    uint32_t totalPacketSize = sizeof(RadioPacketHeader) + messageLength;
+
+    // handle oversized packets
+    if (totalPacketSize > MAX_PACKET_SIZE) {
+        return;
+    }
+
+    // fill header
+    RadioPacketHeader radioPacketHeader{};
+    radioPacketHeader.packetNumber = packetNum++;
+    radioPacketHeader.packetLength = messageLength;
+    radioPacketHeader.groupId = group_uid;
+    radioPacketHeader.flagId = flag_uid;
+
+    // copy data in
+    memcpy(packetBuffer, &radioPacketHeader, sizeof(RadioPacketHeader));
+    memcpy(packetBuffer + sizeof(RadioPacketHeader), message, messageLength);
+
+    radio.transmit(packetBuffer, totalPacketSize);
+}
+
 // Define flags //
-SimpleFlag start("--start", "Send start", true, 255, callback);
+SimpleFlag ping("--ping", "Send start", true, 255, callback_name);
+BaseFlag* pingGroup[] = {&ping};
+
+SimpleFlag deploy("--deploy", "Send stop", true, 255, callback_name);
+BaseFlag* deployGroup[] = {&deploy};
+
+SimpleFlag erase("--erase", "Send stop", true, 255, callback_name);
+BaseFlag* eraseGroup[] = {&erase};
+
+SimpleFlag start("--start_logging", "Send stop", true, 255, callback_name);
 BaseFlag* startGroup[] = {&start};
 
-SimpleFlag stop("--stop", "Send stop", true, 255, callback);
+SimpleFlag stop("--stop_logging", "Send stop", true, 255, callback_name);
 BaseFlag* stopGroup[] = {&stop};
+
+SimpleFlag transmit("--transmit", "Send stop", true, 255, callback_name);
+BaseFlag* transmitGroup[] = {&transmit};
 
 
 void getSerialInput(char* buffer) {
@@ -97,12 +147,60 @@ void sendGPS() {
     radio.transmit(packetBuffer, totalSize);
 }
 
-void sender() {
+void serialSender() {
     char buf[255];  // @TODO: change into a macro/const
     getSerialInput(buf);
 
     // parse input
     myParser.parse(buf);
+}
+
+void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData) {
+    switch (radioPacketHeader->groupId) {
+        case PING:
+            break;
+        case DEPLOY:
+            break;
+        case ERASE:
+            break;
+        case START_LOGGING:
+            break;
+        case STOP_LOGGING:
+            break;
+        case TRANSMIT:
+            break;
+        case GPS:
+            break;
+        default:
+            return;
+    }
+}
+
+void receiver() {
+    radio.loopOnce();
+    if (radio.hasNewData()) {
+        uint8_t data[BUFFER_SIZE];
+        uint32_t receivedLength = radio.getData(data, BUFFER_SIZE);
+
+        // ensure header
+        if (receivedLength < sizeof(RadioPacketHeader)) {
+            return;
+        }
+
+        // decode header
+        RadioPacketHeader* radioPacketHeader = reinterpret_cast<RadioPacketHeader*>(data);
+
+        // validate packet length
+        if (receivedLength != sizeof(RadioPacketHeader) + radioPacketHeader->packetLength) {
+            return;
+        }
+
+        // pointer to data portion, decode this accordingly
+        uint8_t* subPacketData = data + sizeof(RadioPacketHeader);
+
+        // delegate
+        delegatePacket(radioPacketHeader, subPacketData);
+    }
 }
 
 // Arduino functions
@@ -111,18 +209,23 @@ void setup() {
     gps.setup();
     myParser = Parser();
 
-    myParser.addFlagGroup(startGroup, START);
-    myParser.addFlagGroup(stopGroup, STOP);
+    myParser.addFlagGroup(pingGroup, PING);
+    myParser.addFlagGroup(deployGroup, DEPLOY);
+    myParser.addFlagGroup(eraseGroup, ERASE);
+    myParser.addFlagGroup(startGroup, START_LOGGING);
+    myParser.addFlagGroup(stopGroup, STOP_LOGGING);
+    myParser.addFlagGroup(transmitGroup, TRANSMIT);
 }
 
 void loop() {
     // SENDER LOGIC
     Serial.println("Sending packet");
     sendGPS();
-//    sender();
-//    myParser.runFlags();
-//    myParser.resetFlags();
-    //    sender();
+    serialSender();
+    myParser.runFlags();
+    myParser.resetFlags();
+
+    receiver();
 
     delay(2000);
 }

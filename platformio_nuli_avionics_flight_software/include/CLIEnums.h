@@ -6,9 +6,18 @@
 #define DESKTOP_CLIENUMS_H
 
 enum FlagGroupEnum_e {
+    PING = 0,
+    DEPLOY = 1,
+    ERASE = 2,
+    START_LOGGING = 3,
+    STOP_LOGGING = 4,
+    TRANSMIT = 5,
+    GPS = 6,
+    STRING = 255,
+
     CONFIG = 0,
     CREATE_FLIGHT = 1,
-    ERASE = 2,
+//    ERASE = 2,
     HELP = 3,
     LINECUTTER = 4,
     OFFLOAD = 5,
@@ -16,9 +25,6 @@ enum FlagGroupEnum_e {
     SENS = 7,
     SIM = 8,
     VERSION = 9,
-    START = 10,
-    STOP = 11,
-    GPS = 12,
 };
 
 enum ConfigCommands_e {

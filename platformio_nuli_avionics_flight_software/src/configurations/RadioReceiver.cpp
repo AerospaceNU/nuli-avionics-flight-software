@@ -2,7 +2,6 @@
 #include "RFM9xRadio.h"
 #include "RadioPacketDefinitions.h"
 #include "../drivers/arduino/UART_GPS.h"
-#include <Adafruit_GPS.h>
 #include "../include/cli/Parser.h"
 #include "cli/SimpleFlag.h"
 #include "CLIEnums.h"
@@ -12,6 +11,50 @@
 
 RFM9xRadio radio;
 UART_GPS gps(&GPS_SERIAL);
+
+uint8_t packetNum = 0;
+
+/*
+ *
+ * PAYLOAD BOARD
+ *
+ */
+
+/**
+ * @brief Send a message via radio with a prefix
+ * @param message The message to send
+ * @param prefix The prefix to add before the message
+ */
+void sendStringMessage(const char* message, const char* prefix = "Processed flag: ") {
+    // calculate lengths
+    size_t prefixLen = strlen(prefix);
+    size_t messageLen = strlen(message);
+    size_t combinedMsgLen = prefixLen + messageLen + 1;
+
+    // total packet size
+    size_t totalPacketSize = sizeof(RadioPacketHeader) + combinedMsgLen;
+
+    uint8_t buffer[MAX_PACKET_SIZE];
+
+    // handle oversized packets
+    if (totalPacketSize > MAX_PACKET_SIZE) {
+        return;
+    }
+
+    // fill header
+    RadioPacketHeader* header = (RadioPacketHeader*)buffer;
+    header->packetNumber = packetNum++;
+    header->packetLength = combinedMsgLen;
+    header->groupId = STRING;
+    header->flagId = STRING;
+
+    // append string message
+    char* msgPtr = (char*)(buffer + sizeof(RadioPacketHeader));
+    strcpy(msgPtr, prefix);
+    strcpy(msgPtr + prefixLen, message);
+
+    radio.transmit(buffer, totalPacketSize);
+}
 
 void processGPSPacket(uint8_t* data, uint32_t length) {
     // Verify we received the complete packet
@@ -47,11 +90,23 @@ void processGPSPacket(uint8_t* data, uint32_t length) {
 
 void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData) {
     switch (radioPacketHeader->groupId) {
-        case START:
-            Serial.println("Received: START");
+        case PING:
+            sendStringMessage("pong");
             break;
-        case STOP:
-            Serial.println("Received: STOP");
+        case DEPLOY:
+            sendStringMessage("deploying");
+            break;
+        case ERASE:
+            sendStringMessage("erasing");
+            break;
+        case START_LOGGING:
+            sendStringMessage("start logging");
+            break;
+        case STOP_LOGGING:
+            sendStringMessage("stop logging");
+            break;
+        case TRANSMIT:
+            sendStringMessage("transmit");
             break;
         case GPS:
             processGPSPacket(subPacketData, radioPacketHeader->packetLength);
@@ -99,71 +154,6 @@ void loop() {
     Serial.println("Attempting to receive packet");
     receiver();
 
-
-//    // comment in for sender logic
-//    RadioPacketHeader radioPacket;
-////  radioPacket.header.startByte = 0xAA;
-//    radioPacket.header.packetType = 2;
-//    radioPacket.header.packetLength = sizeof(radioPacket);
-//    radioPacket.header.packetNumber = 4;
-//    radioPacket.header.crc = 16;
-//    radioPacket.data = 5;
-//
-//    uint32_t radioPacketSize = sizeof(radioPacket);
-//
-////  radio.transmit(reinterpret_cast<uint8_t *>(&radioPacket), radioPacketSize);
-////  Serial.println("Sent packet");
-//
-//
-//
-//    // comment in for receiver logic
-//    radio.loopOnce();
-//
-//    if (radio.hasNewData()) {
-//        Serial.println("Received Data");
-//
-//        uint8_t data[BUFFER_SIZE];
-//        uint32_t length = radio.getData(data, radioPacketSize);
-//
-//        if (length >= sizeof(HeaderPacket)) {
-//            HeaderPacket *header = reinterpret_cast<HeaderPacket *>(data);
-//
-//            if (header->startByte == 0xAA) {
-//                if (length >= radioPacketSize) {
-//                    auto *radioPacket1 = reinterpret_cast<RadioPacket *>(data);
-//
-//                    if (radioPacket1->header.startByte == 0xAA) {
-//                        // everything should be received correctly
-//                        Serial.print("Packet Number: ");
-//                        Serial.println(radioPacket1->header.packetNumber);
-//                        Serial.print("Packet Type: ");
-//                        Serial.println(radioPacket1->header.packetType);
-//                        Serial.print("Packet CRC: ");
-//                        Serial.println(radioPacket1->header.crc);
-//                        Serial.print("Data is: ");
-//                        Serial.println(radioPacket1->data);
-//                    } else {
-//                        // size is correct, but starting byte does not make sense
-//                        for (uint32_t i = 0; i < length; ++i) {
-//                            Serial.print(data[i], HEX);
-//                            Serial.print(" ");
-//                        }
-//                        Serial.println();
-//                    }
-//                } else {
-//                    // if unexpected size received
-//                    Serial.print("Size incorrect. Length is: ");
-//                    Serial.print(length);
-//                    Serial.print(" . Expected: ");
-//                    Serial.println(radioPacketSize);
-//                }
-//            }
-//        }
-//
-//    } else {
-//        Serial.println("No data received");
-//    }
-//
     delay(2000);
 
 }

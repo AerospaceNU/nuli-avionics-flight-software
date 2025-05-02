@@ -6,7 +6,7 @@
 // https://google.github.io/googletest/primer.html
 // https://github.com/google/googletest/blob/main/googletest/samples/sample3_unittest.cc
 
-void callback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
 
 
 // Demonstrate some basic assertions.

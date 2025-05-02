@@ -6,6 +6,7 @@
 #define MAX_PACKET_DATA_SIZE 32
 
 struct __attribute__((packed)) RadioPacketHeader {
+//    uint8_t isAcknowledgement;    //@TODO: change current acknowledgement system to a switch
     uint8_t packetNumber;
     uint32_t packetLength;
     uint8_t groupId;

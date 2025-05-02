@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_UART_GPS_H
 
 #include <Adafruit_GPS.h>
-#include <GPS.h>
+#include "core/generic_hardware/GPS.h"
 
 
 class UART_GPS final : public GPS {

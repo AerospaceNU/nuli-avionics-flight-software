@@ -160,31 +160,31 @@ void loop() {
             Serial.print(F("[SX1278] Data:\t\t"));
             Serial.println(str);
 
-            if (str.startsWith("p")) {
+            if (str.startsWith("p")) {  // --ping
                 radio.startTransmit("pong");
                 while (!operationDone);
                 operationDone = false;
             } else if (str.startsWith("d")) {
-                radio.startTransmit("deploying");
+                radio.startTransmit("deploying");   // --deploy
                 while (!operationDone);
                 operationDone = false;
                 payload.deployLegs();
-            } else if (str.startsWith("e")) {
+            } else if (str.startsWith("e")) {   // --erase
                 radio.startTransmit("erasing");
                 while (!operationDone);
                 operationDone = false;
                 logger.erase();
-            } else if (str.startsWith("l")) {
+            } else if (str.startsWith("l")) {   // --start_logging
                 radio.startTransmit("started logging");
                 while (!operationDone);
                 operationDone = false;
                 avionicsCore.log = true;
-            } else if (str.startsWith("s")) {
+            } else if (str.startsWith("s")) {   // --stop_logging
                 radio.startTransmit("stopped logging");
                 while (!operationDone);
                 operationDone = false;
                 avionicsCore.log = false;
-            } else if (str.startsWith("t")) {
+            } else if (str.startsWith("t")) {   // --transmit
                 radio.startTransmit("transmitting");
                 while (!operationDone);
                 operationDone = false;

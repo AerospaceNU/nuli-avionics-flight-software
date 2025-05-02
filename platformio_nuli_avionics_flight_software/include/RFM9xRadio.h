@@ -1,7 +1,7 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_RFM9XRADIO_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_RFM9XRADIO_H
 
-#include "RadioLink.h"
+#include "../src/core/generic_hardware/RadioLink.h"
 #include "RadioLib.h"
 
 #define BUFFER_SIZE 1024

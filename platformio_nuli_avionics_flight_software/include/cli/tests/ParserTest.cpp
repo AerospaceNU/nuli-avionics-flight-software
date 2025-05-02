@@ -3,7 +3,7 @@
 #include "cli/SimpleFlag.h"
 #include "cli/ArgumentFlag.h"
 
-void callback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
 
 
 TEST(ParserTest, TestBasic) {

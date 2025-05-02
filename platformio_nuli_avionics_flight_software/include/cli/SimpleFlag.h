@@ -18,7 +18,7 @@ public:
      * @param helpText Name, or calling sign, of the flag
      * @param m_required If a flag is required
      */
-    SimpleFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(uint8_t*, uint32_t length, uint8_t, uint8_t));
+    SimpleFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t));
 
     /**
      * @brief Retrieves the flag's name
