@@ -29,6 +29,8 @@ class USLI2025Payload {
 public:
     bool m_transmitAllowed = true;
 
+    bool echoStringLora = false;
+
     explicit USLI2025Payload() = default;
 
     void setup(HardwareAbstraction* hardware);
@@ -61,6 +63,7 @@ private:
     uint16_t getLandingAccelG();
 
     HardwareAbstraction* m_hardware = nullptr;
+
 
     uint32_t m_liftoffTime = 0;
 

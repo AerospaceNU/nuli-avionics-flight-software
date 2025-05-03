@@ -15,7 +15,6 @@
 #include "generic_hardware/DebugStream.h"
 #include "generic_hardware/VoltageSensor.h"
 
-
 /**
  * This macro generates three methods for a given type of hardware:
  * - addHardware(Hardware*);
@@ -124,7 +123,7 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(Gyroscope, m_gyroscopeArray, m_numGyroscopes, MAX_GYROSCOPE_NUM)
 
-    GENERATE_GET_ADD_METHODS_MACRO(GPS, m_gpsArray, m_numGps, MAX_GPS_NUM)
+//    GENERATE_GET_ADD_METHODS_MACRO(GPS, m_gpsArray, m_numGps, MAX_GPS_NUM)
 
     GENERATE_GET_ADD_METHODS_MACRO(FlashMemory, m_flashMemoryArray, m_numFlashMemory, MAX_FLASH_MEMORY_NUM)
 
@@ -159,7 +158,7 @@ private:
     Accelerometer* m_accelerometerArray[MAX_ACCELEROMETER_NUM] = {nullptr};     ///< Array containing all the Accelerometers in the system
     Magnetometer* m_magnetometerArray[MAX_BAROMETER_NUM] = {nullptr};           ///< Array containing all the Magnetometers in the system
     Gyroscope* m_gyroscopeArray[MAX_GYROSCOPE_NUM] = {nullptr};                 ///< Array containing all the Gyroscopes in the system
-    GPS* m_gpsArray[MAX_GPS_NUM] = {nullptr};                                   ///< Array containing all the Gps in the system
+//    GPS* m_gpsArray[MAX_GPS_NUM] = {nullptr};                                   ///< Array containing all the Gps in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
     RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr};        ///< Array containing all the RadioLinks in the system
     GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};                    ///< Array containing all generic sensors

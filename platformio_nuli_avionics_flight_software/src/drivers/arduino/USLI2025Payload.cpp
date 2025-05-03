@@ -151,6 +151,8 @@ void USLI2025Payload::sendTransmission(uint32_t runtime) {
         m_hardware->getDebugStream()->print(m_transmitBuffer);
         m_hardware->getDebugStream()->println();
         m_aprsModulation->transmit((uint8_t*) m_transmitBuffer, 0);
+
+        echoStringLora = true;
     }
 }
 

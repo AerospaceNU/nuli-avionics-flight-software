@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include "RFM9xRadio.h"
 #include "RadioPacketDefinitions.h"
-#include "../drivers/arduino/UART_GPS.h"
 #include "cli/SimpleFlag.h"
 #include "CLIEnums.h"
 #include "drivers/arduino/SerialDebug.h"
@@ -25,11 +24,9 @@
  *
  */
 
-#define GPS_SERIAL Serial1
 #define MAX_PACKET_SIZE 128
 
 RFM9xRadio radio;
-UART_GPS gps(&GPS_SERIAL);
 
 uint8_t packetNum = 0;
 
@@ -137,38 +134,6 @@ void sendStringMessageAck(const char* message, const char* prefix = "Processed f
     radio.transmit(buffer, totalPacketSize);
 }
 
-void processGPSPacket(uint8_t* data, uint32_t length) {
-    // Verify we received the complete packet
-    if (length == sizeof(GPSPacket)) {
-        // Cast the buffer to a GPSPacket struct pointer
-        GPSPacket* gpsPacket = reinterpret_cast<GPSPacket*>(data);
-
-        // Verify packet type
-        Serial.println("Received GPS Packet:");
-
-        // Now you can access the struct fields directly
-        Serial.print("Altitude: ");
-        Serial.println(gpsPacket->altitude);
-
-        Serial.print("HDOP: ");
-        Serial.println(gpsPacket->HDOP);
-
-        Serial.print("Fix Quality: ");
-        Serial.println(gpsPacket->fixQuality);
-
-        Serial.print("Latitude: ");
-        Serial.println(gpsPacket->latitude);
-
-        Serial.print("Longitude: ");
-        Serial.println(gpsPacket->longitude);
-
-        Serial.print("Satellites Tracked: ");
-        Serial.println(gpsPacket->satellitesTracked);
-    } else {
-        Serial.println("Received unknown packet type");
-    }
-}
-
 void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData) {
     Serial.println("Received, sending ACK");
     switch (radioPacketHeader->groupId) {
@@ -199,7 +164,7 @@ void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData
             Serial.println("Sending ACK for STOP");
             sendStringMessageAck("stop logging");
 
-            avionicsCore.log = true;
+            avionicsCore.log = false;
             break;
         case TRANSMIT:
             Serial.println("Sending ACK for TRANSMIT");
@@ -211,9 +176,6 @@ void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData
         case STOPPING:
             sendStringMessageAck("stopping");
             payload.m_transmitAllowed = false;
-            break;
-        case GPS:
-            processGPSPacket(subPacketData, radioPacketHeader->packetLength);
             break;
         default:
             return;
@@ -251,7 +213,6 @@ void receiver() {
 // Arduino functions
 void setup() {
     radio.setup();
-    gps.setup();
 
     // @TODO: COPPIED FROM PAYBOARD.CPP
     pinMode(8, OUTPUT);
@@ -267,11 +228,11 @@ void setup() {
 
     hardware.setDebugStream(&debug);
     hardware.setSystemClock(&arduinoClock);
-//    hardware.addBarometer(&barometer);
+    hardware.addBarometer(&barometer);
     hardware.addPyro(&pyro1);
     hardware.addVoltageSensor(&batterySensor);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
-//    hardware.addGenericSensor(&icm20948);
+    hardware.addGenericSensor(&icm20948);
     hardware.addAccelerometer(icm20948.getAccelerometer());
     hardware.addGyroscope(icm20948.getGyroscope());
     hardware.addMagnetometer(icm20948.getMagnetometer());
@@ -294,13 +255,13 @@ void setup() {
 }
 
 void loop() {
-    // RECEIVER LOGIC
-    Serial.println("Attempting to receive packet");
     receiver();
-
     avionicsCore.loopOnce();
+
+    if(payload.echoStringLora) {
+        payload.echoStringLora = false;
+        sendStringMessageAck(payload.getTransmitStr());
+    }
+
     cliTick();
-
-    delay(2000);
-
 }

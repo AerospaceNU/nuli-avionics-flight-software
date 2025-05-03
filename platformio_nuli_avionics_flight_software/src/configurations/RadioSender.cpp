@@ -116,6 +116,9 @@ BaseFlag* stopGroup[] = {&stop};
 SimpleFlag transmit("--transmit", "Send stop", true, 255, callback_name);
 BaseFlag* transmitGroup[] = {&transmit};
 
+SimpleFlag stopTransmit("--stop", "Send stop", true, 255, callback_name);
+BaseFlag* stopTransmitGroup[] = {&stopTransmit};
+
 
 void getSerialInput(char* buffer) {
     if (! Serial.available()) {
@@ -218,6 +221,8 @@ void delegatePacketAck(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketD
             break;
         case GPS:
             break;
+        case STOPPING:
+            break;
         case STRING:
             printStringMessage(subPacketData);
             break;
@@ -229,8 +234,8 @@ void delegatePacketAck(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketD
 void receiver() {
     radio.loopOnce();
     if (radio.hasNewData()) {
-        uint8_t data[BUFFER_SIZE];
-        uint32_t receivedLength = radio.getData(data, BUFFER_SIZE);
+        uint8_t data[RADIO_BUFFER_SIZE];
+        uint32_t receivedLength = radio.getData(data, RADIO_BUFFER_SIZE);
 
         // ensure header
         if (receivedLength < sizeof(RadioPacketHeader)) {
@@ -258,7 +263,7 @@ void receiver() {
             delegatePacket(radioPacketHeader, subPacketData);
         }
     } else {
-        Serial.println("No data received");
+//        Serial.println("No data received");
     }
 }
 
@@ -274,6 +279,7 @@ void setup() {
     myParser.addFlagGroup(startGroup, START_LOGGING);
     myParser.addFlagGroup(stopGroup, STOP_LOGGING);
     myParser.addFlagGroup(transmitGroup, TRANSMIT);
+    myParser.addFlagGroup(stopTransmitGroup, STOPPING);
 }
 
 void loop() {
@@ -283,10 +289,10 @@ void loop() {
     myParser.runFlags();
     myParser.resetFlags();
 
-    Serial.print("Is erase set?: ");
-    Serial.println(erase.isSet());
+//    Serial.print("Is erase set?: ");
+//    Serial.println(erase.isSet());
 
     receiver();
-
-    delay(2000);
+// --transmit
+//    delay(2000);
 }

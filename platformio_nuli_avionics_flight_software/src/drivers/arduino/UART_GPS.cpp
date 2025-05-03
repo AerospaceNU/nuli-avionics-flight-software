@@ -31,7 +31,7 @@ void UART_GPS::read() {
         Serial.println(m_lastGPSData);
         
        
-            char buffer[m_lastGPSData.length() + 1];
+            char buffer[m_lastGPSData.length() + 1]; // @todo no dynamic memory
             strcpy(buffer, m_lastGPSData.c_str());
     
             if (m_gps->parse(buffer)) {
