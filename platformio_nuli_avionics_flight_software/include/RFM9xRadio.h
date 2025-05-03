@@ -4,7 +4,7 @@
 #include "../src/core/generic_hardware/RadioLink.h"
 #include "RadioLib.h"
 
-#define BUFFER_SIZE 1024
+#define RADIO_BUFFER_SIZE 1024
 
 class RFM9xRadio : public RadioLink {
 public:
@@ -44,7 +44,7 @@ protected:
 private:
     uint16_t m_packetNumber = 0;
     uint32_t m_dataLength = 0;
-    uint8_t m_inBuffer[BUFFER_SIZE] = {0};
+    uint8_t m_inBuffer[RADIO_BUFFER_SIZE] = {0};
 
     RFM95 m_radio = nullptr;
 };

@@ -6,6 +6,7 @@
 #include "../include/cli/Parser.h"
 #include "cli/SimpleFlag.h"
 #include "CLIEnums.h"
+#include "CliRadioManager.h"
 
 #define GPS_SERIAL Serial1
 #define MAX_PACKET_SIZE 128
@@ -16,6 +17,11 @@ UART_GPS gps(&GPS_SERIAL);
 Parser myParser;
 uint8_t packetNum = 0;
 
+/*
+ *
+ * GROUNDSTATION?
+ *
+ */
 
 // Define callback //
 /**
@@ -39,6 +45,7 @@ void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_ui
 
     // fill header
     RadioPacketHeader radioPacketHeader{};
+    radioPacketHeader.isAcknowledgement = false;
     radioPacketHeader.packetNumber = packetNum++;
     radioPacketHeader.packetLength = length;
     radioPacketHeader.groupId = group_uid;
@@ -60,7 +67,6 @@ void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_ui
  * @note Each callback is provided more information than needed,
  */
 void callback_name(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
-    // Create a formatted message
     char message[128];  //@TODO Make global constant
     snprintf(message, sizeof(message), "Processed flag: %s", name);
 
@@ -78,6 +84,7 @@ void callback_name(const char* name, uint8_t* data, uint32_t length, uint8_t gro
 
     // fill header
     RadioPacketHeader radioPacketHeader{};
+    radioPacketHeader.isAcknowledgement = false;
     radioPacketHeader.packetNumber = packetNum++;
     radioPacketHeader.packetLength = messageLength;
     radioPacketHeader.groupId = group_uid;
@@ -112,11 +119,17 @@ BaseFlag* transmitGroup[] = {&transmit};
 
 void getSerialInput(char* buffer) {
     if (! Serial.available()) {
+        buffer[0] = '\0';
         return;
     }
 
     size_t bytesRead = Serial.readBytes(buffer, 254);
     buffer[bytesRead] = '\0';
+
+    // clear serial buffer
+    while (Serial.available()) {
+        Serial.read();  // Discard any remaining bytes
+    }
 }
 
 void sendGPS() {
@@ -124,6 +137,7 @@ void sendGPS() {
     gps.read();
 
     RadioPacketHeader radioPacketHeader{};
+    radioPacketHeader.isAcknowledgement = false;
     radioPacketHeader.packetNumber = packetNum++;
     radioPacketHeader.packetLength = sizeof(GPSPacket);
     radioPacketHeader.groupId = GPS;
@@ -147,12 +161,24 @@ void sendGPS() {
     radio.transmit(packetBuffer, totalSize);
 }
 
+void printStringMessage(uint8_t* subPacketData) {
+    // Get pointer to the string message
+    char* message = (char*)(subPacketData);
+
+    Serial.print("Received string message: ");
+    Serial.println(message);
+}
+
 void serialSender() {
     char buf[255];  // @TODO: change into a macro/const
     getSerialInput(buf);
 
-    // parse input
-    myParser.parse(buf);
+    // Only parse if we actually received something
+    if (buf[0] != '\0') {
+        Serial.print("Parsing input: ");
+        Serial.println(buf);
+        myParser.parse(buf);
+    }
 }
 
 void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData) {
@@ -170,6 +196,30 @@ void delegatePacket(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData
         case TRANSMIT:
             break;
         case GPS:
+            break;
+        default:
+            return;
+    }
+}
+
+void delegatePacketAck(RadioPacketHeader* radioPacketHeader, uint8_t* subPacketData) {
+    switch (radioPacketHeader->groupId) {
+        case PING:
+            break;
+        case DEPLOY:
+            break;
+        case ERASE:
+            break;
+        case START_LOGGING:
+            break;
+        case STOP_LOGGING:
+            break;
+        case TRANSMIT:
+            break;
+        case GPS:
+            break;
+        case STRING:
+            printStringMessage(subPacketData);
             break;
         default:
             return;
@@ -199,7 +249,16 @@ void receiver() {
         uint8_t* subPacketData = data + sizeof(RadioPacketHeader);
 
         // delegate
-        delegatePacket(radioPacketHeader, subPacketData);
+        Serial.println("Going to delegater..");
+        if (radioPacketHeader->isAcknowledgement) {
+            Serial.println("Is ACK");
+            delegatePacketAck(radioPacketHeader, subPacketData);
+        } else {
+            Serial.println("Is not ACK");
+            delegatePacket(radioPacketHeader, subPacketData);
+        }
+    } else {
+        Serial.println("No data received");
     }
 }
 
@@ -219,11 +278,13 @@ void setup() {
 
 void loop() {
     // SENDER LOGIC
-    Serial.println("Sending packet");
-    sendGPS();
+//    sendGPS();
     serialSender();
     myParser.runFlags();
     myParser.resetFlags();
+
+    Serial.print("Is erase set?: ");
+    Serial.println(erase.isSet());
 
     receiver();
 

@@ -39,8 +39,8 @@ void RFM9xRadio::loopOnce() {
 
   uint16_t length = m_radio.getPacketLength();
   // check data is within limits
-  if (length > 0 && m_dataLength + length <= BUFFER_SIZE) {
-    uint8_t tempBuffer[BUFFER_SIZE];
+  if (length > 0 && m_dataLength + length <= RADIO_BUFFER_SIZE) {
+    uint8_t tempBuffer[RADIO_BUFFER_SIZE];
     int state = m_radio.readData(tempBuffer, length);
 
     // check state

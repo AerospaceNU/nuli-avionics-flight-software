@@ -13,6 +13,7 @@ enum FlagGroupEnum_e {
     STOP_LOGGING = 4,
     TRANSMIT = 5,
     GPS = 6,
+    STOPPING = 7,
     STRING = 255,
 
     CONFIG = 0,
