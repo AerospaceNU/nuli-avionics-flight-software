@@ -26,7 +26,7 @@
 
 #define MAX_PACKET_SIZE 128
 
-RFM9xRadio radio;
+RFM9xRadio radio(905);
 
 uint8_t packetNum = 0;
 

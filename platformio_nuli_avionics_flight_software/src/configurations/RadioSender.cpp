@@ -10,8 +10,8 @@
 
 #define GPS_SERIAL Serial1
 #define MAX_PACKET_SIZE 128
-
-RFM9xRadio radio;
+//--transmit
+RFM9xRadio radio(905);
 UART_GPS gps(&GPS_SERIAL);
 
 Parser myParser;

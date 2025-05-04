@@ -8,6 +8,8 @@
 
 class RFM9xRadio : public RadioLink {
 public:
+    RFM9xRadio(float frequency);
+
     /**
      * @brief Setup radio hardware and pins
      */
@@ -47,6 +49,8 @@ private:
     uint8_t m_inBuffer[RADIO_BUFFER_SIZE] = {0};
 
     RFM95 m_radio = nullptr;
+
+    float m_frequency = 915;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_RFM9XRADIO_H
