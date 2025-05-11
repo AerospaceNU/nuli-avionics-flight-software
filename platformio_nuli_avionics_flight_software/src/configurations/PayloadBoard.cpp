@@ -1,21 +1,16 @@
 #include <Arduino.h>
 #include <Avionics.h>
-#include <GenericSensor.h>
-#include <Barometer.h>
-#include <Accelerometer.h>
-#include <GPS.h>
-#include <Gyroscope.h>
-#include <Magnetometer.h>
-#include <Pyro.h>
-#include <AvionicsCore.h>
-#include <HardwareAbstraction.h>
-#include <Filters.h>
-#include "ICM20948Sensor.h"
-#include "MS8607Sensor.h"
-#include "S25FL512.h"
-#include "ArduinoSystemClock.h"
-#include "SerialDebug.h"
-#include "USLI2025Payload.h"
+#include "core/AvionicsCore.h"
+#include "core/HardwareAbstraction.h"
+#include "core/Filters.h"
+#include "drivers/arduino/ICM20948Sensor.h"
+#include "drivers/arduino/MS8607Sensor.h"
+#include "drivers/arduino/S25FL512.h"
+#include "drivers/arduino/ArduinoSystemClock.h"
+#include "drivers/arduino/SerialDebug.h"
+#include "drivers/arduino/USLI2025Payload.h"
+#include "drivers/arduino/ArduinoPyro.h"
+#include "drivers/arduino/ArduinoVoltageSensor.h"
 
 const int BUFFER_SIZE = 16;  // Adjust buffer size as needed
 char serialInputBuffer[BUFFER_SIZE];
@@ -33,6 +28,7 @@ ArduinoSystemClock arduinoClock;
 MS8607Sensor barometer;
 ICM20948Sensor icm20948(5);
 S25FL512 s25fl512(A5);
+ArduinoPyro pyro1(11, A1, 75);
 
 // Core objects accessible by all components
 HardwareAbstraction hardware;
@@ -71,6 +67,7 @@ void cliTick() {
             isOffloading = false;
         } else {
             Serial.write(offloadReadBuffer, readLength);
+            delay(5);
         }
         currentOffloadAddress += readLength;
     }
@@ -79,20 +76,10 @@ void cliTick() {
 
 // The core
 AvionicsCore avionicsCore;
-USLI2025Payload payload("KC1UAW");
+USLI2025Payload payload;
+AprsModulation aprsModulation(A0, "KC1UAW");
+ArduinoVoltageSensor batterySensor(A4, 22.008);
 
-/**
- * Payload logging requirements:
- *
- * Barometer: 3
- * IMU: 9
- * Clock: 1
- * GPS: 3
- * Battery: 1
- * Pyro: 1
- *
- * Lets just log one page at a time
- */
 #include <RadioLib.h>
 
 SX1276 radio = new Module(8, 3, 4);  // (CS, INT, RST)
@@ -112,7 +99,6 @@ void setup() {
 //    while(!Serial);
     SPI.begin();
     Wire.begin();
-    payload.setup();
 
     Serial.println("Serial successfully started");
 
@@ -127,41 +113,37 @@ void setup() {
     radio.setDio0Action(setFlag, RISING);
     radio.startReceive();
 
-
     hardware.setDebugStream(&debug);
     hardware.setSystemClock(&arduinoClock);
     hardware.addBarometer(&barometer);
+    hardware.addPyro(&pyro1);
+    hardware.addVoltageSensor(&batterySensor);
     // Add the ICM20948. This takes multiple steps because the ICM is actually 3 sensors in one
     hardware.addGenericSensor(&icm20948);
     hardware.addAccelerometer(icm20948.getAccelerometer());
     hardware.addGyroscope(icm20948.getGyroscope());
     hardware.addMagnetometer(icm20948.getMagnetometer());
     hardware.addFlashMemory(&s25fl512);
+    hardware.addRadioLink(&aprsModulation);
     pinMode(A5, OUTPUT);
     digitalWrite(A5, HIGH);
     digitalWrite(8, HIGH);
-
-    // s25fl512.eraseAll();
-    // Serial.println("erase complete");
-
 
     // Finish initializing all hardware
     hardware.setup();
     // Initialize other globals
     configuration.setup();
-
+    payload.setup(&hardware);
     logger.setup(&hardware, &configuration);
     // Initialize components
     filter.setup(&configuration, &logger);
     // Initialize core
     avionicsCore.setup(&hardware, &configuration, &logger, &filter, &payload);
-
 }
 
 
 void loop() {
     avionicsCore.loopOnce();
-    uint32_t time = millis();
     cliTick();
 
     if (operationDone) {
@@ -169,8 +151,6 @@ void loop() {
 
         String str;
         int state = radio.readData(str);
-
-        Serial.println("fads");
 
         if (state == RADIOLIB_ERR_NONE) {
             // packet was successfully received
@@ -180,35 +160,47 @@ void loop() {
             Serial.print(F("[SX1278] Data:\t\t"));
             Serial.println(str);
 
-            if (str.startsWith("p")) {
+            if (str.startsWith("p")) {  // --ping
                 radio.startTransmit("pong");
                 while (!operationDone);
                 operationDone = false;
             } else if (str.startsWith("d")) {
-                radio.startTransmit("deploying");
+                radio.startTransmit("deploying");   // --deploy
                 while (!operationDone);
                 operationDone = false;
                 payload.deployLegs();
-            } else if (str.startsWith("e")) {
+            } else if (str.startsWith("e")) {   // --erase
                 radio.startTransmit("erasing");
                 while (!operationDone);
                 operationDone = false;
                 logger.erase();
-            } else if (str.startsWith("l")) {
+            } else if (str.startsWith("l")) {   // --start_logging
                 radio.startTransmit("started logging");
                 while (!operationDone);
                 operationDone = false;
                 avionicsCore.log = true;
-            } else if (str.startsWith("s")) {
+            } else if (str.startsWith("s")) {   // --stop_logging
                 radio.startTransmit("stopped logging");
                 while (!operationDone);
                 operationDone = false;
                 avionicsCore.log = false;
-            } else if (str.startsWith("t")) {
+            } else if (str.startsWith("t")) {   // --transmit
                 radio.startTransmit("transmitting");
                 while (!operationDone);
                 operationDone = false;
+
                 payload.sendTransmission(millis());
+
+                payload.m_transmitAllowed = true;
+                radio.startTransmit(payload.getTransmitStr());
+                while (!operationDone);
+                operationDone = false;
+            } else if (str.startsWith("w")) {
+                radio.startTransmit("stopping");
+                while (!operationDone);
+                operationDone = false;
+
+                payload.m_transmitAllowed = false;
             }
         }
 

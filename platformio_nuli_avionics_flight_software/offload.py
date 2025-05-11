@@ -5,8 +5,13 @@ import serial.tools.list_ports
 import csv
 
 # Define the LogData struct format
-LOG_DATA_FORMAT = "<Iddd"  # Little-endian: uint32, double, double, double
+LOG_DATA_FORMAT = "<Idddddddddd"  # Little-endian: uint32, double, double, double
 LOG_DATA_SIZE = struct.calcsize(LOG_DATA_FORMAT)
+
+print("dassdadsadassdasad")
+print(LOG_DATA_SIZE)
+print()
+
 CSV_FILENAME = "log_data.csv"
 
 def list_serial_ports():
@@ -30,12 +35,20 @@ def select_serial_port():
 
 def parse_log_data(data):
     """Unpack binary data into LogData struct fields."""
-    timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM = struct.unpack(LOG_DATA_FORMAT, data)
+    timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM, ax, ay, az, vx, vy, vz, batt = struct.unpack(LOG_DATA_FORMAT, data)
+    # timestamp, baroPressurePa, baroTemperatureK, baroAltitudeM = struct.unpack(LOG_DATA_FORMAT, data)
     return {
         "timestamp": timestamp,
         "baroPressurePa": baroPressurePa,
         "baroTemperatureK": baroTemperatureK,
-        "baroAltitudeM": baroAltitudeM
+        "baroAltitudeM": baroAltitudeM,
+        "ax" : ax,
+        "ay" : ay,
+        "az" : az,
+        "vx" : vx,
+        "vy" : vy,
+        "vz" : vz,
+        "batt" : batt
     }
 
 def main():
@@ -44,11 +57,12 @@ def main():
         return
 
     # Open serial connection
-    with serial.Serial(port, baudrate=115200, timeout=1) as ser, open(CSV_FILENAME, "w", newline="") as csvfile:
+    with serial.Serial(port, baudrate=9600, timeout=1) as ser, open(CSV_FILENAME, "w", newline="") as csvfile:
         print(f"Connected to {port}")
 
         # Setup CSV writer
-        csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM"])
+        csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM", "ax", "ay", "az", "vx", "vy", "vz", "batt"])
+        # csv_writer = csv.DictWriter(csvfile, fieldnames=["timestamp", "baroPressurePa", "baroTemperatureK", "baroAltitudeM"])
         csv_writer.writeheader()  # Write CSV header
 
         # Send "offload" command
@@ -57,6 +71,7 @@ def main():
         print(f"Reading data... Logging to {CSV_FILENAME}")
 
         while True:
+            # print(LOG_DATA_SIZE)
             raw_data = ser.read(LOG_DATA_SIZE)
 
             if len(raw_data) < LOG_DATA_SIZE:

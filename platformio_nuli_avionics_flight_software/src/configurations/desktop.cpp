@@ -10,7 +10,7 @@
 #include <HardwareAbstraction.h>
 #include <Filters.h>
 #include <FlashMemory.h>
-#include <CommunicationLink.h>
+#include <RadioLink.h>
 #include "CustomCsvParser.h"
 #include <iostream>
 #include <DesktopDebug.h>

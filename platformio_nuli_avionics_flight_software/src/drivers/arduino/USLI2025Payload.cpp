@@ -1,29 +1,31 @@
 #include "USLI2025Payload.h"
+#include <cstdio>
+#include "../../core/generic_hardware/RadioLink.h"
 
-USLI2025Payload::USLI2025Payload(const char* callsign) : m_aprsModulation(m_transmitPin, callsign) {
+void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationDeg, double temp, double batteryVoltage) {
+    // Save the current temperature, battery voltage, and orientation
+    updateGroundData(temp, batteryVoltage, orientationDeg);
 
-}
-
-//#include "iostream"
-
-void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, double velocityMS, double netAccelMSS, double orientationRad, double temp, double batteryVoltage) {
     /**
      * Pre-flight state
      * Detect launch
      */
     if (m_flightState == PRE_FLIGHT) {
-        if (altitudeM > takeoffThresholdM) {
-            if (takeoffTimer == 0) {
-                takeoffTimer = runtime + 1000;
+        if (altitudeM > m_takeoffThresholdM) {
+            if (m_stateTimer == 0) {
+                m_stateTimer = runtime + 1000;
             }
         } else {
-            takeoffTimer = 0;
+            m_stateTimer = 0;
         }
 
-        if (takeoffTimer != 0 && runtime > takeoffTimer) {
+        if (m_stateTimer != 0 && runtime > m_stateTimer) {
+            m_hardware->getDebugStream()->print("takeoff");
+            m_hardware->getDebugStream()->println();
             m_flightState = FLIGHT;
-            takeoffTimer = runtime + (1000 * 60 * 3);
-//            std::cout << "adsf\n\n\n\n\n\n\n\n";
+            m_stateTimer = runtime + (1000 * 60 * 4);   // Maximum allowed flight time
+
+            m_liftoffTime = runtime;
         }
     }
 
@@ -40,29 +42,61 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
             m_payloadData.maxVel = (int32_t) velocityMS;
         }
 
-        if (runtime > takeoffTimer) {
-            m_payloadData.time = (int32_t) runtime;
+        calculateSurvivability(runtime, netAccelMSS);
+
+        updateLandingBuffers(altitudeM, velocityMS, netAccelMSS, runtime);
+
+        if (runtime > m_stateTimer || checkLanded()) {
+            if (runtime > m_stateTimer) {
+                m_hardware->getDebugStream()->print("flight timed out");
+                m_hardware->getDebugStream()->println();
+            }
+            if (checkLanded()) {
+                m_hardware->getDebugStream()->print("landing detected");
+                m_hardware->getDebugStream()->println();
+            }
+            m_hardware->getDebugStream()->print("landed");
+            m_hardware->getDebugStream()->println();
+
+            m_payloadData.time = (int32_t) (runtime - m_liftoffTime);
+            m_payloadData.landVel = getLandingVelocity();
+            m_payloadData.accel = getLandingAccelG();
             m_flightState = LANDED;
+
+            m_stateTimer = runtime + (1000 * 60 * 5);
         }
     }
 
-    /**
-     * Landed state
-     * Transmit data
-     */
+        /**
+         * Landed state
+         * Transmit data
+         */
     else if (m_flightState == LANDED) {
+        if(runtime > m_stateTimer && m_stateTimer != 0) {
+            m_transmitAllowed = false;
+            m_stateTimer = 0;
+        }
+
         if (runtime > m_nextDeployTime) {
-            m_nextDeployTime = runtime + 15000;
-            deployLegs();
-            delay(2000);
-            updateGroundData(temp, batteryVoltage, orientationRad);
+            m_hardware->getDebugStream()->print("deploy");
+            m_hardware->getDebugStream()->println();
+            m_nextDeployTime = runtime + 20000;
+            if (m_transmitAllowed) {
+                deployLegs();
+                m_hardware->delay(2000);
+            }
         }
 
         if (runtime > m_nextTransmitTime) {
-            m_nextTransmitTime = runtime + 5000;
-            sendTransmission(runtime);
+            m_hardware->getDebugStream()->print("transmit");
+            m_hardware->getDebugStream()->println();
+            m_nextTransmitTime = runtime + 10000;
+            if (m_transmitAllowed) {
+                sendTransmission(runtime);
+            }
         }
     }
+
         // Should never happen
     else {
         m_flightState = PRE_FLIGHT;
@@ -70,31 +104,31 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
 }
 
 void USLI2025Payload::updateGroundData(double temp, double batteryVoltage, double orientationRad) {
-    m_payloadData.ort = (int32_t) double(orientationRad * 57.2958);
-    m_payloadData.battery = (int32_t) batteryVoltage * 10;
+    m_payloadData.ort = (int32_t) orientationRad;
+    m_payloadData.battery = (int32_t) double(batteryVoltage * 10.0);
     m_payloadData.temp = (int32_t) temp;
 }
 
-void USLI2025Payload::setup() {
-    pinMode(m_deployPin, OUTPUT);
-    digitalWrite(m_deployPin, LOW);
-    m_aprsModulation.setup();
+void USLI2025Payload::setup(HardwareAbstraction* hardware) {
+    m_hardware = hardware;
 }
 
 
 void USLI2025Payload::deployLegs() const {
-    digitalWrite(m_deployPin, HIGH);
-    delay(250);
-    digitalWrite(m_deployPin, LOW);
+    if (m_hardware->getNumPyros() > 0) {
+        m_hardware->getPyro(0)->fire();
+        m_hardware->delay(250);
+        m_hardware->getPyro(0)->disable();
+    }
 }
 
 void USLI2025Payload::begin(const char* callsign) {
     m_transmitStringLocation = m_transmitBuffer;
-    addStr(callsign);
+    m_transmitStringLocation += sprintf(m_transmitStringLocation, "%s", callsign);
 }
 
 void USLI2025Payload::addStr(const char* str) {
-    m_transmitStringLocation += sprintf(m_transmitStringLocation, "%s", str);
+    m_transmitStringLocation += sprintf(m_transmitStringLocation, ";%s", str);
 }
 
 void USLI2025Payload::addInt(int num) {
@@ -102,23 +136,135 @@ void USLI2025Payload::addInt(int num) {
 }
 
 void USLI2025Payload::sendTransmission(uint32_t runtime) {
-    begin(m_aprsModulation.getCallsign());
-    addInt(runtime - m_payloadData.time);
-    addInt(m_payloadData.temp);
-    addInt(m_payloadData.battery);
-    addInt(m_payloadData.alt);
-    addInt(m_payloadData.ort);
-    addInt(m_payloadData.maxVel);
-    addInt(m_payloadData.landVel);
-    addInt(m_payloadData.accel);
-    addInt(m_payloadData.suviv);
-    addStr(m_aprsModulation.getCallsign());
-    m_aprsModulation.transmit(m_transmitBuffer);
+    if (m_hardware->getNumRadioLinks() > 0) {
+        RadioLink* m_aprsModulation = m_hardware->getRadioLink(0);
+
+        double altNormal = m_payloadData.alt;
+        altNormal *= 1.05;
+
+        begin("KC1UAW");
+        addInt((int) double(runtime / 1000.0));
+        addInt((int) double((m_payloadData.time + 3000) / 1000.0));
+        addInt(m_payloadData.temp);
+        addInt(m_payloadData.battery);
+        addInt((int) altNormal);
+        addInt(m_payloadData.ort);
+        addInt(m_payloadData.maxVel);
+        addInt(m_payloadData.landVel);
+        addInt(m_payloadData.accel);
+        addInt(m_payloadData.suviv);
+        addStr("KC1UAW");
+
+        m_hardware->getDebugStream()->print(m_transmitBuffer);
+        m_hardware->getDebugStream()->println();
+        m_aprsModulation->transmit((uint8_t*) m_transmitBuffer, 0);
+
+        echoStringLora = true;
+    }
+}
+
+const char* USLI2025Payload::getTransmitStr() {
+    return m_transmitBuffer;
 }
 
 
+void USLI2025Payload::calculateSurvivability(uint32_t runTimeMs, double acceleration) {    // total time >= 10, 0 survivability and return
+
+    // if acceleration is greater than the threshold at the current block
+    if (acceleration > m_accelThreshold[m_survivabilityTotalTime]) {
+        //set start time for acceleration over threshold if its not tracking
+        if (m_survivabilityStartTime == -1) {
+            m_survivabilityStartTime = (int) runTimeMs;
+        }
+        //total time currently over threshold in terms of seconds
+        m_survivabilityTotalTime = (runTimeMs - m_survivabilityStartTime) / 1000;
+
+        if (m_survivabilityTotalTime >= 10) {
+            m_payloadData.suviv = 0;
+            return;
+        }
+
+        double bounds = m_redLine[m_survivabilityTotalTime] - m_accelThreshold[m_survivabilityTotalTime];
+        double newSurvivability = (1.0 - (double(acceleration - m_accelThreshold[m_survivabilityTotalTime]) / (bounds))) * 100;
+        // only update if newSurvivability is lower than current one
+        if (newSurvivability < m_payloadData.suviv) {
+            if (newSurvivability < 0) {
+                m_payloadData.suviv = 0;
+            } else {
+                m_payloadData.suviv = (int) newSurvivability;
+            }
+        }
+    }
+        //normal acceleration range
+    else {
+        m_survivabilityTotalTime = 0;
+        m_survivabilityStartTime = -1;
+    }
+}
 
 
+void USLI2025Payload::updateLandingBuffers(double altitude, double velocity, double acceleration, uint32_t timeMs) {
+    bufferIndex++;
+    if (bufferIndex >= BUFF_SIZE) bufferIndex = 0;
+
+    altitudeBuff[bufferIndex] = altitude;
+    timeMsBuff[bufferIndex] = timeMs;
+    accelerationBuff[bufferIndex] = acceleration;
+
+    updateLandingBuffersCounter++;
+}
+
+bool USLI2025Payload::checkLanded() {
+    if(updateLandingBuffersCounter < BUFF_SIZE) {
+        return false;
+    }
+
+    int minAlt = 9999999;
+    int maxAlt = -999999;
+
+    for (int i = 0; i < 20 * 3; i++) {
+        int alt = altitudeBuff[(bufferIndex + BUFF_SIZE - i) % BUFF_SIZE];
+        if (alt > maxAlt) {
+            maxAlt = alt;
+        }
+        if (alt < minAlt) {
+            minAlt = alt;
+        }
+    }
+
+
+    if (abs(maxAlt - minAlt) < 3) {
+        return true;
+    }
+    return false;
+}
+
+uint16_t USLI2025Payload::getLandingVelocity() {
+    int preLandingIndex = (bufferIndex + BUFF_SIZE - 80) % BUFF_SIZE;
+    int oldestIndex = (bufferIndex + BUFF_SIZE + 1) % BUFF_SIZE;
+
+    int preLandingAltitude = altitudeBuff[preLandingIndex];
+    uint32_t preLandingTime = timeMsBuff[preLandingIndex];
+
+    int oldestAltitude = altitudeBuff[oldestIndex];
+    uint32_t oldestTime = timeMsBuff[oldestIndex];
+
+    double dt = preLandingTime - oldestTime;
+    dt /= 1000;
+    double dz = oldestAltitude - preLandingAltitude;
+
+    return (int) round(dz / dt);
+}
+
+uint16_t USLI2025Payload::getLandingAccelG() {
+    double max = 0;
+    for (int i = 0; i < BUFF_SIZE; i++) {
+        if (accelerationBuff[i] > max) {
+            max = accelerationBuff[i];
+        }
+    }
+    return round(max / 9.8);
+}
 
 
 
