@@ -23,7 +23,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
             m_hardware->getDebugStream()->print("takeoff");
             m_hardware->getDebugStream()->println();
             m_flightState = FLIGHT;
-            m_stateTimer = runtime + (1000 * 60 * 3);
+            m_stateTimer = runtime + (1000 * 60 * 4);   // Maximum allowed flight time
 
             m_liftoffTime = runtime;
         }
@@ -63,8 +63,7 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
             m_payloadData.accel = getLandingAccelG();
             m_flightState = LANDED;
 
-
-            m_stateTimer = runtime + (1000 * 60 * 4);
+            m_stateTimer = runtime + (1000 * 60 * 5);
         }
     }
 
@@ -73,11 +72,16 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
          * Transmit data
          */
     else if (m_flightState == LANDED) {
+        if(runtime > m_stateTimer && m_stateTimer != 0) {
+            m_transmitAllowed = false;
+            m_stateTimer = 0;
+        }
+
         if (runtime > m_nextDeployTime) {
             m_hardware->getDebugStream()->print("deploy");
             m_hardware->getDebugStream()->println();
             m_nextDeployTime = runtime + 20000;
-            if (m_transmitAllowed && runtime < m_stateTimer) {
+            if (m_transmitAllowed) {
                 deployLegs();
                 m_hardware->delay(2000);
             }
@@ -86,8 +90,8 @@ void USLI2025Payload::loopOnce(uint32_t runtime, uint32_t dt, double altitudeM, 
         if (runtime > m_nextTransmitTime) {
             m_hardware->getDebugStream()->print("transmit");
             m_hardware->getDebugStream()->println();
-            m_nextTransmitTime = runtime + 5000;
-            if (m_transmitAllowed && runtime < m_stateTimer) {
+            m_nextTransmitTime = runtime + 10000;
+            if (m_transmitAllowed) {
                 sendTransmission(runtime);
             }
         }
@@ -135,12 +139,15 @@ void USLI2025Payload::sendTransmission(uint32_t runtime) {
     if (m_hardware->getNumRadioLinks() > 0) {
         RadioLink* m_aprsModulation = m_hardware->getRadioLink(0);
 
+        double altNormal = m_payloadData.alt;
+        altNormal *= 1.05;
+
         begin("KC1UAW");
         addInt((int) double(runtime / 1000.0));
         addInt((int) double((m_payloadData.time + 3000) / 1000.0));
         addInt(m_payloadData.temp);
         addInt(m_payloadData.battery);
-        addInt(m_payloadData.alt);
+        addInt((int) altNormal);
         addInt(m_payloadData.ort);
         addInt(m_payloadData.maxVel);
         addInt(m_payloadData.landVel);
@@ -190,6 +197,7 @@ void USLI2025Payload::calculateSurvivability(uint32_t runTimeMs, double accelera
     }
         //normal acceleration range
     else {
+        m_survivabilityTotalTime = 0;
         m_survivabilityStartTime = -1;
     }
 }
@@ -202,9 +210,15 @@ void USLI2025Payload::updateLandingBuffers(double altitude, double velocity, dou
     altitudeBuff[bufferIndex] = altitude;
     timeMsBuff[bufferIndex] = timeMs;
     accelerationBuff[bufferIndex] = acceleration;
+
+    updateLandingBuffersCounter++;
 }
 
 bool USLI2025Payload::checkLanded() {
+    if(updateLandingBuffersCounter < BUFF_SIZE) {
+        return false;
+    }
+
     int minAlt = 9999999;
     int maxAlt = -999999;
 
@@ -249,7 +263,7 @@ uint16_t USLI2025Payload::getLandingAccelG() {
             max = accelerationBuff[i];
         }
     }
-    return round(max / 10.0);
+    return round(max / 9.8);
 }
 
 

@@ -18,25 +18,15 @@
 #include "drivers/arduino/USLI2025Payload.h"
 #include "core/AvionicsCore.h"
 
-/*
- *
- * PAYLOAD BOARD
- *
- */
-
 #define MAX_PACKET_SIZE 128
 
 RFM9xRadio radio(905);
-
 uint8_t packetNum = 0;
-
 const int BUFFER_SIZE = 16;  // Adjust buffer size as needed
 char serialInputBuffer[BUFFER_SIZE];
 int bufferIndex = 0;
-
 bool isOffloading = false;
 uint32_t currentOffloadAddress = 0;
-
 uint8_t offloadReadBuffer[256];
 
 // Hardware devices
@@ -263,5 +253,5 @@ void loop() {
         sendStringMessageAck(payload.getTransmitStr());
     }
 
-    cliTick();
+//    cliTick();
 }

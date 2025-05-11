@@ -7,7 +7,6 @@ void AvionicsCore::setup(HardwareAbstraction* hardware,
                          Configuration* configuration,
                          Logger* logger,
                          Filters* filter, USLI2025Payload* payload) {
-
     m_hardware = hardware;
     m_configuration = configuration;
     m_logger = logger;
@@ -16,9 +15,7 @@ void AvionicsCore::setup(HardwareAbstraction* hardware,
 }
 
 #include "RunningMedian.h"
-
 #define RAD_TO_DEG_2 57.2958 // Conversion factor from radians to degrees
-
 #include <cmath>
 
 double calculateTilt(double ax, double ay, double az) {
@@ -39,9 +36,7 @@ RunningMedian accelerationFilter = RunningMedian(5);
 RunningMedian velocityFilter = RunningMedian(3);
 
 double lastAltitude = 0;
-
 int simFlightDataIndex = 0;
-
 uint32_t runtimeTick = 400;
 uint runtimeAddFudge = 0;
 
@@ -50,8 +45,6 @@ void AvionicsCore::loopOnce() {
     m_hardware->updateLoopTimestamp();
     // Read in sensor data. This data is accessible through
     m_hardware->readAllSensors();
-
-
 
 //    if(simFlightDataIndex > sizeof(flightData) / sizeof(PayloadFlightData) - 5) {
 //        simFlightDataIndex = sizeof(flightData) / sizeof(PayloadFlightData) - 5;
@@ -64,7 +57,7 @@ void AvionicsCore::loopOnce() {
 //    uint32_t dtTick = runtimeTick - lastTimeTick;  // m_hardware->getLoopDtMs()
 //
 //    m_hardware->getBarometer(0)->inject(tickData.baroTemperatureK, 9999999, tickData.baroPressurePa);
-//    m_hardware->getAccelerometer(0)->inject({tickData.ax * 6, tickData.ay * 6, tickData.az * 6}, 9999999);
+//    m_hardware->getAccelerometer(0)->inject({tickData.ax * 1, tickData.ay * 1, tickData.az * 1}, 9999999);
 
     runtimeTick = m_hardware->getLoopTimestampMs();
     uint32_t dtTick = m_hardware->getLoopDtMs();
@@ -78,8 +71,8 @@ void AvionicsCore::loopOnce() {
     double tilt = calculateTilt(accelerationsMss.x, accelerationsMss.y, accelerationsMss.z);
     double accel = calculateMagnitude(accelerationsMss.x, accelerationsMss.y, accelerationsMss.z);
 
-    altitudeFilter.add((float) m_hardware->getBarometer(0)->getAltitudeM());
-    temperatureFilter.add((float) m_hardware->getBarometer(0)->getTemperatureK());
+    altitudeFilter.add((float) (m_hardware->getBarometer(0)->getAltitudeM() - 230));
+    temperatureFilter.add((float) (m_hardware->getBarometer(0)->getTemperatureK() - 3));
     batteryFilter.add((float) m_hardware->getVoltageSensor(0)->getVoltage());
     orientationFilter.add((float) tilt);
     accelerationFilter.add((float) accel);
@@ -97,22 +90,22 @@ void AvionicsCore::loopOnce() {
     double temp = temperatureFilter.getMedian();
     double batteryVoltage = batteryFilter.getMedian();
 
-    Serial.print(runtime);
-    Serial.print('\t');
-    Serial.print(dt);
-    Serial.print('\t');
-    Serial.print(altitudeM);
-    Serial.print('\t');
-    Serial.print(velocityMS);
-    Serial.print('\t');
-    Serial.print(netAccelMSS);
-    Serial.print('\t');
-    Serial.print(orientationDeg);
-    Serial.print('\t');
-    Serial.print(temp);
-    Serial.print('\t');
-    Serial.print(batteryVoltage);
-    Serial.println('\t');
+//    Serial.print(runtime);
+//    Serial.print('\t');
+//    Serial.print(dt);
+//    Serial.print('\t');
+//    Serial.print(altitudeM);
+//    Serial.print('\t');
+//    Serial.print(velocityMS);
+//    Serial.print('\t');
+//    Serial.print(netAccelMSS);
+//    Serial.print('\t');
+//    Serial.print(orientationDeg);
+//    Serial.print('\t');
+//    Serial.print(temp);
+//    Serial.print('\t');
+//    Serial.print(batteryVoltage);
+//    Serial.println('\t');
 
     m_payload->loopOnce(runtime, dt, altitudeM, velocityMS, netAccelMSS, orientationDeg, temp, batteryVoltage);
 

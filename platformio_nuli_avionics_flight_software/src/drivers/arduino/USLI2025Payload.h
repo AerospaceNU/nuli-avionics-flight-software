@@ -89,6 +89,8 @@ private:
     int32_t timeMsBuff[BUFF_SIZE];
     int16_t accelerationBuff[BUFF_SIZE];
     int16_t bufferIndex = BUFF_SIZE;
+
+    uint32_t updateLandingBuffersCounter = 0;
 };
 
 
