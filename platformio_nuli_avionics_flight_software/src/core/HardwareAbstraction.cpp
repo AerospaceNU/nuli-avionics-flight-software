@@ -1,7 +1,8 @@
 #include "HardwareAbstraction.h"
+#include <Arduino.h>
 
 void HardwareAbstraction::setup() {
-    if(m_debugStream == nullptr) {
+    if (m_debugStream == nullptr) {
         setDebugStream(&voidDump);
     }
 

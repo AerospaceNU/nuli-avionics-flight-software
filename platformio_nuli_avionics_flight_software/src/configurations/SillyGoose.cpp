@@ -23,7 +23,7 @@ ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 
 MS5607Sensor barometer;
 ICM20602Sensor icm20602Sensor;
-ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE );
+ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
 
 S25FL512 flash(FLASH_CS_PIN);
 
@@ -34,15 +34,17 @@ HardwareAbstraction hardware;
 AvionicsCore avionicsCore;
 
 void callback_name(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
-    Serial.println("testing12");
+    Serial.println("erasing");
+    flash.eraseAll();
+    Serial.println("done");
 }
 
 Parser myParser;
-SimpleFlag stopTransmit("--stop", "Send stop", true, 255, callback_name);
+SimpleFlag stopTransmit("--erase", "erases", true, 255, callback_name);
 BaseFlag* stopTransmitGroup[] = {&stopTransmit};
 
 void getSerialInput(char* buffer) {
-    if (! Serial.available()) {
+    if (!Serial.available()) {
         buffer[0] = '\0';
         return;
     }
@@ -69,9 +71,14 @@ void serialSender() {
 }
 
 void setup() {
+    pinMode(FRAM_CS_PIN, OUTPUT);
+    digitalWrite(FRAM_CS_PIN, HIGH);
+    SPI.begin();
+    Serial.begin(9600);
+    while(!Serial);
     myParser.addFlagGroup(stopTransmitGroup);
 
-    // System configuration
+    // System configuration--erase
     hardware.setDebugStream(&serialDebug);
     hardware.setSystemClock(&arduinoClock);
     // Devices
@@ -86,11 +93,9 @@ void setup() {
 
     hardware.setup();
 
-    logger.erase();
-    Serial.println("Done");
     logger.setup(&hardware);
 
-    avionicsCore.setup(&hardware, &configuration, &logger);
+//    avionicsCore.setup(&hardware, &configuration, &logger);
 }
 
 void loop() {
@@ -98,8 +103,8 @@ void loop() {
     myParser.runFlags();
     myParser.resetFlags();
 
-    avionicsCore.loopOnce();
-    logger.log();
+//    avionicsCore.loopOnce();
+//    logger.log();
 
 //    Serial.print(hardware.getLoopDtMs());
 //    Serial.print('\t');

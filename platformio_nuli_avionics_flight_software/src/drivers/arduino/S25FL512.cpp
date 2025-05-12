@@ -26,17 +26,15 @@
  * Handle cross page boundary's
  */
 
-S25FL512::S25FL512(uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {
-    /// @todo remove this
-    pinMode(chipSelectPin, OUTPUT);
-}
+S25FL512::S25FL512(uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {}
 
 void S25FL512::setSpiClass(SPIClass* spiClass) {
     m_spiBus = spiClass;
 }
 
-void S25FL512::setup() const {
+void S25FL512::setup() {
     pinMode(m_chipSelectPin, OUTPUT);
+    disableSelectPin();
 }
 
 

@@ -13,7 +13,7 @@ public:
 
     void setSpiClass(SPIClass* spiClass);
 
-    void setup() const;
+    void setup() override;
 
     static uint32_t getMemorySize();
 
