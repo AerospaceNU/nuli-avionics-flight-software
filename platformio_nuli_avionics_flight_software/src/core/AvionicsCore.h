@@ -26,7 +26,7 @@ public:
      * @param stateMachine State machine
      * @param eventManager Event manager
      */
-    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger, Filters* filter, USLI2025Payload *payload);
+    void setup(HardwareAbstraction* hardware, Configuration* configuration, Logger* logger);
 
     /**
      * @brief Run one tick of the core
@@ -36,14 +36,9 @@ public:
     void printDump();
 
 private:
-    // Global
     HardwareAbstraction* m_hardware;
     Configuration* m_configuration;
     Logger* m_logger;
-    USLI2025Payload *m_payload;
-
-    // Local
-    Filters* m_filter;
 };
 
 

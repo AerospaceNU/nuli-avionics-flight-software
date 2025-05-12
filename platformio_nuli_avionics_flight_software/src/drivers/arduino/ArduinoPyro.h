@@ -49,6 +49,7 @@ public:
      */
     void disable() const override;
 
+
     int rawAdcValue() const override;
 
 

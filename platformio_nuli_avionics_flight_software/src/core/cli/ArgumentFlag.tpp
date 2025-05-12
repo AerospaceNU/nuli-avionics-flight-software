@@ -4,6 +4,7 @@
 
 #include "ArgumentFlag.h"
 
+
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t))
         : BaseFlag(name, helpText, required, uid, callback), m_defaultValue(defaultValue), m_defaultValueSet(true) {}

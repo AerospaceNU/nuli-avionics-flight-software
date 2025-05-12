@@ -123,7 +123,8 @@ bool MS5607Sensor::readBytes(unsigned char* values, uint8_t length) const {
     uint8_t error = Wire.endTransmission();
     if (error == 0) {
         Wire.requestFrom(MS5607_ADDR, length);
-        while (!Wire.available()); // wait until bytes are ready
+//        while (!Wire.available()); // wait until bytes are ready
+        waitForI2C();
         for (x = 0; x < length; x++) {
             values[x] = Wire.read();
         }
@@ -137,7 +138,8 @@ bool MS5607Sensor::getDigitalValue(unsigned long &value) const {
     uint8_t x, length = 3;
     unsigned char data[3];
     Wire.requestFrom(MS5607_ADDR, length);
-    while (!Wire.available()); // wait until bytes are ready
+//    while (!Wire.available()); // wait until bytes are ready
+    waitForI2C();
     for (x = 0; x < length; x++) {
         data[x] = Wire.read();
     }
@@ -199,6 +201,11 @@ void MS5607Sensor::setOSR(uint16_t OSR_U) {
             Conv_Delay = 1;
             break;
     }
+}
+
+void MS5607Sensor::waitForI2C() const {
+    uint32_t end = millis() + 30;
+    while (!Wire.available() && millis() < end);
 }
 
 

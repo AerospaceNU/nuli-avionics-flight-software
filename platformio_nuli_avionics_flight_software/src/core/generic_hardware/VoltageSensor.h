@@ -25,7 +25,7 @@ public:
 
 protected:
     void scale() {
-        m_voltage = m_rawVoltage / m_scaleFactor;
+        m_voltage = m_rawVoltage * m_scaleFactor;
     }
 
     double m_scaleFactor = 1;

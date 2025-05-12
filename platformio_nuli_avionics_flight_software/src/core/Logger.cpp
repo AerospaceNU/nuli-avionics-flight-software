@@ -20,9 +20,8 @@ static LogData logData;
 
 static uint8_t logDataBuffer[sizeof(LogData)];
 
-void Logger::setup(HardwareAbstraction* hardware, Configuration* configuration) {
+void Logger::setup(HardwareAbstraction* hardware) {
     m_hardware = hardware;
-    m_configuration = configuration;
     m_logWriteAddress = 0;
 
     FlashMemory* flash = m_hardware->getFlashMemory(0);

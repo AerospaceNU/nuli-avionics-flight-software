@@ -69,11 +69,6 @@ public:
      */
     void readAllRadioLinks();
 
-    inline void delay(uint32_t time) {
-        uint32_t end = getRuntimeMs() + time;
-        while (getRuntimeMs() < end);
-    }
-
     /**
      * @brief Called at the beginning of each loop to track change in time between loops
      * @details This should only be called in once, and only in the Core

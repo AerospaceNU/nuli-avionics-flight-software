@@ -52,6 +52,7 @@ private:
     bool startConversion(char CMD) const;
     bool startMeasurement() const;
     bool getDigitalValue(unsigned long &value) const;
+    void waitForI2C() const;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MS5607Sensor_H
