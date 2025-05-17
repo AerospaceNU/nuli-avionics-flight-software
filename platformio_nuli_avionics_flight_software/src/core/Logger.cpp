@@ -2,6 +2,9 @@
 
 #include <Arduino.h>
 
+
+constexpr ConfigurationID_e Logger::REQUIRED_CONFIGS[];
+
 typedef struct __attribute__((packed)) {
     uint32_t timestamp;
     double baroPressurePa;

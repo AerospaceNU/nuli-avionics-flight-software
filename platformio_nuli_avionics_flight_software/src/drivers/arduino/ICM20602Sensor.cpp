@@ -11,6 +11,9 @@
 #define GYRO_CONFIG  0x1B   // Gyroscope configuration register
 #define ACCEL_XOUT_H 0x3B   // Accelerometer X-axis high byte register
 #define GYRO_XOUT_H  0x43   // Gyroscope X-axis high byte register
+#define CONFIG           0x1A  // Gyro DLPF config
+#define ACCEL_CONFIG2    0x1D  // Accel DLPF config
+#define SMPLRT_DIV        0x19
 
 float accelScaleFactor = 2048.0;  // Scale factor for ±16g (LSB per g)
 float gyroScaleFactor = 16.4;     // Scale factor for ±2000 dps (LSB per dps)
@@ -30,50 +33,59 @@ uint8_t readRegister(uint8_t address, uint8_t reg) {
     return Wire.read();
 }
 
-void readAccelData(int16_t* data) {
-    // Read 6 bytes of accelerometer data (X, Y, Z)
+void ICM20602Sensor::readAccelAndGyroBatch() {
     Wire.beginTransmission(ICM20602_ADDR);
-    Wire.write(ACCEL_XOUT_H);
-    Wire.endTransmission(false);  // Restart condition
-    Wire.requestFrom(ICM20602_ADDR, (uint8_t) 6);
+    Wire.write(ACCEL_XOUT_H);      // 0x2D
+    Wire.endTransmission(false);
+    Wire.requestFrom(ICM20602_ADDR, (uint8_t) 14);  // 6 accel + 2 temp + 6 gyro = 14 bytes
 
-    data[0] = (Wire.read() << 8) | Wire.read();  // X-axis
-    data[1] = (Wire.read() << 8) | Wire.read();  // Y-axis
-    data[2] = (Wire.read() << 8) | Wire.read();  // Z-axis
+    uint8_t buf[14];
+    for (int i = 0; i < 14; i++) {
+        buf[i] = Wire.read();
+    }
+
+    // Parse accel
+    accelData[0] = (int16_t) ((buf[0] << 8) | buf[1]);
+    accelData[1] = (int16_t) ((buf[2] << 8) | buf[3]);
+    accelData[2] = (int16_t) ((buf[4] << 8) | buf[5]);
+
+    // Parse temperature (optional)
+    tempRaw = (int16_t) ((buf[6] << 8) | buf[7]);
+
+    // Parse gyro
+    gyroData[0] = (int16_t) ((buf[8] << 8) | buf[9]);
+    gyroData[1] = (int16_t) ((buf[10] << 8) | buf[11]);
+    gyroData[2] = (int16_t) ((buf[12] << 8) | buf[13]);
+
 }
 
-void readGyroData(int16_t* data) {
-    // Read 6 bytes of gyroscope data (X, Y, Z)
-    Wire.beginTransmission(ICM20602_ADDR);
-    Wire.write(GYRO_XOUT_H);
-    Wire.endTransmission(false);  // Restart condition
-    Wire.requestFrom(ICM20602_ADDR, (uint8_t) 6);
-
-    data[0] = (Wire.read() << 8) | Wire.read();  // X-axis
-    data[1] = (Wire.read() << 8) | Wire.read();  // Y-axis
-    data[2] = (Wire.read() << 8) | Wire.read();  // Z-axis
-}
 
 void initICM20602() {
-    writeRegister(ICM20602_ADDR, PWR_MGMT_1, 0x00);  // Wake up the sensor
+    writeRegister(ICM20602_ADDR, PWR_MGMT_1, 0x00);  // Wake up
     delay(100);
 
-    // Set accelerometer range to ±16g
+    // Set SMPLRT_DIV to 0 -> sample rate = internal rate / (1 + SMPLRT_DIV)
+    writeRegister(ICM20602_ADDR, SMPLRT_DIV, 0x00);  // Max sample rate
+
+    // Enable DLPF for gyroscope (FCHOICE_B = 0), DLPF_CFG = 0 → ~250 Hz bandwidth
+    writeRegister(ICM20602_ADDR, CONFIG, 0x00);  // DLPF_CFG = 0
+
+    // Enable DLPF for accelerometer (ACCEL_FCHOICE_B = 0), A_DLPF_CFG = 0 → ~218.1 Hz
+    writeRegister(ICM20602_ADDR, ACCEL_CONFIG2, 0x00);  // A_DLPF_CFG = 0
+
+    // Set accel range to ±16g
     uint8_t accelConfig = readRegister(ICM20602_ADDR, ACCEL_CONFIG);
-    accelConfig = (accelConfig & ~0x18) | 0x18;  // Clear and set bits [4:3] to 0b11 for ±16g
+    accelConfig = (accelConfig & ~0x18) | 0x18;
     writeRegister(ICM20602_ADDR, ACCEL_CONFIG, accelConfig);
+    accelScaleFactor = 2048.0;
 
-    // Update accelerometer scale factor
-    accelScaleFactor = 2048.0;  // ±16g scale factor
-
-    // Set gyroscope range to ±2000 dps
+    // Set gyro range to ±2000 dps
     uint8_t gyroConfig = readRegister(ICM20602_ADDR, GYRO_CONFIG);
-    gyroConfig = (gyroConfig & ~0x18) | 0x18;  // Clear and set bits [4:3] to 0b11 for ±2000 dps
+    gyroConfig = (gyroConfig & ~0x18) | 0x18;
     writeRegister(ICM20602_ADDR, GYRO_CONFIG, gyroConfig);
-
-    // Update gyroscope scale factor
-    gyroScaleFactor = 16.4;  // ±2000 dps scale factor
+    gyroScaleFactor = 16.4;
 }
+
 
 ICM20602Sensor::ICM20602Sensor() = default;
 
@@ -95,10 +107,10 @@ void ICM20602Sensor::setup() {
 }
 
 void ICM20602Sensor::read() {
-    int16_t accelData[3];  // X, Y, Z
-    int16_t gyroData[3];   // X, Y, Z
-    readAccelData(accelData);
-    readGyroData(gyroData);
+    readAccelAndGyroBatch();
+
+    // @todo is this right? incorporate into rest of code
+//    float temperature_K = (((float) tempRaw / 326.8) + 25.0) + Units::C_TO_K;
 
     // Convert accelerometer data to g
     float accelX_g = (float) accelData[0] / accelScaleFactor;

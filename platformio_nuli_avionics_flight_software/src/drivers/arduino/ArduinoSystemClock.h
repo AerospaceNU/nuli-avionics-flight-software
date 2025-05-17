@@ -7,7 +7,7 @@
 
 class ArduinoSystemClock : public SystemClock {
 public:
-    uint_avionics_time_t currentRuntimeMs() override {
+    uint32_t currentRuntimeMs() override {
         return millis();
     }
 };

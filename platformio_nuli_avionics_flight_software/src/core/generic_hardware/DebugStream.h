@@ -21,12 +21,12 @@ public:
         print(aa);
     }
 
-    virtual void print(int64_t num) {
+    virtual void print(int32_t num) {
 
     }
 
-    void print(uint64_t num) {
-        print(int64_t(num));
+    void print(uint32_t num) {
+        print(int32_t(num));
     }
 
     virtual void print(double num) {

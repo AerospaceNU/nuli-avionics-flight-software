@@ -7,7 +7,7 @@
 /**
  * @class Pyro
  * @brief Represents a pyro channel
- * @details Ability to fire, reading continuity. This assumes the device is an arduino with a pin to read state and a pin to fire
+ * @details Ability to fire, reading continuity. This assumes the device is an arduino with a pin to read state and a pin to fireDrogue
  */
 class Pyro : public GenericSensor {
 public:
@@ -31,17 +31,19 @@ public:
 
     /**
      * @brief Fires the pyro channel
-     * @details Writes the fire pin high
+     * @details Writes the fireDrogue pin high
      */
     virtual void fire() const {}
 
     /**
      * @brief Disables they pyro channel
-     * @details Writes the fire pin low
+     * @details Writes the fireDrogue pin low
      */
     virtual void disable() const {}
 
     virtual int rawAdcValue() const { return 0; };
+
+protected:
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H

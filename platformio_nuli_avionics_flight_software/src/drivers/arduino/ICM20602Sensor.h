@@ -50,9 +50,17 @@ public:
     Gyroscope* getGyroscope();
 
 private:
+    void readAccelAndGyroBatch();
+//    void updateAccel();
+
     // Abstraction
     Accelerometer m_accelerometer;          ///< Injector class used to pass data to the HardwareAbstraction
     Gyroscope m_gyroscope;                  ///< Injector class used to pass data to the HardwareAbstraction
+
+    // For accelerometer
+    int16_t accelData[3];
+    int16_t gyroData[3];
+    int16_t tempRaw;
 };
 
 

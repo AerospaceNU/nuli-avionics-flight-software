@@ -6,7 +6,7 @@
 
 class SystemClock {
 public:
-    virtual uint_avionics_time_t currentRuntimeMs() = 0;
+    virtual uint32_t currentRuntimeMs() = 0;
 
 };
 

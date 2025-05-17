@@ -28,6 +28,7 @@ void MS5607Sensor::read() {
 }
 
 // read raw digital values of temp & pressure from MS5607
+
 bool MS5607Sensor::readDigitalValue() {
     if (startConversion(CONV_D1)) {
         if (startMeasurement()) {
@@ -36,6 +37,7 @@ bool MS5607Sensor::readDigitalValue() {
     } else {
         return false;
     }
+
     if (startConversion(CONV_D2)) {
         if (startMeasurement()) {
             getDigitalValue(DT);

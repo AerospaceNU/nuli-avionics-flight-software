@@ -9,13 +9,13 @@
 /**
  * @class Pyro
  * @brief Represents a pyro channel
- * @details Ability to fire, reading continuity. This assumes the device is an arduino with a pin to read state and a pin to fire
+ * @details Ability to fire, reading continuity. This assumes the device is an arduino with a pin to read state and a pin to fireDrogue
  */
 class ArduinoPyro : public Pyro {
 public:
     /**
      * @brief Creates a pyro object
-     * @param firePin Digital pin to fire the charge
+     * @param firePin Digital pin to fireDrogue the charge
      * @param continuityPin Pin to read in continuity
      * @param continuityThreshold Analog threshold for determining continuity
      */
@@ -40,12 +40,12 @@ public:
     bool hasContinuity() const override;
     /**
      * @brief Fires the pyro channel
-     * @details Writes the fire pin high
+     * @details Writes the fireDrogue pin high
      */
     void fire() const override;
     /**
      * @brief Disables they pyro channel
-     * @details Writes the fire pin low
+     * @details Writes the fireDrogue pin low
      */
     void disable() const override;
 

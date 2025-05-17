@@ -6,6 +6,8 @@
 
 class Logger {
 public:
+    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLASH_START_LOC};
+
     void setup(HardwareAbstraction* hardware);
 
     void log();

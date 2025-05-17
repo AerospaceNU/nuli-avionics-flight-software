@@ -22,7 +22,7 @@ public:
         Serial.print(str);
     }
 
-    void print(int64_t num) override {
+    void print(int32_t num) override {
         Serial.print(num);
     }
 

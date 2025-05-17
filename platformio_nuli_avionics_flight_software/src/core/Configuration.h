@@ -2,40 +2,68 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATION_H
 
 #include "Avionics.h"
+#include "ConfigurationRegistry.h"
 #include "HardwareAbstraction.h"
+#include <Arduino.h>
+
+struct ConfigurationBase {
+    uint8_t* data = nullptr;
+    uint16_t size = 0;
+    ConfigurationID_e name = ConfigurationID_e::NONE;
+    bool m_isUpdated = false;
+};
+
+template<typename T>
+struct ConfigurationData : private ConfigurationBase {
+    const T* get() {
+        return ((T*) data);
+    }
+
+    void set(const T& newVal) {
+        *((T*) data) = newVal;
+        m_isUpdated = true;
+    }
+};
+
 
 class Configuration {
 public:
-    virtual void setup() {
+    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION, CONFIGURATION_CRC};
 
+    template<unsigned N, unsigned M>
+    explicit Configuration(const ConfigSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
+        construct(allConfigs, N);
     }
 
-    bool requiresWrite() const {
-        return m_updated;
+    template<unsigned N>
+    explicit Configuration(const ConfigSet_s (&allConfigs)[N]): m_dataBuffer(m_buffer), m_dataBufferMaxLength(MAX_CONFIGURATION_LENGTH) {
+        construct(allConfigs, N);
     }
 
-    const void *rawData() {
-        return m_buffer;
-    }
+    template<unsigned N>
+    ConfigurationData<typename GetConfigType_s<N>::type>* getConfigurable();
 
-    const uint32_t length() const {
-        return m_length;
-    }
-
-protected:
-    virtual void setBuffer(void *configuration, uint32_t length) {
-        m_buffer = configuration;
-        m_length = length;
-    }
-
-    inline void raiseUpdate() {
-        m_updated = true;
-    }
+    void pushUpdates();
 
 private:
-    bool m_updated = false;
-    void *m_buffer = nullptr;
-    uint32_t m_length = 0;
+    void construct(const ConfigSet_s* allConfigs, uint16_t allConfigsLength);
+
+    void readConfigFromMemory();
+
+    bool configExists(ConfigurationID_e name) const;
+
+    void sortConfigs();
+
+    void assignMemory();
+
+    static void outOfMemoryError();
+
+    uint8_t* m_dataBuffer;
+    const uint32_t m_dataBufferMaxLength = 0;
+
+    uint8_t m_buffer[MAX_CONFIGURATION_LENGTH] = {};
+    ConfigurationBase m_configurations[MAX_CONFIGURATION_NUM] = {};
+    uint32_t m_numConfigurations = 0;
 };
 
 
