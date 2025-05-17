@@ -8,11 +8,19 @@ void HardwareAbstraction::setLoopRate(uint32_t loopRate) {
 }
 
 void HardwareAbstraction::setup() {
-    if (m_debugStream == nullptr) {
-        setDebugStream(&voidDump);
+    // Setup core
+    if (m_debugStream == nullptr || m_systemClock == nullptr || m_configuration == nullptr || m_configurationMemory == nullptr) {
+        if(m_debugStream != nullptr) {
+            m_debugStream->print("Debug stream, clock, configuration, and configuration memory required");
+            m_debugStream->println();
+        }
+        while (true);
     }
-
     m_debugStream->setup();
+    m_systemClock->setup();
+    m_configurationMemory->setup();
+    m_configuration->setup(m_configurationMemory, m_debugStream);
+    
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->setup();
     for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->setup();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->setup();
@@ -22,7 +30,6 @@ void HardwareAbstraction::setup() {
     for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->setup();
     for (int i = 0; i < m_numFlashMemory; i++) m_flashMemoryArray[i]->setup();
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->setup();
-    for (int i = 0; i < m_numConfigurations; i++) m_configurationArray[i]->setup();
 }
 
 void HardwareAbstraction::readAllSensors() {

@@ -6,6 +6,10 @@
 
 class SystemClock {
 public:
+    virtual void setup() {
+
+    }
+
     virtual uint32_t currentRuntimeMs() = 0;
 
 };

@@ -3,11 +3,11 @@
 
 constexpr ConfigurationID_e Configuration::REQUIRED_CONFIGS[];
 
-void Configuration::construct(const ConfigSet_s* allConfigs, uint16_t allConfigsLength) {
+void Configuration::construct(const ConfigurationIDSet_s* allConfigs, uint16_t allConfigsLength) {
     // Add all requested configs to the list, ignoring duplicates
     for (int i = 0; i < allConfigsLength; i++) {
         for (int j = 0; j < allConfigs[i].length; j++) {
-            if(m_numConfigurations >= MAX_CONFIGURATION_NUM) {
+            if (m_numConfigurations >= MAX_CONFIGURATION_NUM) {
                 outOfMemoryError();
                 break;
             }
@@ -19,7 +19,12 @@ void Configuration::construct(const ConfigSet_s* allConfigs, uint16_t allConfigs
             }
         }
     }
+}
 
+
+void Configuration::setup(ConfigurationMemory *memory, DebugStream *debugStream) {
+    m_memory = memory;
+    m_debug = debugStream;
     // Sort the list to ensure a consistent order, then set them up with their respective memory
     sortConfigs();
     assignMemory();
@@ -75,7 +80,7 @@ void Configuration::assignMemory() {
     uint16_t index = 0;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         uint16_t configLength = getConfigLength(m_configurations[i].name);
-        if(index + configLength >= m_dataBufferMaxLength) {
+        if (index + configLength >= m_dataBufferMaxLength) {
             outOfMemoryError();
             m_numConfigurations = i;
             return;
@@ -97,6 +102,7 @@ void Configuration::pushUpdates() {
 void Configuration::outOfMemoryError() {
     Serial.println("Configuration ran out of memory to start");
 }
+
 
 
 

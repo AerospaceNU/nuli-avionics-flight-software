@@ -3,10 +3,10 @@
 
 #include "Avionics.h"
 #include "Arduino.h"
-#include "../../core/generic_hardware/FramMemory.h"
+#include "../../core/generic_hardware/ConfigurationMemory.h"
 #include "Adafruit_FRAM_SPI.h"
 
-class ArduinoFram : public FramMemory {
+class ArduinoFram : public ConfigurationMemory {
 public:
     explicit ArduinoFram(int8_t csPin);
 

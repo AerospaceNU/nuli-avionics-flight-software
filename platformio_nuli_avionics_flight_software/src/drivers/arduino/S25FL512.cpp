@@ -33,6 +33,7 @@ void S25FL512::setSpiClass(SPIClass* spiClass) {
 }
 
 void S25FL512::setup() {
+    m_spiBus->begin();
     pinMode(m_chipSelectPin, OUTPUT);
     disableSelectPin();
 }

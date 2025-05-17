@@ -3,10 +3,11 @@
 
 #include "Avionics.h"
 #include "ConfigurationRegistry.h"
-#include "HardwareAbstraction.h"
+#include "generic_hardware/ConfigurationMemory.h"
+#include "generic_hardware/DebugStream.h"
 #include <Arduino.h>
 
-struct ConfigurationBase {
+struct ConfigurationDataBase {
     uint8_t* data = nullptr;
     uint16_t size = 0;
     ConfigurationID_e name = ConfigurationID_e::NONE;
@@ -14,7 +15,7 @@ struct ConfigurationBase {
 };
 
 template<typename T>
-struct ConfigurationData : private ConfigurationBase {
+struct ConfigurationData : private ConfigurationDataBase {
     const T* get() {
         return ((T*) data);
     }
@@ -28,17 +29,19 @@ struct ConfigurationData : private ConfigurationBase {
 
 class Configuration {
 public:
-    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION, CONFIGURATION_CRC};
+    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH, CONFIGURATION_CRC};
 
     template<unsigned N, unsigned M>
-    explicit Configuration(const ConfigSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
+    explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
         construct(allConfigs, N);
     }
 
     template<unsigned N>
-    explicit Configuration(const ConfigSet_s (&allConfigs)[N]): m_dataBuffer(m_buffer), m_dataBufferMaxLength(MAX_CONFIGURATION_LENGTH) {
+    explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N]): m_dataBuffer(m_buffer), m_dataBufferMaxLength(MAX_CONFIGURATION_LENGTH) {
         construct(allConfigs, N);
     }
+
+    void setup(ConfigurationMemory *memory, DebugStream *debugStream);
 
     template<unsigned N>
     ConfigurationData<typename GetConfigType_s<N>::type>* getConfigurable();
@@ -46,7 +49,7 @@ public:
     void pushUpdates();
 
 private:
-    void construct(const ConfigSet_s* allConfigs, uint16_t allConfigsLength);
+    void construct(const ConfigurationIDSet_s* allConfigs, uint16_t allConfigsLength);
 
     void readConfigFromMemory();
 
@@ -62,8 +65,11 @@ private:
     const uint32_t m_dataBufferMaxLength = 0;
 
     uint8_t m_buffer[MAX_CONFIGURATION_LENGTH] = {};
-    ConfigurationBase m_configurations[MAX_CONFIGURATION_NUM] = {};
+    ConfigurationDataBase m_configurations[MAX_CONFIGURATION_NUM] = {};
     uint32_t m_numConfigurations = 0;
+
+    ConfigurationMemory *m_memory = nullptr;
+    DebugStream *m_debug = nullptr;
 };
 
 

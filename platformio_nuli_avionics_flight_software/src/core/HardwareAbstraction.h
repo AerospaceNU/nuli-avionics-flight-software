@@ -2,6 +2,7 @@
 #define DESKTOP_HARDWAREMANAGER_H
 
 #include "Avionics.h"
+#include "Configuration.h"
 #include "generic_hardware/GenericSensor.h"
 #include "generic_hardware/Barometer.h"
 #include "generic_hardware/Accelerometer.h"
@@ -14,7 +15,7 @@
 #include "generic_hardware/SystemClock.h"
 #include "generic_hardware/DebugStream.h"
 #include "generic_hardware/VoltageSensor.h"
-#include "generic_hardware/FramMemory.h"
+#include "generic_hardware/ConfigurationMemory.h"
 
 /**
  * This macro generates three methods for a given type of hardware:
@@ -101,6 +102,14 @@ public:
         return 0;
     }
 
+    void setConfiguration(Configuration *configuration) {
+        m_configuration = configuration;
+    }
+
+    Configuration *getConfiguration() {
+        return m_configuration;
+    }
+
     GENERATE_GET_ADD_METHODS_MACRO(Pyro, m_pyroArray, m_numPyros, MAX_PYRO_NUM)
 
     GENERATE_GET_ADD_METHODS_MACRO(VoltageSensor, m_voltageSensorArray, m_numVoltageSensors, MAX_VOLTAGE_SENSOR_NUM)
@@ -114,8 +123,6 @@ public:
     GENERATE_GET_ADD_METHODS_MACRO(Gyroscope, m_gyroscopeArray, m_numGyroscopes, MAX_GYROSCOPE_NUM)
 
     GENERATE_GET_ADD_METHODS_MACRO(FlashMemory, m_flashMemoryArray, m_numFlashMemory, MAX_FLASH_MEMORY_NUM)
-
-    GENERATE_GET_ADD_METHODS_MACRO(FramMemory, m_framMemoryArray, m_numFramMemory, MAX_FRAM_MEMORY_NUM)
 
     GENERATE_GET_ADD_METHODS_MACRO(RadioLink, m_radioLinkArray, m_numRadioLinks, MAX_RADIO_TRANSMITTER_LINK_NUM)
 
@@ -138,6 +145,11 @@ private:
 
     uint32_t m_loopTime = 10;
 
+    SystemClock* m_systemClock = nullptr;                                                       ///< System clocks
+    DebugStream* m_debugStream = nullptr;                                                       ///< Debug stream
+    Configuration* m_configuration = nullptr;
+    ConfigurationMemory *m_configurationMemory = nullptr;
+
     uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
     uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
     uint8_t m_numPyros = 0;                             ///< Number of Pyros in the system
@@ -147,10 +159,8 @@ private:
     uint8_t m_numMagnetometers = 0;                     ///< Number of Magnetometers in the system
     uint8_t m_numGyroscopes = 0;                        ///< Number of Gyroscopes in the system
     uint8_t m_numFlashMemory = 0;                       ///< Number of FlashMemory in the system
-    uint8_t m_numFramMemory = 0;                       ///< Number of FlashMemory in the system
     uint8_t m_numRadioLinks = 0;                        ///< Number of RadioLinks in the system
     uint8_t m_numGenericSensors = 0;                    ///< Number of generic sensors
-    uint8_t m_numConfigurations = 0;                    ///< Number of generic sensors
     Pyro* m_pyroArray[MAX_PYRO_NUM] = {nullptr};                                ///< Array containing all the Pyros in the system
     VoltageSensor* m_voltageSensorArray[MAX_VOLTAGE_SENSOR_NUM] = {nullptr};    ///< Array containing all the VoltageSensors in the system
     Barometer* m_barometerArray[MAX_BAROMETER_NUM] = {nullptr};                 ///< Array containing all the Barometers in the system
@@ -158,13 +168,9 @@ private:
     Magnetometer* m_magnetometerArray[MAX_BAROMETER_NUM] = {nullptr};           ///< Array containing all the Magnetometers in the system
     Gyroscope* m_gyroscopeArray[MAX_GYROSCOPE_NUM] = {nullptr};                 ///< Array containing all the Gyroscopes in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
-    FramMemory* m_framMemoryArray[MAX_FRAM_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
     RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr};        ///< Array containing all the RadioLinks in the system
     GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};                    ///< Array containing all generic sensors
-    GenericSensor* m_configurationArray[MAX_CONFIGURATION_NUM] = {nullptr};                    ///< Array containing all generic sensors
-    SystemClock* m_systemClock = nullptr;                                                       ///< System clocks
-    DebugStream* m_debugStream = nullptr;                                                       ///< Debug stream
-    DebugStream voidDump;
+
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file
