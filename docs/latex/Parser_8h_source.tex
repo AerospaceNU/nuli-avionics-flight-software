@@ -1,0 +1,234 @@
+\hypertarget{Parser_8h_source}{}\doxysection{Parser.\+h}
+\label{Parser_8h_source}\index{nuli\_avionics\_flight\_software/platformio\_nuli\_avionics\_flight\_software/src/core/cli/Parser.h@{nuli\_avionics\_flight\_software/platformio\_nuli\_avionics\_flight\_software/src/core/cli/Parser.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ DESKTOP\_PARSER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ DESKTOP\_PARSER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}BaseFlag.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{comment}{}}
+\DoxyCodeLine{00006\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ @TODO:\ Formalize\ error\ handling.\ Currently,\ some\ errors\ are\ printed\ at\ their}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ source,\ while\ in\ other\ places,\ they\ are\ printed\ out\ by\ the\ parent}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ method.}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ @TODO:\ create\ a\ help-\/command\ that\ prints\ all\ flags\ with\ their\ set\ value}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ @TODO:\ increase\ validation.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ ex:\ no\ duplicate\ Leader\ flags}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ ex:\ no\ duplicate\ flags\ within\ a\ FlagGroup}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ ex:\ co-\/dependencies\ (this\ might\ be\ a\ nice\ to\ add)}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ ex:\ flag\ uid}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ @TODO:\ Observe\ memory\ usage\ between\ `template<uint8\_t\ n>`\ and\ passing\ in\ `n`}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ Perhaps\ get\ rid\ of\ the\ template\ for\ addFlagGroup\ because\ right\ now}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ the\ compiler\ would\ create\ a\ new\ instance\ for\ every\ new\ `n`}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{const}\ uint8\_t\ MAX\_FLAG\_GROUPS\ =\ 16;\ \ \ \ \textcolor{comment}{///<\ Maximum\ number\ of\ FlagGroups}}
+\DoxyCodeLine{00025\ \textcolor{keyword}{const}\ uint8\_t\ MAX\_FLAGS\ =\ 16;\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ Maximum\ number\ of\ flags\ per\ FlagGroup}}
+\DoxyCodeLine{00026\ \textcolor{comment}{}}
+\DoxyCodeLine{00027\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ @class\ Parser}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ @brief\ Parses\ command\ line\ inputs\ into\ pre-\/defined\ FlagGroups\ and\ Flags}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *\ @details\ This\ class\ parses\ a\ user's\ input,\ either\ from\ the\ command-\/line}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ arguments\ or\ from\ input\ from\ stdin\ into\ FlagGroups\ containing\ sets\ of\ flags.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ A\ user\ should\ use\ the\ addFlagGroup\ method\ to\ add\ sets\ of\ flags\ to\ a\ group.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ \(\backslash\)n\(\backslash\)n}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ A\ FlagGroup\ is\ defined\ as\ a\ set\ of\ Flags.\ The\ first\ flag\ in\ a\ FlagGroup\ is}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *\ defined\ as\ a\ FlagGroup's\ "{}leader"{}.\ Among\ FlagGroups,\ only\ the\ leader\ flag}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *\ must\ be\ unique,\ collision\ is\ permitted\ for\ members\ of\ a\ single\ FlagGroup}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ with\ another\ members\ of\ a\ different\ FlagGroup.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00039\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classParser}{Parser}}\ \{}
+\DoxyCodeLine{00040\ \textcolor{keyword}{public}:\textcolor{comment}{}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Default\ constructor}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{classParser_a5208129b497bfdf7c8ecceeb70e4bba8}{Parser}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00045\ \textcolor{comment}{}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Default\ destructor}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00049\ \ \ \ \ \mbox{\hyperlink{classParser_a95734193a58a199b4c6d820a6a730c42}{\string~Parser}}()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00050\ \textcolor{comment}{}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Adds\ a\ set\ of\ Flags\ into\ a\ FlagGroup}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ \ \ \ *\ @details\ Creates\ a\ new\ FlagGroup}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ \ \ \ *\ @tparam\ n\ Number\ of\ flags\ provided\ (not\ user\ inputted)}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ \ \ \ *\ @param\ flagGroup\ An\ array\ of\ flags}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{template}<u\textcolor{keywordtype}{int}8\_t\ n>}
+\DoxyCodeLine{00059\ \ \ \ \ int8\_t\ \mbox{\hyperlink{classParser_a3ea66fbf323dc8126281da0c52379999}{addFlagGroup}}(\mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ (\&flagGroup)[n]);}
+\DoxyCodeLine{00060\ \textcolor{comment}{}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Adds\ a\ set\ of\ Flags\ into\ a\ FlagGroup}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ \ \ \ *\ @details\ Creates\ a\ new\ FlagGroup}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ \ \ \ *\ @tparam\ n\ Number\ of\ flags\ provided\ (not\ user\ inputted)}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ \ \ \ *\ @param\ flagGroup\ An\ array\ of\ flags}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ \ \ \ \ *\ @param\ uid\ a\ unique\ identifier\ for\ the\ flagGroup}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{template}<u\textcolor{keywordtype}{int}8\_t\ n>}
+\DoxyCodeLine{00070\ \ \ \ \ int8\_t\ \mbox{\hyperlink{classParser_a6f5de07b89a1804df62a15a88c0e8e72}{addFlagGroup}}(\mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ (\&flagGroup)[n],\ int8\_t\ uid);}
+\DoxyCodeLine{00071\ \textcolor{comment}{}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Parses\ program\ argument\ inputs\ into\ FlagGroups}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ \ \ \ \ *\ @details\ Alternative\ to\ <code>parse(char*\ input)</code>.\ Useful\ in\ cases}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ \ *\ where\ the\ user\ is\ taking\ inputs\ directly\ from\ program\ arguments.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ \ *\ @param\ argc\ Number\ of\ arguments}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ \ \ \ *\ @param\ argv\ char*\ array\ of\ arguments}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00080\ \ \ \ \ int8\_t\ \mbox{\hyperlink{classParser_a6ebcfc842b6714bbaedb9aa8e45de9ec}{parse}}(\textcolor{keywordtype}{int}\ argc,\ \textcolor{keywordtype}{char}*\ argv[]);}
+\DoxyCodeLine{00081\ \textcolor{comment}{}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Parses\ command\ line\ input\ into\ FlagGroups}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ \ *\ @details\ Alternative\ to\ <code>parse(int\ argc,\ char*\ argv[])</code>.}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ \ \ \ *\ Useful\ in\ cases\ where\ the\ user\ wants\ to\ take\ a\ char*\ input.\ This\ method}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ \ *\ simply\ parses\ the\ input\ into\ a\ form\ usable\ by\ the\ aforementioned\ parse}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ \ \ \ *\ method\ then\ passes\ the\ appropriate\ arguments\ to\ that\ method.}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ \ \ \ \ *\ @param\ input\ a\ char*\ stream}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00091\ \ \ \ \ int8\_t\ \mbox{\hyperlink{classParser_a6ebcfc842b6714bbaedb9aa8e45de9ec}{parse}}(\textcolor{keywordtype}{char}*\ input);}
+\DoxyCodeLine{00092\ \textcolor{comment}{}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Retrieves\ a\ flag's\ value\ given\ its\ name\ and\ its\ flag\ group\ name}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ \ *\ @tparam\ T\ Type\ of\ the\ flag}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ \ *\ @param\ flagGroupName\ Name\ of\ its\ flag\ group}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ *\ @param\ flagName\ Name\ of\ the\ flag}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ *\ @param\ value\ location\ to\ store\ value\ returned}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00102\ \ \ \ \ int8\_t\ \mbox{\hyperlink{classParser_a9dc578e91f19d23d57e0f4c2738bf579}{getValue}}(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ flagGroupName,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ flagName,\ T\ \&value);}
+\DoxyCodeLine{00103\ \textcolor{comment}{}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Runs\ the\ set\ of\ flags\ most\ recently\ passed\ in}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ \ \ \ *\ @details\ Uses\ the\ provided\ m\_callback\ functions\ to\ run\ the\ flags\ which}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ \ \ \ *\ were\ most\ recently\ passed\ in.}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00110\ \ \ \ \ int8\_t\ \mbox{\hyperlink{classParser_abad17e0ca0c7179da07ce63e3582246d}{runFlags}}();}
+\DoxyCodeLine{00111\ \textcolor{comment}{}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Prints\ help\ text\ for\ each\ FlagGroup}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classParser_ac41e6ff4af44a82cc1a4c528dbf1b0b6}{printHelp}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00116\ \textcolor{comment}{}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Resets\ all\ flags\ their\ default\ states\ for\ each\ FlagGroup}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ \ \ \ *\ @details\ Changes\ a\ flag's\ state\ to\ before\ it\ was\ parsed.\ This\ does}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ \ \ *\ not\ effect\ core\ parameters\ such\ as\ a\ flag's\ name\ or\ help\ text.\ This}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ \ \ *\ only\ changes\ parameters\ that\ were\ set\ after\ Parser.parse(...)\ was}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ \ \ *\ called.}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classParser_ae9740c4dfc29fdaed4bf463187e44462}{resetFlags}}();}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00127\ \textcolor{keyword}{private}:\textcolor{comment}{}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ \ \ *\ @struct\ FlagGroup\_s}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Represents\ a\ set\ of\ Flags}}
+\DoxyCodeLine{00131\ \textcolor{comment}{\ \ \ \ \ *\ @details\ This\ is\ an\ internal\ organization\ tool\ and\ should\ not\ be\ exposed}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ \ \ \ *\ to\ the\ user.\ Provides\ functionality\ to\ interact\ with\ flags\ within\ group.}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{struct\ }FlagGroup\_s\ \{\textcolor{comment}{}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Default\ constructor}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @warning\ Constructor\ for\ internal\ use\ only}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ FlagGroup\_s()\ :\ flags\_s\{nullptr\},\ flagGroupName\_s\{nullptr\},\ numFlags\_s(0),}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ uid\_s(-\/1)\ \{\}}
+\DoxyCodeLine{00141\ \textcolor{comment}{}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Constructor}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @param\ flags\ A\ constant\ size\ array\ of\ flags}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @param\ flagGroupName\ The\ reference\ for\ this\ FlagGroup}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @param\ numFlags\ The\ number\ of\ flags\ added}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ FlagGroup\_s(\mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ flags[],\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ flagGroupName,\ uint8\_t\ numFlags,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int8\_t\ uid);}
+\DoxyCodeLine{00150\ \textcolor{comment}{}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Retrieves\ the\ leader's\ flag}}
+\DoxyCodeLine{00153\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @return\ A\ BaseFlag\ pointer\ to\ the\ leader}}
+\DoxyCodeLine{00154\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ getLeader();}
+\DoxyCodeLine{00156\ \textcolor{comment}{}}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Retrieves\ specified\ flag\ from\ group}}
+\DoxyCodeLine{00159\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @param\ flagName\ The\ desired\ flag}}
+\DoxyCodeLine{00160\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @param\ flag\ Returned\ flag}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @return\ 0\ if\ success}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ int8\_t\ getFlag(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ flagName,\ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}**\ flag);}
+\DoxyCodeLine{00164\ \textcolor{comment}{}}
+\DoxyCodeLine{00165\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Ensures\ all\ member\ flag\ parameters\ are\ correctly\ set}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @return\ 0\ if\ successful}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ int8\_t\ verifyFlags();}
+\DoxyCodeLine{00170\ \textcolor{comment}{}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Runs\ the\ callback\ functions\ of\ the\ most\ recent\ flag\ group\ set}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ runFlags();}
+\DoxyCodeLine{00175\ \textcolor{comment}{}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00177\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Prints\ help\ text\ for\ each\ Flag}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ printHelp()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00180\ \textcolor{comment}{}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ \ \ \ \ \ \ \ /**}}
+\DoxyCodeLine{00182\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @brief\ Resets\ all\ flags\ within\ the\ group\ to\ their\ default\ states}}
+\DoxyCodeLine{00183\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ @details\ Changes\ a\ flag's\ state\ to\ before\ it\ was\ parsed.\ This\ does}}
+\DoxyCodeLine{00184\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ not\ effect\ core\ parameters\ such\ as\ a\ flag's\ name\ or\ help\ text.\ This}}
+\DoxyCodeLine{00185\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ only\ changes\ parameters\ that\ were\ set\ after\ Parser.parse(...)\ was}}
+\DoxyCodeLine{00186\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ *\ called.}}
+\DoxyCodeLine{00187\ \textcolor{comment}{\ \ \ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ resetFlags();}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ flags\_s[MAX\_FLAGS]\ =\ \{\textcolor{keyword}{nullptr}\};\ \ \ \textcolor{comment}{///<\ The\ flags\ within\ this\ FlagGroup}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ flagGroupName\_s\ =\ \{\textcolor{keyword}{nullptr}\};\ \ \ \ \textcolor{comment}{///<\ The\ leader\ flag's\ name}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ uint8\_t\ numFlags\_s;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ number\ of\ flags\ within\ FlagGroup}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ uint8\_t\ uid\_s;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ unique\ number\ identifying\ FlagGroup}}
+\DoxyCodeLine{00194\ \ \ \ \ \};}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \textcolor{comment}{}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Helper\ function\ for\ parse}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ \ *\ @param\ p\ Pointer\ to\ the\ input\ character\ array}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ \ \ *\ @param\ target\ The\ target\ character\ (e.g.\ a\ quotation\ mark\ or\ space)}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ \ \ \ *\ @return\ A\ pointer\ to\ the\ end\ of\ the\ segment}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{char}*\ getString(\textcolor{keywordtype}{char}*\ p,\ \textcolor{keywordtype}{char}\ target)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00204\ \textcolor{comment}{}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00206\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Retrieves\ a\ flag\ group\ based\ on\ its\ name}}
+\DoxyCodeLine{00207\ \textcolor{comment}{\ \ \ \ \ *\ @param\ flagGroupName\ Name\ of\ the\ desired\ flag\ group}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ \ \ \ *\ @param\ flagGroup\ Placeholder}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ success}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00211\ \ \ \ \ int8\_t\ getFlagGroup(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ flagGroupName,\ FlagGroup\_s**\ flagGroup);}
+\DoxyCodeLine{00212\ \textcolor{comment}{}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ \ \ \ \ *\ @brief\ Retrieves\ a\ flag\ group\ based\ on\ its\ identification\ number}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ \ \ \ *\ @param\ uid\ a\ (hopefully)\ unique\ number\ identifying\ the\ flag\ group}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ \ \ \ *\ @return\ 0\ if\ success}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00218\ \ \ \ \ FlagGroup\_s*\ getFlagGroup(int8\_t\ uid);}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ FlagGroup\_s\ m\_flagGroups[MAX\_FLAG\_GROUPS];\ \ \textcolor{comment}{///<\ FlagGroups}}
+\DoxyCodeLine{00221\ \ \ \ \ uint8\_t\ m\_numFlagGroups\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ number\ of\ FlagGroups}}
+\DoxyCodeLine{00222\ \ \ \ \ uint8\_t\ m\_uid\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ index\ of\ uids}}
+\DoxyCodeLine{00223\ \ \ \ \ int8\_t\ m\_latestFlagGroup\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{///<\ the\ last\ flag\ group\ processed}}
+\DoxyCodeLine{00224\ \};}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#include\ "{}Parser.tpp"{}}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//DESKTOP\_PARSER\_H}}
+
+\end{DoxyCode}

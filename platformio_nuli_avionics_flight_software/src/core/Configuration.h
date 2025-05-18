@@ -16,8 +16,8 @@ struct ConfigurationDataBase {
 
 template<typename T>
 struct ConfigurationData : private ConfigurationDataBase {
-    const T* get() {
-        return ((T*) data);
+    const T& get() {
+        return *((T*) data);
     }
 
     void set(const T& newVal) {
@@ -44,7 +44,26 @@ public:
     void setup(ConfigurationMemory *memory, DebugStream *debugStream);
 
     template<unsigned N>
-    ConfigurationData<typename GetConfigType_s<N>::type>* getConfigurable();
+    ConfigurationData<typename GetConfigType_s<N>::type>* getConfigurable() {
+        int32_t configurationName = N;
+        int32_t left = 0;
+        int32_t right = m_numConfigurations - 1;
+
+        while (left <= right) {
+            int32_t mid = left + (right - left) / 2;
+            int32_t midName = m_configurations[mid].name;
+
+            if (midName == configurationName) {
+                return (ConfigurationData<typename GetConfigType_s<N>::type>*) &m_configurations[mid];
+            } else if (midName < configurationName) {
+                left = mid + 1;
+            } else {
+                right = mid - 1;
+            }
+        }
+
+        return nullptr;
+    }
 
     void pushUpdates();
 
@@ -62,6 +81,7 @@ private:
     static void outOfMemoryError();
 
     uint8_t* m_dataBuffer;
+    uint32_t m_dataBufferIndex = 0;
     const uint32_t m_dataBufferMaxLength = 0;
 
     uint8_t m_buffer[MAX_CONFIGURATION_LENGTH] = {};

@@ -79,36 +79,19 @@ public:
      * Get the runtime at the start of this loop
      * @return time in ms
      */
-    inline uint32_t getLoopTimestampMs() const {
-        return m_currentLoopTimestampMs;
-    }
+    uint32_t getLoopTimestampMs() const;
 
     /**
      * @brief Gets the time since the start of the last loop
      * @return Loop time in ms
      */
-    inline uint32_t getLoopDtMs() const {
-        return m_loopDtMs;
-    }
+    uint32_t getLoopDtMs() const;
 
-    /**
-     * @brief Gets the runtime of the system
-     * @return runtime in ms
-     */
-    inline uint32_t getRuntimeMs() {
-        if (m_systemClock != nullptr) {
-            return m_systemClock->currentRuntimeMs();
-        }
-        return 0;
-    }
+    void setConfiguration(Configuration* configuration);
 
-    void setConfiguration(Configuration *configuration) {
-        m_configuration = configuration;
-    }
+    Configuration* getConfiguration();
 
-    Configuration *getConfiguration() {
-        return m_configuration;
-    }
+    void setConfigurationMemory(ConfigurationMemory* configurationMemory);
 
     GENERATE_GET_ADD_METHODS_MACRO(Pyro, m_pyroArray, m_numPyros, MAX_PYRO_NUM)
 
@@ -133,25 +116,15 @@ public:
     GENERATE_GET_SET_METHODS_MACRO(DebugStream, m_debugStream)
 
 private:
-    /**
-     * @brief Called at the beginning of each loop to track change in time between loops
-     * @details This should only be called in once, and only in the Core
-    */
-    inline void updateLoopTimestamp() {
-        uint32_t lastTime = m_currentLoopTimestampMs;
-        m_currentLoopTimestampMs = getRuntimeMs();
-        m_loopDtMs = m_currentLoopTimestampMs - lastTime;
-    }
-
     uint32_t m_loopTime = 10;
+    uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
+    uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
 
     SystemClock* m_systemClock = nullptr;                                                       ///< System clocks
     DebugStream* m_debugStream = nullptr;                                                       ///< Debug stream
     Configuration* m_configuration = nullptr;
-    ConfigurationMemory *m_configurationMemory = nullptr;
+    ConfigurationMemory* m_configurationMemory = nullptr;
 
-    uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
-    uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
     uint8_t m_numPyros = 0;                             ///< Number of Pyros in the system
     uint8_t m_numVoltageSensors = 0;                    ///< Number of VoltageSensors in the system
     uint8_t m_numBarometers = 0;                        ///< Number of Barometers in the system

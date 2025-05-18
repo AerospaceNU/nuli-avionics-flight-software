@@ -34,9 +34,9 @@ if (BUILD_DOC AND DOXYGEN_FOUND)
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs/
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM)
-else (DOXYGEN_FOUND)
+else (BUILD_DOC AND DOXYGEN_FOUND)
     message("Doxygen need to be installed to generate the doxygen documentation")
-endif (DOXYGEN_FOUND)
+endif (BUILD_DOC AND DOXYGEN_FOUND)
 
 
 

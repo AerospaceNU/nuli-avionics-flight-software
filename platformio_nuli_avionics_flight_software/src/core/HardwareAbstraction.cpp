@@ -1,16 +1,11 @@
 #include "HardwareAbstraction.h"
 #include <Arduino.h>
 
-void HardwareAbstraction::setLoopRate(uint32_t loopRate) {
-    double delay = 1.0 / loopRate;
-    delay *= 1000;
-    m_loopTime = (uint32_t) delay;
-}
-
 void HardwareAbstraction::setup() {
     // Setup core
     if (m_debugStream == nullptr || m_systemClock == nullptr || m_configuration == nullptr || m_configurationMemory == nullptr) {
-        if(m_debugStream != nullptr) {
+        if (m_debugStream != nullptr) {
+            m_debugStream->setup();
             m_debugStream->print("Debug stream, clock, configuration, and configuration memory required");
             m_debugStream->println();
         }
@@ -20,7 +15,7 @@ void HardwareAbstraction::setup() {
     m_systemClock->setup();
     m_configurationMemory->setup();
     m_configuration->setup(m_configurationMemory, m_debugStream);
-    
+
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->setup();
     for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->setup();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->setup();
@@ -46,10 +41,44 @@ void HardwareAbstraction::readAllRadioLinks() {
     for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->loopOnce();
 }
 
+void HardwareAbstraction::setLoopRate(uint32_t loopRate) {
+    double delay = 1.0 / loopRate;
+    delay *= 1000;
+    m_loopTime = (uint32_t) delay;
+}
+
 void HardwareAbstraction::enforceLoopTime() {
-    uint32_t end = getLoopTimestampMs() + 10;
-    while (getRuntimeMs() < end);
-    updateLoopTimestamp();
+    // Wait for the end of the previous tick
+    uint32_t end = getLoopTimestampMs() + m_loopTime;
+    if (m_systemClock->currentRuntimeMs() > end) {
+        m_debugStream->print("Loop overrun");
+        m_debugStream->println();
+    }
+    while (m_systemClock->currentRuntimeMs() < end) {};
+    // Update timers
+    uint32_t lastTime = m_currentLoopTimestampMs;
+    m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
+    m_loopDtMs = m_currentLoopTimestampMs - lastTime;
+}
+
+void HardwareAbstraction::setConfigurationMemory(ConfigurationMemory* configurationMemory)  {
+    m_configurationMemory = configurationMemory;
+}
+
+Configuration* HardwareAbstraction::getConfiguration() {
+    return m_configuration;
+}
+
+void HardwareAbstraction::setConfiguration(Configuration* configuration)  {
+    m_configuration = configuration;
+}
+
+uint32_t HardwareAbstraction::getLoopDtMs() const {
+    return m_loopDtMs;
+}
+
+uint32_t HardwareAbstraction::getLoopTimestampMs() const {
+    return m_currentLoopTimestampMs;
 }
 
 

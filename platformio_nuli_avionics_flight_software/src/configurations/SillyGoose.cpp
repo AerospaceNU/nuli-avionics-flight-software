@@ -28,20 +28,30 @@ S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
 
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(false);
-ConfigurationIDSet_s allConfigs[] = {Configuration::REQUIRED_CONFIGS};
+SerialDebug serialDebug(true);
+ConfigurationID_e configSet[] = {RADIO_FREQUENCY};
+ConfigurationID_e configSet2[] = {CONFIGURATION_CRC, CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH};
+ConfigurationIDSet_s allConfigs[] = {configSet2, configSet, Configuration::REQUIRED_CONFIGS};
 Configuration configuration(allConfigs);
 HardwareAbstraction hardware;
 
 void setup() {
     pinMode(LIGHT_PIN, OUTPUT);
     digitalWrite(LIGHT_PIN, HIGH);
+    pinMode(FLASH_CS_PIN, OUTPUT);
+    digitalWrite(FLASH_CS_PIN, HIGH);
+    pinMode(FRAM_CS_PIN, OUTPUT);
+    digitalWrite(FRAM_CS_PIN, HIGH);
 
+    Serial.begin(9600);
+    while (!Serial);
+    Serial.println("Starting");
     // System
-    hardware.setLoopRate(100);
+    hardware.setLoopRate(10);
     hardware.setConfiguration(&configuration);
     hardware.setDebugStream(&serialDebug);
     hardware.setSystemClock(&arduinoClock);
+    hardware.setConfigurationMemory(&fram);
     // Devices
     hardware.addPyro(&droguePyro);
     hardware.addPyro(&mainPyro);
@@ -51,9 +61,30 @@ void setup() {
     hardware.addAccelerometer(icm20602Sensor.getAccelerometer());
     hardware.addGyroscope(icm20602Sensor.getGyroscope());
     hardware.addFlashMemory(&flash);
-    hardware.addFramMemory(&fram);
 
     hardware.setup();
+
+    ConfigurationData<uint32_t>* configVersion = configuration.getConfigurable<CONFIGURATION_VERSION>();
+    ConfigurationData<uint32_t>* configHash = configuration.getConfigurable<CONFIGURATION_VERSION_HASH>();
+    ConfigurationData<uint32_t>* configCrc = configuration.getConfigurable<CONFIGURATION_CRC>();
+    ConfigurationData<float>* radioFrequency = configuration.getConfigurable<RADIO_FREQUENCY>();
+
+    Serial.println(configVersion->get());
+    Serial.println(configHash->get());
+    Serial.println(configCrc->get());
+    Serial.println(radioFrequency->get());
+    Serial.println();
+
+    configVersion->set(12);
+    configHash->set(332);
+//    configCrc->set(7);
+    radioFrequency->set(2433.77);
+    configuration.pushUpdates();
+
+    Serial.println(configVersion->get());
+    Serial.println(configHash->get());
+    Serial.println(configCrc->get());
+    Serial.println(radioFrequency->get());
 }
 
 
@@ -63,6 +94,7 @@ void loop() {
 
     digitalWrite(LIGHT_PIN, ((hardware.getLoopTimestampMs() / 200) % 2 == 0) ? LOW : HIGH);
 
-    Serial.println(hardware.getLoopDtMs());
+//    Serial.println(hardware.getLoopDtMs());
+    configuration.pushUpdates();
 }
 

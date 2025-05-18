@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['looponce_0',['loopOnce',['../classAvionicsCore.html#a55b34aa872a06687c97179308335cf9f',1,'AvionicsCore']]]
+  ['endtransmission_0',['endTransmission',['../classAprsTransmitter.html#a896b20d1fb6ad1286a23b68d705228bb',1,'AprsTransmitter']]]
 ];

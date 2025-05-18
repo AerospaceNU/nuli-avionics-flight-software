@@ -1,0 +1,143 @@
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md1}{}\doxysection{Flags}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md1}
+There are two types of flags supported which both inherit from {\ttfamily \mbox{\hyperlink{classBaseFlag}{Base\+Flag}}}.
+\begin{DoxyEnumerate}
+\item {\ttfamily \mbox{\hyperlink{classSimpleFlag}{Simple\+Flag}}}\+: A typical boolean flag. There is one constructor.
+\item {\ttfamily \mbox{\hyperlink{classArgumentFlag}{Argument\+Flag}}}\+: A flag with one argument. There are two constructors. One with a default argument and one without.
+\begin{DoxyEnumerate}
+\item IMPORTANT\+: Only fundamental types ({\ttfamily int, double, float, etc.}) and {\ttfamily const char$\ast$} are allowed.
+\end{DoxyEnumerate}
+\end{DoxyEnumerate}\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md2}{}\doxysection{Usage}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md2}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md3}{}\doxysubsection{0. Include}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md3}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{\#include\ "{}Parser.h"{}\ }
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md4}{}\doxysubsection{1. Create Parser Object}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md4}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{Parser\ myParser\ =\ Parser();}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md5}{}\doxysubsection{2. Callbacks}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md5}
+Callbacks must have the return type of {\ttfamily void} and must take in two arguments. For {\ttfamily \mbox{\hyperlink{classSimpleFlag}{Simple\+Flag}}}, a {\ttfamily bool} and a {\ttfamily int8\+\_\+t} and for {\ttfamily \mbox{\hyperlink{classArgumentFlag}{Argument\+Flag}}} any fundamental type (plus {\ttfamily const char$\ast$}) and a {\ttfamily int8\+\_\+t}.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{void\ callback1(bool\ a,\ int8\_t\ b);}
+\DoxyCodeLine{}
+\DoxyCodeLine{void\ callback2(int\ a,\ int8\_t\ b)\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{void\ callback3(float\ a,\ int8\_t\ b)\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{void\ callback4(uint8\_t\ a,\ int8\_t\ b)\ }
+\DoxyCodeLine{}
+\DoxyCodeLine{void\ callback5(const\ char*\ a,\ int8\_t\ b);}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md6}{}\doxysubsection{2. Declare Flags}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md6}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{SimpleFlag\ config("{}-\/-\/config"{},\ "{}Configure\ a\ trigger\ with\ additional\ flags\_s"{},\ true,\ callback1);}
+\DoxyCodeLine{ArgumentFlag<int>\ config\_trigger("{}-\/t"{},\ 0,\ "{}Trigger\ number"{},\ true,\ callback2);}
+\DoxyCodeLine{ArgumentFlag<float>\ config\_pulseWidth("{}-\/w"{},\ 0.0,\ "{}Pulse\ width\ (required\ for\ pwm)"{},\ false,\ callback3);}
+\DoxyCodeLine{ArgumentFlag<uint8\_t>\ config\_elevation("{}-\/e"{},\ "{}Configure\ ground\ elevation\ (in\ meters)"{},\ false,\ callback4);}
+\DoxyCodeLine{ArgumentFlag<const\ char*>\ config\_notation("{}-\/C"{},\ "{}Configuration\ using\ expression\ notation"{},\ false,\ callback5);}
+
+\end{DoxyCode}
+
+
+\begin{quote}
+Note\+: While not required by C++, always explicitly signify the type of \mbox{\hyperlink{classArgumentFlag}{Argument\+Flag}}. The compiler can {\itshape sometimes} infer the type when given a default value, but is finicky and unreliable. \end{quote}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md7}{}\doxysubsection{3. Add Flags to list of flags}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md7}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{BaseFlag*\ configGroup[]\{\&config,\ \&config\_trigger,\ \&config\_pulseWidth,\ \&config\_elevation\};}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md8}{}\doxysubsection{4. Add flag list to Parser}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md8}
+\begin{quote}
+Note\+: The UID allows the parser to identify which flag group was last inputted. \end{quote}
+There are two options\+:
+
+One, default and use auto-\/incremented uid from 0 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{myParser.addFlagGroup(configGroup);}
+
+\end{DoxyCode}
+ Two, self set uid 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{myParser.addFlagGroup(configGroup,\ 10);}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md9}{}\doxysubsection{5. Repeat}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md9}
+Repeat for more groups of flags.\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md10}{}\doxysubsection{6. Run on input}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md10}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{myParser.parse(<input>);}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md11}{}\doxysubsection{7. Run callbacks}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md11}
+Run the callbacks for the flag group that was most recently added 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{myParser.runFlags();}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md12}{}\doxysubsection{8. Reset flags for next run}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md12}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\ \{c++\}}
+\DoxyCodeLine{myParser.resetFlags();}
+
+\end{DoxyCode}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md13}{}\doxysection{Testing}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md13}
+\hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md14}{}\doxysubsection{CLion}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md14}
+Use the run configurations panel \hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md15}{}\doxysubsection{Linux}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md15}
+\begin{quote}
+A shell script is provided under cli \texorpdfstring{$>$}{>} tests \texorpdfstring{$>$}{>} flag\+Testing.\+sh which simply packages up the commands listed below. \end{quote}
+Build the project with coverage flags enabled\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{rm\ -\/rf\ build}
+\DoxyCodeLine{cmake\ -\/S\ .\ -\/B\ build\ -\/DENABLE\_COVERAGE=ON}
+\DoxyCodeLine{cmake\ -\/-\/build\ build}
+
+\end{DoxyCode}
+
+
+Running the project 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{cd\ build}
+\DoxyCodeLine{ctest\ -\/-\/verbose}
+
+\end{DoxyCode}
+ \hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md16}{}\doxysubsubsection{Code Coverage}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md16}
+Generating coverage data 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{lcov\ -\/-\/capture\ -\/-\/directory\ .\ -\/-\/output-\/file\ coverage.info}
+
+\end{DoxyCode}
+
+
+Filter out system files 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{lcov\ -\/-\/remove\ coverage.info\ '/usr/*'\ '*/tests/*'\ '*/gtest/*'\ -\/-\/output-\/file\ coverage\_filtered.info}
+
+\end{DoxyCode}
+
+
+Generate HTML report\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{genhtml\ coverage\_filtered.info\ -\/-\/output-\/directory\ coverage\_report\ -\/-\/demangle-\/cpp}
+
+\end{DoxyCode}
+ \hypertarget{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md17}{}\doxysubsection{Windows/\+Mac\+OS}\label{md_nuli_avionics_flight_software_platformio_nuli_avionics_flight_software_src_core_cli_README_autotoc_md17}
+Idk. 

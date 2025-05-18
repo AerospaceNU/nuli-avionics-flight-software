@@ -22,7 +22,7 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, uint16_t a
 }
 
 
-void Configuration::setup(ConfigurationMemory *memory, DebugStream *debugStream) {
+void Configuration::setup(ConfigurationMemory* memory, DebugStream* debugStream) {
     m_memory = memory;
     m_debug = debugStream;
     // Sort the list to ensure a consistent order, then set them up with their respective memory
@@ -33,26 +33,8 @@ void Configuration::setup(ConfigurationMemory *memory, DebugStream *debugStream)
     readConfigFromMemory();
 }
 
-template<unsigned N>
-ConfigurationData<typename GetConfigType_s<N>::type>* Configuration::getConfigurable() {
-    int left = 0;
-    int right = m_numConfigurations - 1;
-
-    while (left <= right) {
-        int mid = left + (right - left) / 2;
-        int midName = m_configurations[mid].name;
-
-        if (midName == N) {
-            return (ConfigurationData<typename GetConfigType_s<N>::type>*) &m_configurations[mid];
-        } else if (midName < N) {
-            left = mid + 1;
-        } else {
-            right = mid - 1;
-        }
-    }
-
-    return nullptr;
-}
+//template<unsigned N>
+//ConfigurationData<typename GetConfigType_s<N>::type>* Configuration::getConfigurable()
 
 bool Configuration::configExists(ConfigurationID_e name) const {
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
@@ -77,26 +59,45 @@ void Configuration::sortConfigs() {
 }
 
 void Configuration::assignMemory() {
-    uint16_t index = 0;
+    m_dataBufferIndex = 0;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        uint16_t configLength = getConfigLength(m_configurations[i].name);
-        if (index + configLength >= m_dataBufferMaxLength) {
+        uint16_t configurationLength = getConfigurationLength(m_configurations[i].name);
+        if (m_dataBufferIndex + configurationLength >= m_dataBufferMaxLength) {
             outOfMemoryError();
             m_numConfigurations = i;
             return;
         }
-        m_configurations[i].size = configLength;
-        m_configurations[i].data = m_dataBuffer + index;
-        index += configLength;
+        m_configurations[i].size = configurationLength;
+        m_configurations[i].data = m_dataBuffer + m_dataBufferIndex;
+        m_dataBufferIndex += configurationLength;
     }
 }
 
 void Configuration::readConfigFromMemory() {
-
+    m_memory->read(0, m_dataBuffer, m_dataBufferIndex);
 }
 
 void Configuration::pushUpdates() {
+    uint8_t* writeStartLocation = m_dataBuffer;
+    uint32_t bytesToWrite = 0;
 
+    for (uint32_t i = 0; i < m_numConfigurations; i++) {
+        if (m_configurations[i].m_isUpdated) {
+            m_configurations[i].m_isUpdated = false;
+            if (bytesToWrite == 0) writeStartLocation = m_configurations[i].data;
+            bytesToWrite += m_configurations[i].size;
+        } else if (bytesToWrite > 0) {
+            uint32_t address = writeStartLocation - m_dataBuffer;
+            m_memory->write(address, writeStartLocation, bytesToWrite);
+            writeStartLocation = m_dataBuffer;
+            bytesToWrite = 0;
+        }
+    }
+
+    if (bytesToWrite > 0) {
+        uint32_t address = writeStartLocation - m_dataBuffer;
+        m_memory->write(address, writeStartLocation, bytesToWrite);
+    }
 }
 
 void Configuration::outOfMemoryError() {

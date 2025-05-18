@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['endtransmission_0',['endTransmission',['../classAprsTransmitter.html#a896b20d1fb6ad1286a23b68d705228bb',1,'AprsTransmitter']]]
+  ['baseflag_0',['BaseFlag',['../classBaseFlag.html#abfeb3f2926af3349c5490d920320dda1',1,'BaseFlag']]]
 ];

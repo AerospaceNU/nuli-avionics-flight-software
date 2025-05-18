@@ -1,6 +1,22 @@
 var searchData=
 [
-  ['read_0',['read',['../classGenericSensor.html#a446cd4668c39444340eaa0118b4b7471',1,'GenericSensor::read()'],['../classICM20602Sensor.html#a1043c4b0e300b64ef0ed8608ff8c9256',1,'ICM20602Sensor::read()'],['../classICM20948Sensor.html#aa909de6c9a56db475ac4d9ab2fa97c0f',1,'ICM20948Sensor::read()'],['../classMS5607Sensor.html#ae6c3d740b2a937f94df537c0c6d3150b',1,'MS5607Sensor::read()'],['../classMS8607Sensor.html#a762aec1b89a7b4388226bd2d6da73aac',1,'MS8607Sensor::read()']]],
-  ['readallcommunicationlinks_1',['readAllCommunicationLinks',['../classHardwareAbstraction.html#a72369f6172a31270aaf910e0f79b64f6',1,'HardwareAbstraction']]],
-  ['readallsensors_2',['readAllSensors',['../classHardwareAbstraction.html#a6af4f7679b3a7f527a4e6d20dc3255a2',1,'HardwareAbstraction']]]
+  ['getabsolutehumidity_0',['getAbsoluteHumidity',['../classBarometer.html#a6d03d50f4b1ae5474b6549a7572ca6ce',1,'Barometer']]],
+  ['getaccelerationsmss_1',['getAccelerationsMSS',['../classAccelerometer.html#a28fbcc1f8d7baafb33add28f4a4a6816',1,'Accelerometer']]],
+  ['getaccelerometer_2',['getAccelerometer',['../classICM20602Sensor.html#aaf76a29048f4422234f7f0623039e32f',1,'ICM20602Sensor::getAccelerometer()'],['../classICM20948Sensor.html#a8e86674e32548301c8113d899aa50848',1,'ICM20948Sensor::getAccelerometer()']]],
+  ['getaltitudem_3',['getAltitudeM',['../classBarometer.html#a05b54d5648be0a4b2a269d8a4998cbdb',1,'Barometer']]],
+  ['getdata_4',['getData',['../classRFM9xRadio.html#aaef01e392e8f055fe4bd783fd5f5bc2a',1,'RFM9xRadio']]],
+  ['getgyroscope_5',['getGyroscope',['../classICM20602Sensor.html#a431166023011dad9801074ed63ae6f0e',1,'ICM20602Sensor::getGyroscope()'],['../classICM20948Sensor.html#a0067a30feb6c7b3b637e39d52a648a2a',1,'ICM20948Sensor::getGyroscope()']]],
+  ['gethumiditypercent_6',['getHumidityPercent',['../classBarometer.html#a5ff95e79fd12563452f88ae1e6c506a9',1,'Barometer']]],
+  ['getloopdtms_7',['getLoopDtMs',['../classHardwareAbstraction.html#a3188cc59429ed9ebcb80c249f14f2394',1,'HardwareAbstraction']]],
+  ['getlooptimestampms_8',['getLoopTimestampMs',['../classHardwareAbstraction.html#a9e4a8dda8bf9cbdd541af38e1bffa6e7',1,'HardwareAbstraction']]],
+  ['getmagneticfieldtesla_9',['getMagneticFieldTesla',['../classMagnetometer.html#a29f03b95cac1ed56ce162ba8c4bdb0c0',1,'Magnetometer']]],
+  ['getmagnetometer_10',['getMagnetometer',['../classICM20948Sensor.html#acf5faa4722fc01ea6bc6c30c4fb98df9',1,'ICM20948Sensor']]],
+  ['getpressurepa_11',['getPressurePa',['../classBarometer.html#a403393f4bc4983116a7b13723451dcc4',1,'Barometer']]],
+  ['getrow_12',['getRow',['../classCustomCsvParser.html#aa48b3e9bf32933a303ede546a2418276',1,'CustomCsvParser']]],
+  ['getsize_13',['getSize',['../classCustomCsvParser.html#adb9d10474a3304ad8c1288a592c77870',1,'CustomCsvParser']]],
+  ['gettemperaturek_14',['getTemperatureK',['../classAccelerometer.html#ae15cfc422be5824eeecdb0df37f94abc',1,'Accelerometer::getTemperatureK()'],['../classBarometer.html#a9135eaa5c709373ac981cfd41bb79318',1,'Barometer::getTemperatureK()'],['../classGyroscope.html#a2aa7113c45c27c8e1e21e096f8f3cd06',1,'Gyroscope::getTemperatureK()'],['../classMagnetometer.html#a3c2920c45211940d6e97bed5f2725b02',1,'Magnetometer::getTemperatureK()']]],
+  ['getvalue_15',['getValue',['../classBaseFlag.html#a31f1ba364a08c9666a383c7bed5effd7',1,'BaseFlag::getValue()'],['../classParser.html#a9dc578e91f19d23d57e0f4c2738bf579',1,'Parser::getValue()']]],
+  ['getvaluederived_16',['getValueDerived',['../classArgumentFlag.html#a7076395e354ca76c45eaea691b3c9944',1,'ArgumentFlag::getValueDerived()'],['../classSimpleFlag.html#a9fb7461a81fd9d8fe4fc334d12e4019e',1,'SimpleFlag::getValueDerived()']]],
+  ['getvalueraw_17',['getValueRaw',['../classArgumentFlag.html#a942d105920a99bb97a2fa07f1e958323',1,'ArgumentFlag::getValueRaw()'],['../classBaseFlag.html#aaca151687e86f1bc9712297ec4912b6a',1,'BaseFlag::getValueRaw()'],['../classSimpleFlag.html#a23755cc42b2f5a561c657e6d519227f8',1,'SimpleFlag::getValueRaw()']]],
+  ['getvelocitiesrads_18',['getVelocitiesRadS',['../classGyroscope.html#aaa2f286f20293bf921a7cc33a3d472dc',1,'Gyroscope']]]
 ];
