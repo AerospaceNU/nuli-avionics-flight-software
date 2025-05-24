@@ -12,10 +12,6 @@ void ArduinoFram::setup() {
     }
 }
 
-bool ArduinoFram::ready() {
-    return true;
-}
-
 void ArduinoFram::write(uint32_t address, const uint8_t* buffer, uint32_t length) {
     m_AdafruitFram.writeEnable(true);
     m_AdafruitFram.write(address, buffer, length);

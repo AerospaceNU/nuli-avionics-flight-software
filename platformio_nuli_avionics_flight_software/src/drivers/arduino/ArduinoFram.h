@@ -12,8 +12,6 @@ public:
 
     void setup() override;
 
-    bool ready() override;
-
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override;
 
     void read(uint32_t address, uint8_t* buffer, uint32_t length) override;

@@ -75,6 +75,8 @@ void Configuration::assignMemory() {
 
 void Configuration::readConfigFromMemory() {
     m_memory->read(0, m_dataBuffer, m_dataBufferIndex);
+
+
 }
 
 void Configuration::pushUpdates() {

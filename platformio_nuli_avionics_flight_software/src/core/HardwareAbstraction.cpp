@@ -22,9 +22,12 @@ void HardwareAbstraction::setup() {
     for (int i = 0; i < m_numAccelerometers; i++) m_accelerometerArray[i]->setup();
     for (int i = 0; i < m_numMagnetometers; i++) m_magnetometerArray[i]->setup();
     for (int i = 0; i < m_numGyroscopes; i++) m_gyroscopeArray[i]->setup();
-    for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->setup();
     for (int i = 0; i < m_numFlashMemory; i++) m_flashMemoryArray[i]->setup();
+    for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->setup();
+    for (int i = 0; i < m_numIndicators; i++) m_indicatorArray[i]->setup();
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->setup();
+
+    enforceLoopTime();
 }
 
 void HardwareAbstraction::readAllSensors() {
@@ -59,18 +62,6 @@ void HardwareAbstraction::enforceLoopTime() {
     uint32_t lastTime = m_currentLoopTimestampMs;
     m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
     m_loopDtMs = m_currentLoopTimestampMs - lastTime;
-}
-
-void HardwareAbstraction::setConfigurationMemory(ConfigurationMemory* configurationMemory)  {
-    m_configurationMemory = configurationMemory;
-}
-
-Configuration* HardwareAbstraction::getConfiguration() {
-    return m_configuration;
-}
-
-void HardwareAbstraction::setConfiguration(Configuration* configuration)  {
-    m_configuration = configuration;
 }
 
 uint32_t HardwareAbstraction::getLoopDtMs() const {

@@ -93,6 +93,7 @@ ICM20602Sensor::ICM20602Sensor() = default;
 void ICM20602Sensor::setup() {
     Serial.println("Starting ICM20602 sensors");
     Wire.begin();
+    Wire.setClock(400000);
 
     initICM20602();
 

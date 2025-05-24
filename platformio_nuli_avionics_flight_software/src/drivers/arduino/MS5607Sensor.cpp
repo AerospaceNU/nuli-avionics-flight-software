@@ -11,6 +11,7 @@
 void MS5607Sensor::setup() {
     Serial.println("Starting barometric sensor");
     Wire.begin();
+    Wire.setClock(400000);
     if (readCalibration()) {
         Serial.println("Started");
     } else {
@@ -30,6 +31,7 @@ void MS5607Sensor::read() {
 // read raw digital values of temp & pressure from MS5607
 
 bool MS5607Sensor::readDigitalValue() {
+    // @todo make this start the pressure reading at the highest OSR
     if (startConversion(CONV_D1)) {
         if (startMeasurement()) {
             getDigitalValue(DP);
@@ -67,7 +69,7 @@ bool MS5607Sensor::startConversion(char CMD) const {
     Wire.write(CMD);
     char error = Wire.endTransmission();
     if (error == 0) {
-        delay(Conv_Delay);
+        delayMicroseconds(Conv_Delay);
         return true;
     } else {
         return false;
@@ -140,7 +142,6 @@ bool MS5607Sensor::getDigitalValue(unsigned long &value) const {
     uint8_t x, length = 3;
     unsigned char data[3];
     Wire.requestFrom(MS5607_ADDR, length);
-//    while (!Wire.available()); // wait until bytes are ready
     waitForI2C();
     for (x = 0; x < length; x++) {
         data[x] = Wire.read();
@@ -175,32 +176,32 @@ void MS5607Sensor::setOSR(uint16_t OSR_U) {
         case 256:
             CONV_D1 = 0x40;
             CONV_D2 = 0x50;
-            Conv_Delay = 1;
+            Conv_Delay = 600;
             break;
         case 512:
             CONV_D1 = 0x42;
             CONV_D2 = 0x52;
-            Conv_Delay = 2;
+            Conv_Delay = 1170;
             break;
         case 1024:
             CONV_D1 = 0x44;
             CONV_D2 = 0x54;
-            Conv_Delay = 3;
+            Conv_Delay = 2280;
             break;
         case 2048:
             CONV_D1 = 0x46;
             CONV_D2 = 0x56;
-            Conv_Delay = 5;
+            Conv_Delay = 4540;
             break;
         case 4096:
             CONV_D1 = 0x48;
             CONV_D2 = 0x58;
-            Conv_Delay = 10;
+            Conv_Delay = 9040;
             break;
         default:
             CONV_D1 = 0x40;
             CONV_D2 = 0x50;
-            Conv_Delay = 1;
+            Conv_Delay = 600;
             break;
     }
 }

@@ -34,7 +34,7 @@ private:
     uint16_t OSR = 4096;              // default over sampling ratio
     uint16_t CONV_D1 = 0x48;          // corresponding temp conv. command for OSR
     uint16_t CONV_D2 = 0x58;          // corresponding pressure conv. command for OSR
-    uint16_t Conv_Delay = 10;          // corresponding conv. delay for OSR
+    uint16_t Conv_Delay = 9040;          // corresponding conv. delay for OSR
 
     unsigned int C1, C2, C3, C4, C5, C6;
     unsigned long DP, DT;

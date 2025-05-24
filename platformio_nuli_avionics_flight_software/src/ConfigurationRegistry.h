@@ -18,7 +18,6 @@ enum ConfigurationID_e : int16_t {
     GROUND_ELEVATION,
     GROUND_TEMPERATURE,
     RADIO_FREQUENCY,
-
     // Leave this last
     LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE,
 };

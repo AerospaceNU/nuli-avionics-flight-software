@@ -97,11 +97,11 @@ protected:
         m_absoluteHumidity = (216.7 * (vapourPressure)) / m_temperatureK;
     }
 
-    double m_temperatureK = 0;          ///<The measured temperature
-    double m_humidityPercent = 0;       ///< The measured humidity (%rh)
-    double m_absoluteHumidity = 0;      ///< The calculated absolute humidity
-    double m_pressurePa = 0;            ///< The measured pressure
-    double m_altitudeM = 0;             ///< The calculated altitude
+    float m_temperatureK = 0;          ///<The measured temperature
+    float m_humidityPercent = 0;       ///< The measured humidity (%rh)
+    float m_absoluteHumidity = 0;      ///< The calculated absolute humidity
+    float m_pressurePa = 0;            ///< The measured pressure
+    float m_altitudeM = 0;             ///< The calculated altitude
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BAROMETER_H

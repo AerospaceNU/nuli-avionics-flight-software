@@ -16,6 +16,8 @@
 #include "generic_hardware/DebugStream.h"
 #include "generic_hardware/VoltageSensor.h"
 #include "generic_hardware/ConfigurationMemory.h"
+#include "generic_hardware/Indicator.h"
+
 
 /**
  * This macro generates three methods for a given type of hardware:
@@ -87,11 +89,13 @@ public:
      */
     uint32_t getLoopDtMs() const;
 
-    void setConfiguration(Configuration* configuration);
+    GENERATE_GET_SET_METHODS_MACRO(SystemClock, m_systemClock)
 
-    Configuration* getConfiguration();
+    GENERATE_GET_SET_METHODS_MACRO(DebugStream, m_debugStream)
 
-    void setConfigurationMemory(ConfigurationMemory* configurationMemory);
+    GENERATE_GET_SET_METHODS_MACRO(Configuration, m_configuration)
+
+    GENERATE_GET_SET_METHODS_MACRO(ConfigurationMemory, m_configurationMemory)
 
     GENERATE_GET_ADD_METHODS_MACRO(Pyro, m_pyroArray, m_numPyros, MAX_PYRO_NUM)
 
@@ -109,11 +113,9 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(RadioLink, m_radioLinkArray, m_numRadioLinks, MAX_RADIO_TRANSMITTER_LINK_NUM)
 
+    GENERATE_GET_ADD_METHODS_MACRO(Indicator, m_indicatorArray, m_numIndicators, MAX_INDICATOR_NUM)
+
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
-
-    GENERATE_GET_SET_METHODS_MACRO(SystemClock, m_systemClock)
-
-    GENERATE_GET_SET_METHODS_MACRO(DebugStream, m_debugStream)
 
 private:
     uint32_t m_loopTime = 10;
@@ -133,6 +135,7 @@ private:
     uint8_t m_numGyroscopes = 0;                        ///< Number of Gyroscopes in the system
     uint8_t m_numFlashMemory = 0;                       ///< Number of FlashMemory in the system
     uint8_t m_numRadioLinks = 0;                        ///< Number of RadioLinks in the system
+    uint8_t m_numIndicators = 0;                        ///< Number of RadioLinks in the system
     uint8_t m_numGenericSensors = 0;                    ///< Number of generic sensors
     Pyro* m_pyroArray[MAX_PYRO_NUM] = {nullptr};                                ///< Array containing all the Pyros in the system
     VoltageSensor* m_voltageSensorArray[MAX_VOLTAGE_SENSOR_NUM] = {nullptr};    ///< Array containing all the VoltageSensors in the system
@@ -141,9 +144,9 @@ private:
     Magnetometer* m_magnetometerArray[MAX_BAROMETER_NUM] = {nullptr};           ///< Array containing all the Magnetometers in the system
     Gyroscope* m_gyroscopeArray[MAX_GYROSCOPE_NUM] = {nullptr};                 ///< Array containing all the Gyroscopes in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr};          ///< Array containing all the FlashMemory in the system
-    RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr};        ///< Array containing all the RadioLinks in the system
-    GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};                    ///< Array containing all generic sensors
-
+    RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr};    ///< Array containing all the RadioLinks in the system
+    Indicator* m_indicatorArray[MAX_INDICATOR_NUM] = {nullptr};                 ///< Array containing all the RadioLinks in the system
+    GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr};    ///< Array containing all generic sensors
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file
