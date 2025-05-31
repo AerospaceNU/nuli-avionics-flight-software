@@ -98,7 +98,7 @@ void setup() {
     Serial.println(configCrc->get());
     Serial.println(radioFrequency->get());
 }
-1
+
 
 void loop() {
     uint32_t start = micros();
