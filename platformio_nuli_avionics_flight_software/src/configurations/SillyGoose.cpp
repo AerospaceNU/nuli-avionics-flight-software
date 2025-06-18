@@ -37,7 +37,7 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
 AltitudeKf altitudeKf;
 
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(true);
+SerialDebug serialDebug(false);
 ConfigurationID_e configSet[] = {RADIO_FREQUENCY};
 ConfigurationID_e configSet2[] = {CONFIGURATION_CRC, CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH};
 ConfigurationIDSet_s allConfigs[] = {configSet2, configSet, Configuration::REQUIRED_CONFIGS};
@@ -53,7 +53,7 @@ void setup() {
     altitudeKf.calculateDiscreteTimeA(.01);
 
     Serial.begin(9600);
-    while (!Serial);
+    // while (!Serial);
     Serial.println("Starting");
     // System
     hardware.setLoopRate(100);
@@ -126,6 +126,8 @@ void loop() {
     Serial.print(altitudeKf.getAltitude());
     Serial.print('\t');
     Serial.print((end - start) / 1000.0);
+    Serial.print('\t');
+    Serial.print(batteryVoltageSensor.getVoltage());
     Serial.print('\t');
     Serial.println(barometer.getAltitudeM());
 }
