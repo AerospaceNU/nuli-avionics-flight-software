@@ -18,6 +18,8 @@ enum ConfigurationID_e : int16_t {
     GROUND_ELEVATION,
     GROUND_TEMPERATURE,
     RADIO_FREQUENCY,
+    MAIN_ELEVATION,
+    DROGUE_DELAY,
     // Leave this last
     LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE,
 };
@@ -32,6 +34,8 @@ template<> struct GetConfigType_s<FLASH_START_LOC> {using type = uint32_t; };
 template<> struct GetConfigType_s<GROUND_ELEVATION> {using type = float; };
 template<> struct GetConfigType_s<GROUND_TEMPERATURE> {using type = float; };
 template<> struct GetConfigType_s<RADIO_FREQUENCY> {using type = float; };
+template<> struct GetConfigType_s<MAIN_ELEVATION> {using type = float; };
+template<> struct GetConfigType_s<DROGUE_DELAY> {using type = float; };
 // Leave this last
 template<> struct GetConfigType_s<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE> {using type = void; };
 

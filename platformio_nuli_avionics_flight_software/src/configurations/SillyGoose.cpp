@@ -38,8 +38,8 @@ AltitudeKf altitudeKf;
 
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(false);
-ConfigurationID_e configSet[] = {RADIO_FREQUENCY};
-ConfigurationID_e configSet2[] = {CONFIGURATION_CRC, CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH};
+ConfigurationID_e configSet[] = {DROGUE_DELAY, MAIN_ELEVATION};
+ConfigurationID_e configSet2[] = {CONFIGURATION_CRC, CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH, RADIO_FREQUENCY};
 ConfigurationIDSet_s allConfigs[] = {configSet2, configSet, Configuration::REQUIRED_CONFIGS};
 Configuration configuration(allConfigs);
 HardwareAbstraction hardware;
@@ -76,27 +76,27 @@ void setup() {
 
     hardware.setup();
 
-    ConfigurationData<uint32_t>* configVersion = configuration.getConfigurable<CONFIGURATION_VERSION>();
-    ConfigurationData<uint32_t>* configHash = configuration.getConfigurable<CONFIGURATION_VERSION_HASH>();
-    ConfigurationData<uint32_t>* configCrc = configuration.getConfigurable<CONFIGURATION_CRC>();
-    ConfigurationData<float>* radioFrequency = configuration.getConfigurable<RADIO_FREQUENCY>();
-
-    Serial.println(configVersion->get());
-    Serial.println(configHash->get());
-    Serial.println(configCrc->get());
-    Serial.println(radioFrequency->get());
-    Serial.println();
-
-    configVersion->set(912);
-    configHash->set(9332);
-    configCrc->set(97);
-    radioFrequency->set(92433.77);
-    configuration.pushUpdates();
-
-    Serial.println(configVersion->get());
-    Serial.println(configHash->get());
-    Serial.println(configCrc->get());
-    Serial.println(radioFrequency->get());
+    // ConfigurationData<uint32_t>* configVersion = configuration.getConfigurable<CONFIGURATION_VERSION>();
+    // ConfigurationData<uint32_t>* configHash = configuration.getConfigurable<CONFIGURATION_VERSION_HASH>();
+    // ConfigurationData<uint32_t>* configCrc = configuration.getConfigurable<CONFIGURATION_CRC>();
+    // ConfigurationData<float>* radioFrequency = configuration.getConfigurable<RADIO_FREQUENCY>();
+    //
+    // Serial.println(configVersion->get());
+    // Serial.println(configHash->get());
+    // Serial.println(configCrc->get());
+    // Serial.println(radioFrequency->get());
+    // Serial.println();
+    //
+    // configVersion->set(912);
+    // configHash->set(9332);
+    // configCrc->set(97);
+    // radioFrequency->set(92433.77);
+    // configuration.pushUpdates();
+    //
+    // Serial.println(configVersion->get());
+    // Serial.println(configHash->get());
+    // Serial.println(configCrc->get());
+    // Serial.println(radioFrequency->get());
 }
 
 
