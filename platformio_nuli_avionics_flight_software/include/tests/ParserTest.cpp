@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include "cli/Parser.h"
-#include "cli/SimpleFlag.h"
-#include "cli/ArgumentFlag.h"
+#include "../../src/core/cli/Parser.h"
+#include "../../src/core/cli/SimpleFlag.h"
+#include "../../src/core/cli/ArgumentFlag.h"
 
-void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag *dependency) { }
 
 
 TEST(ParserTest, TestBasic) {

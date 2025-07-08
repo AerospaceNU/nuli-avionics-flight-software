@@ -26,7 +26,7 @@ public:
      * @param helpText A flag's help text
      * @param m_required If a flag is required
      */
-    ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t));
+    ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag* dependency));
 
     /**
      * @brief Alternative constructor for an ArgumentFlag
@@ -39,7 +39,7 @@ public:
      * @param m_required If a flag is required
      * @param callback
      */
-    ArgumentFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t));
+    ArgumentFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag* dependency));
 
     /**
      * @brief Retrieves the flag's name

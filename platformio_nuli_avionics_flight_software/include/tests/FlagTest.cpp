@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include "../BaseFlag.h"
-#include "../SimpleFlag.h"
-#include "../ArgumentFlag.h"
+#include "../../src/core/cli/BaseFlag.h"
+#include "../../src/core/cli/SimpleFlag.h"
+#include "../../src/core/cli/ArgumentFlag.h"
 
 // https://google.github.io/googletest/primer.html
 // https://github.com/google/googletest/blob/main/googletest/samples/sample3_unittest.cc
 
-void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag *dependency) { }
 
 
 // Demonstrate some basic assertions.
