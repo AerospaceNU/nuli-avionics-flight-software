@@ -222,6 +222,7 @@ void loop() {
       cliParser.runFlags();
       cliParser.resetFlags();
     }
+     */
 
     uint32_t start = micros();
     hardware.enforceLoopTime();
@@ -234,7 +235,6 @@ void loop() {
             hardware.getIndicator(i)->off();
         }
     }
-     */
 
     // Serial.print()
     
