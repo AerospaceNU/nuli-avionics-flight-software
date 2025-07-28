@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include "ReturnCodes.h"
 
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
@@ -46,7 +47,7 @@ public:
       * @param arg argument to parse into flag, is nullable
       * @return 0 if success, negative for failure
       */
-    virtual int8_t parse(char* arg) = 0;
+    virtual CLIReturnCode_e parse(char* arg) = 0;
 
     /**
      *
@@ -109,7 +110,7 @@ protected:
      * @return 0 if success, <0 if failure
      */
     template<typename T>
-    inline int8_t parseArgument(const char* value, T &result);
+    inline CLIReturnCode_e parseArgument(const char* value, T &result);
 
     /**
      * @brief Retrieves the flag of a flag from a derived class

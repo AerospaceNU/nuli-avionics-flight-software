@@ -56,7 +56,7 @@ public:
      * @return 0 if successful
      */
     template<uint8_t n>
-    int8_t addFlagGroup(BaseFlag* (&flagGroup)[n]);
+    CLIReturnCode_e addFlagGroup(BaseFlag* (&flagGroup)[n]);
 
     /**
      * @brief Adds a set of Flags into a FlagGroup
@@ -67,7 +67,7 @@ public:
      * @return 0 if successful
      */
     template<uint8_t n>
-    int8_t addFlagGroup(BaseFlag* (&flagGroup)[n], int8_t uid);
+    CLIReturnCode_e addFlagGroup(BaseFlag* (&flagGroup)[n], int8_t uid);
 
     /**
      * @brief Parses program argument inputs into FlagGroups
@@ -77,7 +77,7 @@ public:
      * @param argv char* array of arguments
      * @return 0 if successful
      */
-    int8_t parse(int argc, char* argv[]);
+    CLIReturnCode_e parse(int argc, char* argv[]);
 
     /**
      * @brief Parses command line input into FlagGroups
@@ -88,7 +88,7 @@ public:
      * @param input a char* stream
      * @return 0 if successful
      */
-    int8_t parse(char* input);
+    CLIReturnCode_e parse(char* input);
 
     /**
      * @brief Retrieves a flag's value given its name and its flag group name
@@ -99,7 +99,7 @@ public:
      * @return 0 if successful
      */
     template<typename T>
-    int8_t getValue(const char* flagGroupName, const char* flagName, T &value);
+    CLIReturnCode_e getValue(const char* flagGroupName, const char* flagName, T &value);
 
     /**
      * @brief Runs the set of flags most recently passed in
@@ -107,7 +107,7 @@ public:
      * were most recently passed in.
      * @return 0 if successful
      */
-    int8_t runFlags();
+    CLIReturnCode_e runFlags();
 
     /**
      * @brief Prints help text for each FlagGroup
@@ -160,13 +160,13 @@ private:
          * @param flag Returned flag
          * @return 0 if success
          */
-        int8_t getFlag(const char* flagName, BaseFlag** flag);
+        CLIReturnCode_e getFlag(const char* flagName, BaseFlag** flag);
 
         /**
          * @brief Ensures all member flag parameters are correctly set
          * @return 0 if successful
          */
-        int8_t verifyFlags();
+        CLIReturnCode_e verifyFlags();
 
         /**
          * @brief Runs the callback functions of the most recent flag group set
@@ -208,14 +208,14 @@ private:
      * @param flagGroup Placeholder
      * @return 0 if success
      */
-    int8_t getFlagGroup(const char* flagGroupName, FlagGroup_s** flagGroup);
+    CLIReturnCode_e getFlagGroup(const char* flagGroupName, FlagGroup_s** flagGroup);
 
     /**
      * @brief Retrieves a flag group based on its identification number
      * @param uid a (hopefully) unique number identifying the flag group
      * @return 0 if success
      */
-    FlagGroup_s* getFlagGroup(int8_t uid);
+    CLIReturnCode_e getFlagGroup(int8_t uid, FlagGroup_s** flagGroup);
 
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups

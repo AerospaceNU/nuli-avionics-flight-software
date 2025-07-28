@@ -60,7 +60,7 @@ public:
      * @param arg argument to parse into flag, is nullable
      * @return 0 if success, negative for failure
      */
-    int8_t parse(char* arg) override;
+    CLIReturnCode_e parse(char* arg) override;
 
     /**
      * @brief Dispatches to a pre-set m_callback function.

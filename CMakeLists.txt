@@ -64,6 +64,7 @@ set(cliSimFiles
         platformio_nuli_avionics_flight_software/src/core/cli/ArgumentFlag.h
         platformio_nuli_avionics_flight_software/src/core/cli/ArgumentFlag.tpp
         platformio_nuli_avionics_flight_software/src/core/cli/CLIEnums.h
+        platformio_nuli_avionics_flight_software/src/core/cli/ReturnCodes.h
 )
 
 # Enable Code Coverage Options
@@ -108,5 +109,5 @@ gtest_discover_tests(FlagTest)
 gtest_discover_tests(ParserTest)
 
 # ========cli example configuration========
-add_executable(cli ${cliSimFiles}
+add_executable(cli_example ${cliSimFiles}
         platformio_nuli_avionics_flight_software/include/CLIExample.cpp)

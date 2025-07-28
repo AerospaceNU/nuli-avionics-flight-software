@@ -11,9 +11,9 @@ const char* SimpleFlag::help() const {
     return m_helpText;
 }
 
-int8_t SimpleFlag::parse(char* arg) {
+CLIReturnCode_e SimpleFlag::parse(char* arg) {
     m_set = true;
-    return 0;
+    return CLI_SUCCESS;
 }
 
 void SimpleFlag::run(uint8_t groupUid) {

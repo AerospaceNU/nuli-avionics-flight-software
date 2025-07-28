@@ -114,7 +114,7 @@ TEST(ArgumentFlag, TestFailure) {
     ArgumentFlag<int> testB("--testB", 0, "some help text", true, 0, callback);
     char argB[4] = "abc";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testB.parse(argB), -1);
+    ASSERT_EQ(testB.parse(argB), CLI_PARSE_FAILED_TO_PARSE_ARGUMENT);
     std::string outputB = ::testing::internal::GetCapturedStderr();
     std::string expectedB = "Failed to parse argument: abc\n";
     EXPECT_EQ(outputB, expectedB);
@@ -123,7 +123,7 @@ TEST(ArgumentFlag, TestFailure) {
     ArgumentFlag<double> testC("--testC", 5.0, "some help text", true, 0, callback);
     char argC[7] = "123abc";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testC.parse(argC), -1); // should fail, argument provided cannot map to a fundamental type (or const char*)
+    ASSERT_EQ(testC.parse(argC), CLI_PARSE_FAIL_EXTRA_ARGUMENTS); // should fail, argument provided cannot map to a fundamental type (or const char*)
     std::string outputC = ::testing::internal::GetCapturedStderr();
     std::string expectedC = "Failed to parse argument (extra characters found): 123abc\n";
     EXPECT_EQ(outputC, expectedC);

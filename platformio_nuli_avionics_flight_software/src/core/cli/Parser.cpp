@@ -3,15 +3,15 @@
 #include <stdexcept>
 
 // parses inputs into appropriate flags.
-int8_t Parser::parse(int argc, char** argv) {
+CLIReturnCode_e Parser::parse(int argc, char** argv) {
     if (m_numFlagGroups == 0) {
         fprintf(stderr, "No flag group present\n");
-        return -1;
+        return CLI_PARSER_NO_FLAG_GROUP_PROVIDED;
     }
 
     if (argc <= 1) {
         fprintf(stderr, "No flag provided\n");
-        return -1;
+        return CLI_PARSER_NO_FLAGS_PROVIDED;
     }
 
     int argvPos = 1;
@@ -45,7 +45,7 @@ int8_t Parser::parse(int argc, char** argv) {
 
     if (!matchedLeader) {
         fprintf(stderr, "Leader flag not found\n");
-        return -1;
+        return CLI_PARSER_NO_LEADER_FLAG;
     }
 
     // set latest flag group
@@ -61,7 +61,7 @@ int8_t Parser::parse(int argc, char** argv) {
             if (std::strcmp(currArg, flagGroup->flags_s[i]->name()) == 0) {
                 matched = true;
 
-                int8_t parseResult;
+                CLIReturnCode_e parseResult;
                 // these branches don't represent SimpleFlag or ArgumentFlag
                 if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') {
                     parseResult = flagGroup->flags_s[i]->parse(nullptr);
@@ -71,7 +71,7 @@ int8_t Parser::parse(int argc, char** argv) {
                 }
 
                 if (parseResult < 0) {
-                    return -1;
+                    return parseResult;
                 }
             }
 
@@ -82,7 +82,7 @@ int8_t Parser::parse(int argc, char** argv) {
 
         if (!matched) {
             fprintf(stderr, "Unknown flag: %s\n", currArg);
-            return -1;
+            return CLI_PARSER_UNKNOWN_FLAG;
         }
     }
 
@@ -91,7 +91,7 @@ int8_t Parser::parse(int argc, char** argv) {
     return flagGroup->verifyFlags();
 }
 
-int8_t Parser::parse(char* input) {
+CLIReturnCode_e Parser::parse(char* input) {
     /* Diagram represent how the parser works without dynamic memory allocation.
      *   [--config 5 -C "hello world"]
      *           |- null
@@ -163,15 +163,15 @@ void Parser::printHelp() const {
     }
 }
 
-int8_t Parser::FlagGroup_s::verifyFlags() {
+CLIReturnCode_e Parser::FlagGroup_s::verifyFlags() {
     for (uint8_t i = 0; i < this->numFlags_s; ++i) {
         if (!this->flags_s[i]->verify()) {
             fprintf(stderr, "Missing required argument: %s\n", this->flags_s[i]->name());
-            return -1;
+            return CLI_PARSER_MISSING_REQUIRED_ARGS;
         }
     }
 
-    return 0;
+    return CLI_SUCCESS;
 }
 
 void Parser::resetFlags() {
@@ -185,40 +185,42 @@ void Parser::resetFlags() {
     m_latestFlagGroup = -1;
 }
 
-int8_t Parser::getFlagGroup(const char* flagGroupName, Parser::FlagGroup_s** flagGroup) {
+CLIReturnCode_e Parser::getFlagGroup(const char* flagGroupName, Parser::FlagGroup_s** flagGroup) {
     for (int i = 0; i < m_numFlagGroups; ++i) {
         if (std::strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
             *flagGroup = &m_flagGroups[i];
-            return 0;
+            return CLI_SUCCESS;
         }
     }
 
-    return -1;
+    return CLI_PARSER_UNKNOWN_FLAG_GROUP;
 }
 
-Parser::FlagGroup_s* Parser::getFlagGroup(int8_t uid) {
+CLIReturnCode_e Parser::getFlagGroup(int8_t uid, FlagGroup_s** flagGroup) {
     for (int i = 0; i < m_numFlagGroups; ++i) {
         if (m_flagGroups[i].uid_s == uid) {
-            return &m_flagGroups[i];
+            *flagGroup = &m_flagGroups[i];
+            return CLI_SUCCESS;
         }
     }
 
-    return nullptr;
+    return CLI_PARSER_UNKNOWN_FLAG_GROUP;
 }
 
-int8_t Parser::runFlags() {
+CLIReturnCode_e Parser::runFlags() {
     // retrieve the most recent flag group
     if (m_latestFlagGroup < 0) {
-        return -1;
+        return CLI_PARSER_MISSING_LATEST_FLAG_GROUP;
     }
 
-    FlagGroup_s *flagGroup = getFlagGroup(m_latestFlagGroup);
-    if (! flagGroup) {
-        return -1;
+    FlagGroup_s *flagGroup;
+    CLIReturnCode_e returnCode = getFlagGroup(m_latestFlagGroup, &flagGroup);
+    if (returnCode != CLI_SUCCESS) {
+        return returnCode;
     }
 
     flagGroup->runFlags();
-    return 0;
+    return CLI_SUCCESS;
 }
 
 /* /////////////// */
@@ -243,15 +245,15 @@ BaseFlag* Parser::FlagGroup_s::getLeader() {
     return flags_s[0];
 }
 
-int8_t Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** flag) {
+CLIReturnCode_e Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** flag) {
     for (int i = 0; i < numFlags_s; ++i) {
         if (std::strcmp(flagName, flags_s[i]->name()) == 0) {
             *flag = flags_s[i];
-            return 0;
+            return CLI_SUCCESS;
         }
     }
 
-    return -1;
+    return CLI_PARSER_UNKNOWN_FLAG;
 }
 
 void Parser::FlagGroup_s::printHelp() const {

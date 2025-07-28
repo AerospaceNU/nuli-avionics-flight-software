@@ -24,27 +24,28 @@ const char* ArgumentFlag<T>::help() const {
 }
 
 template<typename T>
-int8_t ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to return new argvPos?
+CLIReturnCode_e ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to return new argvPos?
     // early exit
     if (arg == nullptr) {
         if (m_defaultValueSet) {
             // use default argument
             m_argument = m_defaultValue;
             m_set = true;
-            return 0;   // success
+            return CLI_SUCCESS;   // success
         } else {
             fprintf(stderr, "Default argument not set, value required for %s\n", this->name());
-            return -1;
+            return CLI_NO_DEFAULT_VALUE_SET;
         }
     }
 
     // set identifiers
-    if (this->parseArgument(arg, m_argument) < 0) {
-        return -1;
+    CLIReturnCode_e returnCode = this->parseArgument(arg, m_argument);
+    if (returnCode != CLI_SUCCESS) {
+        return returnCode;
     }
 
     m_set = true;
-    return 0;
+    return CLI_SUCCESS;
 }
 
 template<typename T>
