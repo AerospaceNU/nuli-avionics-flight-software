@@ -61,7 +61,7 @@ void setup() {
     hardware.setSystemClock(&arduinoClock);
     hardware.setConfigurationMemory(&fram);
     hardware.setConfiguration(&configuration);
-//    configuration.setDefaultValue<RADIO_FREQUENCY>(915.32);
+    // configuration.setDefaultValue<RADIO_FREQUENCY>(915.32);
     // Devices
     hardware.addPyro(&droguePyro);
     hardware.addPyro(&mainPyro);
@@ -113,12 +113,10 @@ void loop() {
         }
     }
 
-//    Serial.println(hardware.getLoopDtMs());
-
+    // Serial.print()
+    
     altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
     altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
-
-
 
     configuration.pushUpdates();
 
