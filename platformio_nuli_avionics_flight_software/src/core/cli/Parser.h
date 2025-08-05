@@ -190,7 +190,7 @@ private:
         BaseFlag* flags_s[MAX_FLAGS] = {nullptr};   ///< The flags within this FlagGroup
         const char* flagGroupName_s = {nullptr};    ///< The leader flag's name
         uint8_t numFlags_s;                         ///< number of flags within FlagGroup
-        uint8_t uid_s;                              ///< unique number identifying FlagGroup
+        int8_t uid_s;                               ///< unique number identifying FlagGroup
     };
 
 
@@ -219,7 +219,7 @@ private:
 
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
-    uint8_t m_uid = 0;                          ///< index of uids
+    int8_t m_uid = 0;                           ///< index of uids
     int8_t m_latestFlagGroup = -1;              ///< the last flag group processed
 };
 

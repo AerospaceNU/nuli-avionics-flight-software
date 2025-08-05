@@ -5,12 +5,10 @@
 // parses inputs into appropriate flags.
 CLIReturnCode_e Parser::parse(int argc, char** argv) {
     if (m_numFlagGroups == 0) {
-        fprintf(stderr, "No flag group present\n");
         return CLI_PARSER_NO_FLAG_GROUP_PROVIDED;
     }
 
     if (argc <= 1) {
-        fprintf(stderr, "No flag provided\n");
         return CLI_PARSER_NO_FLAGS_PROVIDED;
     }
 
@@ -44,7 +42,6 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
     }
 
     if (!matchedLeader) {
-        fprintf(stderr, "Leader flag not found\n");
         return CLI_PARSER_NO_LEADER_FLAG;
     }
 
@@ -81,7 +78,6 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
         }
 
         if (!matched) {
-            fprintf(stderr, "Unknown flag: %s\n", currArg);
             return CLI_PARSER_UNKNOWN_FLAG;
         }
     }
@@ -166,7 +162,6 @@ void Parser::printHelp() const {
 CLIReturnCode_e Parser::FlagGroup_s::verifyFlags() {
     for (uint8_t i = 0; i < this->numFlags_s; ++i) {
         if (!this->flags_s[i]->verify()) {
-            fprintf(stderr, "Missing required argument: %s\n", this->flags_s[i]->name());
             return CLI_PARSER_MISSING_REQUIRED_ARGS;
         }
     }
@@ -233,8 +228,7 @@ Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, u
           uid_s(uid) {
     // check flag count
     if (numFlags > MAX_FLAGS) {
-//        throw std::invalid_argument("Maximum flag count exceeded");
-        return; // @TODO: Added because PlatformIO config doesn't like exceptions
+        return;
     }
 
     // copy flags into flags_s

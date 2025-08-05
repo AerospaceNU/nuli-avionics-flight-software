@@ -33,7 +33,6 @@ CLIReturnCode_e ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to ret
             m_set = true;
             return CLI_SUCCESS;   // success
         } else {
-            fprintf(stderr, "Default argument not set, value required for %s\n", this->name());
             return CLI_NO_DEFAULT_VALUE_SET;
         }
     }
