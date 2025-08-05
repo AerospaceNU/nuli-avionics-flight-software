@@ -17,34 +17,34 @@ Parser myParser = Parser();
 ```
 
 ### 2. Callbacks
-Callbacks must have the return type of `void` and must take in two 
-arguments. For `SimpleFlag`, a `bool` and a `int8_t` and for `ArgumentFlag`
-any fundamental type (plus `const char*`) and a `int8_t`.
+Callbacks must have the return type of `void` and must take in the flag's name,
+data, group uid, flag uid, and an optional dependency for the flag. 
 
 ```c++
-void callback1(bool a, int8_t b);
-
-void callback2(int a, int8_t b) 
-
-void callback3(float a, int8_t b) 
-
-void callback4(uint8_t a, int8_t b) 
-
-void callback5(const char* a, int8_t b);
+void callback(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                   BaseFlag *dependency) {}
 ```
 
 ### 2. Declare Flags
 ```c++
-SimpleFlag config("--config", "Configure a trigger with additional flags_s", true, callback1);
-ArgumentFlag<int> config_trigger("-t", 0, "Trigger number", true, callback2);
-ArgumentFlag<float> config_pulseWidth("-w", 0.0, "Pulse width (required for pwm)", false, callback3);
-ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in meters)", false, callback4);
-ArgumentFlag<const char*> config_notation("-C", "Configuration using expression notation", false, callback5);
+SimpleFlag config("--config", "Configure a trigger with additional flags_s", true, callback);
+ArgumentFlag<int> config_trigger("-t", 0, "Trigger number", true, callback);
+ArgumentFlag<float> config_pulseWidth("-w", 0.0, "Pulse width (required for pwm)", false, callback);
+ArgumentFlag<uint8_t> config_elevation("-e", "Configure ground elevation (in meters)", false, callback);
+ArgumentFlag<const char*> config_notation("-C", "Configuration using expression notation", false, callback);
 ```
 
 > Note: While not required by C++, always explicitly signify the type of 
 > ArgumentFlag. The compiler can *sometimes* infer the type when given
 > a default value, but is finicky and unreliable.
+
+### 2.5 Optional Dependencies
+You can optionally add up to one dependency for each flag. As referenced in the
+callbacks section, a dependency can be added to create a more dynamic parser.
+```c++
+[flag_1].setDependency(&[flag_2]);
+config.setDependency(&config_trigger);
+```
 
 ### 3. Add Flags to list of flags
 ```c++

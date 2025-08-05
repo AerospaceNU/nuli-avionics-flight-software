@@ -13,12 +13,12 @@ set(desktopSimFiles platformio_nuli_avionics_flight_software/src/configurations/
         platformio_nuli_avionics_flight_software/src/core/HardwareAbstraction.cpp
         platformio_nuli_avionics_flight_software/src/core/Logger.cpp
         platformio_nuli_avionics_flight_software/src/drivers/arduino/USLI2025Payload.cpp
-        platformio_nuli_avionics_flight_software/include/cli/Parser.cpp
-        platformio_nuli_avionics_flight_software/include/cli/Parser.tpp
-        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.tpp
-        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
+        platformio_nuli_avionics_flight_software/src/core/cli/Parser.cpp
+        platformio_nuli_avionics_flight_software/src/core/cli/Parser.tpp
+        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.cpp
+        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.tpp
+        platformio_nuli_avionics_flight_software/src/core/cli/SimpleFlag.cpp
+        platformio_nuli_avionics_flight_software/src/core/cli/ArgumentFlag.tpp
 )
 
 add_executable(desktop ${desktopSimFiles})
@@ -53,17 +53,18 @@ enable_testing()
 
 # setting required files
 set(cliSimFiles
-        platformio_nuli_avionics_flight_software/include/cli/Parser.cpp
-        platformio_nuli_avionics_flight_software/include/cli/Parser.h
-        platformio_nuli_avionics_flight_software/include/cli/Parser.tpp
-        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.h
-        platformio_nuli_avionics_flight_software/include/cli/BaseFlag.tpp
-        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.cpp
-        platformio_nuli_avionics_flight_software/include/cli/SimpleFlag.h
-        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.h
-        platformio_nuli_avionics_flight_software/include/cli/ArgumentFlag.tpp
-        platformio_nuli_avionics_flight_software/include/CLIEnums.h
+        platformio_nuli_avionics_flight_software/src/core/cli/Parser.cpp
+        platformio_nuli_avionics_flight_software/src/core/cli/Parser.h
+        platformio_nuli_avionics_flight_software/src/core/cli/Parser.tpp
+        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.cpp
+        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.h
+        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.tpp
+        platformio_nuli_avionics_flight_software/src/core/cli/SimpleFlag.cpp
+        platformio_nuli_avionics_flight_software/src/core/cli/SimpleFlag.h
+        platformio_nuli_avionics_flight_software/src/core/cli/ArgumentFlag.h
+        platformio_nuli_avionics_flight_software/src/core/cli/ArgumentFlag.tpp
+        platformio_nuli_avionics_flight_software/src/core/cli/CLIEnums.h
+        platformio_nuli_avionics_flight_software/src/core/cli/ReturnCodes.h
 )
 
 # Enable Code Coverage Options
@@ -72,7 +73,7 @@ option(ENABLE_COVERAGE "Enable coverage reporting" ON)
 
 # ----FlagTest----
 add_executable(FlagTest ${cliSimFiles}
-        platformio_nuli_avionics_flight_software/include/cli/tests/FlagTest.cpp)
+        platformio_nuli_avionics_flight_software/include/tests/FlagTest.cpp)
 
 target_link_libraries(
         FlagTest
@@ -89,7 +90,7 @@ endif()
 
 # ----ParserTest----
 add_executable(ParserTest ${cliSimFiles}
-        platformio_nuli_avionics_flight_software/include/cli/tests/ParserTest.cpp)
+        platformio_nuli_avionics_flight_software/include/tests/ParserTest.cpp)
 
 target_link_libraries(
         ParserTest
@@ -108,5 +109,5 @@ gtest_discover_tests(FlagTest)
 gtest_discover_tests(ParserTest)
 
 # ========cli example configuration========
-add_executable(cli ${cliSimFiles}
-        platformio_nuli_avionics_flight_software/include/cli/CLIExample.cpp)
+add_executable(cli_example ${cliSimFiles}
+        platformio_nuli_avionics_flight_software/include/CLIExample.cpp)

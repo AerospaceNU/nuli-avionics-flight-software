@@ -6,29 +6,27 @@
 
 // general
 template<typename T>
-int8_t BaseFlag::parseArgument(const char* value, T &result) {
+CLIReturnCode_e BaseFlag::parseArgument(const char* value, T &result) {
     std::istringstream iss(value);
     iss >> result;
     if (iss.fail()) {
-        fprintf(stderr, "Failed to parse argument: %s\n", value);
-        return -1;
+        return CLI_PARSE_FAILED_TO_PARSE_ARGUMENT;
     }
 
     // Check for leftover characters (ensures complete parsing)
     char leftover;
     if (iss >> leftover) {
-        fprintf(stderr, "Failed to parse argument (extra characters found): %s\n", value);
-        return -1;
+        return CLI_PARSE_FAIL_EXTRA_ARGUMENTS;
     }
 
-    return 0;
+    return CLI_SUCCESS;
 }
 
 // specialization for const char*
 template<>
-inline int8_t BaseFlag::parseArgument<const char*>(const char* value, const char*&result) {
+inline CLIReturnCode_e BaseFlag::parseArgument<const char*>(const char* value, const char*&result) {
     result = value;
-    return 0;
+    return CLI_SUCCESS;
 }
 
 template<typename T>
