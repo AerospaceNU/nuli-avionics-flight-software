@@ -1,9 +1,9 @@
 #include <gtest/gtest.h>
-#include "cli/Parser.h"
-#include "cli/SimpleFlag.h"
-#include "cli/ArgumentFlag.h"
+#include "../../src/core/cli/Parser.h"
+#include "../../src/core/cli/SimpleFlag.h"
+#include "../../src/core/cli/ArgumentFlag.h"
 
-void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag *dependency) { }
 
 
 TEST(ParserTest, TestBasic) {
@@ -121,7 +121,7 @@ TEST(ParserTest, TestFailure1) {
     Parser testParserA = Parser();
     char argsA[1] = "";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testParserA.parse(argsA), -1);
+    ASSERT_EQ(testParserA.parse(argsA), CLI_PARSER_NO_FLAG_GROUP_PROVIDED);
     std::string outputA = ::testing::internal::GetCapturedStderr();
     std::string expectedA = "No flag group present\n";
     EXPECT_EQ(outputA, expectedA);
@@ -135,7 +135,7 @@ TEST(ParserTest, TestFailure1) {
 
     char argsB[1] = "";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testParserB.parse(argsB), -1);
+    ASSERT_EQ(testParserB.parse(argsB), CLI_PARSER_NO_FLAGS_PROVIDED);
     std::string outputB = ::testing::internal::GetCapturedStderr();
     std::string expectedB = "No flag provided\n";
     EXPECT_EQ(outputB, expectedB);
@@ -153,7 +153,7 @@ TEST(ParserTest, TestFailure2) {
 
     char argsC[13] = "--flag_group";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testParserC.parse(argsC), -1);
+    ASSERT_EQ(testParserC.parse(argsC), CLI_PARSER_NO_LEADER_FLAG);
     std::string outputC = ::testing::internal::GetCapturedStderr();
     std::string expectedC = "Leader flag not found\n";
     EXPECT_EQ(outputC, expectedC);
@@ -168,7 +168,7 @@ TEST(ParserTest, TestFailure2) {
 
     char argsD[15] = "--testD 5 -b 2";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testParserD.parse(argsD), -1);
+    ASSERT_EQ(testParserD.parse(argsD), CLI_PARSER_UNKNOWN_FLAG);
     std::string outputD = ::testing::internal::GetCapturedStderr();
     std::string expectedD = "Unknown flag: -b\n";
     EXPECT_EQ(outputD, expectedD);
@@ -184,7 +184,7 @@ TEST(ParserTest, TestFailure3) {
 
     char argsE[15] = "--testE";
     ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testParserE.parse(argsE), -1);
+    ASSERT_EQ(testParserE.parse(argsE), CLI_PARSER_MISSING_REQUIRED_ARGS);
     std::string outputE = ::testing::internal::GetCapturedStderr();
     std::string expectedE = "Missing required argument: -a\n";
     EXPECT_EQ(outputE, expectedE);
