@@ -52,10 +52,11 @@ python3 get-platformio.py
    1. `python.exe get-platformio.py`
 
 ### 3.2 CLion PlatformIO Extension
+> For more information, click [here](https://www.jetbrains.com/help/clion/platformio.html#install).
+
 Once PlatformIO is installed, install the PlatformIO extension for CLion. Then
 restart CLion. \
 `File > Settings > Plugins > Marketplace > Search "PlatformIO for CLion"`
-> For more information, click [here](https://www.jetbrains.com/help/clion/platformio.html#install).
 
 ### 3.3 Troubleshooting
 Sometimes, PlatformIO likes to fail to load or build when starting from an 
