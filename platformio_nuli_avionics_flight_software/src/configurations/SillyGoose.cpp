@@ -22,6 +22,8 @@
 #include "core/Configuration.h"
 #include "core/altitude_kf.h"
 
+#define DEFAULT_FLAT_UID 255
+
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 
@@ -118,23 +120,14 @@ void callback_drogueDelay(const char *name, uint8_t *data, uint32_t length, uint
     }
 }
 
-void getSerialInput(char* buffer) {
-  if (! Serial.available()) {
-    return;
-  }
-
-  size_t bytesRead = Serial.readBytes(buffer, 63);
-  buffer[bytesRead] = '\0';
-}
-
 // Define flags //
-SimpleFlag erase("--erase", "Send start", true, 255, callback_erase);
+SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase);
 
-SimpleFlag offload("--offload", "Send start", true, 255, callback_offload);
-SimpleFlag offload_binary("-b", "binary", false, 255, callback_none);
-ArgumentFlag<int> testfire("--testfire", "Send start", true, 255, callback_testfire);
-ArgumentFlag<float> mainAltitude("--mainAltitude", "Send start", true, 255, callback_mainAltitude);
-ArgumentFlag<float> drogueDelay("--drogueDelay", "Send start", true, 255, callback_drogueDelay);
+SimpleFlag offload("--offload", "Send start", true, DEFAULT_FLAT_UID, callback_offload);
+SimpleFlag offload_binary("-b", "binary", false, DEFAULT_FLAT_UID, callback_none);
+ArgumentFlag<int> testfire("--testfire", "Send start", true, DEFAULT_FLAT_UID, callback_testfire);
+ArgumentFlag<float> mainAltitude("--mainAltitude", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
+ArgumentFlag<float> drogueDelay("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
 
 BaseFlag *eraseGroup[] = {&erase};
 BaseFlag *offloadGroup[] = {&offload, &offload_binary};
@@ -176,8 +169,6 @@ void setup() {
 
     hardware.setup();
 
-    cliParser = Parser();
-
     // setup dependency
     offload.setDependency(&offload_binary);
 
@@ -212,18 +203,6 @@ void setup() {
 
 
 void loop() {
-    /*
-    char input[64] = {0};
-    getSerialInput(input);
-
-    // parses user input
-    if (cliParser.parse(input) == 0) {
-      Serial.println("Running flags");
-      cliParser.runFlags();
-      cliParser.resetFlags();
-    }
-     */
-
     uint32_t start = micros();
     hardware.enforceLoopTime();
     hardware.readAllSensors();
@@ -236,8 +215,6 @@ void loop() {
         }
     }
 
-    // Serial.print()
-    
     altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
     altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
 
