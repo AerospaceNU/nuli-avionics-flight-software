@@ -18,7 +18,8 @@ public:
      * @param helpText Name, or calling sign, of the flag
      * @param m_required If a flag is required
      */
-    SimpleFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t));
+    SimpleFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag* dependency));
+
 
     /**
      * @brief Retrieves the flag's name
@@ -38,7 +39,7 @@ public:
      * @param arg argument to parse into flag, is nullable
      * @return 0 if success, negative for failure
      */
-    int8_t parse(char* arg) override;
+    CLIReturnCode_e parse(char* arg) override;
 
     /**
      * @brief Dispatches to a pre-set m_callback function.

@@ -1,7 +1,7 @@
-#include "Parser.h"
-#include "SimpleFlag.h"
-#include "ArgumentFlag.h"
-#include "CLIEnums.h"
+//#include "Parser.h"
+//#include "SimpleFlag.h"
+//#include "ArgumentFlag.h"
+//#include "CLIEnums.h"
 
 /*
 --config
@@ -44,6 +44,11 @@
 
 --version  Send Git version and tag info
  */
+
+#include "../src/core/cli/SimpleFlag.h"
+#include "../src/core/cli/ArgumentFlag.h"
+#include "../src/core/cli/Parser.h"
+#include "../src/core/cli/CLIEnums.h"
 
 /* Callback functions */
 void boolCallback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) {
@@ -122,22 +127,25 @@ void doubleCallback(uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t f
     }
 }
 
+void generalCallback(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                          BaseFlag *dependency) { }
+
 int main() {
     Parser myParser = Parser();
 
     /* config group */
-    SimpleFlag config("--config", "Configure a trigger with additional flag", true, CONFIG_STARTER, boolCallback);
-    ArgumentFlag<int> config_trigger("-t", "Trigger to configure", false, CONFIG_TRIGGER, intCallback);
-    ArgumentFlag<int> config_triggerType("-m", 2, "Trigger type", false, CONFIG_TRIGGER_TYPE, intCallback);
-    ArgumentFlag<int> config_pyro("-p", "Pyro num or cut channel", false, CONFIG_PYRO, intCallback);
-    ArgumentFlag<float> config_duration("-d", "Duration", false, CONFIG_DURATION, floatCallback);
-    ArgumentFlag<float> config_pulse("-w", "Pulse width", false, CONFIG_PULSE, floatCallback);
-    ArgumentFlag<const char*> config_configuration("-C", "Configuration using expression notation. Must be in quotes", false, CONFIG_CONFIGURATION, stringCallback);
-    SimpleFlag config_deleteT("-D", "Delete this trigger", false, CONFIG_DELETE, boolCallback);
-    SimpleFlag config_manual("-N", "Disallow manual triggering", false, CONFIG_MANUAL, boolCallback);
-    ArgumentFlag<float> config_elevation("-e", "Configure ground elevation (in meters)", false, CONFIG_ELEVATION, floatCallback);
-    ArgumentFlag<float> config_groundTemp("-r", "Configure ground temperature (in celsius)", false, CONFIG_GROUND_TEMP, floatCallback);
-    ArgumentFlag<int> config_channel("-c","Configure radio channel (in multiples of bandwidth), negative numbers allowed", false, CONFIG_CHANNEL, intCallback);
+    SimpleFlag config("--config", "Configure a trigger with additional flag", true, CONFIG_STARTER, generalCallback);
+    ArgumentFlag<int> config_trigger("-t", "Trigger to configure", false, CONFIG_TRIGGER, generalCallback);
+    ArgumentFlag<int> config_triggerType("-m", 2, "Trigger type", false, CONFIG_TRIGGER_TYPE, generalCallback);
+    ArgumentFlag<int> config_pyro("-p", "Pyro num or cut channel", false, CONFIG_PYRO, generalCallback);
+    ArgumentFlag<float> config_duration("-d", "Duration", false, CONFIG_DURATION, generalCallback);
+    ArgumentFlag<float> config_pulse("-w", "Pulse width", false, CONFIG_PULSE, generalCallback);
+    ArgumentFlag<const char*> config_configuration("-C", "Configuration using expression notation. Must be in quotes", false, CONFIG_CONFIGURATION, generalCallback);
+    SimpleFlag config_deleteT("-D", "Delete this trigger", false, CONFIG_DELETE, generalCallback);
+    SimpleFlag config_manual("-N", "Disallow manual triggering", false, CONFIG_MANUAL, generalCallback);
+    ArgumentFlag<float> config_elevation("-e", "Configure ground elevation (in meters)", false, CONFIG_ELEVATION, generalCallback);
+    ArgumentFlag<float> config_groundTemp("-r", "Configure ground temperature (in celsius)", false, CONFIG_GROUND_TEMP, generalCallback);
+    ArgumentFlag<int> config_channel("-c","Configure radio channel (in multiples of bandwidth), negative numbers allowed", false, CONFIG_CHANNEL, generalCallback);
     BaseFlag* configGroup[]{&config, &config_trigger, &config_triggerType,
                             &config_pyro, &config_duration, &config_pulse,
                             &config_configuration, &config_deleteT,
@@ -145,44 +153,44 @@ int main() {
                             &config_groundTemp, &config_channel};
 
     /* create group */
-    SimpleFlag createFlight("--create_flight", "Clear state log and move back to preflight", true, 255, boolCallback);
+    SimpleFlag createFlight("--create_flight", "Clear state log and move back to preflight", true, 255, generalCallback);
     BaseFlag* createFlightGroup[](&createFlight);
 
     /* erase group */
-    SimpleFlag erase("--erase", "Fully erases on-board flash", true, 255, boolCallback);
+    SimpleFlag erase("--erase", "Fully erases on-board flash", true, 255, generalCallback);
     BaseFlag* eraseGroup[](&erase);
 
     /* help group */
-    SimpleFlag help("--help", "FCB produces standard command line help string", true, 255, boolCallback);
+    SimpleFlag help("--help", "FCB produces standard command line help string", true, 255, generalCallback);
     BaseFlag* helpGroup[](&help);
 
     /* linecutter group */
-    SimpleFlag linecutter("--linecutter", "Send linecutter cut with given", true, 255, boolCallback);
-    ArgumentFlag<int> linecutter_id("-i", "Send linecutter cut with given ID", true, 255, intCallback);
-    ArgumentFlag<const char*> linecutter_command("-c", "Send a command", true, 255, stringCallback);
+    SimpleFlag linecutter("--linecutter", "Send linecutter cut with given", true, 255, generalCallback);
+    ArgumentFlag<int> linecutter_id("-i", "Send linecutter cut with given ID", true, 255, generalCallback);
+    ArgumentFlag<const char*> linecutter_command("-c", "Send a command", true, 255, generalCallback);
     BaseFlag* linecutterGroup[](&linecutter, &linecutter_id, &linecutter_command);
 
     /* offload group */
-    SimpleFlag offload("--offload", "Offloads the last flight recorded on the board", true, 255, boolCallback);
-    ArgumentFlag<int> offload_flightNum("-f", "Offload a specific flight number off the board", false, 255, intCallback);
-    SimpleFlag offload_help("-h", "Help for offload. Prints info about each flight", true, 255, boolCallback);
+    SimpleFlag offload("--offload", "Offloads the last flight recorded on the board", true, 255, generalCallback);
+    ArgumentFlag<int> offload_flightNum("-f", "Offload a specific flight number off the board", false, 255, generalCallback);
+    SimpleFlag offload_help("-h", "Help for offload. Prints info about each flight", true, 255, generalCallback);
     BaseFlag* offloadGroup[](&offload, &offload_flightNum, &offload_help);
 
     /* triggerfire group */
-    SimpleFlag triggerfire("--triggerfire", "IMMEDIATELY fires the given trigger number", true, 255, boolCallback);
-    ArgumentFlag<int> triggerfire_triggerNum("-t", "Trigger number to fire", true, 255, intCallback);
+    SimpleFlag triggerfire("--triggerfire", "IMMEDIATELY fires the given trigger number", true, 255, generalCallback);
+    ArgumentFlag<int> triggerfire_triggerNum("-t", "Trigger number to fire", true, 255, generalCallback);
     BaseFlag* triggerfireGroup[](&triggerfire, &triggerfire_triggerNum);
 
     /* sense group */
-    SimpleFlag sense("--sense", "Reads back most recent sensor data", true, 255, boolCallback);
+    SimpleFlag sense("--sense", "Reads back most recent sensor data", true, 255, generalCallback);
     BaseFlag* senseGroup[](&sense);
 
     /* sim group */
-    SimpleFlag sim("--sim", "Simulate past flights in hardware", true, 255, boolCallback);
+    SimpleFlag sim("--sim", "Simulate past flights in hardware", true, 255, generalCallback);
     BaseFlag* simGroup[](&sim);
 
     /* version group */
-    SimpleFlag version("--version", "Send Git version and tag info", true, 255, boolCallback);
+    SimpleFlag version("--version", "Send Git version and tag info", true, 255, generalCallback);
     BaseFlag* versionGroup[](&version);
 
 
@@ -198,51 +206,17 @@ int main() {
     myParser.addFlagGroup(simGroup, SIM);
     myParser.addFlagGroup(versionGroup, VERSION);
 
+    myParser.printHelp();
+
     while(true) {
-//        myParser.printHelp();
 
         char input[64] = {0};
         fgets(input, 64, stdin);
 
         // parses user input
-        if (myParser.parse(input) < 0) {
+        if (myParser.parse(input) != CLI_SUCCESS) {
             continue;
         }
-
-        printf("Parsed!\n");
-
-//        // set 1
-//        // when retrieving a value, you should always check if the flag is set.
-//        // otherwise, undefined behaviour can occur.
-//        bool returnBool;
-//        if (myParser.getValue<bool>(config.name(), config.name(), returnBool) < 0) {
-//            continue;
-//        }
-//        printf("Config set: %d\n", returnBool);
-//
-//        int returnInt;
-//        if (myParser.getValue<int>(config.name(), config_trigger.name(), returnInt) < 0) {
-//            printf("get value failed\n");
-//            continue;
-//        }
-//        printf("Trigger Num is: %d\n", returnInt);
-//
-//        const char* returnChar;
-//        if (myParser.getValue<const char*>(config.name(), config_configuration.name(), returnChar) < 0) {
-//            continue;
-//        }
-//        printf("Configuration is: %s\n\n", returnChar);
-//
-//
-//        // set 2, should be same as set 1
-//        bool config_set = config.getValue<bool>();
-//        printf("Config set: %d\n", config_set);
-//
-//        int triggerNum = config_trigger.getValue<int>();
-//        printf("Trigger Num is: %d\n", triggerNum);
-//
-//        const char* configuration = config_configuration.getValue<const char*>();
-//        printf("Configuration is: %s\n", configuration);
 
         printf("Doing callbacks!\n");
         myParser.runFlags();

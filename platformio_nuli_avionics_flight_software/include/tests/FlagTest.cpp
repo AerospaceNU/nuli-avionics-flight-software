@@ -1,12 +1,12 @@
 #include <gtest/gtest.h>
-#include "../BaseFlag.h"
-#include "../SimpleFlag.h"
-#include "../ArgumentFlag.h"
+#include "../../src/core/cli/BaseFlag.h"
+#include "../../src/core/cli/SimpleFlag.h"
+#include "../../src/core/cli/ArgumentFlag.h"
 
 // https://google.github.io/googletest/primer.html
 // https://github.com/google/googletest/blob/main/googletest/samples/sample3_unittest.cc
 
-void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid) { }
+void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag *dependency) { }
 
 
 // Demonstrate some basic assertions.
@@ -104,27 +104,15 @@ TEST(ArgumentFlag, TestParse) {
 TEST(ArgumentFlag, TestFailure) {
     // no default argument passed in
     ArgumentFlag<int> testA("--testA", "some help text", true, 0, callback);
-    ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testA.parse(nullptr), -1); // should fail, no default argument provided and no argument provided
-    std::string outputA = ::testing::internal::GetCapturedStderr();
-    std::string expectedA = "Default argument not set, value required for --testA\n";
-    EXPECT_EQ(outputA, expectedA);
+    ASSERT_EQ(testA.parse(nullptr), CLI_NO_DEFAULT_VALUE_SET); // should fail, no default argument provided and no argument provided
 
     // parsing error, wrong type input
     ArgumentFlag<int> testB("--testB", 0, "some help text", true, 0, callback);
     char argB[4] = "abc";
-    ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testB.parse(argB), -1);
-    std::string outputB = ::testing::internal::GetCapturedStderr();
-    std::string expectedB = "Failed to parse argument: abc\n";
-    EXPECT_EQ(outputB, expectedB);
+    ASSERT_EQ(testB.parse(argB), CLI_PARSE_FAILED_TO_PARSE_ARGUMENT);
 
     // parsing error, mixed input
     ArgumentFlag<double> testC("--testC", 5.0, "some help text", true, 0, callback);
     char argC[7] = "123abc";
-    ::testing::internal::CaptureStderr();
-    ASSERT_EQ(testC.parse(argC), -1); // should fail, argument provided cannot map to a fundamental type (or const char*)
-    std::string outputC = ::testing::internal::GetCapturedStderr();
-    std::string expectedC = "Failed to parse argument (extra characters found): 123abc\n";
-    EXPECT_EQ(outputC, expectedC);
+    ASSERT_EQ(testC.parse(argC), CLI_PARSE_FAIL_EXTRA_ARGUMENTS); // should fail, argument provided cannot map to a fundamental type (or const char*)
 }

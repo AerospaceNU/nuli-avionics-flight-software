@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include "ReturnCodes.h"
 
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
@@ -46,7 +47,13 @@ public:
       * @param arg argument to parse into flag, is nullable
       * @return 0 if success, negative for failure
       */
-    virtual int8_t parse(char* arg) = 0;
+    virtual CLIReturnCode_e parse(char* arg) = 0;
+
+    /**
+     *
+     * @param flag
+     */
+    void setDependency(BaseFlag *flag);
 
     /**
      * @brief Dispatches to a pre-set m_callback function.
@@ -93,7 +100,7 @@ protected:
      * @param helpText A flag's help text
      * @param required If a flag is required
      */
-    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t));
+    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag*));
 
     /**
      * @brief Parses an input into the expected type
@@ -103,7 +110,7 @@ protected:
      * @return 0 if success, <0 if failure
      */
     template<typename T>
-    inline int8_t parseArgument(const char* value, T &result);
+    inline CLIReturnCode_e parseArgument(const char* value, T &result);
 
     /**
      * @brief Retrieves the flag of a flag from a derived class
@@ -114,9 +121,10 @@ protected:
     const char* m_name;         ///< Name, or calling sign, of the flag
     const char* m_helpText;     ///< A flag's help text
     const bool m_required;      ///< If a flag is required
-    const uint8_t  m_identifier;      ///< command identifier
+    const uint8_t m_identifier; ///< command identifier
     bool m_set;                 ///< If a flag is in-use
-    void (*m_callback)(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid);   ///< Callback function. Takes in if a flag is set and its group's uid
+    void (*m_callback)(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);   ///< Callback function. Takes in if a flag is set and its group's uid
+    BaseFlag* m_dependency = nullptr;    ///<
 };
 
 #include "BaseFlag.tpp"

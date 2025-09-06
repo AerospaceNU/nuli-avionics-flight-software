@@ -1,6 +1,6 @@
 #include "SimpleFlag.h"
 
-SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t))
+SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag* dependency))
         : BaseFlag(name, helpText, required, uid, callback) {}
 
 const char* SimpleFlag::name() const {
@@ -11,9 +11,9 @@ const char* SimpleFlag::help() const {
     return m_helpText;
 }
 
-int8_t SimpleFlag::parse(char* arg) {
+CLIReturnCode_e SimpleFlag::parse(char* arg) {
     m_set = true;
-    return 0;
+    return CLI_SUCCESS;
 }
 
 void SimpleFlag::run(uint8_t groupUid) {
@@ -25,7 +25,7 @@ void SimpleFlag::run(uint8_t groupUid) {
         buffer[0] = m_set ? 1 : 0;
 
         // Pass the buffer to the callback
-        m_callback(m_name, buffer, sizeof(bool), groupUid, m_identifier);
+        m_callback(m_name, buffer, sizeof(bool), groupUid, m_identifier, m_dependency);
     }
 }
 
