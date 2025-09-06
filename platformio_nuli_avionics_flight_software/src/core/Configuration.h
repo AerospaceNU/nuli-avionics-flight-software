@@ -48,14 +48,6 @@ public:
         return (ConfigurationData<typename GetConfigType_s<N>::type>*) getBaseConfigurationData(ConfigurationID_e(N));
     }
 
-//    template<unsigned N>
-//    void setDefaultValue(const typename GetConfigType_s<N>::type &value) {
-//        auto configurationData = getConfigurable<N>();
-//        if(!configurationData->isInitialized()) {
-//            configurationData->set(value);
-//        }
-//    }
-
     void pushUpdates();
 
 private:

@@ -8,7 +8,7 @@
 #define BUFF_SIZE (20*8)
 
 enum FlightState_e {
-    PRE_FLIGHT,
+    PRE_FLIGHT2,
     FLIGHT,
     LANDED,
 };

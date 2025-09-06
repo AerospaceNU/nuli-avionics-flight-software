@@ -77,6 +77,8 @@ public:
 
     void enforceLoopTime();
 
+    uint32_t getLastTickDuration() const;
+
     /**
      * Get the runtime at the start of this loop
      * @return time in ms
@@ -121,6 +123,7 @@ private:
     uint32_t m_loopTime = 10;
     uint32_t m_loopDtMs = 0;                            ///< Tracks the loop execution time
     uint32_t m_currentLoopTimestampMs = 0;              ///< Tracks the start time of each loop
+    uint32_t m_lastTickDuration = 0;
 
     SystemClock* m_systemClock = nullptr;                                                       ///< System clocks
     DebugStream* m_debugStream = nullptr;                                                       ///< Debug stream

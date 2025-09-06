@@ -6,7 +6,6 @@
 #include "Configuration.h"
 #include "Logger.h"
 #include "Filters.h"
-#include "../drivers/arduino/USLI2025Payload.h"
 
 /**
  * @class AvionicsCore

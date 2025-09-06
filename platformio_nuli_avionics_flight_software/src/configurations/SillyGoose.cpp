@@ -20,6 +20,7 @@
 #include "core/AvionicsCore.h"
 #include "core/Configuration.h"
 #include "core/altitude_kf.h"
+#include "core/StateMachine.h"
 
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
@@ -35,13 +36,12 @@ IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
 
 AltitudeKf altitudeKf;
+StateMachine stateMachine;
 
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(false);
 ConfigurationID_e configSet[] = {DROGUE_DELAY, MAIN_ELEVATION};
-ConfigurationID_e configSet2[] = {CONFIGURATION_CRC, CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH, RADIO_FREQUENCY};
-ConfigurationIDSet_s allConfigs[] = {configSet2, configSet, Configuration::REQUIRED_CONFIGS};
-Configuration configuration(allConfigs);
+Configuration configuration({configSet, Configuration::REQUIRED_CONFIGS});
 HardwareAbstraction hardware;
 
 void setup() {
@@ -49,8 +49,6 @@ void setup() {
     digitalWrite(FLASH_CS_PIN, HIGH);
     pinMode(FRAM_CS_PIN, OUTPUT);
     digitalWrite(FRAM_CS_PIN, HIGH);
-
-    altitudeKf.calculateDiscreteTimeA(.01);
 
     Serial.begin(9600);
     // while (!Serial);
@@ -61,7 +59,6 @@ void setup() {
     hardware.setSystemClock(&arduinoClock);
     hardware.setConfigurationMemory(&fram);
     hardware.setConfiguration(&configuration);
-    // configuration.setDefaultValue<RADIO_FREQUENCY>(915.32);
     // Devices
     hardware.addPyro(&droguePyro);
     hardware.addPyro(&mainPyro);
@@ -73,55 +70,37 @@ void setup() {
     hardware.addFlashMemory(&flash);
     hardware.addIndicator(&led);
     hardware.addIndicator(&buzzer);
-
     hardware.setup();
 
-    // ConfigurationData<uint32_t>* configVersion = configuration.getConfigurable<CONFIGURATION_VERSION>();
-    // ConfigurationData<uint32_t>* configHash = configuration.getConfigurable<CONFIGURATION_VERSION_HASH>();
-    // ConfigurationData<uint32_t>* configCrc = configuration.getConfigurable<CONFIGURATION_CRC>();
-    // ConfigurationData<float>* radioFrequency = configuration.getConfigurable<RADIO_FREQUENCY>();
-    //
-    // Serial.println(configVersion->get());
-    // Serial.println(configHash->get());
-    // Serial.println(configCrc->get());
-    // Serial.println(radioFrequency->get());
-    // Serial.println();
-    //
-    // configVersion->set(912);
-    // configHash->set(9332);
-    // configCrc->set(97);
-    // radioFrequency->set(92433.77);
-    // configuration.pushUpdates();
-    //
-    // Serial.println(configVersion->get());
-    // Serial.println(configHash->get());
-    // Serial.println(configCrc->get());
-    // Serial.println(radioFrequency->get());
+    stateMachine.setup();
+    altitudeKf.calculateDiscreteTimeA(.01);
+
 }
 
 
 void loop() {
-    uint32_t start = micros();
+    const uint32_t start = micros();
+
     hardware.enforceLoopTime();
     hardware.readAllSensors();
 
-    for(int i = 0; i < hardware.getNumIndicators(); i++) {
-        if((hardware.getLoopTimestampMs() / 250) % 2 == 0) {
+    for (int i = 0; i < hardware.getNumIndicators(); i++) {
+        if ((hardware.getLoopTimestampMs() / 250) % 2 == 0) {
             hardware.getIndicator(i)->on();
         } else {
             hardware.getIndicator(i)->off();
         }
     }
 
-    // Serial.print()
-    
     altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
     altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
 
     configuration.pushUpdates();
 
-    uint32_t end = micros();
+    const uint32_t end = micros();
     Serial.print(altitudeKf.getAltitude());
+    Serial.print('\t');
+    Serial.print(hardware.getLastTickDuration());
     Serial.print('\t');
     Serial.print((end - start) / 1000.0);
     Serial.print('\t');
@@ -129,19 +108,3 @@ void loop() {
     Serial.print('\t');
     Serial.println(barometer.getAltitudeM());
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

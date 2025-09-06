@@ -32,14 +32,26 @@ const uint8_t MAX_CONFIGURATION_LENGTH = 50;
  * @brief Vector with 3 axis
  */
 struct Vector3D_s {
-    double x;           ///< X axis
-    double y;           ///< Y axis
-    double z;           ///< Z axis
+    float x; ///< X axis
+    float y; ///< Y axis
+    float z; ///< Z axis
 };
 
+struct Pose_s {
+    Vector3D_s position;
+    Vector3D_s velocity;
+    Vector3D_s acceleration;
+    Vector3D_s orientation;
+    Vector3D_s angularVelocity;
+    float angle_vertical;
+};
 
-
-
+enum State_e {
+    PRE_FLIGHT,
+    ASCENT,
+    DESCENT,
+    POST_FLIGHT,
+};
 
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

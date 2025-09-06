@@ -47,21 +47,29 @@ void HardwareAbstraction::readAllRadioLinks() {
 void HardwareAbstraction::setLoopRate(uint32_t loopRate) {
     double delay = 1.0 / loopRate;
     delay *= 1000;
-    m_loopTime = (uint32_t) delay;
+    m_loopTime = (uint32_t)delay;
 }
 
 void HardwareAbstraction::enforceLoopTime() {
-    // Wait for the end of the previous tick
-    uint32_t end = getLoopTimestampMs() + m_loopTime;
-    if (m_systemClock->currentRuntimeMs() > end) {
+    // Track the end of the tick
+    const uint32_t actualLoopEnd = m_systemClock->currentRuntimeMs();
+    const uint32_t desiredLoopEnd = getLoopTimestampMs() + m_loopTime;
+    // Enforce loop time, detect overruns
+    if (actualLoopEnd > desiredLoopEnd) {
         m_debugStream->print("Loop overrun");
         m_debugStream->println();
+    } else {
+        while (m_systemClock->currentRuntimeMs() < desiredLoopEnd) {};
     }
-    while (m_systemClock->currentRuntimeMs() < end) {};
     // Update timers
-    uint32_t lastTime = m_currentLoopTimestampMs;
+    const uint32_t lastTime = m_currentLoopTimestampMs;
     m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
     m_loopDtMs = m_currentLoopTimestampMs - lastTime;
+    m_lastTickDuration = actualLoopEnd - lastTime;
+}
+
+uint32_t HardwareAbstraction::getLastTickDuration() const {
+    return m_lastTickDuration;
 }
 
 uint32_t HardwareAbstraction::getLoopDtMs() const {
@@ -71,12 +79,3 @@ uint32_t HardwareAbstraction::getLoopDtMs() const {
 uint32_t HardwareAbstraction::getLoopTimestampMs() const {
     return m_currentLoopTimestampMs;
 }
-
-
-
-
-
-
-
-
-
