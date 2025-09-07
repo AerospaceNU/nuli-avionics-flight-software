@@ -15,6 +15,8 @@ public:
 
     State_e getState() const;
 
+    uint32_t getStateStartTime() const;
+
 private:
     bool hasLaunched(const Pose_s& pose);
 
@@ -25,8 +27,10 @@ private:
     ConfigurationData<int32_t>* m_state = nullptr;
     Configuration* m_configuration = nullptr;
 
-    uint32_t m_stateTransitionTimer = 0;
-    double altitude = 0;
+    uint32_t m_internalStateTransitionTimer = 0;
+    double m_landingDetectionReferenceAltitude = 0;
+
+    uint32_t m_stateStartTime = 0;
 };
 
 #endif //STATEMACHINE_H

@@ -40,13 +40,17 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
 
 AltitudeKf altitudeKf;
 StateDeterminer stateDeterminer;
-
-
-ConfigurationID_e configSet[] = {DROGUE_DELAY, MAIN_ELEVATION};
-Configuration configuration({configSet, Configuration::REQUIRED_CONFIGS, StateDeterminer::REQUIRED_CONFIGS});
 HardwareAbstraction hardware;
-
 Parser cliParser;
+
+ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION};
+Configuration configuration({
+        sillyGooseRequiredConfigs,
+        Configuration::REQUIRED_CONFIGS,
+        StateDeterminer::REQUIRED_CONFIGS
+    });
+ConfigurationData<float>* mainElevation;
+ConfigurationData<uint32_t>* drogueDelay;
 
 // Define Callbacks //
 void callback_none(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
@@ -123,17 +127,18 @@ SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase
 SimpleFlag offload("--offload", "Send start", true, DEFAULT_FLAT_UID, callback_offload);
 SimpleFlag offload_binary("-b", "binary", false, DEFAULT_FLAT_UID, callback_none);
 ArgumentFlag<int> testfire("--testfire", "Send start", true, DEFAULT_FLAT_UID, callback_testfire);
-ArgumentFlag<float> mainAltitude("--mainAltitude", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
-ArgumentFlag<float> drogueDelay("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
+ArgumentFlag<float> mainAltitudeFlag("--mainAltitude", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
+ArgumentFlag<float> drogueDelayFlag("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
 
 BaseFlag* eraseGroup[] = {&erase};
 BaseFlag* offloadGroup[] = {&offload, &offload_binary};
 BaseFlag* testfireGroup[] = {&testfire};
-BaseFlag* mainAltitudeGroup[] = {&mainAltitude};
-BaseFlag* drogueDelayGroup[] = {&drogueDelay};
+BaseFlag* mainAltitudeGroup[] = {&mainAltitudeFlag};
+BaseFlag* drogueDelayGroup[] = {&drogueDelayFlag};
 
 
 void setup() {
+    // Make all SPI devices play nice by deactivating them all
     pinMode(FLASH_CS_PIN, OUTPUT);
     digitalWrite(FLASH_CS_PIN, HIGH);
     pinMode(FRAM_CS_PIN, OUTPUT);
@@ -172,6 +177,9 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(mainAltitudeGroup);
     cliParser.addFlagGroup(drogueDelayGroup);
+
+    drogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
+    mainElevation = configuration.getConfigurable<MAIN_ELEVATION>();
 }
 
 void runIndicators() {
@@ -198,13 +206,29 @@ void loop() {
     hardware.enforceLoopTime();
     hardware.readSensors();
 
-    constexpr Pose_s pose{};     // This will be provided from the filter
     altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
     altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
+    constexpr Pose_s pose{}; // This will be provided from the filter
 
-    State_e state = stateDeterminer.loopOnce(pose);
+    const State_e state = stateDeterminer.loopOnce(pose);
+
+    switch (state) {
+    case DESCENT:
+        if (pose.timestamp_ms - stateDeterminer.getStateStartTime() > drogueDelay->get()) {
+            droguePyro.fire();
+        }
+
+        if (pose.position.z < mainElevation->get()) {
+            mainPyro.fire();
+        }
+    case POST_FLIGHT:
+        droguePyro.disable();
+        mainPyro.disable();
+    default: ;
+    }
 
     runIndicators();
+    printDebug();
 
     configuration.pushUpdatesToMemory();
 }
