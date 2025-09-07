@@ -1,7 +1,5 @@
 #include "Arduino.h"
-#include "boards/SillyGoosePins.h"
-
-
+#include "pinmaps/SillyGoosePins.h"
 
 void setup() {
     Serial.begin(9600);

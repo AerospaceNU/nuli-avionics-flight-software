@@ -30,7 +30,7 @@ void HardwareAbstraction::setup() {
     enforceLoopTime();
 }
 
-void HardwareAbstraction::readAllSensors() {
+void HardwareAbstraction::readSensors() {
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->read();
     for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->read();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->read();

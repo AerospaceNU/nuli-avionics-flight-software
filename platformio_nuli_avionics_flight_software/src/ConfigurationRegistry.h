@@ -25,21 +25,24 @@ enum ConfigurationID_e : int16_t {
     LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE,
 };
 
+// This struct allows us to associate a give enum/config ID to a c++ primitive type
 template<signed N>
-struct GetConfigType_s;
-template<> struct GetConfigType_s<NONE> {using type = void; };
-template<> struct GetConfigType_s<CONFIGURATION_VERSION> {using type = uint32_t; };
-template<> struct GetConfigType_s<CONFIGURATION_VERSION_HASH> {using type = uint32_t; };
-template<> struct GetConfigType_s<CONFIGURATION_CRC> {using type = uint32_t; };
-template<> struct GetConfigType_s<STATE> {using type = int32_t; };
-template<> struct GetConfigType_s<FLASH_START_LOC> {using type = uint32_t; };
-template<> struct GetConfigType_s<GROUND_ELEVATION> {using type = float; };
-template<> struct GetConfigType_s<GROUND_TEMPERATURE> {using type = float; };
-template<> struct GetConfigType_s<RADIO_FREQUENCY> {using type = float; };
-template<> struct GetConfigType_s<MAIN_ELEVATION> {using type = float; };
-template<> struct GetConfigType_s<DROGUE_DELAY> {using type = float; };
+struct GetConfigurationType_s;
+#define ASSOCIATE_CONFIGURATION_TYPE(CONFIGURATION_ENUM, dataType) template<> struct GetConfigurationType_s<CONFIGURATION_ENUM> {using type = dataType; };
+//// Register each configurable here
+ASSOCIATE_CONFIGURATION_TYPE(NONE, void)
+ASSOCIATE_CONFIGURATION_TYPE(CONFIGURATION_VERSION, uint32_t)
+ASSOCIATE_CONFIGURATION_TYPE(CONFIGURATION_VERSION_HASH, uint32_t)
+ASSOCIATE_CONFIGURATION_TYPE(CONFIGURATION_CRC, uint32_t)
+ASSOCIATE_CONFIGURATION_TYPE(STATE, int32_t)
+ASSOCIATE_CONFIGURATION_TYPE(FLASH_START_LOC, int32_t)
+ASSOCIATE_CONFIGURATION_TYPE(GROUND_ELEVATION, float)
+ASSOCIATE_CONFIGURATION_TYPE(GROUND_TEMPERATURE, float)
+ASSOCIATE_CONFIGURATION_TYPE(RADIO_FREQUENCY, float)
+ASSOCIATE_CONFIGURATION_TYPE(MAIN_ELEVATION, float)
+ASSOCIATE_CONFIGURATION_TYPE(DROGUE_DELAY, float)
 // Leave this last
-template<> struct GetConfigType_s<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE> {using type = void; };
+ASSOCIATE_CONFIGURATION_TYPE(LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE, void);
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////
 /////////////////////// DO NOT TOUCH ////////////////////////////////////////////////////////////////
@@ -56,7 +59,7 @@ struct ConfigurationIDSet_s {
 };
 
 template<signed N> inline uint16_t getConfigurationLengthGenerator(const ConfigurationID_e name) {
-    if (name == N) return sizeof(typename GetConfigType_s<N>::type);
+    if (name == N) return sizeof(typename GetConfigurationType_s<N>::type);
     return getConfigurationLengthGenerator<N - 1>(name);
 }
 

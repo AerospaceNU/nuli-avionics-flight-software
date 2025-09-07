@@ -67,7 +67,7 @@ public:
      * @brief Reads in all sensor data
      * @details Calls read for each sensor, the resultant data is stored within each sensor object
      */
-    void readAllSensors();
+    void readSensors();
 
     /**
      * @brief Reads all communications links to buffers

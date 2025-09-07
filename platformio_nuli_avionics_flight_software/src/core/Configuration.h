@@ -44,11 +44,11 @@ public:
     void setup(ConfigurationMemory* memory, DebugStream* debugStream);
 
     template<unsigned N>
-    ConfigurationData<typename GetConfigType_s<N>::type>* getConfigurable() {
-        return (ConfigurationData<typename GetConfigType_s<N>::type>*) getBaseConfigurationData(ConfigurationID_e(N));
+    ConfigurationData<typename GetConfigurationType_s<N>::type>* getConfigurable() {
+        return (ConfigurationData<typename GetConfigurationType_s<N>::type>*) getBaseConfigurationData(ConfigurationID_e(N));
     }
 
-    void pushUpdates();
+    void pushUpdatesToMemory();
 
 private:
     BaseConfigurationData_s* getBaseConfigurationData(ConfigurationID_e name) {

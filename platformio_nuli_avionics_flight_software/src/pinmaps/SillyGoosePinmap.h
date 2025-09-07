@@ -3,6 +3,7 @@
 
 #include "Arduino.h"
 
+#define FRAM_CS_PIN (13)
 #define FLASH_CS_PIN (12)
 #define FRAM_HOLD_PIN (10)
 #define FLASH_HOLD_PIN (11)

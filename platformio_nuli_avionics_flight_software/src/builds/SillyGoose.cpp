@@ -1,6 +1,6 @@
 #include "Avionics.h"
 #include <Arduino.h>
-#include "boards/SillyGoosePins.h"
+#include "pinmaps/SillyGoosePinmap.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
 #include "drivers/arduino/MS5607Sensor.h"
@@ -21,56 +21,55 @@
 #include "core/AvionicsCore.h"
 #include "core/Configuration.h"
 #include "core/altitude_kf.h"
-#include "core/StateMachine.h"
+#include "core/StateDeterminer.h"
 
 #define DEFAULT_FLAT_UID 255
 
-ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
-ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
-
+// Hardware
+ArduinoSystemClock arduinoClock;
+SerialDebug serialDebug(false);
 MS5607Sensor barometer;
 ICM20602Sensor icm20602;
+ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
+ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
-
 S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
-
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
 
 AltitudeKf altitudeKf;
-StateMachine stateMachine;
+StateDeterminer stateDeterminer;
 
-ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(false);
+
 ConfigurationID_e configSet[] = {DROGUE_DELAY, MAIN_ELEVATION};
-Configuration configuration({configSet, Configuration::REQUIRED_CONFIGS});
+Configuration configuration({configSet, Configuration::REQUIRED_CONFIGS, StateDeterminer::REQUIRED_CONFIGS});
 HardwareAbstraction hardware;
 
 Parser cliParser;
 
 // Define Callbacks //
-void callback_none(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                   BaseFlag *dependency) {}
+void callback_none(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                   BaseFlag* dependency) {}
 
-void callback_erase(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                    BaseFlag *dependency) {
+void callback_erase(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                    BaseFlag* dependency) {
     Serial.println("Erasing all");
     flash.eraseAll();
 }
 
-void callback_offload(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                      BaseFlag *dependency) {
+void callback_offload(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                      BaseFlag* dependency) {
     if (dependency != nullptr && dependency->isSet()) {
         Serial.println("Dependency set!");
         // do something
     } else {
-      Serial.println("Dependency not set!");
+        Serial.println("Dependency not set!");
     }
 }
 
-void callback_testfire(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                       BaseFlag *dependency) {
+void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                       BaseFlag* dependency) {
     if (length >= sizeof(int)) {
         // Extract the integer value from the data buffer
         int value = 0;
@@ -83,8 +82,8 @@ void callback_testfire(const char *name, uint8_t *data, uint32_t length, uint8_t
     }
 }
 
-void callback_mainAltitude(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                           BaseFlag *dependency) {
+void callback_mainAltitude(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                           BaseFlag* dependency) {
     printf("Group UID: %u, Flag UID: %u\n", group_uid, flag_uid);
 
     if (length >= sizeof(float)) {
@@ -95,15 +94,15 @@ void callback_mainAltitude(const char *name, uint8_t *data, uint32_t length, uin
         Serial.println("Received float value: ");
         Serial.print(value);
 
-        ConfigurationData<float> *configMainAltitude = configuration.getConfigurable<MAIN_ELEVATION>();
+        ConfigurationData<float>* configMainAltitude = configuration.getConfigurable<MAIN_ELEVATION>();
         configMainAltitude->set(value);
     } else {
         Serial.println("Error: Insufficient data for float type\n");
     }
 }
 
-void callback_drogueDelay(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                          BaseFlag *dependency) {
+void callback_drogueDelay(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                          BaseFlag* dependency) {
     if (length >= sizeof(float)) {
         // Extract the float value from the data buffer
         float value = 0.0f;
@@ -112,7 +111,7 @@ void callback_drogueDelay(const char *name, uint8_t *data, uint32_t length, uint
         Serial.print("Received float value: ");
         Serial.println(value);
 
-        ConfigurationData<float> *configDrogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
+        ConfigurationData<float>* configDrogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
         configDrogueDelay->set(value);
     } else {
         Serial.println("Error: Insufficient data for float type");
@@ -121,19 +120,17 @@ void callback_drogueDelay(const char *name, uint8_t *data, uint32_t length, uint
 
 // Define flags //
 SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase);
-
 SimpleFlag offload("--offload", "Send start", true, DEFAULT_FLAT_UID, callback_offload);
 SimpleFlag offload_binary("-b", "binary", false, DEFAULT_FLAT_UID, callback_none);
 ArgumentFlag<int> testfire("--testfire", "Send start", true, DEFAULT_FLAT_UID, callback_testfire);
 ArgumentFlag<float> mainAltitude("--mainAltitude", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
 ArgumentFlag<float> drogueDelay("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
 
-BaseFlag *eraseGroup[] = {&erase};
-BaseFlag *offloadGroup[] = {&offload, &offload_binary};
-BaseFlag *testfireGroup[] = {&testfire};
-BaseFlag *mainAltitudeGroup[] = {&mainAltitude};
-BaseFlag *drogueDelayGroup[] = {&drogueDelay};
-
+BaseFlag* eraseGroup[] = {&erase};
+BaseFlag* offloadGroup[] = {&offload, &offload_binary};
+BaseFlag* testfireGroup[] = {&testfire};
+BaseFlag* mainAltitudeGroup[] = {&mainAltitude};
+BaseFlag* drogueDelayGroup[] = {&drogueDelay};
 
 
 void setup() {
@@ -164,7 +161,7 @@ void setup() {
     hardware.addIndicator(&buzzer);
     hardware.setup();
 
-    stateMachine.setup();
+    stateDeterminer.setup(&configuration);
     altitudeKf.calculateDiscreteTimeA(.01);
 
     // setup dependency
@@ -175,37 +172,9 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(mainAltitudeGroup);
     cliParser.addFlagGroup(drogueDelayGroup);
-
-    // ConfigurationData<uint32_t>* configVersion = configuration.getConfigurable<CONFIGURATION_VERSION>();
-    // ConfigurationData<uint32_t>* configHash = configuration.getConfigurable<CONFIGURATION_VERSION_HASH>();
-    // ConfigurationData<uint32_t>* configCrc = configuration.getConfigurable<CONFIGURATION_CRC>();
-    // ConfigurationData<float>* radioFrequency = configuration.getConfigurable<RADIO_FREQUENCY>();
-    //
-    // Serial.println(configVersion->get());
-    // Serial.println(configHash->get());
-    // Serial.println(configCrc->get());
-    // Serial.println(radioFrequency->get());
-    // Serial.println();
-    //
-    // configVersion->set(912);
-    // configHash->set(9332);
-    // configCrc->set(97);
-    // radioFrequency->set(92433.77);
-    // configuration.pushUpdates();
-    //
-    // Serial.println(configVersion->get());
-    // Serial.println(configHash->get());
-    // Serial.println(configCrc->get());
-    // Serial.println(radioFrequency->get());
 }
 
-
-void loop() {
-    const uint32_t start = micros();
-
-    hardware.enforceLoopTime();
-    hardware.readAllSensors();
-
+void runIndicators() {
     for (int i = 0; i < hardware.getNumIndicators(); i++) {
         if ((hardware.getLoopTimestampMs() / 250) % 2 == 0) {
             hardware.getIndicator(i)->on();
@@ -213,20 +182,29 @@ void loop() {
             hardware.getIndicator(i)->off();
         }
     }
+}
 
-    altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
-    altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
-
-    configuration.pushUpdates();
-
-    const uint32_t end = micros();
+void printDebug() {
     Serial.print(altitudeKf.getAltitude());
     Serial.print('\t');
     Serial.print(hardware.getLastTickDuration());
     Serial.print('\t');
-    Serial.print((end - start) / 1000.0);
-    Serial.print('\t');
     Serial.print(batteryVoltageSensor.getVoltage());
     Serial.print('\t');
     Serial.println(barometer.getAltitudeM());
+}
+
+void loop() {
+    hardware.enforceLoopTime();
+    hardware.readSensors();
+
+    constexpr Pose_s pose{};     // This will be provided from the filter
+    altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
+    altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
+
+    State_e state = stateDeterminer.loopOnce(pose);
+
+    runIndicators();
+
+    configuration.pushUpdatesToMemory();
 }

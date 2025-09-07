@@ -79,7 +79,7 @@ void Configuration::readConfigFromMemory() {
 
 }
 
-void Configuration::pushUpdates() {
+void Configuration::pushUpdatesToMemory() {
     uint8_t* writeStartLocation = m_dataBuffer;
     uint32_t bytesToWrite = 0;
 

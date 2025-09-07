@@ -15,7 +15,7 @@ void AvionicsCore::loopOnce() {
     // Get the start timestamp for this loop
 //    m_hardware->updateLoopTimestamp();
     // Read in sensor data. This data is accessible through
-    m_hardware->readAllSensors();
+    m_hardware->readSensors();
 }
 
 
