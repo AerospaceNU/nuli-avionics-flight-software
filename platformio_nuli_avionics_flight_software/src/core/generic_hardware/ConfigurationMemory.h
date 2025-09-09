@@ -17,6 +17,9 @@ public:
  * @details Allows the configuration API to be used for boards without
  * non-volatile memory, however it will reset every time the code restarts.
  * This is needed because the configuration API is guaranteed to be available.
+ *
+ * @todo I think we can remove this
+ *
  * @tparam N Size of the memory
  */
 template<unsigned N>

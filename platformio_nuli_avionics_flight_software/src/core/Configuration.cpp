@@ -12,7 +12,7 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, uint16_t a
                 break;
             }
 
-            ConfigurationID_e requestedConfig = allConfigs[i].data[j];
+            const ConfigurationID_e requestedConfig = allConfigs[i].data[j];
             if (!configExists(requestedConfig)) {
                 m_configurations[m_numConfigurations].name = requestedConfig;
                 m_numConfigurations++;
@@ -104,6 +104,7 @@ void Configuration::pushUpdatesToMemory() {
 
 void Configuration::outOfMemoryError() {
     Serial.println("Configuration ran out of memory to start");
+    while (true);
 }
 
 

@@ -67,13 +67,7 @@ public:
      * @brief Reads in all sensor data
      * @details Calls read for each sensor, the resultant data is stored within each sensor object
      */
-    void readSensors();
-
-    /**
-     * @brief Reads all communications links to buffers
-     * @details Calls read on each communication link, and does something???? with the data
-     */
-    void readAllRadioLinks();
+    void readSensors() const;
 
     void enforceLoopTime();
 

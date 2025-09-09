@@ -30,7 +30,7 @@ void HardwareAbstraction::setup() {
     enforceLoopTime();
 }
 
-void HardwareAbstraction::readSensors() {
+void HardwareAbstraction::readSensors() const {
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->read();
     for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->read();
     for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->read();
@@ -40,14 +40,10 @@ void HardwareAbstraction::readSensors() {
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->read();
 }
 
-void HardwareAbstraction::readAllRadioLinks() {
-    for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->loopOnce();
-}
-
-void HardwareAbstraction::setLoopRate(uint32_t loopRate) {
+void HardwareAbstraction::setLoopRate(const uint32_t loopRate) {
     double delay = 1.0 / loopRate;
     delay *= 1000;
-    m_loopTime = (uint32_t)delay;
+    m_loopTime = (uint32_t)delay;   // @todo round?
 }
 
 void HardwareAbstraction::enforceLoopTime() {
