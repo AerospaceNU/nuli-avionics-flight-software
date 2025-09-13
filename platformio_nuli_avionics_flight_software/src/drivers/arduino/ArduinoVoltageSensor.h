@@ -3,9 +3,9 @@
 
 #include "../../core/generic_hardware/VoltageSensor.h"
 
-class ArduinoVoltageSensor : public VoltageSensor {
+class ArduinoVoltageSensor final : public VoltageSensor {
 public:
-    ArduinoVoltageSensor(uint8_t pin, double scaleFactor);
+    ArduinoVoltageSensor(uint8_t pin, float scaleFactor);
 
     void read() override;
 

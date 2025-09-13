@@ -3,7 +3,7 @@
 
 constexpr ConfigurationID_e Configuration::REQUIRED_CONFIGS[];
 
-void Configuration::construct(const ConfigurationIDSet_s* allConfigs, uint16_t allConfigsLength) {
+void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint16_t allConfigsLength) {
     // Add all requested configs to the list, ignoring duplicates
     for (int i = 0; i < allConfigsLength; i++) {
         for (int j = 0; j < allConfigs[i].length; j++) {
@@ -22,9 +22,10 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, uint16_t a
 }
 
 
-void Configuration::setup(ConfigurationMemory* memory, DebugStream* debugStream) {
-    m_memory = memory;
-    m_debug = debugStream;
+void Configuration::setup(HardwareAbstraction *hardware, const uint8_t id) {
+    m_hardware = hardware;
+    m_memory = hardware->getFramMemory(id); // @todo make rest of class safe?
+    m_debug = hardware->getDebugStream();
     // Sort the list to ensure a consistent order, then set them up with their respective memory
     sortConfigs();
     assignMemory();
@@ -36,7 +37,7 @@ void Configuration::setup(ConfigurationMemory* memory, DebugStream* debugStream)
 //template<unsigned N>
 //ConfigurationData<typename GetConfigType_s<N>::type>* Configuration::getConfigurable()
 
-bool Configuration::configExists(ConfigurationID_e name) const {
+bool Configuration::configExists(const ConfigurationID_e name) const {
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].name == name) {
             return true;

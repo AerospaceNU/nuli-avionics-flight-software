@@ -6,6 +6,8 @@
 
 class DebugStream {
 public:
+    virtual ~DebugStream() = default;
+
     virtual void setup() {
 
     }

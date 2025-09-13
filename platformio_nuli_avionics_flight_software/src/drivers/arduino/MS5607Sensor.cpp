@@ -25,7 +25,6 @@ void MS5607Sensor::read() {
     readDigitalValue();
     m_pressurePa = getPressure() * Units::MBAR_TO_PA;
     m_temperatureK = getTemperature() + Units::C_TO_K;
-    calculateAltitude();
 }
 
 // read raw digital values of temp & pressure from MS5607

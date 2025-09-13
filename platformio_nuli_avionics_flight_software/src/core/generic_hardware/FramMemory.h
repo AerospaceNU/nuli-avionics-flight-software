@@ -1,7 +1,7 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONMEMORY_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONMEMORY_H
 
-class ConfigurationMemory {
+class FramMemory {
 public:
     virtual void setup() {};
 
@@ -23,7 +23,7 @@ public:
  * @tparam N Size of the memory
  */
 template<unsigned N>
-class VolatileConfigurationMemory : public ConfigurationMemory {
+class VolatileConfigurationMemory : public FramMemory {
 public:
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override {
         if(length > N) return;

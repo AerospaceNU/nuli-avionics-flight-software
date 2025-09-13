@@ -13,15 +13,12 @@
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "core/HardwareAbstraction.h"
 #include "core/Configuration.h"
-#include "core/altitude_kf.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
 #include "core/cli/Parser.h"
-#include "core/Logger.h"
-#include "core/AvionicsCore.h"
-#include "core/Configuration.h"
-#include "core/altitude_kf.h"
 #include "core/StateDeterminer.h"
+#include "core/filters/PoseEstimator.h"
+#include "core/Logger.h"
 
 #define DEFAULT_FLAT_UID 255
 
@@ -38,12 +35,12 @@ ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
 
-AltitudeKf altitudeKf;
-StateDeterminer stateDeterminer;
 HardwareAbstraction hardware;
+StateDeterminer stateDeterminer;
+PoseEstimator poseEstimator;
 Parser cliParser;
 
-ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION};
+ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR};
 Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
@@ -88,18 +85,15 @@ void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t
 
 void callback_mainAltitude(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
                            BaseFlag* dependency) {
-    printf("Group UID: %u, Flag UID: %u\n", group_uid, flag_uid);
-
     if (length >= sizeof(float)) {
         // Extract the float value from the data buffer
         float value = 0.0f;
         memcpy(&value, data, sizeof(float));
 
-        Serial.println("Received float value: ");
-        Serial.print(value);
+        mainElevation->set(value);
 
-        ConfigurationData<float>* configMainAltitude = configuration.getConfigurable<MAIN_ELEVATION>();
-        configMainAltitude->set(value);
+        Serial.print("MAIN_ELEVATION has been set to: ");
+        Serial.println(mainElevation->get());
     } else {
         Serial.println("Error: Insufficient data for float type\n");
     }
@@ -107,19 +101,26 @@ void callback_mainAltitude(const char* name, uint8_t* data, uint32_t length, uin
 
 void callback_drogueDelay(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
                           BaseFlag* dependency) {
-    if (length >= sizeof(float)) {
+    if (length >= sizeof(uint32_t)) {
         // Extract the float value from the data buffer
-        float value = 0.0f;
-        memcpy(&value, data, sizeof(float));
+        uint32_t value = 0;
+        memcpy(&value, data, sizeof(uint32_t));
 
-        Serial.print("Received float value: ");
-        Serial.println(value);
+        drogueDelay->set(value);
 
-        ConfigurationData<float>* configDrogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
-        configDrogueDelay->set(value);
+        Serial.print("DROGUE_DELAY has been set to: ");
+        Serial.println(drogueDelay->get());
     } else {
-        Serial.println("Error: Insufficient data for float type");
+        Serial.print("Error");
     }
+}
+
+void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
+                     BaseFlag* dependency) {
+    Serial.print("DROGUE_DELAY is: ");
+    Serial.println(drogueDelay->get());
+    Serial.print("MAIN_ELEVATION is: ");
+    Serial.println(mainElevation->get());
 }
 
 // Define flags //
@@ -127,15 +128,27 @@ SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase
 SimpleFlag offload("--offload", "Send start", true, DEFAULT_FLAT_UID, callback_offload);
 SimpleFlag offload_binary("-b", "binary", false, DEFAULT_FLAT_UID, callback_none);
 ArgumentFlag<int> testfire("--testfire", "Send start", true, DEFAULT_FLAT_UID, callback_testfire);
-ArgumentFlag<float> mainAltitudeFlag("--mainAltitude", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
-ArgumentFlag<float> drogueDelayFlag("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
+ArgumentFlag<float> mainAltitudeFlag("--mainElevation", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
+ArgumentFlag<uint32_t> drogueDelayFlag("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
+SimpleFlag configFlag("--config", "Send start", true, DEFAULT_FLAT_UID, callback_config);
+
 
 BaseFlag* eraseGroup[] = {&erase};
 BaseFlag* offloadGroup[] = {&offload, &offload_binary};
 BaseFlag* testfireGroup[] = {&testfire};
 BaseFlag* mainAltitudeGroup[] = {&mainAltitudeFlag};
 BaseFlag* drogueDelayGroup[] = {&drogueDelayFlag};
+BaseFlag* configGroup[] = {&configFlag};
 
+void runIndicators() {
+    for (int i = 0; i < hardware.getNumIndicators(); i++) {
+        if ((hardware.getLoopTimestampMs() / 250) % 2 == 0) {
+            hardware.getIndicator(i)->on();
+        } else {
+            hardware.getIndicator(i)->off();
+        }
+    }
+}
 
 void setup() {
     // Make all SPI devices play nice by deactivating them all
@@ -148,72 +161,76 @@ void setup() {
     // while (!Serial);
     Serial.println("Starting");
     // System
-    hardware.setLoopRate(100);
+    hardware.setLoopRateHz(100);
     hardware.setDebugStream(&serialDebug);
     hardware.setSystemClock(&arduinoClock);
-    hardware.setConfigurationMemory(&fram);
-    hardware.setConfiguration(&configuration);
     // Devices
-    hardware.addPyro(&droguePyro);
-    hardware.addPyro(&mainPyro);
-    hardware.addVoltageSensor(&batteryVoltageSensor);
-    hardware.addBarometer(&barometer);
-    hardware.addGenericSensor(&icm20602);
-    hardware.addAccelerometer(icm20602.getAccelerometer());
-    hardware.addGyroscope(icm20602.getGyroscope());
-    hardware.addFlashMemory(&flash);
-    hardware.addIndicator(&led);
-    hardware.addIndicator(&buzzer);
+    const int16_t framID = hardware.appendFramMemory(&fram);
+    hardware.appendFlashMemory(&flash);
+    hardware.appendPyro(&droguePyro);
+    hardware.appendPyro(&mainPyro);
+    hardware.appendVoltageSensor(&batteryVoltageSensor);
+    hardware.appendBarometer(&barometer);
+    hardware.appendGenericSensor(&icm20602);
+    hardware.appendAccelerometer(icm20602.getAccelerometer());
+    hardware.appendGyroscope(icm20602.getGyroscope());
+    hardware.appendIndicator(&led);
+    hardware.appendIndicator(&buzzer);
+    // Setup components
     hardware.setup();
-
+    configuration.setup(&hardware, framID);
+    poseEstimator.setup(&hardware, &configuration);
     stateDeterminer.setup(&configuration);
-    altitudeKf.calculateDiscreteTimeA(.01);
+
 
     // setup dependency
     offload.setDependency(&offload_binary);
-
     cliParser.addFlagGroup(eraseGroup);
     cliParser.addFlagGroup(offloadGroup);
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(mainAltitudeGroup);
     cliParser.addFlagGroup(drogueDelayGroup);
+    cliParser.addFlagGroup(configGroup);
 
+    // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION>();
+    batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR>()->get());
+
+    led.setOutputPercent(10.0);
 }
 
-void runIndicators() {
-    for (int i = 0; i < hardware.getNumIndicators(); i++) {
-        if ((hardware.getLoopTimestampMs() / 250) % 2 == 0) {
-            hardware.getIndicator(i)->on();
-        } else {
-            hardware.getIndicator(i)->off();
+char serialRead[500] = "";
+int32_t serialReadIndex = 0;
+
+void runCli() {
+    while (Serial.available() > 0) {
+        const char c = Serial.read();
+        serialRead[serialReadIndex++] = c;
+        Serial.print(c);
+        if (c == '\n') {
+            serialRead[serialReadIndex++] = '\0';
+            if (cliParser.parse(serialRead) == 0) {
+                cliParser.runFlags();
+                cliParser.resetFlags();
+            } else {
+                Serial.print("Invalid message: ");
+                Serial.println(serialRead);
+            }
+            serialReadIndex = 0;
         }
     }
-}
-
-void printDebug() {
-    Serial.print(altitudeKf.getAltitude());
-    Serial.print('\t');
-    Serial.print(hardware.getLastTickDuration());
-    Serial.print('\t');
-    Serial.print(batteryVoltageSensor.getVoltage());
-    Serial.print('\t');
-    Serial.println(barometer.getAltitudeM());
 }
 
 void loop() {
     hardware.enforceLoopTime();
     hardware.readSensors();
 
-    altitudeKf.predict(hardware.getLoopTimestampMs() / 1000.0);
-    altitudeKf.dataUpdate(barometer.getAltitudeM(), icm20602.getAccelerometer()->getAccelerationsMSS().z);
-    constexpr Pose_s pose{}; // This will be provided from the filter
-
+    const Pose_s pose = poseEstimator.loopOnce();
     const State_e state = stateDeterminer.loopOnce(pose);
 
     switch (state) {
-    case DESCENT:
+    case DESCENT: // @todo turn off pyros after some time
         if (pose.timestamp_ms - stateDeterminer.getStateStartTime() > drogueDelay->get()) {
             droguePyro.fire();
         }
@@ -228,7 +245,6 @@ void loop() {
     }
 
     runIndicators();
-    printDebug();
-
+    runCli();
     configuration.pushUpdatesToMemory();
 }

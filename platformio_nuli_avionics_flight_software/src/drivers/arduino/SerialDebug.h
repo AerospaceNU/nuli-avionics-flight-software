@@ -9,8 +9,8 @@
 
 class SerialDebug : public DebugStream {
 public:
-    explicit SerialDebug(bool wait = true) {
-        m_wait = wait;
+    explicit SerialDebug(const bool waitToConnect = true) {
+        m_wait = waitToConnect;
     }
 
     void setup() override {
@@ -22,11 +22,11 @@ public:
         Serial.print(str);
     }
 
-    void print(int32_t num) override {
+    void print(const int32_t num) override {
         Serial.print(num);
     }
 
-    void print(double num) override {
+    void print(const double num) override {
         Serial.print(num);
     }
 private:

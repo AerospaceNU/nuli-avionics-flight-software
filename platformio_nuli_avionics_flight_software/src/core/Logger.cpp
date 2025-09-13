@@ -1,5 +1,4 @@
 #include "Logger.h"
-
 #include <Arduino.h>
 
 
@@ -23,22 +22,21 @@ static LogData logData;
 
 static uint8_t logDataBuffer[sizeof(LogData)];
 
-void Logger::setup(HardwareAbstraction* hardware) {
+void Logger::setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t id) {
     m_hardware = hardware;
+    m_flash = m_hardware->getFlashMemory(id);
+
     m_logWriteAddress = 0;
-
-    FlashMemory* flash = m_hardware->getFlashMemory(0);
-
     bool foundEmptyPacket = false;
 
     while (true) {
         // Serial.print("Checking ");
         // Serial.println(m_logWriteAddress);
         // Serial.println(sizeof(logDataBuffer));
-        flash->read(m_logWriteAddress, logDataBuffer, sizeof(logDataBuffer));
+        m_flash->read(m_logWriteAddress, logDataBuffer, sizeof(logDataBuffer));
         foundEmptyPacket = true;
         for (unsigned int i = 0; i < sizeof(logDataBuffer); ++i) {
-            if (logDataBuffer[i] != 0xFF) {
+            if (logDataBuffer[i] != 0xFF) {         // @todo make more robust
                 foundEmptyPacket = false;
                 break;
             }
@@ -53,10 +51,7 @@ void Logger::setup(HardwareAbstraction* hardware) {
 }
 
 void Logger::log() {
-    FlashMemory* flash = m_hardware->getFlashMemory(0);
-
-
-    logData.baroAltitudeM = m_hardware->getBarometer(0)->getAltitudeM();
+    logData.baroAltitudeM = 0;
     logData.baroPressurePa = m_hardware->getBarometer(0)->getPressurePa();
     logData.baroTemperatureK = m_hardware->getBarometer(0)->getTemperatureK();
     logData.timestamp = m_hardware->getLoopTimestampMs();
@@ -72,22 +67,18 @@ void Logger::log() {
     logData.vy = velocitiesRadS.y;
     logData.vz = velocitiesRadS.z;
     logData.batt = m_hardware->getVoltageSensor(0)->getVoltage();
-    // Serial.println(logData.timestamp);
-    // Serial.println(sizeof(logData));
 
-    flash->write(m_logWriteAddress, (uint8_t*) &logData, sizeof(logData), true);
+    m_flash->write(m_logWriteAddress, (uint8_t*) &logData, sizeof(logData), true);
     m_logWriteAddress += sizeof(logData);
 }
 
-uint32_t Logger::offloadData(uint32_t readAddress, uint8_t* buffer, const uint32_t length) {
-    FlashMemory* flash = m_hardware->getFlashMemory(0);
-    uint32_t readLength = min(length, max((unsigned int) 0, m_logWriteAddress - readAddress));
-    flash->read(readAddress, buffer, length);
+uint32_t Logger::offloadData(const uint32_t readAddress, uint8_t* buffer, const uint32_t length) const {
+    const uint32_t readLength = min(length, max((unsigned int) 0, m_logWriteAddress - readAddress));
+    m_flash->read(readAddress, buffer, length);
     return readLength;
 }
 
 void Logger::erase() {
-    FlashMemory* flash = m_hardware->getFlashMemory(0);
-    flash->eraseAll();
+    m_flash->eraseAll();
     m_logWriteAddress = 0;
 }

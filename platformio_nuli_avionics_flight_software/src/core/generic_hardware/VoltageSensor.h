@@ -1,12 +1,12 @@
-#include "Avionics.h"
-#include "GenericSensor.h"
-
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_VOLTAGESENSOR_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_VOLTAGESENSOR_H
 
+#include "Avionics.h"
+#include "GenericSensor.h"
+
 class VoltageSensor : public GenericSensor {
 public:
-    explicit VoltageSensor(double scaleFactor) {
+    explicit VoltageSensor(const float scaleFactor) {
         m_scaleFactor = scaleFactor;
     }
 
@@ -14,23 +14,27 @@ public:
 
     void read() override {}
 
-    void inject(double rawVoltage) {
+    void setScaleFactor(const float scaleFactor) {
+        m_scaleFactor = scaleFactor;
+    }
+
+    void inject(const float rawVoltage) {
         m_rawVoltage = rawVoltage;
         scale();
     }
 
-    virtual double getVoltage() { return m_voltage; }
+    virtual float getVoltage() { return m_voltage; }
 
-    virtual double getRawVoltage() { return m_rawVoltage; }
+    virtual float getRawVoltage() { return m_rawVoltage; }
 
 protected:
     void scale() {
         m_voltage = m_rawVoltage * m_scaleFactor;
     }
 
-    double m_scaleFactor = 1;
-    double m_voltage = 0;
-    double m_rawVoltage = 0;
+    float m_scaleFactor = 1;
+    float m_voltage = 0;
+    float m_rawVoltage = 0;
 };
 
 

@@ -5,6 +5,8 @@
 
 class Indicator {
 public:
+    virtual ~Indicator() = default;
+
     enum IndicatorType {
         NONE,
         AUDIO,

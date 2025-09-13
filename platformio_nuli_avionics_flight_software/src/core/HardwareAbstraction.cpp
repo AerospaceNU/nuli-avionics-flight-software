@@ -3,7 +3,7 @@
 
 void HardwareAbstraction::setup() {
     // Setup core
-    if (m_debugStream == nullptr || m_systemClock == nullptr || m_configuration == nullptr || m_configurationMemory == nullptr) {
+    if (m_debugStream == nullptr || m_systemClock == nullptr) {
         if (m_debugStream != nullptr) {
             m_debugStream->setup();
             m_debugStream->print("Debug stream, clock, configuration, and configuration memory required");
@@ -13,8 +13,6 @@ void HardwareAbstraction::setup() {
     }
     m_debugStream->setup();
     m_systemClock->setup();
-    m_configurationMemory->setup();
-    m_configuration->setup(m_configurationMemory, m_debugStream);
 
     for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->setup();
     for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->setup();
@@ -40,10 +38,10 @@ void HardwareAbstraction::readSensors() const {
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->read();
 }
 
-void HardwareAbstraction::setLoopRate(const uint32_t loopRate) {
+void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
     double delay = 1.0 / loopRate;
     delay *= 1000;
-    m_loopTime = (uint32_t)delay;   // @todo round?
+    m_loopTime = (uint32_t)delay; // @todo round?
 }
 
 void HardwareAbstraction::enforceLoopTime() {

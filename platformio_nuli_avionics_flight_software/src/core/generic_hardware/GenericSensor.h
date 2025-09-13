@@ -11,6 +11,7 @@
  */
 class GenericSensor {
 public:
+    virtual ~GenericSensor() = default;
     /**
      * @brief Initialize the sensor
      * @details Enabling any peripherals, confirm sensor is talking, set configuration registers on the sensor
@@ -23,6 +24,9 @@ public:
      * Currently is allowed to block the loop to wait for data from the sensor for a few ms.
      */
     virtual void read() {}
+
+
+    virtual bool validReading() { return true; }
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GENERICSENSOR_H

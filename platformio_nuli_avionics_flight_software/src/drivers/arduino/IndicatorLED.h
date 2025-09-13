@@ -5,10 +5,17 @@
 #include <Arduino.h>
 #include "../../core/generic_hardware/Indicator.h"
 
-class IndicatorLED : public Indicator {
+class IndicatorLED final : public Indicator {
 public:
-    explicit IndicatorLED(int8_t pin) {
+    explicit IndicatorLED(const int8_t pin) {
         m_pin = pin;
+    }
+
+    void setOutputPercent(float power) {
+        if (power <= 100 && power >= 0) {
+            power *= 2.55;
+            m_outputPower = (int16_t) power;
+        }
     }
 
     void setup() override {
@@ -16,15 +23,24 @@ public:
     }
 
     void on() override {
-        digitalWrite(m_pin, HIGH);
+        if (m_outputPower > 0) {
+            analogWrite(m_pin, m_outputPower);
+        } else {
+            digitalWrite(m_pin, HIGH);
+        }
     }
 
     void off() override {
-        digitalWrite(m_pin, LOW);
+        if (m_outputPower > 0) {
+            analogWrite(m_pin, 0);
+        } else {
+            digitalWrite(m_pin, LOW);
+        }
     }
 
 private:
     int8_t m_pin;
+    int16_t m_outputPower = -1;
 };
 
 
