@@ -14,8 +14,8 @@ void PoseEstimator::setup(HardwareAbstraction* hardware, Configuration* configur
 
 Pose_s PoseEstimator::loopOnce() {
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
-    float pressurePa = getPressurePa();
-    Vector3D_s accelerationMSS = getAccelerationMSS();
+    // float pressurePa = getPressurePa();
+    // Vector3D_s accelerationMSS = getAccelerationMSS();
 
     // Transform to global frame
 

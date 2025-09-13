@@ -142,7 +142,7 @@ BaseFlag* configGroup[] = {&configFlag};
 
 void runIndicators() {
     for (int i = 0; i < hardware.getNumIndicators(); i++) {
-        if ((hardware.getLoopTimestampMs() / 250) % 2 == 0) {
+        if ((hardware.getLoopTimestampMs() / 200) % 2 == 0) {
             hardware.getIndicator(i)->on();
         } else {
             hardware.getIndicator(i)->off();
@@ -150,8 +150,33 @@ void runIndicators() {
     }
 }
 
+char serialRead[500] = "";
+int32_t serialReadIndex = 0;
+
+void runCli() {
+    while (Serial.available() > 0) {
+        const char c = Serial.read();
+        serialRead[serialReadIndex++] = c;
+        Serial.print(c);
+        if (c == '\n') {
+            serialRead[serialReadIndex++] = '\0';
+            if (cliParser.parse(serialRead) == 0) {
+                cliParser.runFlags();
+                cliParser.resetFlags();
+            } else {
+                Serial.print("Invalid message: ");
+                Serial.println(serialRead);
+            }
+            serialReadIndex = 0;
+        }
+    }
+}
+
 void setup() {
-    // Make all SPI devices play nice by deactivating them all
+    Serial.begin(9600);
+    while (!Serial) {}
+
+    // Make all SPI devices play nice by deactivating them all TODO: is there a nice abstraction that would work here?
     pinMode(FLASH_CS_PIN, OUTPUT);
     digitalWrite(FLASH_CS_PIN, HIGH);
     pinMode(FRAM_CS_PIN, OUTPUT);
@@ -182,7 +207,6 @@ void setup() {
     poseEstimator.setup(&hardware, &configuration);
     stateDeterminer.setup(&configuration);
 
-
     // setup dependency
     offload.setDependency(&offload_binary);
     cliParser.addFlagGroup(eraseGroup);
@@ -197,29 +221,7 @@ void setup() {
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR>()->get());
 
-    led.setOutputPercent(10.0);
-}
-
-char serialRead[500] = "";
-int32_t serialReadIndex = 0;
-
-void runCli() {
-    while (Serial.available() > 0) {
-        const char c = Serial.read();
-        serialRead[serialReadIndex++] = c;
-        Serial.print(c);
-        if (c == '\n') {
-            serialRead[serialReadIndex++] = '\0';
-            if (cliParser.parse(serialRead) == 0) {
-                cliParser.runFlags();
-                cliParser.resetFlags();
-            } else {
-                Serial.print("Invalid message: ");
-                Serial.println(serialRead);
-            }
-            serialReadIndex = 0;
-        }
-    }
+    led.setOutputPercent(6.0);
 }
 
 void loop() {
@@ -230,6 +232,8 @@ void loop() {
     const State_e state = stateDeterminer.loopOnce(pose);
 
     switch (state) {
+    case PRE_FLIGHT:
+        runCli();
     case DESCENT: // @todo turn off pyros after some time
         if (pose.timestamp_ms - stateDeterminer.getStateStartTime() > drogueDelay->get()) {
             droguePyro.fire();
@@ -239,12 +243,12 @@ void loop() {
             mainPyro.fire();
         }
     case POST_FLIGHT:
+        runCli();
         droguePyro.disable();
         mainPyro.disable();
     default: ;
     }
 
     runIndicators();
-    runCli();
     configuration.pushUpdatesToMemory();
 }
