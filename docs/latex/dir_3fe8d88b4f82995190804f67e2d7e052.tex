@@ -1,0 +1,160 @@
+\doxysection{nuli-\/avionics-\/flight-\/software/platformio\+\_\+nuli\+\_\+avionics\+\_\+flight\+\_\+software/src/core/cli Directory Reference}
+\hypertarget{dir_3fe8d88b4f82995190804f67e2d7e052}{}\label{dir_3fe8d88b4f82995190804f67e2d7e052}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/cli Directory Reference@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/cli Directory Reference}}
+Directory dependency graph for cli\+:
+% FIG 0
+\doxysubsubsection*{Files}
+\begin{DoxyCompactItemize}
+\item 
+file {\bfseries Argument\+Flag.\+h}
+\item 
+file {\bfseries Base\+Flag.\+h}
+\item 
+file {\bfseries CLIEnums.\+h}
+\item 
+file {\bfseries Parser.\+h}
+\item 
+file {\bfseries Return\+Codes.\+h}
+\item 
+file {\bfseries Simple\+Flag.\+h}
+\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+\hypertarget{README.md_autotoc_md0}{}\doxysubsection{\texorpdfstring{Command-\/\+Line Interface User Guide}{Command-\/\+Line Interface User Guide}}\label{README.md_autotoc_md0}
+\hypertarget{README.md_autotoc_md1}{}\doxysubsection{\texorpdfstring{Flags}{Flags}}\label{README.md_autotoc_md1}
+There are two types of flags supported which both inherit from {\ttfamily \doxylink{classBaseFlag}{Base\+Flag}}.
+\begin{DoxyEnumerate}
+\item {\ttfamily \doxylink{classSimpleFlag}{Simple\+Flag}}\+: A typical boolean flag. There is one constructor.
+\item {\ttfamily \doxylink{classArgumentFlag}{Argument\+Flag}}\+: A flag with one argument. There are two constructors. One with a default argument and one without.
+\begin{DoxyEnumerate}
+\item IMPORTANT\+: Only fundamental types ({\ttfamily int, double, float, etc.}) and {\ttfamily const char\texorpdfstring{$\ast$}{*}} are allowed.
+\end{DoxyEnumerate}
+\end{DoxyEnumerate}\hypertarget{README.md_autotoc_md2}{}\doxysubsection{\texorpdfstring{Usage}{Usage}}\label{README.md_autotoc_md2}
+\hypertarget{README.md_autotoc_md3}{}\doxysubsubsection{\texorpdfstring{0. Include}{0. Include}}\label{README.md_autotoc_md3}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{preprocessor}{\#include\ "{}Parser.h"{}}\ }
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md4}{}\doxysubsubsection{\texorpdfstring{1. Create Parser Object}{1. Create Parser Object}}\label{README.md_autotoc_md4}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classParser}{Parser}}\ myParser\ =\ \mbox{\hyperlink{classParser}{Parser}}();}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md5}{}\doxysubsubsection{\texorpdfstring{2. Callbacks}{2. Callbacks}}\label{README.md_autotoc_md5}
+Callbacks must have the return type of {\ttfamily void} and must take in the flag\textquotesingle{}s name, data, group uid, flag uid, and an optional dependency for the flag.
+
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\textcolor{keywordtype}{void}\ callback(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *name,\ uint8\_t\ *data,\ uint32\_t\ length,\ uint8\_t\ group\_uid,\ uint8\_t\ flag\_uid,}
+\DoxyCodeLine{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}\ *dependency)\ \{\}}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md6}{}\doxysubsubsection{\texorpdfstring{2. Declare Flags}{2. Declare Flags}}\label{README.md_autotoc_md6}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ config(\textcolor{stringliteral}{"{}-\/-\/config"{}},\ \textcolor{stringliteral}{"{}Configure\ a\ trigger\ with\ additional\ flags\_s"{}},\ \textcolor{keyword}{true},\ callback);}
+\DoxyCodeLine{\mbox{\hyperlink{classArgumentFlag}{ArgumentFlag<int>}}\ config\_trigger(\textcolor{stringliteral}{"{}-\/t"{}},\ 0,\ \textcolor{stringliteral}{"{}Trigger\ number"{}},\ \textcolor{keyword}{true},\ callback);}
+\DoxyCodeLine{\mbox{\hyperlink{classArgumentFlag}{ArgumentFlag<float>}}\ config\_pulseWidth(\textcolor{stringliteral}{"{}-\/w"{}},\ 0.0,\ \textcolor{stringliteral}{"{}Pulse\ width\ (required\ for\ pwm)"{}},\ \textcolor{keyword}{false},\ callback);}
+\DoxyCodeLine{\mbox{\hyperlink{classArgumentFlag}{ArgumentFlag<uint8\_t>}}\ config\_elevation(\textcolor{stringliteral}{"{}-\/e"{}},\ \textcolor{stringliteral}{"{}Configure\ ground\ elevation\ (in\ meters)"{}},\ \textcolor{keyword}{false},\ callback);}
+\DoxyCodeLine{\mbox{\hyperlink{classArgumentFlag}{ArgumentFlag<const\ char*>}}\ config\_notation(\textcolor{stringliteral}{"{}-\/C"{}},\ \textcolor{stringliteral}{"{}Configuration\ using\ expression\ notation"{}},\ \textcolor{keyword}{false},\ callback);}
+
+\end{DoxyCode}
+
+
+\begin{quote}
+Note\+: While not required by C++, always explicitly signify the type of \doxylink{classArgumentFlag}{Argument\+Flag}. The compiler can {\itshape sometimes} infer the type when given a default value, but is finicky and unreliable. \end{quote}
+\hypertarget{README.md_autotoc_md7}{}\doxysubsubsection{\texorpdfstring{2.\+5 Optional Dependencies}{2.\+5 Optional Dependencies}}\label{README.md_autotoc_md7}
+You can optionally add up to one dependency for each flag. As referenced in the callbacks section, a dependency can be added to create a more dynamic parser. 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{[flag\_1].setDependency(\&[flag\_2]);}
+\DoxyCodeLine{config.setDependency(\&config\_trigger);}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md8}{}\doxysubsubsection{\texorpdfstring{3. Add Flags to list of flags}{3. Add Flags to list of flags}}\label{README.md_autotoc_md8}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{\mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ configGroup[]\{\&config,\ \&config\_trigger,\ \&config\_pulseWidth,\ \&config\_elevation\};}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md9}{}\doxysubsubsection{\texorpdfstring{4. Add flag list to Parser}{4. Add flag list to Parser}}\label{README.md_autotoc_md9}
+\begin{quote}
+Note\+: The UID allows the parser to identify which flag group was last inputted. \end{quote}
+
+
+There are two options\+:
+
+One, default and use auto-\/incremented uid from 0 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{myParser.\mbox{\hyperlink{classParser_abe4ff3e3ab2bbe35be3053c3510d37f2}{addFlagGroup}}(configGroup);}
+
+\end{DoxyCode}
+ Two, self set uid 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{myParser.\mbox{\hyperlink{classParser_abe4ff3e3ab2bbe35be3053c3510d37f2}{addFlagGroup}}(configGroup,\ 10);}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md10}{}\doxysubsubsection{\texorpdfstring{5. Repeat}{5. Repeat}}\label{README.md_autotoc_md10}
+Repeat for more groups of flags.\hypertarget{README.md_autotoc_md11}{}\doxysubsubsection{\texorpdfstring{6. Run on input}{6. Run on input}}\label{README.md_autotoc_md11}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{myParser.\mbox{\hyperlink{classParser_af91b3f2b557c13f6d58d628e514e9d08}{parse}}(<input>);}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md12}{}\doxysubsubsection{\texorpdfstring{7. Run callbacks}{7. Run callbacks}}\label{README.md_autotoc_md12}
+Run the callbacks for the flag group that was most recently added 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{myParser.\mbox{\hyperlink{classParser_a0a3343f5aa8ef7f8e6584e73b113e258}{runFlags}}();}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md13}{}\doxysubsubsection{\texorpdfstring{8. Reset flags for next run}{8. Reset flags for next run}}\label{README.md_autotoc_md13}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{myParser.\mbox{\hyperlink{classParser_ae9740c4dfc29fdaed4bf463187e44462}{resetFlags}}();}
+
+\end{DoxyCode}
+\hypertarget{README.md_autotoc_md14}{}\doxysubsection{\texorpdfstring{Testing}{Testing}}\label{README.md_autotoc_md14}
+\hypertarget{README.md_autotoc_md15}{}\doxysubsubsection{\texorpdfstring{CLion}{CLion}}\label{README.md_autotoc_md15}
+Use the run configurations panel \hypertarget{README.md_autotoc_md16}{}\doxysubsubsection{\texorpdfstring{Linux}{Linux}}\label{README.md_autotoc_md16}
+\begin{quote}
+A shell script is provided under cli \texorpdfstring{$>$}{>} tests \texorpdfstring{$>$}{>} flag\+Testing.\+sh which simply packages up the commands listed below. \end{quote}
+
+
+Build the project with coverage flags enabled\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{rm\ -\/rf\ build}
+\DoxyCodeLine{cmake\ -\/S\ .\ -\/B\ build\ -\/DENABLE\_COVERAGE=ON}
+\DoxyCodeLine{cmake\ -\/-\/build\ build}
+
+\end{DoxyCode}
+
+
+Running the project 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{cd\ build}
+\DoxyCodeLine{ctest\ -\/-\/verbose}
+
+\end{DoxyCode}
+ \hypertarget{README.md_autotoc_md17}{}\doxysubsubsubsection{\texorpdfstring{Code Coverage}{Code Coverage}}\label{README.md_autotoc_md17}
+Generating coverage data 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{lcov\ -\/-\/capture\ -\/-\/directory\ .\ -\/-\/output-\/file\ coverage.info}
+
+\end{DoxyCode}
+
+
+Filter out system files 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{lcov\ -\/-\/remove\ coverage.info\ '/usr/*'\ '*/tests/*'\ '*/gtest/*'\ -\/-\/output-\/file\ coverage\_filtered.info}
+
+\end{DoxyCode}
+
+
+Generate HTML report\+: 
+\begin{DoxyCode}{0}
+\DoxyCodeLine{genhtml\ coverage\_filtered.info\ -\/-\/output-\/directory\ coverage\_report\ -\/-\/demangle-\/cpp}
+
+\end{DoxyCode}
+ \hypertarget{README.md_autotoc_md18}{}\doxysubsubsection{\texorpdfstring{Windows/\+Mac\+OS}{Windows/\+Mac\+OS}}\label{README.md_autotoc_md18}
+Idk. 

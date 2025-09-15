@@ -28,7 +28,7 @@ private:
     HardwareAbstraction *m_hardware = nullptr;
     Configuration *m_configuration = nullptr;
 
-    ConfigurationData<int32_t> *m_state = nullptr;
+    ConfigurationData<int32_t> m_state;
 };
 
 

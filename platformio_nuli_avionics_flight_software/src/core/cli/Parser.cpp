@@ -139,7 +139,7 @@ CLIReturnCode_e Parser::parse(char* input) {
 }
 
 char* Parser::getString(char* p, char target) const { // NOLINT(*-convert-member-functions-to-static)
-    while(*p && *p != target && *p != '\n') {
+    while(*p && *p != target && *p != '\n' && *p != '\r') {
         p++;
     }
 

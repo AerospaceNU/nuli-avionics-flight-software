@@ -47,7 +47,7 @@ float PoseEstimator::getPressurePa() const {
 }
 
 Vector3D_s PoseEstimator::getAccelerationMSS() const {
-    if (m_state->get() == DESCENT) {
+    if (m_state.get() == DESCENT) {
         return {0, 0, 0};
     }
 

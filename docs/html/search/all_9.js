@@ -1,5 +1,25 @@
 var searchData=
 [
-  ['logger_0',['Logger',['../classLogger.html',1,'']]],
-  ['looponce_1',['loopOnce',['../classAvionicsCore.html#a55b34aa872a06687c97179308335cf9f',1,'AvionicsCore::loopOnce()'],['../classRFM9xRadio.html#a29abd9c35e030f68da556234773b9228',1,'RFM9xRadio::loopOnce()'],['../classUSLI2025Payload.html#a3f60ccea139a11e0cba057327d25fba4',1,'USLI2025Payload::loopOnce()']]]
+  ['abbreviations_0',['Allowed Acronyms and Abbreviations',['../index.html#autotoc_md25',1,'']]],
+  ['accelerometer_1',['Accelerometer',['../classAccelerometer.html',1,'']]],
+  ['acronyms_20and_20abbreviations_2',['Allowed Acronyms and Abbreviations',['../index.html#autotoc_md25',1,'']]],
+  ['add_20flag_20list_20to_20parser_3',['4. Add flag list to Parser',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md9',1,'']]],
+  ['add_20flags_20to_20list_20of_20flags_4',['3. Add Flags to list of flags',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md8',1,'']]],
+  ['addflaggroup_5',['addFlagGroup',['../classParser.html#abe4ff3e3ab2bbe35be3053c3510d37f2',1,'Parser::addFlagGroup(BaseFlag *(&amp;flagGroup)[n])'],['../classParser.html#a767d754c7d139efbeaed6664b91c069a',1,'Parser::addFlagGroup(BaseFlag *(&amp;flagGroup)[n], int8_t uid)']]],
+  ['allowed_20acronyms_20and_20abbreviations_6',['Allowed Acronyms and Abbreviations',['../index.html#autotoc_md25',1,'']]],
+  ['allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_7',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['altitudekf_8',['AltitudeKf',['../classAltitudeKf.html',1,'']]],
+  ['and_20abbreviations_9',['Allowed Acronyms and Abbreviations',['../index.html#autotoc_md25',1,'']]],
+  ['and_20functions_10',['Structs, Enums, Typedefs and Functions',['../index.html#autotoc_md29',1,'']]],
+  ['aprsmodulation_11',['AprsModulation',['../classAprsModulation.html',1,'']]],
+  ['aprstransmitter_12',['AprsTransmitter',['../classAprsTransmitter.html',1,'']]],
+  ['arduinofram_13',['ArduinoFram',['../classArduinoFram.html',1,'']]],
+  ['arduinopyro_14',['ArduinoPyro',['../classArduinoPyro.html',1,'ArduinoPyro'],['../classArduinoPyro.html#ad2b6314479e5d28ae1a8fda0bcb32ca6',1,'ArduinoPyro::ArduinoPyro()']]],
+  ['arduinosystemclock_15',['ArduinoSystemClock',['../classArduinoSystemClock.html',1,'']]],
+  ['arduinovoltagesensor_16',['ArduinoVoltageSensor',['../classArduinoVoltageSensor.html',1,'']]],
+  ['argumentflag_17',['ArgumentFlag',['../classArgumentFlag.html',1,'ArgumentFlag&lt; T &gt;'],['../classArgumentFlag.html#af69b84d9d2b35113bd9a9bedd25da3ce',1,'ArgumentFlag::ArgumentFlag(const char *name, T defaultValue, const char *helpText, bool m_required, uint8_t uid, void(*callback)(const char *name, uint8_t *, uint32_t length, uint8_t, uint8_t, BaseFlag *dependency))'],['../classArgumentFlag.html#aff5b3ff0c8f9b34992d16c8079a68183',1,'ArgumentFlag::ArgumentFlag(const char *name, const char *helpText, bool m_required, uint8_t uid, void(*callback)(const char *name, uint8_t *, uint32_t length, uint8_t, uint8_t, BaseFlag *dependency))']]],
+  ['as_20string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_18',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['avionics_20flight_20software_19',['NULI Avionics Flight Software',['../index.html',1,'']]],
+  ['avionics_2eh_20',['Avionics.h',['../Avionics_8h.html',1,'']]],
+  ['avoid_20the_20following_3a_21',['AVOID THE FOLLOWING:',['../index.html#autotoc_md24',1,'']]]
 ];

@@ -24,7 +24,7 @@ private:
 
     bool hasLanded(const Pose_s& pose);
 
-    ConfigurationData<int32_t>* m_state = nullptr;
+    ConfigurationData<int32_t> m_state;
     Configuration* m_configuration = nullptr;
 
     uint32_t m_internalStateTransitionTimer = 0;

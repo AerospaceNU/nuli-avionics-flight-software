@@ -74,10 +74,8 @@ void Configuration::assignMemory() {
     }
 }
 
-void Configuration::readConfigFromMemory() {
+void Configuration::readConfigFromMemory() const {
     m_memory->read(0, m_dataBuffer, m_dataBufferIndex);
-
-
 }
 
 void Configuration::pushUpdatesToMemory() {

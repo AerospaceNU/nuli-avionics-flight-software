@@ -8,11 +8,11 @@ void StateDeterminer::setup(Configuration* configuration) {
     m_state = m_configuration->getConfigurable<STATE>();
     // @todo reboot detection
     // For now we assume that flight always is PRE_FLIGHT on boot
-    m_state->set(PRE_FLIGHT);
+    m_state.set(PRE_FLIGHT);
 }
 
 State_e StateDeterminer::loopOnce(const Pose_s& pose) {
-    switch (m_state->get()) {
+    switch (m_state.get()) {
     case PRE_FLIGHT: {
         /** @todo
          * Save a timestamp from GPS? nah this should probably be handeled elsewhere
@@ -22,21 +22,21 @@ State_e StateDeterminer::loopOnce(const Pose_s& pose) {
          */
 
         if (hasLaunched(pose)) {
-            m_state->set(ASCENT);
+            m_state.set(ASCENT);
             m_stateStartTime = pose.timestamp_ms;
         }
     }
 
     case ASCENT: {
         if (apogeeReached(pose)) {
-            m_state->set(DESCENT);
+            m_state.set(DESCENT);
             m_stateStartTime = pose.timestamp_ms;
         }
     }
 
     case DESCENT: {
         if (hasLanded(pose)) {
-            m_state->set(POST_FLIGHT);
+            m_state.set(POST_FLIGHT);
             m_stateStartTime = pose.timestamp_ms;
         }
     }
@@ -44,7 +44,7 @@ State_e StateDeterminer::loopOnce(const Pose_s& pose) {
     case POST_FLIGHT: {}
 
     default: {
-        m_state->set(PRE_FLIGHT);
+        m_state.set(PRE_FLIGHT);
         m_stateStartTime = pose.timestamp_ms;
     }
     }
@@ -100,7 +100,7 @@ bool StateDeterminer::hasLanded(const Pose_s& pose) {
 }
 
 State_e StateDeterminer::getState() const {
-    return State_e(m_state->get());
+    return State_e(m_state.get());
 }
 
 uint32_t StateDeterminer::getStateStartTime() const {

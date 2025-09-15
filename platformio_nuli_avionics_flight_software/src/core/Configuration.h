@@ -17,17 +17,27 @@ struct BaseConfigurationData_s {
 };
 
 template <typename T>
-struct ConfigurationData : private BaseConfigurationData_s {
-    const T& get() {
-        return *((T*)data);
+struct ConfigurationData {
+    BaseConfigurationData_s* base = nullptr; // pointer to the underlying data
+
+    ConfigurationData() = default;
+
+    // Constructor from BaseConfigurationData_s*
+    explicit ConfigurationData(BaseConfigurationData_s* b) : base(b) {}
+
+    T get() const {
+        if (!base || !base->data) return T{}; // default-constructed T
+        return *reinterpret_cast<const T*>(base->data);
     }
 
     void set(const T& newVal) {
-        *((T*)data) = newVal;
-        m_isUpdated = true;
+        if (!base || !base->data) return;
+        *reinterpret_cast<T*>(base->data) = newVal;
+        base->m_isUpdated = true;
     }
-};
 
+    bool isValid() const { return base != nullptr; }
+};
 
 class Configuration {
 public:
@@ -43,12 +53,40 @@ public:
         construct(allConfigs, N);
     }
 
-    void setup(HardwareAbstraction *hardware, uint8_t id);
+    void setup(HardwareAbstraction* hardware, uint8_t id);
 
     template <unsigned N>
-    ConfigurationData<typename GetConfigurationType_s<N>::type>* getConfigurable() {
-        return (ConfigurationData<typename GetConfigurationType_s<N>::type>*)getBaseConfigurationData(ConfigurationID_e(N));
+    ConfigurationData<typename GetConfigurationType_s<N>::type> getConfigurable() {
+        using T = typename GetConfigurationType_s<N>::type;
+        const ConfigurationID_e id = ConfigurationID_e(N);
+        BaseConfigurationData_s* base = configExists(id) ? getBaseConfigurationData(id) : nullptr;
+        return ConfigurationData<T>(base);
     }
+
+    // template <typename T>
+    // ConfigurationData<T> getConfigurableByName(const char* str) {
+    //     const ConfigurationID_e id = getConfigurationID(str);
+    //     BaseConfigurationData_s* base = (id != NONE && configExists(id)) ? getBaseConfigurationData(id) : nullptr;
+    //
+    //     if (base && base->data && base->size == sizeof(T)) {
+    //         return ConfigurationData<T>(base);
+    //     }
+    //
+    //     // fail-safe: return invalid ConfigurationData
+    //     return ConfigurationData<T>(nullptr);
+    // }
+    //
+    // template <typename T>
+    // ConfigurationData<T> getConfigurableByID(const ConfigurationID_e id) {
+    //     BaseConfigurationData_s* base = (id != NONE && configExists(id)) ? getBaseConfigurationData(id) : nullptr;
+    //
+    //     if (base && base->data && base->size == sizeof(T)) {
+    //         return ConfigurationData<T>(base);
+    //     }
+    //
+    //     // fail-safe
+    //     return ConfigurationData<T>(nullptr);
+    // }
 
     void pushUpdatesToMemory();
 
@@ -74,7 +112,7 @@ private:
 
     void construct(const ConfigurationIDSet_s* allConfigs, uint16_t allConfigsLength);
 
-    void readConfigFromMemory();
+    void readConfigFromMemory() const;
 
     bool configExists(ConfigurationID_e name) const;
 

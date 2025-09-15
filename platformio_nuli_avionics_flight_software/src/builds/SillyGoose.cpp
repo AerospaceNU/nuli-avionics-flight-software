@@ -46,8 +46,8 @@ Configuration configuration({
         Configuration::REQUIRED_CONFIGS,
         StateDeterminer::REQUIRED_CONFIGS
     });
-ConfigurationData<float>* mainElevation;
-ConfigurationData<uint32_t>* drogueDelay;
+ConfigurationData<float> mainElevation;
+ConfigurationData<uint32_t> drogueDelay;
 
 // Define Callbacks //
 void callback_none(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
@@ -83,62 +83,49 @@ void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t
     }
 }
 
-void callback_mainAltitude(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                           BaseFlag* dependency) {
-    if (length >= sizeof(float)) {
-        // Extract the float value from the data buffer
-        float value = 0.0f;
-        memcpy(&value, data, sizeof(float));
 
-        mainElevation->set(value);
-
-        Serial.print("MAIN_ELEVATION has been set to: ");
-        Serial.println(mainElevation->get());
-    } else {
-        Serial.println("Error: Insufficient data for float type\n");
-    }
-}
-
-void callback_drogueDelay(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                          BaseFlag* dependency) {
-    if (length >= sizeof(uint32_t)) {
-        // Extract the float value from the data buffer
-        uint32_t value = 0;
-        memcpy(&value, data, sizeof(uint32_t));
-
-        drogueDelay->set(value);
-
-        Serial.print("DROGUE_DELAY has been set to: ");
-        Serial.println(drogueDelay->get());
-    } else {
-        Serial.print("Error");
-    }
-}
-
-void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                     BaseFlag* dependency) {
-    Serial.print("DROGUE_DELAY is: ");
-    Serial.println(drogueDelay->get());
-    Serial.print("MAIN_ELEVATION is: ");
-    Serial.println(mainElevation->get());
-}
+void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
 
 // Define flags //
 SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase);
 SimpleFlag offload("--offload", "Send start", true, DEFAULT_FLAT_UID, callback_offload);
 SimpleFlag offload_binary("-b", "binary", false, DEFAULT_FLAT_UID, callback_none);
 ArgumentFlag<int> testfire("--testfire", "Send start", true, DEFAULT_FLAT_UID, callback_testfire);
-ArgumentFlag<float> mainAltitudeFlag("--mainElevation", "Send start", true, DEFAULT_FLAT_UID, callback_mainAltitude);
-ArgumentFlag<uint32_t> drogueDelayFlag("--drogueDelay", "Send start", true, DEFAULT_FLAT_UID, callback_drogueDelay);
 SimpleFlag configFlag("--config", "Send start", true, DEFAULT_FLAT_UID, callback_config);
+ArgumentFlag<float> mainAltitudeFlagNew("-m", "Send start", false, DEFAULT_FLAT_UID, callback_none);
+ArgumentFlag<float> drogueDelayFlagNew("-d", "Send start", false, DEFAULT_FLAT_UID, callback_none);
 
+void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
+    if (mainAltitudeFlagNew.isSet()) {
+        mainElevation.set(mainAltitudeFlagNew.getValueDerived());
+        Serial.print("MAIN_ELEVATION has been set to: ");
+        Serial.print(mainElevation.get());
+        Serial.println(" m");
+
+    } else {
+        Serial.print("MAIN_ELEVATION is: ");
+        Serial.print(mainElevation.get());
+        Serial.println(" m");
+
+    }
+
+    if (drogueDelayFlagNew.isSet()) {
+        const float timeMs = drogueDelayFlagNew.getValueDerived() * 1000;
+        drogueDelay.set(uint32_t(timeMs));
+        Serial.print("DROGUE_DELAY has been set to: ");
+        Serial.print(drogueDelay.get());
+        Serial.println(" ms");
+    } else {
+        Serial.print("DROGUE_DELAY is: ");
+        Serial.print(drogueDelay.get());
+        Serial.println(" ms");
+    }
+}
 
 BaseFlag* eraseGroup[] = {&erase};
 BaseFlag* offloadGroup[] = {&offload, &offload_binary};
 BaseFlag* testfireGroup[] = {&testfire};
-BaseFlag* mainAltitudeGroup[] = {&mainAltitudeFlag};
-BaseFlag* drogueDelayGroup[] = {&drogueDelayFlag};
-BaseFlag* configGroup[] = {&configFlag};
+BaseFlag* configGroup[] = {&configFlag, &drogueDelayFlagNew, &mainAltitudeFlagNew};
 
 void runIndicators() {
     for (int i = 0; i < hardware.getNumIndicators(); i++) {
@@ -159,12 +146,15 @@ void runCli() {
         serialRead[serialReadIndex++] = c;
         Serial.print(c);
         if (c == '\n') {
-            serialRead[serialReadIndex++] = '\0';
-            if (cliParser.parse(serialRead) == 0) {
+            serialRead[serialReadIndex] = '\0';
+            const int errorCode = cliParser.parse(serialRead);
+            if (errorCode == 0) {
                 cliParser.runFlags();
                 cliParser.resetFlags();
             } else {
                 Serial.print("Invalid message: ");
+                Serial.print(errorCode);
+                Serial.print(", ");
                 Serial.println(serialRead);
             }
             serialReadIndex = 0;
@@ -185,6 +175,9 @@ void setup() {
     Serial.begin(9600);
     // while (!Serial);
     Serial.println("Starting");
+    Serial.println(getConfigurationName(CONFIGURATION_VERSION));
+    Serial.println(getConfigurationID("CONFIGURATION_VERSION"));
+
     // System
     hardware.setLoopRateHz(100);
     hardware.setDebugStream(&serialDebug);
@@ -212,14 +205,12 @@ void setup() {
     cliParser.addFlagGroup(eraseGroup);
     cliParser.addFlagGroup(offloadGroup);
     cliParser.addFlagGroup(testfireGroup);
-    cliParser.addFlagGroup(mainAltitudeGroup);
-    cliParser.addFlagGroup(drogueDelayGroup);
     cliParser.addFlagGroup(configGroup);
 
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION>();
-    batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR>()->get());
+    batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR>().get());
 
     led.setOutputPercent(6.0);
 }
@@ -235,11 +226,11 @@ void loop() {
     case PRE_FLIGHT:
         runCli();
     case DESCENT: // @todo turn off pyros after some time
-        if (pose.timestamp_ms - stateDeterminer.getStateStartTime() > drogueDelay->get()) {
+        if (pose.timestamp_ms - stateDeterminer.getStateStartTime() > drogueDelay.get()) {
             droguePyro.fire();
         }
 
-        if (pose.position.z < mainElevation->get()) {
+        if (pose.position.z < mainElevation.get()) {
             mainPyro.fire();
         }
     case POST_FLIGHT:
