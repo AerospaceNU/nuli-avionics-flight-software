@@ -14,9 +14,10 @@ var searchData=
   ['m_5ftemperaturek_11',['m_temperatureK',['../classAccelerometer.html#abf7ecea12e18ff7251117da535ea2a5e',1,'Accelerometer::m_temperatureK'],['../classBarometer.html#afa5e2a1030d50c1948424856e3dda506',1,'Barometer::m_temperatureK'],['../classGyroscope.html#a0b5a755c5de9abe087fa615df73a44d0',1,'Gyroscope::m_temperatureK'],['../classMagnetometer.html#a15a8d17c386e0bf5deb15f96ddb9d36b',1,'Magnetometer::m_temperatureK']]],
   ['m_5fvelocitiesrads_12',['m_velocitiesRadS',['../classGyroscope.html#afe6003bb25f78698360f876b47579780',1,'Gyroscope']]],
   ['macos_13',['Windows/MacOS',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md18',1,'']]],
-  ['macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_14',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['magnetometer_15',['Magnetometer',['../classMagnetometer.html',1,'']]],
-  ['method_20names_16',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['ms5607sensor_17',['MS5607Sensor',['../classMS5607Sensor.html',1,'']]],
-  ['ms8607sensor_18',['MS8607Sensor',['../classMS8607Sensor.html',1,'']]]
+  ['macos_20linux_14',['MacOS / Linux',['../index.html#autotoc_md26',1,'']]],
+  ['macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_15',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['magnetometer_16',['Magnetometer',['../classMagnetometer.html',1,'']]],
+  ['method_20names_17',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['ms5607sensor_18',['MS5607Sensor',['../classMS5607Sensor.html',1,'']]],
+  ['ms8607sensor_19',['MS8607Sensor',['../classMS8607Sensor.html',1,'']]]
 ];

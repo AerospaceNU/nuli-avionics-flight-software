@@ -20,7 +20,9 @@ var searchData=
   ['getvaluederived_17',['getValueDerived',['../classArgumentFlag.html#a7076395e354ca76c45eaea691b3c9944',1,'ArgumentFlag::getValueDerived()'],['../classSimpleFlag.html#a9fb7461a81fd9d8fe4fc334d12e4019e',1,'SimpleFlag::getValueDerived()']]],
   ['getvalueraw_18',['getValueRaw',['../classArgumentFlag.html#a942d105920a99bb97a2fa07f1e958323',1,'ArgumentFlag::getValueRaw()'],['../classBaseFlag.html#aaca151687e86f1bc9712297ec4912b6a',1,'BaseFlag::getValueRaw()'],['../classSimpleFlag.html#a23755cc42b2f5a561c657e6d519227f8',1,'SimpleFlag::getValueRaw()']]],
   ['getvelocitiesrads_19',['getVelocitiesRadS',['../classGyroscope.html#aaa2f286f20293bf921a7cc33a3d472dc',1,'Gyroscope']]],
-  ['gps_20',['GPS',['../classGPS.html',1,'']]],
-  ['guide_21',['Guide',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md0',1,'Command-Line Interface User Guide'],['../index.html#autotoc_md22',1,'Formating Guide']]],
-  ['gyroscope_22',['Gyroscope',['../classGyroscope.html',1,'']]]
+  ['git_20github_20',['1. Git/GitHub',['../index.html#autotoc_md22',1,'']]],
+  ['github_21',['1. Git/GitHub',['../index.html#autotoc_md22',1,'']]],
+  ['gps_22',['GPS',['../classGPS.html',1,'']]],
+  ['guide_23',['Guide',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md0',1,'Command-Line Interface User Guide'],['../index.html#autotoc_md31',1,'Formating Guide']]],
+  ['gyroscope_24',['Gyroscope',['../classGyroscope.html',1,'']]]
 ];

@@ -28,15 +28,16 @@ set(CMAKE_CXX_STANDARD 20)
 # ========Doxygen Build Configuration========
 option(BUILD_DOC "Build documentation" ON)
 find_package(Doxygen)
-if (BUILD_DOC AND DOXYGEN_FOUND)
+find_program(DOT_EXECUTABLE dot)
+if (BUILD_DOC AND DOXYGEN_FOUND AND DOT_EXECUTABLE)
     add_custom_target(create_doxygen ALL
             COMMAND ${DOXYGEN_EXECUTABLE} Doxyfile
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs/
             COMMENT "Generating API documentation with Doxygen"
             VERBATIM)
-else (BUILD_DOC AND DOXYGEN_FOUND)
+else (BUILD_DOC)
     message("Doxygen need to be installed to generate the doxygen documentation")
-endif (BUILD_DOC AND DOXYGEN_FOUND)
+endif ()
 
 
 

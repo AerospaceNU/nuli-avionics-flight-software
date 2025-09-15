@@ -2,7 +2,7 @@ var searchData=
 [
   ['latitude_0',['latitude',['../structCoordinates__s.html#af47239e5203a3f568c090616e993d8f5',1,'Coordinates_s']]],
   ['line_20interface_20user_20guide_1',['Command-Line Interface User Guide',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md0',1,'']]],
-  ['linux_2',['Linux',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md16',1,'']]],
+  ['linux_2',['Linux',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md16',1,'Linux'],['../index.html#autotoc_md26',1,'MacOS / Linux']]],
   ['list_3',['Todo List',['../todo.html',1,'']]],
   ['list_20of_20flags_4',['3. Add Flags to list of flags',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md8',1,'']]],
   ['list_20to_20parser_5',['4. Add flag list to Parser',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md9',1,'']]],
