@@ -36,7 +36,7 @@ void Logger::setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t 
         m_flash->read(m_logWriteAddress, logDataBuffer, sizeof(logDataBuffer));
         foundEmptyPacket = true;
         for (unsigned int i = 0; i < sizeof(logDataBuffer); ++i) {
-            if (logDataBuffer[i] != 0xFF) {         // @todo make more robust
+            if (logDataBuffer[i] != 0xFF) { // @todo make more robust
                 foundEmptyPacket = false;
                 break;
             }
@@ -54,8 +54,7 @@ void Logger::log() {
     logData.baroAltitudeM = 0;
     logData.baroPressurePa = m_hardware->getBarometer(0)->getPressurePa();
     logData.baroTemperatureK = m_hardware->getBarometer(0)->getTemperatureK();
-    logData.timestamp = m_hardware->getLoopTimestampMs();
-
+    logData.timestamp = m_hardware->getTimestamp().runtime_ms;
 
     Vector3D_s accelerationsMss = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
     Vector3D_s velocitiesRadS = m_hardware->getGyroscope(0)->getVelocitiesRadS();
@@ -68,12 +67,12 @@ void Logger::log() {
     logData.vz = velocitiesRadS.z;
     logData.batt = m_hardware->getVoltageSensor(0)->getVoltage();
 
-    m_flash->write(m_logWriteAddress, (uint8_t*) &logData, sizeof(logData), true);
+    m_flash->write(m_logWriteAddress, (uint8_t*)&logData, sizeof(logData), true);
     m_logWriteAddress += sizeof(logData);
 }
 
 uint32_t Logger::offloadData(const uint32_t readAddress, uint8_t* buffer, const uint32_t length) const {
-    const uint32_t readLength = min(length, max((unsigned int) 0, m_logWriteAddress - readAddress));
+    const uint32_t readLength = min(length, max((unsigned int)0, m_logWriteAddress - readAddress));
     m_flash->read(readAddress, buffer, length);
     return readLength;
 }

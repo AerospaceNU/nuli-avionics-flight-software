@@ -50,29 +50,47 @@ struct Vector3D_s {
  * @brief Geographic coordinates with latitude and longitude
  */
 struct Coordinates_s {
-    float latitude; ///< Latitude
-    float longitude; ///< Longitude
+    float latitudeDeg; ///< Latitude
+    float longitudeDeg; ///< Longitude
+    float altitudeM;
 };
 
-struct Pose_s {
-    uint32_t timestamp_ms;
-    Coordinates_s coordinates;
-    Vector3D_s position;
-    Vector3D_s velocity;
-    Vector3D_s acceleration;
-    Vector3D_s orientation;
-    Vector3D_s angularVelocity;
-    float angle_vertical;
+struct Timestamp_s {
+    uint32_t runtime_ms;
+    uint32_t dt_ms;
 };
 
-enum State_e {
+enum FlightState_e {
     PRE_FLIGHT,
     ASCENT,
     DESCENT,
     POST_FLIGHT,
 };
 
-// This can be added in a struct definition to ensure the compiler doen't add any padding bytes between variables
+struct State1D_s {
+    float altitudeM;
+    float velocityMS;
+    float accelerationMSS;
+};
+
+struct State6D_s {
+    Vector3D_s position;
+    Vector3D_s velocity;
+    Vector3D_s acceleration;
+    Vector3D_s orientation;
+    Vector3D_s angularVelocity;
+};
+
+struct RocketState_s {
+    Timestamp_s timestamp;
+    Coordinates_s rawGps;
+    FlightState_e flightState;
+    State1D_s state1D;
+    State6D_s state6D;
+};
+
+
+// This can be added in a struct definition to ensure the compiler doesn't add any padding bytes between variables
 #define remove_struct_padding __attribute__((packed))
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

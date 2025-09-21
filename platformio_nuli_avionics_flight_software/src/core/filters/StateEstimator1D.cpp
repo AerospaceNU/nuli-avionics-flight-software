@@ -1,34 +1,34 @@
-#include "PoseEstimator.h"
+#include "StateEstimator1D.h"
 
 #include "../../ConstantsUnits.h"
 #include "core/generic_hardware/Accelerometer.h"
 #include "core/generic_hardware/Barometer.h"
 
-constexpr ConfigurationID_e PoseEstimator::REQUIRED_CONFIGS[];
+constexpr ConfigurationID_e StateEstimator1D::REQUIRED_CONFIGS[];
 
-void PoseEstimator::setup(HardwareAbstraction* hardware, Configuration* configuration) {
+void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
     m_configuration = configuration;
-    m_state = m_configuration->getConfigurable<STATE>();
+    m_flightState = m_configuration->getConfigurable<FLIGHT_STATE>();
 }
 
-Pose_s PoseEstimator::loopOnce() {
+State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp) {
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
-    // float pressurePa = getPressurePa();
-    // Vector3D_s accelerationMSS = getAccelerationMSS();
+    const float pressurePa = getPressurePa();
+    const Vector3D_s accelerationMSS = getAccelerationMSS();
 
     // Transform to global frame
 
+    m_currentState1D.altitudeM = pressurePa;
 
-    m_currentPose.timestamp_ms = m_hardware->getLoopTimestampMs();
-    return m_currentPose;
+    return m_currentState1D;
 }
 
-Pose_s PoseEstimator::getPose() const {
-    return m_currentPose;
+State1D_s StateEstimator1D::getState1D() const {
+    return m_currentState1D;
 }
 
-float PoseEstimator::getPressurePa() const {
+float StateEstimator1D::getPressurePa() const {
     float pressurePa = 0;
     int32_t count = 0;
     for (int32_t i = 0; i < m_hardware->getNumBarometers(); i++) {
@@ -46,8 +46,8 @@ float PoseEstimator::getPressurePa() const {
     return pressurePa / float(count);
 }
 
-Vector3D_s PoseEstimator::getAccelerationMSS() const {
-    if (m_state.get() == DESCENT) {
+Vector3D_s StateEstimator1D::getAccelerationMSS() const {
+    if (m_flightState.get() == DESCENT) {
         return {0, 0, 0};
     }
 
@@ -59,7 +59,7 @@ Vector3D_s PoseEstimator::getAccelerationMSS() const {
     return {};
 }
 
-float PoseEstimator::calculateAltitudeM(const float pressurePa) {
+float StateEstimator1D::calculateAltitudeM(const float pressurePa) {
     return (286.0 / Constants::LAPSE_RATE_K_M) *
         (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
 }

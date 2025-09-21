@@ -73,3 +73,10 @@ uint32_t HardwareAbstraction::getLoopDtMs() const {
 uint32_t HardwareAbstraction::getLoopTimestampMs() const {
     return m_currentLoopTimestampMs;
 }
+
+Timestamp_s HardwareAbstraction::getTimestamp() const {
+    Timestamp_s timestamp{};
+    timestamp.runtime_ms = getLoopTimestampMs();
+    timestamp.dt_ms = getLoopDtMs();
+    return timestamp;
+}

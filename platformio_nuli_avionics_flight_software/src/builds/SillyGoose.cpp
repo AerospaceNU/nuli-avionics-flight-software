@@ -16,8 +16,8 @@
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
 #include "core/cli/Parser.h"
-#include "core/StateDeterminer.h"
-#include "core/filters/PoseEstimator.h"
+#include "core/FlightStateDeterminer.h"
+#include "core/filters/StateEstimator1D.h"
 #include "core/Logger.h"
 
 #define DEFAULT_FLAT_UID 255
@@ -36,15 +36,15 @@ IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
 
 HardwareAbstraction hardware;
-StateDeterminer stateDeterminer;
-PoseEstimator poseEstimator;
+FlightStateDeterminer flightStateDeterminer;
+StateEstimator1D stateEstimator1D;
 Parser cliParser;
 
 ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR};
 Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
-        StateDeterminer::REQUIRED_CONFIGS
+        FlightStateDeterminer::REQUIRED_CONFIGS
     });
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
@@ -101,12 +101,10 @@ void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t g
         Serial.print("MAIN_ELEVATION has been set to: ");
         Serial.print(mainElevation.get());
         Serial.println(" m");
-
     } else {
         Serial.print("MAIN_ELEVATION is: ");
         Serial.print(mainElevation.get());
         Serial.println(" m");
-
     }
 
     if (drogueDelayFlagNew.isSet()) {
@@ -129,7 +127,7 @@ BaseFlag* configGroup[] = {&configFlag, &drogueDelayFlagNew, &mainAltitudeFlagNe
 
 void runIndicators() {
     for (int i = 0; i < hardware.getNumIndicators(); i++) {
-        if ((hardware.getLoopTimestampMs() / 200) % 2 == 0) {
+        if ((hardware.getTimestamp().runtime_ms / 200) % 2 == 0) {
             hardware.getIndicator(i)->on();
         } else {
             hardware.getIndicator(i)->off();
@@ -197,8 +195,8 @@ void setup() {
     // Setup components
     hardware.setup();
     configuration.setup(&hardware, framID);
-    poseEstimator.setup(&hardware, &configuration);
-    stateDeterminer.setup(&configuration);
+    stateEstimator1D.setup(&hardware, &configuration);
+    flightStateDeterminer.setup(&configuration);
 
     // setup dependency
     offload.setDependency(&offload_binary);
@@ -219,18 +217,22 @@ void loop() {
     hardware.enforceLoopTime();
     hardware.readSensors();
 
-    const Pose_s pose = poseEstimator.loopOnce();
-    const State_e state = stateDeterminer.loopOnce(pose);
+    RocketState_s state{};
+    state.timestamp = hardware.getTimestamp();
+    state.state1D = stateEstimator1D.loopOnce(state.timestamp);
+    state.flightState = flightStateDeterminer.loopOnce(state.state1D, state.timestamp);
+    state.state6D = State6D_s(); // Not implemented
+    state.rawGps = Coordinates_s(); // Not implemented
 
-    switch (state) {
+    switch (state.flightState) {
     case PRE_FLIGHT:
         runCli();
     case DESCENT: // @todo turn off pyros after some time
-        if (pose.timestamp_ms - stateDeterminer.getStateStartTime() > drogueDelay.get()) {
+        if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get()) {
             droguePyro.fire();
         }
 
-        if (pose.position.z < mainElevation.get()) {
+        if (state.state1D.altitudeM < mainElevation.get()) {
             mainPyro.fire();
         }
     case POST_FLIGHT:
