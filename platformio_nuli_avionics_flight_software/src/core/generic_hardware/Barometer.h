@@ -49,30 +49,34 @@ public:
         return m_pressurePa;
     }
 
-protected:
-    // /**
-    //  * @brief Calculates the altitude from pressure and temperature
-    //  * @details Specific algorithm used??????
-    //  */
-    //
-    // /**
-    //  * @brief Calculates the absolute humidity in g/m^3 from relative humidity and temperature
-    //  * @details Used the Clausius–Clapeyron for the calculation of saturation vapour pressure. And
-    //  */
-    // void calculateAbsoluteHumidity() {
-    //     // @todo use a constant for conversion to and from kelvin
-    //     // https://www.omnicalculator.com/physics/absolute-humidity
-    //     // comes from https://en.wikipedia.org/wiki/Clausius%E2%80%93Clapeyron_relation#Meteorology_and_climatology
-    //     // direct source https://digital.library.unt.edu/ark:/67531/metadc693874/m1/15/ (eq. 25)
-    //     // this is also an approximation
-    //
-    //     const double saturationVapourPressure = 6.1094 * exp((17.625 * (m_temperatureK - Units::C_TO_K)) / ((m_temperatureK - Units::C_TO_K) + 243.04)); // in hPa
-    //     // equation can be seen from here (re-arrange RH) http://www.atmo.arizona.edu/students/courselinks/fall12/atmo336/lectures/sec1/humidity.html
-    //     const double vapourPressure = (m_humidityPercent / 100) * saturationVapourPressure;
-    //
-    //     m_absoluteHumidity = (216.7 * (vapourPressure)) / m_temperatureK;
-    // }
+    /**
+    * @brief Calculates the altitude from pressure and temperature
+    * @details Specific algorithm used??????
+    */
+    static float calculateAltitudeM(const float pressurePa) {
+        return (286.0f / Constants::LAPSE_RATE_K_M) *
+            (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+    }
 
+    /**
+     * @brief Calculates the absolute humidity in g/m^3 from relative humidity and temperature
+     * @details Used the Clausius–Clapeyron for the calculation of saturation vapour pressure. And
+     */
+    static float calculateAbsoluteHumidity(const float temperatureK, const float humidityPercent) {
+        // @todo use a constant for conversion to and from kelvin
+        // https://www.omnicalculator.com/physics/absolute-humidity
+        // comes from https://en.wikipedia.org/wiki/Clausius%E2%80%93Clapeyron_relation#Meteorology_and_climatology
+        // direct source https://digital.library.unt.edu/ark:/67531/metadc693874/m1/15/ (eq. 25)
+        // this is also an approximation
+
+        const float saturationVapourPressure = 6.1094f * exp((17.625f * (temperatureK - Units::C_TO_K)) / ((temperatureK - Units::C_TO_K) + 243.04f)); // in hPa
+        // equation can be seen from here (re-arrange RH) http://www.atmo.arizona.edu/students/courselinks/fall12/atmo336/lectures/sec1/humidity.html
+        const float vapourPressure = (humidityPercent / 100) * saturationVapourPressure;
+
+        return (216.7f * (vapourPressure)) / temperatureK;
+    }
+
+protected:
     float m_temperatureK = 0; ///<The measured temperature
     float m_humidityPercent = 0; ///< The measured humidity (%rh)
     float m_pressurePa = 0; ///< The measured pressure

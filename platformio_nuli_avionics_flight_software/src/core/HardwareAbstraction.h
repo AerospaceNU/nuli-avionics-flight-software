@@ -75,6 +75,8 @@ public:
 
     Timestamp_s getTimestamp() const;
 
+    uint32_t getTargetLoopTimeMs() const;
+
     GENERATE_GET_SET_METHODS_MACRO(SystemClock, m_systemClock)
 
     GENERATE_GET_SET_METHODS_MACRO(DebugStream, m_debugStream)

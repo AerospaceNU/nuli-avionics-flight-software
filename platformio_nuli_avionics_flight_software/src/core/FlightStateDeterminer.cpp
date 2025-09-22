@@ -76,6 +76,7 @@ bool FlightStateDeterminer::hasLaunched(const State1D_s& state1D, const Timestam
 }
 
 bool FlightStateDeterminer::apogeeReached(const State1D_s& state1D, const Timestamp_s& timestamp) {
+    // @todo perhaps add a altitude below max seen check
     if (state1D.velocityMS < 0) { // If we are going down
         if (timestamp.runtime_ms - m_internalStateTransitionTimer > APOGEE_DEBOUNCE_TIMER_MS) {
             m_internalStateTransitionTimer = timestamp.runtime_ms;

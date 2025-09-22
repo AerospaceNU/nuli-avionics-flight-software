@@ -50,26 +50,26 @@ void Logger::setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t 
     Serial.println(m_logWriteAddress);
 }
 
-void Logger::log() {
-    logData.baroAltitudeM = 0;
-    logData.baroPressurePa = m_hardware->getBarometer(0)->getPressurePa();
-    logData.baroTemperatureK = m_hardware->getBarometer(0)->getTemperatureK();
-    logData.timestamp = m_hardware->getTimestamp().runtime_ms;
-
-    Vector3D_s accelerationsMss = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
-    Vector3D_s velocitiesRadS = m_hardware->getGyroscope(0)->getVelocitiesRadS();
-
-    logData.ax = accelerationsMss.x;
-    logData.ay = accelerationsMss.y;
-    logData.az = accelerationsMss.z;
-    logData.vx = velocitiesRadS.x;
-    logData.vy = velocitiesRadS.y;
-    logData.vz = velocitiesRadS.z;
-    logData.batt = m_hardware->getVoltageSensor(0)->getVoltage();
-
-    m_flash->write(m_logWriteAddress, (uint8_t*)&logData, sizeof(logData), true);
-    m_logWriteAddress += sizeof(logData);
-}
+// void Logger::log() {
+//     logData.baroAltitudeM = 0;
+//     logData.baroPressurePa = m_hardware->getBarometer(0)->getPressurePa();
+//     logData.baroTemperatureK = m_hardware->getBarometer(0)->getTemperatureK();
+//     logData.timestamp = m_hardware->getTimestamp().runtime_ms;
+//
+//     Vector3D_s accelerationsMss = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
+//     Vector3D_s velocitiesRadS = m_hardware->getGyroscope(0)->getVelocitiesRadS();
+//
+//     logData.ax = accelerationsMss.x;
+//     logData.ay = accelerationsMss.y;
+//     logData.az = accelerationsMss.z;
+//     logData.vx = velocitiesRadS.x;
+//     logData.vy = velocitiesRadS.y;
+//     logData.vz = velocitiesRadS.z;
+//     logData.batt = m_hardware->getVoltageSensor(0)->getVoltage();
+//
+//     m_flash->write(m_logWriteAddress, (uint8_t*)&logData, sizeof(logData), true);
+//     m_logWriteAddress += sizeof(logData);
+// }
 
 uint32_t Logger::offloadData(const uint32_t readAddress, uint8_t* buffer, const uint32_t length) const {
     const uint32_t readLength = min(length, max((unsigned int)0, m_logWriteAddress - readAddress));

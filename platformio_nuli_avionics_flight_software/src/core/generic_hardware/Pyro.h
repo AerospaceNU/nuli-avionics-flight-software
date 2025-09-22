@@ -29,17 +29,25 @@ public:
      */
     virtual bool hasContinuity() const { return false; }
 
+
+    /**
+     * @brief Returns if the channel is currently fired
+     * @return If fired
+     */
+    virtual bool isFired() const { return false; }
+
+
     /**
      * @brief Fires the pyro channel
      * @details Writes the fireDrogue pin high
      */
-    virtual void fire() const {}
+    virtual void fire() {}
 
     /**
      * @brief Disables they pyro channel
      * @details Writes the fireDrogue pin low
      */
-    virtual void disable() const {}
+    virtual void disable() {}
 
     virtual int rawAdcValue() const { return 0; };
 

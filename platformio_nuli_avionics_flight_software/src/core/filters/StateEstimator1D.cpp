@@ -10,16 +10,31 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_hardware = hardware;
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE>();
+
+    kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
+    kalmanFilter.setAccelerometerCovariance(1);
 }
 
 State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp) {
+
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     const float pressurePa = getPressurePa();
-    const Vector3D_s accelerationMSS = getAccelerationMSS();
+    const float altitudeM = Barometer::calculateAltitudeM(pressurePa);
+    const float accelerationMSS = getAccelerationMSS();
 
-    // Transform to global frame
+    // double gainMultiplier = map(
+    //       clamp(kalman.getXhat().estimatedVelocity, 250, 350), 250, 350, 1, 0.3);
+    // double kalmanGain[] = {kalman.DEFAULT_KALMAN_GAIN[0] * gainMultiplier,
+    //                        kalman.DEFAULT_KALMAN_GAIN[1] * gainMultiplier};
+    // kalmanFilter.setBarometerCovariance(0.05);
+    // kalmanFilter.setPitoCovariance(0.05);
 
-    m_currentState1D.altitudeM = pressurePa;
+    kalmanFilter.predict();
+    kalmanFilter.altitudeAndAccelerationDataUpdate(altitudeM, accelerationMSS);
+
+    m_currentState1D.altitudeM = kalmanFilter.getAltitude();
+    m_currentState1D.velocityMS = kalmanFilter.getVelocity();
+    m_currentState1D.accelerationMSS = kalmanFilter.getAcceleration();
 
     return m_currentState1D;
 }
@@ -46,20 +61,15 @@ float StateEstimator1D::getPressurePa() const {
     return pressurePa / float(count);
 }
 
-Vector3D_s StateEstimator1D::getAccelerationMSS() const {
+float StateEstimator1D::getAccelerationMSS() const {
     if (m_flightState.get() == DESCENT) {
-        return {0, 0, 0};
+        return 0;
     }
 
-    // for (int32_t i = 0; i < m_hardware->getNumAccelerometers(); i++) {
-    //     Barometer* barometer = m_hardware->getBarometer(i);
-    // }
+    // @todo, full scale switching, bad reading detection, and coordinate transforms
+    if (m_hardware->getNumAccelerometers() > 0) {
+        return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().x - float(Constants::G_EARTH_MSS);
+    }
 
-
-    return {};
-}
-
-float StateEstimator1D::calculateAltitudeM(const float pressurePa) {
-    return (286.0 / Constants::LAPSE_RATE_K_M) *
-        (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+    return 0;
 }

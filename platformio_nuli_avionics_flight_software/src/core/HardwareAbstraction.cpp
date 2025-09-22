@@ -80,3 +80,8 @@ Timestamp_s HardwareAbstraction::getTimestamp() const {
     timestamp.dt_ms = getLoopDtMs();
     return timestamp;
 }
+
+uint32_t HardwareAbstraction::getTargetLoopTimeMs() const {
+    return m_loopTime;
+}
+

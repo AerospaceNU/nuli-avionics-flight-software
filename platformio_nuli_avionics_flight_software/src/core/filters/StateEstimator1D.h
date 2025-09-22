@@ -4,12 +4,12 @@
 #include "Avionics.h"
 #include "core/HardwareAbstraction.h"
 #include "core/Configuration.h"
+#include "altitude_kf.h"
 
 
 class StateEstimator1D {
 public:
     constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE};
-
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
@@ -20,15 +20,15 @@ public:
 private:
     float getPressurePa() const;
 
-    Vector3D_s getAccelerationMSS() const;
-
-    static float calculateAltitudeM(float pressurePa);
+    float getAccelerationMSS() const;
 
     State1D_s m_currentState1D = {};
     HardwareAbstraction* m_hardware = nullptr;
     Configuration* m_configuration = nullptr;
 
     ConfigurationData<int32_t> m_flightState;
+
+    AltitudeKf kalmanFilter;
 };
 
 

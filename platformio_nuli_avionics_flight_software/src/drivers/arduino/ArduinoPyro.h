@@ -42,20 +42,23 @@ public:
      * @brief Fires the pyro channel
      * @details Writes the fireDrogue pin high
      */
-    void fire() const override;
+    void fire() override;
     /**
      * @brief Disables they pyro channel
      * @details Writes the fireDrogue pin low
      */
-    void disable() const override;
+    void disable() override;
 
 
     int rawAdcValue() const override;
+
+    bool isFired() const override;
 
 
     static constexpr int32_t USE_DIGITAL_CONTINUITY = -1;           ///< Flag value for the analog threshold to allow for continuity to be read digitally
 
 private:
+    bool m_isFired = false;
     bool m_hasContinuity = false;               ///< Tracks if the pyro has continuity
     int32_t m_continuityValue = 0;              ///< Analog threshold for determining if a pin has continuity
     const uint8_t m_firePin;                    ///< Pin for firing the pyro

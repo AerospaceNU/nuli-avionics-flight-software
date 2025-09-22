@@ -18,9 +18,39 @@
 #include "core/cli/Parser.h"
 #include "core/FlightStateDeterminer.h"
 #include "core/filters/StateEstimator1D.h"
-#include "core/Logger.h"
+#include "core/BasicLogger.h"
 
 #define DEFAULT_FLAT_UID 255
+
+struct SillyGooseLogData {
+    uint32_t timestampMs;
+    uint32_t dtMS;
+
+    float pressurePa;
+    float barometerTemperatureK;
+
+    float accelerationMSS_x;
+    float accelerationMSS_y;
+    float accelerationMSS_z;
+    float velocityRadS_x;
+    float velocityRadS_y;
+    float velocityRadS_z;
+    float imuTemperatureK;
+
+    float batterVoltageV;
+
+    float altitudeM;
+    float velocityMS;
+    float accelerationMSS;
+
+    int32_t flightState;
+
+    bool drogueContinuity;
+    bool drogueFired;
+    bool mainContinuity;
+    bool mainFired;
+}
+    remove_struct_padding;
 
 // Hardware
 ArduinoSystemClock arduinoClock;
@@ -39,6 +69,7 @@ HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 Parser cliParser;
+BasicLogger<SillyGooseLogData> logger;
 
 ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR};
 Configuration configuration({
@@ -49,6 +80,8 @@ Configuration configuration({
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 
+bool enableLogging = false;
+
 // Define Callbacks //
 void callback_none(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
                    BaseFlag* dependency) {}
@@ -56,21 +89,42 @@ void callback_none(const char* name, uint8_t* data, uint32_t length, uint8_t gro
 void callback_erase(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
                     BaseFlag* dependency) {
     Serial.println("Erasing all");
-    flash.eraseAll();
+    logger.erase();
+    Serial.println("Done");
 }
 
-void callback_offload(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                      BaseFlag* dependency) {
-    if (dependency != nullptr && dependency->isSet()) {
-        Serial.println("Dependency set!");
-        // do something
-    } else {
-        Serial.println("Dependency not set!");
+void callback_offload(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
+    uint32_t failCount = 0;
+    for (uint32_t i = 0; true; i++) {
+        uint8_t id;
+        const SillyGooseLogData logData = logger.offload(i, id);
+        if (id == 0xFF) {
+            failCount++;
+            if (failCount >= 4) {
+                break;
+            }
+        } else if (id == 0x01) {
+            Serial.print(logData.timestampMs);
+            Serial.print("\t");
+            Serial.print(logData.altitudeM);
+            Serial.print("\t");
+            Serial.print(logData.velocityMS);
+            Serial.print("\t");
+            Serial.print(logData.accelerationMSS);
+            Serial.print("\t");
+            Serial.print(logData.barometerTemperatureK);
+            Serial.print("\t");
+            Serial.print(logData.drogueContinuity);
+            Serial.print("\t");
+            Serial.print(logData.mainContinuity);
+            Serial.println();
+        } else if (id == 0x02) {
+            Serial.println("New flight");
+        }
     }
 }
 
-void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                       BaseFlag* dependency) {
+void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
     if (length >= sizeof(int)) {
         // Extract the integer value from the data buffer
         int value = 0;
@@ -85,6 +139,8 @@ void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t
 
 
 void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
+void callback_log(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
+
 
 // Define flags //
 SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase);
@@ -94,6 +150,21 @@ ArgumentFlag<int> testfire("--testfire", "Send start", true, DEFAULT_FLAT_UID, c
 SimpleFlag configFlag("--config", "Send start", true, DEFAULT_FLAT_UID, callback_config);
 ArgumentFlag<float> mainAltitudeFlagNew("-m", "Send start", false, DEFAULT_FLAT_UID, callback_none);
 ArgumentFlag<float> drogueDelayFlagNew("-d", "Send start", false, DEFAULT_FLAT_UID, callback_none);
+ArgumentFlag<int> logFlag("--log", "Send start", false, DEFAULT_FLAT_UID, callback_log);
+
+
+void callback_log(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
+    Serial.print("Entry's in log ");
+    Serial.println(logger.getEntryNumber());
+    if (logFlag.getValueDerived() == 2) {
+        enableLogging = true;
+        Serial.println("Logging enabled");
+    } else if (logFlag.getValueDerived() == 1) {
+        enableLogging = false;
+        Serial.println("Logging disabled");
+    }
+}
+
 
 void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
     if (mainAltitudeFlagNew.isSet()) {
@@ -124,6 +195,8 @@ BaseFlag* eraseGroup[] = {&erase};
 BaseFlag* offloadGroup[] = {&offload, &offload_binary};
 BaseFlag* testfireGroup[] = {&testfire};
 BaseFlag* configGroup[] = {&configFlag, &drogueDelayFlagNew, &mainAltitudeFlagNew};
+BaseFlag* logGroup[] = {&logFlag};
+
 
 void runIndicators() {
     for (int i = 0; i < hardware.getNumIndicators(); i++) {
@@ -160,6 +233,7 @@ void runCli() {
     }
 }
 
+
 void setup() {
     Serial.begin(9600);
     while (!Serial) {}
@@ -182,7 +256,7 @@ void setup() {
     hardware.setSystemClock(&arduinoClock);
     // Devices
     const int16_t framID = hardware.appendFramMemory(&fram);
-    hardware.appendFlashMemory(&flash);
+    const int16_t flashID = hardware.appendFlashMemory(&flash);
     hardware.appendPyro(&droguePyro);
     hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
@@ -197,6 +271,7 @@ void setup() {
     configuration.setup(&hardware, framID);
     stateEstimator1D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
+    logger.setup(&hardware, &cliParser, flashID);
 
     // setup dependency
     offload.setDependency(&offload_binary);
@@ -204,6 +279,7 @@ void setup() {
     cliParser.addFlagGroup(offloadGroup);
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(configGroup);
+    cliParser.addFlagGroup(logGroup);
 
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
@@ -214,9 +290,11 @@ void setup() {
 }
 
 void loop() {
+    // Run core hardware
     hardware.enforceLoopTime();
     hardware.readSensors();
 
+    // Determine state
     RocketState_s state{};
     state.timestamp = hardware.getTimestamp();
     state.state1D = stateEstimator1D.loopOnce(state.timestamp);
@@ -224,9 +302,13 @@ void loop() {
     state.state6D = State6D_s(); // Not implemented
     state.rawGps = Coordinates_s(); // Not implemented
 
+
+    // State machine to determine when to do what
     switch (state.flightState) {
     case PRE_FLIGHT:
         runCli();
+    case ASCENT:
+        enableLogging = true;
     case DESCENT: // @todo turn off pyros after some time
         if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get()) {
             droguePyro.fire();
@@ -236,12 +318,27 @@ void loop() {
             mainPyro.fire();
         }
     case POST_FLIGHT:
+        enableLogging = false;
         runCli();
         droguePyro.disable();
         mainPyro.disable();
     default: ;
     }
 
+    // Handle outputs: indicators, pyros, logging, config, etc
     runIndicators();
     configuration.pushUpdatesToMemory();
+
+    // Run logging
+    if (enableLogging) {
+        SillyGooseLogData logData{};
+        logData.timestampMs = state.timestamp.runtime_ms;
+        logData.altitudeM = state.state1D.altitudeM;
+        logData.velocityMS = state.state1D.velocityMS;
+        logData.accelerationMSS = state.state1D.accelerationMSS;
+        logData.barometerTemperatureK = hardware.getBarometer(0)->getTemperatureK();
+        logData.drogueContinuity = droguePyro.hasContinuity();
+        logData.mainContinuity = mainPyro.hasContinuity();
+        logger.log(logData);
+    }
 }

@@ -23,14 +23,20 @@ bool ArduinoPyro::hasContinuity() const {
     return m_hasContinuity;
 }
 
-void ArduinoPyro::fire() const {
+void ArduinoPyro::fire() {
+    m_isFired = true;
     digitalWrite(m_firePin, HIGH);
 }
 
-void ArduinoPyro::disable() const {
+void ArduinoPyro::disable() {
+    m_isFired = false;
     digitalWrite(m_firePin, LOW);
 }
 
 int ArduinoPyro::rawAdcValue() const {
     return m_continuityValue;
+}
+
+bool ArduinoPyro::isFired() const {
+    return m_isFired;
 }
