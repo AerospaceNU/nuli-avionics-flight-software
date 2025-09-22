@@ -6,47 +6,40 @@ constexpr ConfigurationID_e FlightStateDeterminer::REQUIRED_CONFIGS[];
 void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE>();
+    m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION>();
     // @todo reboot detection
     // For now we assume that flight always is PRE_FLIGHT on boot
     m_flightState.set(PRE_FLIGHT);
 }
 
 FlightState_e FlightStateDeterminer::loopOnce(const State1D_s& state1D, const Timestamp_s& timestamp) {
-    switch (m_flightState.get()) {
-    case PRE_FLIGHT: {
-        /** @todo
-         * Save a timestamp from GPS? nah this should probably be handeled elsewhere
-         * Log occasonaly? probably worth it
-         * Calculate ground pressure
-         * Update orientation reference
-         */
+    if (m_flightState.get() == PRE_FLIGHT) {
+        // Update ground altitude reference: only update at maximum once per second, and if it has changed by over 2
+        m_lowPass.update(state1D.unfilteredNoOffsetAltitudeM);
+        if (timestamp.runtime_ms - m_internalSecondaryTimer > 1000) {
+            if (abs(m_groundElevation.get() - m_lowPass.value()) > 2.0f) {
+                m_groundElevation.set(m_lowPass.value());
+            }
+            m_internalSecondaryTimer = timestamp.runtime_ms;
+        }
 
-        if (hasLaunched(state1D, timestamp)) {
+        if (hasLaunched(state1D, timestamp) && timestamp.runtime_ms > 5000) { // @todo do something smarter than waiting 5s
             m_flightState.set(ASCENT);
             m_flightStateStartTime = timestamp.runtime_ms;
         }
-    }
-
-    case ASCENT: {
+    } else if (m_flightState.get() == ASCENT) {
         if (apogeeReached(state1D, timestamp)) {
             m_flightState.set(DESCENT);
             m_flightStateStartTime = timestamp.runtime_ms;
         }
-    }
-
-    case DESCENT: {
+    } else if (m_flightState.get() == DESCENT) {
         if (hasLanded(state1D, timestamp)) {
             m_flightState.set(POST_FLIGHT);
             m_flightStateStartTime = timestamp.runtime_ms;
         }
-    }
-
-    case POST_FLIGHT: {}
-
-    default: {
+    } else if (m_flightState.get() == POST_FLIGHT) {} else {
         m_flightState.set(PRE_FLIGHT);
         m_flightStateStartTime = timestamp.runtime_ms;
-    }
     }
 
     return getState();

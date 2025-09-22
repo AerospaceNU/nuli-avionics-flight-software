@@ -71,6 +71,8 @@ struct State1D_s {
     float altitudeM;
     float velocityMS;
     float accelerationMSS;
+
+    float unfilteredNoOffsetAltitudeM;
 };
 
 struct State6D_s {

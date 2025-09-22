@@ -14,8 +14,8 @@
 
 #define CLOCK_SPI_DATA 0x00
 #define ERASE_ALL_TIME (1000 * 60 * 5)
-#define SECTOR_SIZE (256000)
-#define MEMORY_SIZE (64000000)
+#define SECTOR_SIZE (262144)        // Address of end of sector 1 from datasheet: 0003FFFF
+#define MEMORY_SIZE (67108864)
 #define PAGE_SIZE (512)
 
 /**
@@ -26,7 +26,7 @@
  * Handle cross page boundary's
  */
 
-S25FL512::S25FL512(uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {}
+S25FL512::S25FL512(const uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {}
 
 void S25FL512::setSpiClass(SPIClass* spiClass) {
     m_spiBus = spiClass;
@@ -72,7 +72,7 @@ void S25FL512::write(uint32_t address, const uint8_t* buffer, uint32_t length, b
     while (length > 0) {
         // We need to wait for the previous write to finish, regardless of waitForCompletion
         if (!ready()) {
-            waitForReady();
+            waitForReady(1000);
         }
         // Get the end of the current page
         currentPageEnd = (address - (address % getPageSize())) + getPageSize();
@@ -84,7 +84,7 @@ void S25FL512::write(uint32_t address, const uint8_t* buffer, uint32_t length, b
         // Serial.println(address);
         pageProgram(address, (buffer + bufferOffset), currentPageBytes);
         if (waitForCompletion) {
-            waitForReady();
+            waitForReady(1000);
         }
         // Track that we wrote a certain number of bytes
         length -= currentPageBytes;
@@ -216,6 +216,9 @@ bool S25FL512::waitForReady(uint32_t timeout) const {
     return waitForWriteCompletion(timeout);
 }
 
+uint32_t S25FL512::getMemorySizeBytes() const {
+    return getMemorySize();
+}
 
 
 

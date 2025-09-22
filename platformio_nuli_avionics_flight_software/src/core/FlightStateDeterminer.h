@@ -4,10 +4,11 @@
 #include "Avionics.h"
 #include "Configuration.h"
 #include "ConfigurationRegistry.h"
+#include "core/filters/LowPass.h"
 
 class FlightStateDeterminer {
 public:
-    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE};
+    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE, GROUND_ELEVATION};
 
     void setup(Configuration* configuration);
 
@@ -25,9 +26,13 @@ private:
     bool hasLanded(const State1D_s& state1D, const Timestamp_s& timestamp);
 
     ConfigurationData<int32_t> m_flightState;
+    ConfigurationData<float> m_groundElevation;
     Configuration* m_configuration = nullptr;
 
+    LowPass m_lowPass{0.01};
+
     uint32_t m_internalStateTransitionTimer = 0;
+    uint32_t m_internalSecondaryTimer = 0;
     double m_landingDetectionReferenceAltitude = 0;
 
     uint32_t m_flightStateStartTime = 0;

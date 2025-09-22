@@ -7,7 +7,7 @@
 
 #include "core/generic_hardware/FlashMemory.h"
 
-class S25FL512: public FlashMemory {
+class S25FL512 final : public FlashMemory {
 public:
     explicit S25FL512(uint8_t chipSelectPin);
 
@@ -23,21 +23,23 @@ public:
 
     static uint32_t getPageSize();
 
-    bool ready() const;
+    uint32_t getMemorySizeBytes() const override;
 
-    bool waitForReady(uint32_t timeout = 1000) const;
+    bool ready() const override;
 
-    void write(uint32_t address, const uint8_t* buffer, uint32_t length, bool waitForCompletion = true) const;
+    bool waitForReady(uint32_t timeout) const override;
 
-    void read(uint32_t address, uint8_t* buffer, uint32_t length) const;
+    void write(uint32_t address, const uint8_t* buffer, uint32_t length, bool waitForCompletion) const override;
 
-    uint8_t read(uint32_t address) const;
+    void read(uint32_t address, uint8_t* buffer, uint32_t length) const override;
 
-    void write(uint32_t address, uint8_t byte) const;
+    uint8_t read(uint32_t address) const override;
 
-    void eraseAll(bool waitForCompletion = true) const;
+    void write(uint32_t address, uint8_t byte) const override;
 
-    void eraseSector(uint32_t sectorNumber, bool waitForCompletion = true) const;
+    void eraseAll(bool waitForCompletion) const override;
+
+    void eraseSector(uint32_t sectorNumber, bool waitForCompletion) const override;
 
     uint8_t readStatusRegister() const;
 

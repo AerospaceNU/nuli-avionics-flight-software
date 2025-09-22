@@ -10,31 +10,28 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_hardware = hardware;
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE>();
+    m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION>();
+
 
     kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
     kalmanFilter.setAccelerometerCovariance(1);
 }
 
 State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp) {
-
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     const float pressurePa = getPressurePa();
-    const float altitudeM = Barometer::calculateAltitudeM(pressurePa);
+    const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa);
     const float accelerationMSS = getAccelerationMSS();
 
-    // double gainMultiplier = map(
-    //       clamp(kalman.getXhat().estimatedVelocity, 250, 350), 250, 350, 1, 0.3);
-    // double kalmanGain[] = {kalman.DEFAULT_KALMAN_GAIN[0] * gainMultiplier,
-    //                        kalman.DEFAULT_KALMAN_GAIN[1] * gainMultiplier};
-    // kalmanFilter.setBarometerCovariance(0.05);
-    // kalmanFilter.setPitoCovariance(0.05);
+    // @todo update covariances with velocity
 
     kalmanFilter.predict();
-    kalmanFilter.altitudeAndAccelerationDataUpdate(altitudeM, accelerationMSS);
+    kalmanFilter.altitudeAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
 
     m_currentState1D.altitudeM = kalmanFilter.getAltitude();
     m_currentState1D.velocityMS = kalmanFilter.getVelocity();
     m_currentState1D.accelerationMSS = kalmanFilter.getAcceleration();
+    m_currentState1D.unfilteredNoOffsetAltitudeM = altitudeRawM;
 
     return m_currentState1D;
 }

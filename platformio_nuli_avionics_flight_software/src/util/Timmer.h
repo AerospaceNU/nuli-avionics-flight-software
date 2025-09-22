@@ -7,7 +7,7 @@ class Timer {
 public:
     void start(uint32_t ms);
 
-    hasReached(unsigned long timeFromStart)
+    hasReached(unsigned long timeFromStart);
 
 private:
 };

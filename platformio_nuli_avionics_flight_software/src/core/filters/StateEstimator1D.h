@@ -9,7 +9,7 @@
 
 class StateEstimator1D {
 public:
-    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE};
+    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE, GROUND_ELEVATION};
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
@@ -27,6 +27,7 @@ private:
     Configuration* m_configuration = nullptr;
 
     ConfigurationData<int32_t> m_flightState;
+    ConfigurationData<float> m_groundElevation;
 
     AltitudeKf kalmanFilter;
 };
