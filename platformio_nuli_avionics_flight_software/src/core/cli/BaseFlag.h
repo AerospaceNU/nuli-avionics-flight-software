@@ -4,6 +4,7 @@
 #include <string>
 #include <cstdint>
 #include "ReturnCodes.h"
+#include <functional>
 
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
@@ -99,8 +100,11 @@ protected:
      * @param name Name of a flag
      * @param helpText A flag's help text
      * @param required If a flag is required
+     * @param callback
      */
-    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag*));
+    // BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag*));
+    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, const std::function<void(void)> &callback);
+
 
     /**
      * @brief Parses an input into the expected type
@@ -123,7 +127,8 @@ protected:
     const bool m_required;      ///< If a flag is required
     const uint8_t m_identifier; ///< command identifier
     bool m_set;                 ///< If a flag is in-use
-    void (*m_callback)(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);   ///< Callback function. Takes in if a flag is set and its group's uid
+    // void (*m_callback)(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);   ///< Callback function. Takes in if a flag is set and its group's uid
+    std::function<void(void)> m_callback;
     BaseFlag* m_dependency = nullptr;    ///<
 };
 

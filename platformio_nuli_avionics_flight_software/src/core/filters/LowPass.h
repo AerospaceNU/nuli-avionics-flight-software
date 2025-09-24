@@ -3,7 +3,7 @@
 
 class LowPass {
 public:
-    explicit LowPass(const float alpha = 0.1f) : alpha(alpha), smoothed(0.0f), initialized(false) {}
+    explicit LowPass(const float alpha) : alpha(alpha), smoothed(0.0f), initialized(false) {}
 
     float update(const float input) {
         if (!initialized) {

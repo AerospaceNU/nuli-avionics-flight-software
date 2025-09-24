@@ -15,14 +15,28 @@ class BasicLogger {
     } remove_struct_padding;
     // clang-format on
 public:
-    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char *header, void (*printFunction)(const LogDataStruct&)) {
+    BasicLogger() : logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
+                    startFlag("-start", "", false, 255, doNothingBlankFunction),
+                    endFlag("-end", "", false, 255, doNothingBlankFunction),
+                    offloadBinaryFlag("-b", "binary", false, 255, doNothingBlankFunction),
+                    eraseFlag("--erase", "Send start", true, 255, [this]() { this->eraseCallback(); }),
+                    offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
+                    streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
+
+    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&)) {
         m_hardware = hardware;
         m_flash = m_hardware->getFlashMemory(flashID);
         m_logWriteIndex = 0;
         m_headerStr = header;
         m_printFunction = printFunction;
 
-        // @todo binary search, also time remaining in log
+        // Setup CLI interface
+        offloadBinaryFlag.setDependency(&offloadBinaryFlag);
+        parser->addFlagGroup(eraseGroup);
+        parser->addFlagGroup(offloadGroup);
+        parser->addFlagGroup(logGroup);
+        parser->addFlagGroup(streamGroup);
+
         const uint32_t numEntries = m_flash->getMemorySizeBytes() / sizeof(InternalStruct_s);
 
         uint32_t left = 0;
@@ -36,9 +50,9 @@ public:
 
             if (id == 0xFF) {
                 firstEmpty = mid; // possible candidate
-                right = mid;      // search left half
+                right = mid; // search left half
             } else {
-                left = mid + 1;   // search right half
+                left = mid + 1; // search right half
             }
         }
 
@@ -56,8 +70,21 @@ public:
     }
 
     void log(const LogDataStruct& logDataStruct) {
-        m_dataStruct.id = 0x01;
-        m_dataStruct.data = logDataStruct;
+        if (m_enableLogging) {
+            m_dataStruct.id = 0x01;
+            m_dataStruct.data = logDataStruct;
+            m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
+            m_logWriteIndex++;
+        }
+        if (m_enableStreaming) {
+            m_printFunction(logDataStruct);
+        }
+    }
+
+    void logMessage(const char* str) {
+        m_dataStruct.id = 0x03;
+        memcpy(&m_dataStruct.data, str, min(sizeof(LogDataStruct), strlen(str) + 1));
+        ((char*)(&m_dataStruct.data))[sizeof(LogDataStruct) - 1] = '\0'; // Ensure null termination
         m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
         m_logWriteIndex++;
     }
@@ -108,8 +135,94 @@ public:
         return static_cast<uint32_t>(remainingEntries * loopTimeSec);
     }
 
+    void offloadCallback() {
+        uint32_t failCount = 0;
+        Serial.println(m_headerStr);
+        for (uint32_t i = 0; true; i++) {
+            uint8_t id;
+            const LogDataStruct logData = offload(i, id);
+            if (id == 0xFF) {
+                failCount++;
+                if (failCount >= 4) {
+                    break;
+                }
+            } else if (id == 0x01) {
+                m_printFunction(logData);
+            } else if (id == 0x02) {
+                Serial.println("New flight");
+            } else if (id == 0x03) {
+                const char* str = (const char*)&logData;
+                Serial.write(str, min(sizeof(LogDataStruct), strlen(str)));
+                Serial.println();
+            }
+        }
+    }
+
+    void eraseCallback() {
+        Serial.println("Erasing all");
+        erase();
+        Serial.println("Done");
+    }
+
+    void logCallback() {
+        Serial.print("Entry's in log ");
+        Serial.println(getEntryNumber());
+        Serial.print("Remaining log length (s): ");
+        Serial.println(getRemainingLogLengthSeconds());
+        if (startFlag.isSet() && !endFlag.isSet()) {
+            m_enableLogging = true;
+            Serial.println("Logging enabled");
+        } else if (endFlag.isSet() && !startFlag.isSet()) {
+            m_enableLogging = false;
+            Serial.println("Logging disabled");
+        } else {
+            Serial.println(m_enableLogging ? "Logging is enabled" : "Logging is disabled");
+        }
+    }
+
+    void streamCallback() {
+        if (startFlag.isSet() && !endFlag.isSet()) {
+            m_enableStreaming = true;
+            Serial.println("Streaming enabled");
+        } else if (endFlag.isSet() && !startFlag.isSet()) {
+            m_enableStreaming = false;
+            Serial.println("Streaming disabled");
+        } else {
+            Serial.println(m_enableStreaming ? "Streaming is enabled" : "Streaming is disabled");
+        }
+    }
+
+    static void doNothingBlankFunction() {}
+
+    void enableLogging() {
+        m_enableLogging = true;
+    }
+
+    void disableLogging() {
+        m_enableLogging = false;
+    }
+
+    bool isLoggingEnabled() const {
+        return m_enableLogging;
+    }
 
 private:
+    bool m_enableLogging = false;
+    bool m_enableStreaming = false;
+
+    SimpleFlag logFlag;
+    SimpleFlag startFlag;
+    SimpleFlag endFlag;
+    SimpleFlag offloadBinaryFlag;
+    SimpleFlag eraseFlag;
+    SimpleFlag offloadFlag;
+    SimpleFlag streamFlag;
+
+    BaseFlag* logGroup[3] = {&logFlag, &startFlag, &endFlag};
+    BaseFlag* eraseGroup[1] = {&eraseFlag};
+    BaseFlag* offloadGroup[2] = {&offloadFlag, &offloadBinaryFlag};
+    BaseFlag* streamGroup[3] = {&streamFlag, &startFlag, &endFlag};
+
     HardwareAbstraction* m_hardware = nullptr;
     FlashMemory* m_flash = nullptr;
     uint32_t m_logWriteIndex = 0;
@@ -117,7 +230,8 @@ private:
     InternalStruct_s m_dataStruct{};
     uint8_t* m_dataStructStart = (uint8_t*)&m_dataStruct;
 
-    const char *m_headerStr = nullptr;
+
+    const char* m_headerStr = nullptr;
     void (*m_printFunction)(const LogDataStruct&) = nullptr;
 };
 

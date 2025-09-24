@@ -58,6 +58,7 @@ struct Coordinates_s {
 struct Timestamp_s {
     uint32_t runtime_ms;
     uint32_t dt_ms;
+    uint32_t tick;
 };
 
 enum FlightState_e {

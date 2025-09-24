@@ -64,56 +64,32 @@ S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
-
+// Core components
 HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 Parser cliParser;
 BasicLogger<SillyGooseLogData> logger;
-
+// Configuration
 ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR};
-Configuration configuration({
-        sillyGooseRequiredConfigs,
-        Configuration::REQUIRED_CONFIGS,
-        FlightStateDeterminer::REQUIRED_CONFIGS
-    });
+Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS});
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
-
-bool enableLogging = false;
-bool enableStreaming = false;
-
+// CLI
 void runCli();
-void runIndicators();
-
-void callback_none(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {}
-void callback_erase(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
-void callback_offload(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
-void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
-void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
-void callback_log(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
-void callback_stream(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);
-
-// Define flags //
-SimpleFlag erase("--erase", "Send start", true, DEFAULT_FLAT_UID, callback_erase);
-SimpleFlag offload("--offload", "Send start", true, DEFAULT_FLAT_UID, callback_offload);
-SimpleFlag offload_binary("-b", "binary", false, DEFAULT_FLAT_UID, callback_none);
-SimpleFlag testfire("--fire", "Send start", true, DEFAULT_FLAT_UID, callback_testfire);
+void callback_none() {}
+void fireCallback();
+void cliConfigurationCallback();
+SimpleFlag testfire("--fire", "Send start", true, DEFAULT_FLAT_UID, fireCallback);
 SimpleFlag testDrogue("-d", "Send start", false, DEFAULT_FLAT_UID, callback_none);
 SimpleFlag testMain("-m", "Send start", false, DEFAULT_FLAT_UID, callback_none);
-SimpleFlag configFlag("--config", "Send start", true, DEFAULT_FLAT_UID, callback_config);
+SimpleFlag configFlag("--config", "Send start", true, DEFAULT_FLAT_UID, cliConfigurationCallback);
 ArgumentFlag<float> mainAltitudeFlagNew("-m", "Send start", false, DEFAULT_FLAT_UID, callback_none);
 ArgumentFlag<float> drogueDelayFlagNew("-d", "Send start", false, DEFAULT_FLAT_UID, callback_none);
-ArgumentFlag<int32_t> logFlag("--log", "Send start", false, DEFAULT_FLAT_UID, callback_log);
-ArgumentFlag<int32_t> streamFlag("--stream", "Send start", false, DEFAULT_FLAT_UID, callback_stream);
-
-BaseFlag* eraseGroup[] = {&erase};
-BaseFlag* offloadGroup[] = {&offload, &offload_binary};
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 BaseFlag* configGroup[] = {&configFlag, &drogueDelayFlagNew, &mainAltitudeFlagNew};
-BaseFlag* logGroup[] = {&logFlag};
-BaseFlag* streamGroup[] = {&streamFlag};
 
+void runIndicators(const Timestamp_s&);
 
 void setup() {
     Serial.begin(9600);
@@ -149,13 +125,8 @@ void setup() {
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
 
     // setup dependency
-    offload.setDependency(&offload_binary);
-    cliParser.addFlagGroup(eraseGroup);
-    cliParser.addFlagGroup(offloadGroup);
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(configGroup);
-    cliParser.addFlagGroup(logGroup);
-    cliParser.addFlagGroup(streamGroup);
 
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
@@ -163,18 +134,20 @@ void setup() {
     // batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR>().get());
 
     led.setOutputPercent(6.0);
+
+    logger.logMessage("System setup complete");
 }
 
 // @todo Make sure that on boot stuff is populated correctly (ground elevation, etc), particularly for launch detection
 
 void loop() {
+    RocketState_s state{};
+
     // Run core hardware
-    hardware.enforceLoopTime();
+    state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
     // Determine state
-    RocketState_s state{};
-    state.timestamp = hardware.getTimestamp();
     state.state1D = stateEstimator1D.loopOnce(state.timestamp);
     state.flightState = flightStateDeterminer.loopOnce(state.state1D, state.timestamp);
     state.state6D = State6D_s(); // Not implemented
@@ -184,8 +157,8 @@ void loop() {
     if (state.flightState == PRE_FLIGHT) {
         runCli();
     } else if (state.flightState == ASCENT) {
-        if (!enableLogging) {
-            enableLogging = true;
+        if (!logger.isLoggingEnabled()) {
+            logger.enableLogging();
             logger.newFlight();
         }
     } else if (state.flightState == DESCENT) {
@@ -198,19 +171,17 @@ void loop() {
             mainPyro.fire();
         }
     } else if (state.flightState == POST_FLIGHT) {
-        enableLogging = false;
+        logger.disableLogging();
         runCli();
         droguePyro.disable();
         mainPyro.disable();
     }
 
-    // Handle outputs: indicators, pyros, logging, config, etc
-    runIndicators();
-    configuration.pushUpdatesToMemory();
-
+    //// Handle outputs: indicators, pyros, logging, config, etc
+    // Runs light and buzzer
+    runIndicators(state.timestamp);
     // Run logging
     SillyGooseLogData logData{};
-    // Populate data
     logData.timestampMs = state.timestamp.runtime_ms;
     logData.dtMS = state.timestamp.dt_ms;
     logData.pressurePa = hardware.getBarometer(0)->getPressurePa();
@@ -232,18 +203,24 @@ void loop() {
     logData.drogueFired = droguePyro.isFired();
     logData.mainContinuity = mainPyro.hasContinuity();
     logData.mainFired = mainPyro.isFired();
-    if (enableLogging) {
-        logger.log(logData);
-    }
-    if (enableStreaming) {
-        printLog(logData);
-    }
+    logger.log(logData);
+    configuration.pushUpdatesToMemory();
 }
 
 
+////////////////////////////////////////////
+////////////////////////////////////////////
 
-////////////////////////////////////////////
-////////////////////////////////////////////
+
+void runIndicators(const Timestamp_s& timestamp) {
+    for (int i = 0; i < hardware.getNumIndicators(); i++) {
+        if ((timestamp.runtime_ms / 200) % 2 == 0) {
+            hardware.getIndicator(i)->on();
+        } else {
+            hardware.getIndicator(i)->off();
+        }
+    }
+}
 
 void runCli() {
     static char serialRead[500] = "";
@@ -269,17 +246,7 @@ void runCli() {
     }
 }
 
-void runIndicators() {
-    for (int i = 0; i < hardware.getNumIndicators(); i++) {
-        if ((hardware.getTimestamp().runtime_ms / 200) % 2 == 0) {
-            hardware.getIndicator(i)->on();
-        } else {
-            hardware.getIndicator(i)->off();
-        }
-    }
-}
-
-void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
+void fireCallback() {
     if (testDrogue.isSet()) {
         Serial.println("Firing drogue");
         droguePyro.fire();
@@ -293,34 +260,7 @@ void callback_testfire(const char* name, uint8_t* data, uint32_t length, uint8_t
     }
 }
 
-void callback_stream(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
-    if (streamFlag.getValueDerived() > 0) {
-        enableStreaming = true;
-        Serial.println("Streaming enabled");
-    } else {
-        enableStreaming = false;
-        Serial.println("Streaming disabled");
-    }
-}
-
-void callback_log(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
-    Serial.print("Entry's in log ");
-    Serial.println(logger.getEntryNumber());
-    Serial.print("Remaining log length (s): ");
-    Serial.println(logger.getRemainingLogLengthSeconds());
-    if (logFlag.getValueDerived() == 2) {
-        enableLogging = true;
-        Serial.println("Logging enabled");
-    } else if (logFlag.getValueDerived() == 1) {
-        enableLogging = false;
-        Serial.println("Logging disabled");
-    } else {
-        Serial.println(enableLogging ? "Logging is enabled" : "Logging is disabled");
-    }
-}
-
-
-void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
+void cliConfigurationCallback() {
     if (mainAltitudeFlagNew.isSet()) {
         mainElevation.set(mainAltitudeFlagNew.getValueDerived());
         Serial.print("MAIN_ELEVATION has been set to: ");
@@ -343,29 +283,4 @@ void callback_config(const char* name, uint8_t* data, uint32_t length, uint8_t g
         Serial.print(drogueDelay.get());
         Serial.println(" ms");
     }
-}
-
-void callback_offload(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
-    uint32_t failCount = 0;
-    Serial.println(LOG_HEADER);
-    for (uint32_t i = 0; true; i++) {
-        uint8_t id;
-        const SillyGooseLogData logData = logger.offload(i, id);
-        if (id == 0xFF) {
-            failCount++;
-            if (failCount >= 4) {
-                break;
-            }
-        } else if (id == 0x01) {
-            printLog(logData);
-        } else if (id == 0x02) {
-            Serial.println("New flight");
-        }
-    }
-}
-
-void callback_erase(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency) {
-    Serial.println("Erasing all");
-    logger.erase();
-    Serial.println("Done");
 }

@@ -44,7 +44,7 @@ void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
     m_loopTime = (uint32_t)delay; // @todo round?
 }
 
-void HardwareAbstraction::enforceLoopTime() {
+Timestamp_s HardwareAbstraction::enforceLoopTime() {
     // Track the end of the tick
     const uint32_t actualLoopEnd = m_systemClock->currentRuntimeMs();
     const uint32_t desiredLoopEnd = getLoopTimestampMs() + m_loopTime;
@@ -60,6 +60,10 @@ void HardwareAbstraction::enforceLoopTime() {
     m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
     m_loopDtMs = m_currentLoopTimestampMs - lastTime;
     m_lastTickDuration = actualLoopEnd - lastTime;
+
+    m_tickCount++;
+
+    return getTimestamp();
 }
 
 uint32_t HardwareAbstraction::getLastTickDuration() const {
@@ -78,6 +82,7 @@ Timestamp_s HardwareAbstraction::getTimestamp() const {
     Timestamp_s timestamp{};
     timestamp.runtime_ms = getLoopTimestampMs();
     timestamp.dt_ms = getLoopDtMs();
+    timestamp.tick = m_tickCount;
     return timestamp;
 }
 

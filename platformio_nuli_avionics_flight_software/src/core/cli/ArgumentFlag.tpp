@@ -6,11 +6,11 @@
 
 
 template<typename T>
-ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag* dependency))
+ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, uint8_t uid, const std::function<void(void)> &callback)
         : BaseFlag(name, helpText, required, uid, callback), m_defaultValue(defaultValue), m_defaultValueSet(true) {}
 
 template<typename T>
-ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag* dependency))
+ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required, uint8_t uid, const std::function<void(void)> &callback)
         : BaseFlag(name, helpText, required, uid, callback), m_defaultValueSet(false) {}
 
 template<typename T>
@@ -57,7 +57,8 @@ void ArgumentFlag<T>::run(uint8_t groupUid) {
         memcpy(buffer, &m_argument, sizeof(T));
 
         // Pass the buffer to the callback
-        m_callback(m_name, buffer, sizeof(T), groupUid, m_identifier, m_dependency);
+        // m_callback(m_name, buffer, sizeof(T), groupUid, m_identifier, m_dependency);
+        m_callback();
     }
 }
 
@@ -71,7 +72,8 @@ void ArgumentFlag<float>::run(uint8_t groupUid) {
         memcpy(buffer, &m_argument, sizeof(float));
 
         // Call the callback with the serialized data
-        m_callback(m_name, buffer, sizeof(float), groupUid, m_identifier, m_dependency);
+        // m_callback(m_name, buffer, sizeof(float), groupUid, m_identifier, m_dependency);
+        m_callback();
     }
 }
 
@@ -80,14 +82,16 @@ template<>
 void ArgumentFlag<const char*>::run(uint8_t groupUid) {
     if (m_callback) {
         if (m_argument) {
-            size_t length = myStrlen(m_argument);
+            // size_t length = myStrlen(m_argument);
 
             // Call the callback with the string data
             // Note: we're passing the raw pointer but with the correct length
-            m_callback(m_name, (uint8_t*)m_argument, length, groupUid, m_identifier, m_dependency);
+            // m_callback(m_name, (uint8_t*)m_argument, length, groupUid, m_identifier, m_dependency);
+            m_callback();
         } else {
             // Handle null strings
-            m_callback(m_name, nullptr, 0, groupUid, m_identifier, m_dependency);
+            // m_callback(m_name, nullptr, 0, groupUid, m_identifier, m_dependency);
+            m_callback();
         }
     }
 }

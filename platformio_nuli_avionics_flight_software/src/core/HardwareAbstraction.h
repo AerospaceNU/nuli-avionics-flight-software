@@ -69,11 +69,7 @@ public:
      */
     void readSensors() const;
 
-    void enforceLoopTime();
-
-    uint32_t getLastTickDuration() const;
-
-    Timestamp_s getTimestamp() const;
+    Timestamp_s enforceLoopTime();
 
     uint32_t getTargetLoopTimeMs() const;
 
@@ -104,6 +100,10 @@ public:
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
 private:
+    uint32_t getLastTickDuration() const;
+
+    Timestamp_s getTimestamp() const;
+
     /**
      * Get the runtime at the start of this loop
      * @return time in ms
@@ -120,6 +120,7 @@ private:
     uint32_t m_loopDtMs = 0; ///< Tracks the loop execution time
     uint32_t m_currentLoopTimestampMs = 0; ///< Tracks the start time of each loop
     uint32_t m_lastTickDuration = 0;
+    uint32_t m_tickCount = 0;
 
     SystemClock* m_systemClock = nullptr; ///< System clocks
     DebugStream* m_debugStream = nullptr; ///< Debug stream
