@@ -2,7 +2,7 @@
 This is a script for the radio range testing of the EBYTE E22-900M30S
 This is the Code for the Receiver
 */
-
+#include <Arduino.h>
 #include <RadioLib.h>
 
 // External E22-900M30S (SX1262)

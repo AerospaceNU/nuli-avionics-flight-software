@@ -3,6 +3,7 @@ This is a script for the radio range testing of the EBYTE E22-900M30S
 This is the Code for the Receiver
 */
 
+#include <Arduino.h>
 #include <RadioLib.h>
 #include <string.h>
 #include <cstring>
@@ -83,6 +84,14 @@ void loop() {
     e22Received = false;
     int state = e22.readData(ack);
     if (state == RADIOLIB_ERR_NONE) {
+      float rssi = e22.getRSSI();   // in dBm
+      float snr  = e22.getSNR();    // in dB (may be negative)
+      Serial.print("RSSI: ");
+      Serial.print(rssi);
+      Serial.print(" dBm | SNR: ");
+      Serial.print(snr);
+      Serial.println(" dB");
+
       digitalWrite(LED_BUILTIN, LOW);
       delay(500);  // wait 1/2 second before reply
       transmitCount += 1;
