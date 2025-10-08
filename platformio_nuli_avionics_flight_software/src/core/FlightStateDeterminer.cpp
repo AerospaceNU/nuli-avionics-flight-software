@@ -1,12 +1,12 @@
 #include "FlightStateDeterminer.h"
 #include "HardwareAbstraction.h"
 
-constexpr ConfigurationID_e FlightStateDeterminer::REQUIRED_CONFIGS[];
+constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
 
 void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
-    m_flightState = m_configuration->getConfigurable<FLIGHT_STATE>();
-    m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION>();
+    m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
+    m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
     // @todo reboot detection
     // For now we assume that flight always is PRE_FLIGHT on boot
     m_flightState.set(PRE_FLIGHT);

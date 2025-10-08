@@ -9,7 +9,7 @@
 
 class StateEstimator1D {
 public:
-    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE, GROUND_ELEVATION};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {FLIGHT_STATE_c, GROUND_ELEVATION_c};
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 

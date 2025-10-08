@@ -15,13 +15,13 @@ class BasicLogger {
     } remove_struct_padding;
     // clang-format on
 public:
-    BasicLogger() : logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
-                    startFlag("-start", "", false, 255, doNothingBlankFunction),
-                    endFlag("-end", "", false, 255, doNothingBlankFunction),
-                    offloadBinaryFlag("-b", "binary", false, 255, doNothingBlankFunction),
-                    eraseFlag("--erase", "Send start", true, 255, [this]() { this->eraseCallback(); }),
-                    offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
-                    streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
+    BasicLogger() : m_logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
+                    m_startFlag("-start", "", false, 255, doNothingBlankFunction),
+                    m_endFlag("-end", "", false, 255, doNothingBlankFunction),
+                    m_offloadBinaryFlag("-b", "binary", false, 255, doNothingBlankFunction),
+                    m_eraseFlag("--erase", "Send start", true, 255, [this]() { this->eraseCallback(); }),
+                    m_offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
+                    m_streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
 
     void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&)) {
         m_hardware = hardware;
@@ -31,11 +31,11 @@ public:
         m_printFunction = printFunction;
 
         // Setup CLI interface
-        offloadBinaryFlag.setDependency(&offloadBinaryFlag);
-        parser->addFlagGroup(eraseGroup);
-        parser->addFlagGroup(offloadGroup);
-        parser->addFlagGroup(logGroup);
-        parser->addFlagGroup(streamGroup);
+        m_offloadBinaryFlag.setDependency(&m_offloadBinaryFlag);
+        parser->addFlagGroup(m_eraseGroup);
+        parser->addFlagGroup(m_offloadGroup);
+        parser->addFlagGroup(m_logGroup);
+        parser->addFlagGroup(m_streamGroup);
 
         const uint32_t numEntries = m_flash->getMemorySizeBytes() / sizeof(InternalStruct_s);
 
@@ -169,10 +169,10 @@ public:
         Serial.println(getEntryNumber());
         Serial.print("Remaining log length (s): ");
         Serial.println(getRemainingLogLengthSeconds());
-        if (startFlag.isSet() && !endFlag.isSet()) {
+        if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableLogging = true;
             Serial.println("Logging enabled");
-        } else if (endFlag.isSet() && !startFlag.isSet()) {
+        } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableLogging = false;
             Serial.println("Logging disabled");
         } else {
@@ -181,10 +181,10 @@ public:
     }
 
     void streamCallback() {
-        if (startFlag.isSet() && !endFlag.isSet()) {
+        if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableStreaming = true;
             Serial.println("Streaming enabled");
-        } else if (endFlag.isSet() && !startFlag.isSet()) {
+        } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableStreaming = false;
             Serial.println("Streaming disabled");
         } else {
@@ -210,18 +210,18 @@ private:
     bool m_enableLogging = false;
     bool m_enableStreaming = false;
 
-    SimpleFlag logFlag;
-    SimpleFlag startFlag;
-    SimpleFlag endFlag;
-    SimpleFlag offloadBinaryFlag;
-    SimpleFlag eraseFlag;
-    SimpleFlag offloadFlag;
-    SimpleFlag streamFlag;
+    SimpleFlag m_logFlag;
+    SimpleFlag m_startFlag;
+    SimpleFlag m_endFlag;
+    SimpleFlag m_offloadBinaryFlag;
+    SimpleFlag m_eraseFlag;
+    SimpleFlag m_offloadFlag;
+    SimpleFlag m_streamFlag;
 
-    BaseFlag* logGroup[3] = {&logFlag, &startFlag, &endFlag};
-    BaseFlag* eraseGroup[1] = {&eraseFlag};
-    BaseFlag* offloadGroup[2] = {&offloadFlag, &offloadBinaryFlag};
-    BaseFlag* streamGroup[3] = {&streamFlag, &startFlag, &endFlag};
+    BaseFlag* m_logGroup[3] = {&m_logFlag, &m_startFlag, &m_endFlag};
+    BaseFlag* m_eraseGroup[1] = {&m_eraseFlag};
+    BaseFlag* m_offloadGroup[2] = {&m_offloadFlag, &m_offloadBinaryFlag};
+    BaseFlag* m_streamGroup[3] = {&m_streamFlag, &m_startFlag, &m_endFlag};
 
     HardwareAbstraction* m_hardware = nullptr;
     FlashMemory* m_flash = nullptr;

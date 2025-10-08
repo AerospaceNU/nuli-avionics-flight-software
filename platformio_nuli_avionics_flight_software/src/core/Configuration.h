@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATION_H
 
 #include "Avionics.h"
-#include "ConfigurationRegistry.h"
+#include "ConfigurationRegistryWraper.h"
 #include "HardwareAbstraction.h"
 #include "generic_hardware/FramMemory.h"
 #include "generic_hardware/DebugStream.h"
@@ -12,7 +12,7 @@
 struct BaseConfigurationData_s {
     uint8_t* data = nullptr;
     uint16_t size = 0;
-    ConfigurationID_e name = ConfigurationID_e::NONE;
+    ConfigurationID_t name = NONE_c;
     bool m_isUpdated = false;
 };
 
@@ -41,7 +41,7 @@ struct ConfigurationData {
 
 class Configuration {
 public:
-    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION, CONFIGURATION_VERSION_HASH, CONFIGURATION_CRC};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION_c, CONFIGURATION_VERSION_HASH_c, CONFIGURATION_CRC_c};
 
     template <unsigned N, unsigned M>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
@@ -58,46 +58,29 @@ public:
     template <unsigned N>
     ConfigurationData<typename GetConfigurationType_s<N>::type> getConfigurable() {
         using T = typename GetConfigurationType_s<N>::type;
-        const ConfigurationID_e id = ConfigurationID_e(N);
+        const ConfigurationID_t id = ConfigurationID_t(N);
         BaseConfigurationData_s* base = configExists(id) ? getBaseConfigurationData(id) : nullptr;
         return ConfigurationData<T>(base);
     }
 
-    // template <typename T>
-    // ConfigurationData<T> getConfigurableByName(const char* str) {
-    //     const ConfigurationID_e id = getConfigurationID(str);
-    //     BaseConfigurationData_s* base = (id != NONE && configExists(id)) ? getBaseConfigurationData(id) : nullptr;
-    //
-    //     if (base && base->data && base->size == sizeof(T)) {
-    //         return ConfigurationData<T>(base);
-    //     }
-    //
-    //     // fail-safe: return invalid ConfigurationData
-    //     return ConfigurationData<T>(nullptr);
-    // }
-    //
-    // template <typename T>
-    // ConfigurationData<T> getConfigurableByID(const ConfigurationID_e id) {
-    //     BaseConfigurationData_s* base = (id != NONE && configExists(id)) ? getBaseConfigurationData(id) : nullptr;
-    //
-    //     if (base && base->data && base->size == sizeof(T)) {
-    //         return ConfigurationData<T>(base);
-    //     }
-    //
-    //     // fail-safe
-    //     return ConfigurationData<T>(nullptr);
-    // }
+    template <unsigned N>
+    void setDefault(typename GetConfigurationType_s<N>::type value) {
+        // Ensure setup has not been called
+        if (m_hardware == nullptr) {
+            getConfigurable<N>().set(value);
+        }
+    }
 
     void pushUpdatesToMemory();
 
 private:
-    BaseConfigurationData_s* getBaseConfigurationData(ConfigurationID_e name) {
+    BaseConfigurationData_s* getBaseConfigurationData(const ConfigurationID_t name) {
         int32_t left = 0;
         int32_t right = (int32_t)m_numConfigurations - 1;
 
         while (left <= right) {
-            int32_t mid = left + (right - left) / 2;
-            int32_t midName = m_configurations[mid].name;
+            const int32_t mid = left + (right - left) / 2;
+            const int32_t midName = m_configurations[mid].name;
 
             if (midName == name) {
                 return &m_configurations[mid];
@@ -114,7 +97,7 @@ private:
 
     void readConfigFromMemory() const;
 
-    bool configExists(ConfigurationID_e name) const;
+    bool configExists(ConfigurationID_t name) const;
 
     void sortConfigs();
 
