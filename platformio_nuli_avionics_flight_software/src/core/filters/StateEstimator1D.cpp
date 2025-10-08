@@ -4,14 +4,14 @@
 #include "core/generic_hardware/Accelerometer.h"
 #include "core/generic_hardware/Barometer.h"
 
-constexpr ConfigurationID_e StateEstimator1D::REQUIRED_CONFIGS[];
+constexpr ConfigurationID_t StateEstimator1D::REQUIRED_CONFIGS[];
 
 void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
     m_configuration = configuration;
-    m_flightState = m_configuration->getConfigurable<FLIGHT_STATE>();
-    m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION>();
-
+    m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
+    m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
+    m_groundTemperature = m_configuration->getConfigurable<GROUND_TEMPERATURE_c>();
 
     kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
     kalmanFilter.setAccelerometerCovariance(1);
@@ -20,7 +20,7 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
 State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp) {
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     const float pressurePa = getPressurePa();
-    const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa);
+    const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
     const float accelerationMSS = getAccelerationMSS();
 
     // @todo update covariances with velocity

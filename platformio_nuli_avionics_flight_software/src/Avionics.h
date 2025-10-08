@@ -62,10 +62,10 @@ struct Timestamp_s {
 };
 
 enum FlightState_e {
-    PRE_FLIGHT,
-    ASCENT,
-    DESCENT,
-    POST_FLIGHT,
+    PRE_FLIGHT = 0,
+    ASCENT = 1,
+    DESCENT = 2,
+    POST_FLIGHT = 3,
 };
 
 struct State1D_s {

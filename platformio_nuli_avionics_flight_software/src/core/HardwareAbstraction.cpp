@@ -6,8 +6,7 @@ void HardwareAbstraction::setup() {
     if (m_debugStream == nullptr || m_systemClock == nullptr) {
         if (m_debugStream != nullptr) {
             m_debugStream->setup();
-            m_debugStream->print("Debug stream, clock, configuration, and configuration memory required");
-            m_debugStream->println();
+            m_debugStream->println("Debug stream, clock, configuration, and configuration memory required");
         }
         while (true);
     }
@@ -50,8 +49,7 @@ Timestamp_s HardwareAbstraction::enforceLoopTime() {
     const uint32_t desiredLoopEnd = getLoopTimestampMs() + m_loopTime;
     // Enforce loop time, detect overruns
     if (actualLoopEnd > desiredLoopEnd) {
-        m_debugStream->print("Loop overrun");
-        m_debugStream->println();
+        m_debugStream->println("Loop overrun");
     } else {
         while (m_systemClock->currentRuntimeMs() < desiredLoopEnd) {};
     }

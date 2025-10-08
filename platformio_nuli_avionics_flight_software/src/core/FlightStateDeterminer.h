@@ -3,12 +3,11 @@
 
 #include "Avionics.h"
 #include "Configuration.h"
-#include "ConfigurationRegistry.h"
 #include "core/filters/LowPass.h"
 
 class FlightStateDeterminer {
 public:
-    constexpr static ConfigurationID_e REQUIRED_CONFIGS[] = {FLIGHT_STATE, GROUND_ELEVATION};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {FLIGHT_STATE_c, GROUND_ELEVATION_c};
 
     void setup(Configuration* configuration);
 

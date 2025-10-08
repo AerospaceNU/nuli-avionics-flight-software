@@ -16,13 +16,14 @@
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
 #include "core/cli/Parser.h"
+#include "core/ConfigurationCliBinding.h"
 #include "core/FlightStateDeterminer.h"
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
 #include "util/StringHelper.h"
 #include "core/SimulationParser.h"
 
-#define DEFAULT_FLAT_UID 255
+// @todo: give all hardware access to the debug stream
 
 // clang-format off
 struct SillyGooseLogData {
@@ -52,7 +53,6 @@ struct SillyGooseLogData {
 void printLog(const SillyGooseLogData &d) { char buf[256]; mini_snprintf(buf,sizeof(buf),"%lu\t%lu\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\n",d.timestampMs,d.dtMS,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); Serial.print(buf); }
 // clang-format on
 
-
 // Hardware
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(false);
@@ -72,8 +72,8 @@ StateEstimator1D stateEstimator1D;
 Parser cliParser;
 BasicLogger<SillyGooseLogData> logger;
 // Configuration
-ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR};
-Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS});
+ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c};
+Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 
@@ -83,17 +83,19 @@ SimulationParser simulationParser;
 void runCli();
 void callback_none() {}
 void fireCallback();
-void cliConfigurationCallback();
-SimpleFlag testfire("--fire", "Send start", true, DEFAULT_FLAT_UID, fireCallback);
-SimpleFlag testDrogue("-d", "Send start", false, DEFAULT_FLAT_UID, callback_none);
-SimpleFlag testMain("-m", "Send start", false, DEFAULT_FLAT_UID, callback_none);
-SimpleFlag configFlag("--config", "Send start", true, DEFAULT_FLAT_UID, cliConfigurationCallback);
-ArgumentFlag<float> mainAltitudeFlagNew("-m", "Send start", false, DEFAULT_FLAT_UID, callback_none);
-ArgumentFlag<float> drogueDelayFlagNew("-d", "Send start", false, DEFAULT_FLAT_UID, callback_none);
+SimpleFlag testfire("--fire", "Send start", true, 255, fireCallback);
+SimpleFlag testDrogue("-d", "Send start", false, 255, callback_none);
+SimpleFlag testMain("-m", "Send start", false, 255, callback_none);
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
-BaseFlag* configGroup[] = {&configFlag, &drogueDelayFlagNew, &mainAltitudeFlagNew};
+ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
+ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
+ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageConfigurationCliBinding;
+ConfigurationCliBinding<GROUND_ELEVATION_c> groundElevationConfigurationCliBinding;
+ConfigurationCliBinding<GROUND_TEMPERATURE_c> groundTemperatureConfigurationCliBinding;
+ConfigurationCliBinding<CONFIGURATION_VERSION_c> versionConfigurationCliBinding;
 
 void runIndicators(const Timestamp_s&);
+
 
 void setup() {
     Serial.begin(9600);
@@ -104,6 +106,9 @@ void setup() {
     digitalWrite(FLASH_CS_PIN, HIGH);
     pinMode(FRAM_CS_PIN, OUTPUT);
     digitalWrite(FRAM_CS_PIN, HIGH);
+
+    // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE);
 
     // System
     hardware.setLoopRateHz(100);
@@ -128,14 +133,19 @@ void setup() {
     flightStateDeterminer.setup(&configuration);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
 
-    // setup dependency
+    // setup cli
     cliParser.addFlagGroup(testfireGroup);
-    cliParser.addFlagGroup(configGroup);
+    drogueConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    batteryVoltageConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    versionConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    groundElevationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    groundTemperatureConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
 
     // Locally used configuration variables
-    drogueDelay = configuration.getConfigurable<DROGUE_DELAY>();
-    mainElevation = configuration.getConfigurable<MAIN_ELEVATION>();
-    // batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR>().get());
+    drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
+    mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
+    batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
 
     led.setOutputPercent(6.0);
 
@@ -267,30 +277,5 @@ void fireCallback() {
         mainPyro.fire();
         delay(100);
         mainPyro.disable();
-    }
-}
-
-void cliConfigurationCallback() {
-    if (mainAltitudeFlagNew.isSet()) {
-        mainElevation.set(mainAltitudeFlagNew.getValueDerived());
-        Serial.print("MAIN_ELEVATION has been set to: ");
-        Serial.print(mainElevation.get());
-        Serial.println(" m");
-    } else {
-        Serial.print("MAIN_ELEVATION is: ");
-        Serial.print(mainElevation.get());
-        Serial.println(" m");
-    }
-
-    if (drogueDelayFlagNew.isSet()) {
-        const float timeMs = drogueDelayFlagNew.getValueDerived() * 1000;
-        drogueDelay.set(uint32_t(timeMs));
-        Serial.print("DROGUE_DELAY has been set to: ");
-        Serial.print(drogueDelay.get());
-        Serial.println(" ms");
-    } else {
-        Serial.print("DROGUE_DELAY is: ");
-        Serial.print(drogueDelay.get());
-        Serial.println(" ms");
     }
 }

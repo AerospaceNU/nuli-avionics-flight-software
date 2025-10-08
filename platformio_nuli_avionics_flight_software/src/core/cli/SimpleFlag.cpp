@@ -19,10 +19,10 @@ CLIReturnCode_e SimpleFlag::parse(char* arg) {
 void SimpleFlag::run(uint8_t groupUid) {
     if (m_callback) {
         // Create a local buffer to hold the boolean value
-        uint8_t buffer[sizeof(bool)];
+        // uint8_t buffer[sizeof(bool)];
 
         // Copy the boolean value into the buffer
-        buffer[0] = m_set ? 1 : 0;
+        // buffer[0] = m_set ? 1 : 0;
 
         // Pass the buffer to the callback
         // m_callback(m_name, buffer, sizeof(bool), groupUid, m_identifier, m_dependency);
