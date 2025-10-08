@@ -149,13 +149,21 @@ void setup() {
 
     led.setOutputPercent(6.0);
 
+    // char buff[100] = "--streamLog -start";
+    // cliParser.parse(buff);
+    // cliParser.runFlags();
+    // cliParser.resetFlags();
+
     logger.logMessage("System setup complete");
 }
 
 // @todo Make sure that on boot stuff is populated correctly (ground elevation, etc), particularly for launch detection
 
 void loop() {
+    // uint32_t start = micros();
     // simulationParser.blockingGetNextSimulationData();
+    // uint32_t end = micros();
+    // Serial.println(end - start);
 
     RocketState_s state{};
 
@@ -163,8 +171,13 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
-    // barometer.inject(simulationParser.getNextFloat(), 0, simulationParser.getNextFloat());
-    // icm20602.getGyroscope()->inject({simulationParser.getNextFloat(), simulationParser.getNextFloat(), simulationParser.getNextFloat()}, 0);
+    // float tempK = simulationParser.getNextFloat();
+    // float pressurePa = simulationParser.getNextFloat();
+    // float ax = simulationParser.getNextFloat();
+    // float ay = simulationParser.getNextFloat();
+    // float az = simulationParser.getNextFloat();
+    // barometer.inject(tempK, 0, pressurePa);
+    // icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
 
 
     // Determine state

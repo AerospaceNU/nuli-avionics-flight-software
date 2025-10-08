@@ -6,6 +6,7 @@
 class SimulationParser {
 public:
     void blockingGetNextSimulationData() {
+        Serial.println("--con");
         uint32_t index = 0;
         fieldNumber = 0;
         while (true) {
