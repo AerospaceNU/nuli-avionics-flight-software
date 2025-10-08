@@ -53,8 +53,8 @@ public:
     * @brief Calculates the altitude from pressure and temperature
     * @details Specific algorithm used??????
     */
-    static float calculateAltitudeM(const float pressurePa) {
-        return (286.0f / Constants::LAPSE_RATE_K_M) *
+    static float calculateAltitudeM(const float pressurePa, const float temperatureK) {
+        return (temperatureK / Constants::LAPSE_RATE_K_M) *
             (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
     }
 

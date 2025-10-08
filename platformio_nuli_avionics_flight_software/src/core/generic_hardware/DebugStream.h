@@ -8,37 +8,32 @@ class DebugStream {
 public:
     virtual ~DebugStream() = default;
 
-    virtual void setup() {
+    // ---- Setup ----
+    virtual void setup() = 0;
 
-    }
+    void setDecimalPlaces(int places) { m_decimalPlaces = places; }
 
-    virtual void print(const char *str) {
+    // ---- Print ----
+    virtual void print(const char* str) = 0;
+    virtual void print(char c) = 0;
+    virtual void print(int32_t num) = 0;
+    virtual void print(uint32_t num) = 0;
+    virtual void print(double num) = 0;
 
-    }
+    // ---- Println ----
+    virtual void println() = 0;
+    virtual void println(const char* str) = 0;
+    virtual void println(char c) = 0;
+    virtual void println(int32_t num) = 0;
+    virtual void println(uint32_t num) = 0;
+    virtual void println(double num) = 0;
 
-    void print(char c) {
-        char aa[2];
-        aa[0] = c;
-        aa[1] = 0;
-        print(aa);
-    }
+    // ---- Write ----
+    virtual size_t write(uint8_t b) = 0;
+    virtual size_t write(const void* buffer, size_t size) = 0;
 
-    virtual void print(int32_t num) {
-
-    }
-
-    void print(uint32_t num) {
-        print(int32_t(num));
-    }
-
-    virtual void print(double num) {
-
-    }
-
-    void println() {
-        print("\n");
-    }
+protected:
+    int m_decimalPlaces = 4;  // default decimal places for floating-point printing
 };
 
-
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DEBUGSTREAM_H
+#endif // PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DEBUGSTREAM_H

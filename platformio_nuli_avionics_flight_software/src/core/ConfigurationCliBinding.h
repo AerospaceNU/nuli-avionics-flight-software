@@ -22,13 +22,15 @@ public:
     void callback() {
         if (m_setValueFlag.isSet()) {
             m_data.set(m_setValueFlag.getValueDerived());
-            Serial.print(name());
-            Serial.print(" has been set to: ");
-            Serial.println(m_data.get());
+            m_debugStream->setDecimalPlaces(8);
+            m_debugStream->print(name());
+            m_debugStream->print(" has been set to: ");
+            m_debugStream->println(m_data.get());
         } else {
-            Serial.print(name());
-            Serial.print(" is set to: ");
-            Serial.println(m_data.get());
+            m_debugStream->setDecimalPlaces(8);
+            m_debugStream->print(name());
+            m_debugStream->print(" is set to: ");
+            m_debugStream->println(m_data.get());
         }
     }
 private:

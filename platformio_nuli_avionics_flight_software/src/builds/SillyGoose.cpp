@@ -22,6 +22,8 @@
 #include "core/BasicLogger.h"
 #include "util/StringHelper.h"
 
+// @todo: give all hardware access to the debug stream
+
 // clang-format off
 struct SillyGooseLogData {
     uint32_t timestampMs;
@@ -70,7 +72,7 @@ Parser cliParser;
 BasicLogger<SillyGooseLogData> logger;
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c};
-Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS});
+Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 // CLI
@@ -84,9 +86,9 @@ BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
 ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
 ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageConfigurationCliBinding;
+ConfigurationCliBinding<GROUND_ELEVATION_c> groundElevationConfigurationCliBinding;
+ConfigurationCliBinding<GROUND_TEMPERATURE_c> groundTemperatureConfigurationCliBinding;
 ConfigurationCliBinding<CONFIGURATION_VERSION_c> versionConfigurationCliBinding;
-
-
 
 void runIndicators(const Timestamp_s&);
 
@@ -101,7 +103,7 @@ void setup() {
     pinMode(FRAM_CS_PIN, OUTPUT);
     digitalWrite(FRAM_CS_PIN, HIGH);
 
-    // Configuration defaults
+    // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE);
 
     // System
@@ -133,6 +135,8 @@ void setup() {
     mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     batteryVoltageConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     versionConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    groundElevationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    groundTemperatureConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
 
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();

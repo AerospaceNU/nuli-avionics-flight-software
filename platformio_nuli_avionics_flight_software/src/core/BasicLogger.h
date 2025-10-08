@@ -16,15 +16,16 @@ class BasicLogger {
     // clang-format on
 public:
     BasicLogger() : m_logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
-                    m_startFlag("-start", "", false, 255, doNothingBlankFunction),
-                    m_endFlag("-end", "", false, 255, doNothingBlankFunction),
-                    m_offloadBinaryFlag("-b", "binary", false, 255, doNothingBlankFunction),
+                    m_startFlag("-start", "", false, 255, []() {}),
+                    m_endFlag("-end", "", false, 255, []() {}),
+                    m_offloadBinaryFlag("-b", "binary", false, 255, []() {}),
                     m_eraseFlag("--erase", "Send start", true, 255, [this]() { this->eraseCallback(); }),
                     m_offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
                     m_streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
 
     void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&)) {
         m_hardware = hardware;
+        m_debugStream = m_hardware->getDebugStream();
         m_flash = m_hardware->getFlashMemory(flashID);
         m_logWriteIndex = 0;
         m_headerStr = header;
@@ -59,14 +60,14 @@ public:
         // firstEmpty is now the first index where id == 0xFF
         m_logWriteIndex = firstEmpty;
 
-        Serial.print("Starting logging at ");
-        Serial.print(getEntryNumber());
-        Serial.print(" entry, index: ");
-        Serial.println(m_logWriteIndex * sizeof(InternalStruct_s));
-        Serial.print("Maximum log length (s): ");
-        Serial.println(getMaxLogLengthSeconds());
-        Serial.print("Remaining log length (s): ");
-        Serial.println(getRemainingLogLengthSeconds());
+        m_debugStream->print("Starting logging at ");
+        m_debugStream->print(getEntryNumber());
+        m_debugStream->print(" entry, index: ");
+        m_debugStream->println(m_logWriteIndex * sizeof(InternalStruct_s));
+        m_debugStream->print("Maximum log length (s): ");
+        m_debugStream->println(getMaxLogLengthSeconds());
+        m_debugStream->print("Remaining log length (s): ");
+        m_debugStream->println(getRemainingLogLengthSeconds());
     }
 
     void log(const LogDataStruct& logDataStruct) {
@@ -137,7 +138,7 @@ public:
 
     void offloadCallback() {
         uint32_t failCount = 0;
-        Serial.println(m_headerStr);
+        m_debugStream->println(m_headerStr);
         for (uint32_t i = 0; true; i++) {
             uint8_t id;
             const LogDataStruct logData = offload(i, id);
@@ -149,50 +150,48 @@ public:
             } else if (id == 0x01) {
                 m_printFunction(logData);
             } else if (id == 0x02) {
-                Serial.println("New flight");
+                m_debugStream->println("New flight");
             } else if (id == 0x03) {
                 const char* str = (const char*)&logData;
                 Serial.write(str, min(sizeof(LogDataStruct), strlen(str)));
-                Serial.println();
+                m_debugStream->println();
             }
         }
     }
 
     void eraseCallback() {
-        Serial.println("Erasing all");
+        m_debugStream->println("Erasing all");
         erase();
-        Serial.println("Done");
+        m_debugStream->println("Done");
     }
 
     void logCallback() {
-        Serial.print("Entry's in log ");
-        Serial.println(getEntryNumber());
-        Serial.print("Remaining log length (s): ");
-        Serial.println(getRemainingLogLengthSeconds());
+        m_debugStream->print("Entry's in log ");
+        m_debugStream->println(getEntryNumber());
+        m_debugStream->print("Remaining log length (s): ");
+        m_debugStream->println(getRemainingLogLengthSeconds());
         if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableLogging = true;
-            Serial.println("Logging enabled");
+            m_debugStream->println("Logging enabled");
         } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableLogging = false;
-            Serial.println("Logging disabled");
+            m_debugStream->println("Logging disabled");
         } else {
-            Serial.println(m_enableLogging ? "Logging is enabled" : "Logging is disabled");
+            m_debugStream->println(m_enableLogging ? "Logging is enabled" : "Logging is disabled");
         }
     }
 
     void streamCallback() {
         if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableStreaming = true;
-            Serial.println("Streaming enabled");
+            m_debugStream->println("Streaming enabled");
         } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableStreaming = false;
-            Serial.println("Streaming disabled");
+            m_debugStream->println("Streaming disabled");
         } else {
-            Serial.println(m_enableStreaming ? "Streaming is enabled" : "Streaming is disabled");
+            m_debugStream->println(m_enableStreaming ? "Streaming is enabled" : "Streaming is disabled");
         }
     }
-
-    static void doNothingBlankFunction() {}
 
     void enableLogging() {
         m_enableLogging = true;
@@ -224,6 +223,7 @@ private:
     BaseFlag* m_streamGroup[3] = {&m_streamFlag, &m_startFlag, &m_endFlag};
 
     HardwareAbstraction* m_hardware = nullptr;
+    DebugStream* m_debugStream = nullptr;
     FlashMemory* m_flash = nullptr;
     uint32_t m_logWriteIndex = 0;
 

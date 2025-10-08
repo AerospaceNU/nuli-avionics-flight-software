@@ -68,6 +68,9 @@ public:
         // Ensure setup has not been called
         if (m_hardware == nullptr) {
             getConfigurable<N>().set(value);
+        } else {
+            m_debug->print("It's too late to be setting a default");
+            m_debug->println();
         }
     }
 
@@ -103,7 +106,7 @@ private:
 
     void assignMemory();
 
-    static void outOfMemoryError();
+    void outOfMemoryError() const;
 
     uint8_t* m_dataBuffer;
     uint32_t m_dataBufferIndex = 0;

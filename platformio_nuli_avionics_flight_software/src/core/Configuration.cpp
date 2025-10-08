@@ -131,8 +131,8 @@ void Configuration::pushUpdatesToMemory() {
     }
 }
 
-void Configuration::outOfMemoryError() {
-    Serial.println("Configuration ran out of memory to start");
+void Configuration::outOfMemoryError() const {
+    m_debug->println("Configuration ran out of memory to start");
     while (true);
 }
 
