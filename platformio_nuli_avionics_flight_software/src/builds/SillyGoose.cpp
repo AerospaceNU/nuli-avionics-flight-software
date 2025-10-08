@@ -20,6 +20,7 @@
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
 #include "util/StringHelper.h"
+#include "core/SimulationParser.h"
 
 #define DEFAULT_FLAT_UID 255
 
@@ -75,6 +76,9 @@ ConfigurationID_e sillyGooseRequiredConfigs[] = {DROGUE_DELAY, MAIN_ELEVATION, B
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS});
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
+
+SimulationParser simulationParser;
+
 // CLI
 void runCli();
 void callback_none() {}
@@ -141,11 +145,17 @@ void setup() {
 // @todo Make sure that on boot stuff is populated correctly (ground elevation, etc), particularly for launch detection
 
 void loop() {
+    // simulationParser.blockingGetNextSimulationData();
+
     RocketState_s state{};
 
     // Run core hardware
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
+
+    // barometer.inject(simulationParser.getNextFloat(), 0, simulationParser.getNextFloat());
+    // icm20602.getGyroscope()->inject({simulationParser.getNextFloat(), simulationParser.getNextFloat(), simulationParser.getNextFloat()}, 0);
+
 
     // Determine state
     state.state1D = stateEstimator1D.loopOnce(state.timestamp);
