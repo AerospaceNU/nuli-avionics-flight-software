@@ -64,13 +64,12 @@ public:
     }
 
     template <unsigned N>
-    void setDefault(typename GetConfigurationType_s<N>::type value) {
+    void setDefault(const typename GetConfigurationType_s<N>::type &value) {
         // Ensure setup has not been called
         if (m_hardware == nullptr) {
             getConfigurable<N>().set(value);
         } else {
-            m_debug->print("It's too late to be setting a default");
-            m_debug->println();
+            m_debug->println("It's too late to be setting a default");`
         }
     }
 

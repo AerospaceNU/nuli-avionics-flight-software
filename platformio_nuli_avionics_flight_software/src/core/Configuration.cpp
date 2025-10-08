@@ -56,8 +56,7 @@ void Configuration::setup(HardwareAbstraction *hardware, const uint8_t id) {
         // Write default values
         pushUpdatesToMemory();
         // Notify user
-        m_debug->print("Configuration invalid, resetting to defaults");
-        m_debug->println();
+        m_debug->println("Configuration invalid, resetting to defaults");
     } else {
         // As we have just read in everything, nothing should be updated
         // This is a hack that just overwrites setDefault()'s unintended behavior of raising this flag
