@@ -174,6 +174,15 @@ private:
         void runFlags();
 
         /**
+         * @brief Compares two strings for equivalency
+         * @details Both strings must be valid cstrings
+         * @param string1
+         * @param string2
+         * @return
+         */
+        int strcmp(const char* string1, const char* string2);
+
+        /**
          * @brief Prints help text for each Flag
          */
         void printHelp() const;
@@ -201,6 +210,15 @@ private:
      * @return A pointer to the end of the segment
      */
     char* getString(char* p, char target) const;
+
+    /**
+     * @brief Compares two strings for equivalency
+     * @details Both strings must be valid cstrings
+     * @param string1
+     * @param string2
+     * @return
+     */
+    int strcmp(const char* string1, const char* string2);
 
     /**
      * @brief Retrieves a flag group based on its name

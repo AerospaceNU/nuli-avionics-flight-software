@@ -1,7 +1,6 @@
 #ifndef DESKTOP_ARGUMENTFLAG_TPP
 #define DESKTOP_ARGUMENTFLAG_TPP
 
-
 #include "ArgumentFlag.h"
 
 

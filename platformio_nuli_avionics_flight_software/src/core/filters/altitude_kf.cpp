@@ -4,19 +4,6 @@
 
 #include "altitude_kf.h"
 
-#if __has_include("unsupported/Eigen/MatrixFunctions")
-
-#include "unsupported/Eigen/MatrixFunctions"
-
-#define EIGEN_UNSUPPORTED 1
-#endif
-
-#if  __has_include("iostream")
-
-#include "iostream"
-
-#endif
-
 float altitudeFromPressure(float pressure_pa) {
     // https://en.wikipedia.org/wiki/Pressure_altitude, converted to use m and pa
     float pressure_mbar = pressure_pa / 100.0f;
