@@ -1,7 +1,6 @@
 #ifndef DESKTOP_BASEFLAG_H
 #define DESKTOP_BASEFLAG_H
 
-#include <string>
 #include <cstdint>
 #include "ReturnCodes.h"
 #include <functional>

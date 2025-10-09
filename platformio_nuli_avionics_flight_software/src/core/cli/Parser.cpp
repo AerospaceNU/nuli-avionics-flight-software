@@ -1,5 +1,4 @@
 #include "Parser.h"
-#include <cstring>
 #include <stdexcept>
 
 // parses inputs into appropriate flags.
@@ -19,7 +18,7 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
     const char* flagGroupName = argv[argvPos];    // The flag group's name should always be the first argument
     bool matchedLeader = false;
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
-        if (std::strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
+        if (strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
             // flag group has been identified
             matchedLeader = true;
             flagGroup = &m_flagGroups[i];
@@ -55,7 +54,7 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
 
         // find the matching flag
         for (uint8_t i = 0; i < flagGroup->numFlags_s; ++i) {
-            if (std::strcmp(currArg, flagGroup->flags_s[i]->name()) == 0) {
+            if (strcmp(currArg, flagGroup->flags_s[i]->name()) == 0) {
                 matched = true;
 
                 CLIReturnCode_e parseResult;
@@ -151,6 +150,15 @@ char* Parser::getString(char* p, char target) const { // NOLINT(*-convert-member
     return p;
 }
 
+int Parser::strcmp(const char* string1, const char* string2) {  // NOLINT(*-convert-member-functions-to-static)
+    while (*string1 && (*string1 == *string2)) {
+        string1++;
+        string2++;
+    }
+
+    return *(const unsigned char*)string1 - *(const unsigned char*)string2;
+}
+
 void Parser::printHelp() const {
     // loop through each FlagGroup_s
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
@@ -182,7 +190,7 @@ void Parser::resetFlags() {
 
 CLIReturnCode_e Parser::getFlagGroup(const char* flagGroupName, Parser::FlagGroup_s** flagGroup) {
     for (int i = 0; i < m_numFlagGroups; ++i) {
-        if (std::strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
+        if (strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
             *flagGroup = &m_flagGroups[i];
             return CLI_SUCCESS;
         }
@@ -241,7 +249,7 @@ BaseFlag* Parser::FlagGroup_s::getLeader() {
 
 CLIReturnCode_e Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** flag) {
     for (int i = 0; i < numFlags_s; ++i) {
-        if (std::strcmp(flagName, flags_s[i]->name()) == 0) {
+        if (strcmp(flagName, flags_s[i]->name()) == 0) {
             *flag = flags_s[i];
             return CLI_SUCCESS;
         }
@@ -267,4 +275,13 @@ void Parser::FlagGroup_s::runFlags() {
     for (uint8_t i = 0; i < numFlags_s; ++i) {
         if (flags_s[i]->isSet()) flags_s[i]->run(uid_s);
     }
+}
+
+int Parser::FlagGroup_s::strcmp(const char* string1, const char* string2) { // NOLINT(*-convert-member-functions-to-static)
+    while (*string1 && (*string1 == *string2)) {
+        string1++;
+        string2++;
+    }
+
+    return *(const unsigned char*)string1 - *(const unsigned char*)string2;
 }
