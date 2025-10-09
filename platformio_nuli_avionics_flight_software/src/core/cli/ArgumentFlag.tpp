@@ -1,8 +1,6 @@
 #ifndef DESKTOP_ARGUMENTFLAG_TPP
 #define DESKTOP_ARGUMENTFLAG_TPP
 
-
-//#include <cstring>
 #include "ArgumentFlag.h"
 
 
@@ -52,10 +50,10 @@ template<typename T>
 void ArgumentFlag<T>::run(uint8_t groupUid) {
     if (m_callback) {
         // Create a local buffer to hold the value
-//        uint8_t buffer[sizeof(T)];
+        uint8_t buffer[sizeof(T)];
 
         // Copy the value into the buffer
-//        memcpy(buffer, &m_argument, sizeof(T));
+        memcpy(buffer, &m_argument, sizeof(T));
 
         // Pass the buffer to the callback
         // m_callback(m_name, buffer, sizeof(T), groupUid, m_identifier, m_dependency);
