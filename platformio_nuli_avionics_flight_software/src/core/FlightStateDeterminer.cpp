@@ -28,6 +28,11 @@ FlightState_e FlightStateDeterminer::loopOnce(const State1D_s& state1D, const Ti
             m_flightStateStartTime = timestamp.runtime_ms;
         }
     } else if (m_flightState.get() == ASCENT) {
+        // Track maximum altitude
+        if (state1D.altitudeM > m_maxAltitude) {
+            m_maxAltitude = state1D.altitudeM;
+        }
+        // Check if we have reached apogee
         if (apogeeReached(state1D, timestamp)) {
             m_flightState.set(DESCENT);
             m_flightStateStartTime = timestamp.runtime_ms;
@@ -73,7 +78,9 @@ bool FlightStateDeterminer::apogeeReached(const State1D_s& state1D, const Timest
     if (state1D.velocityMS < 0) { // If we are going down
         if (timestamp.runtime_ms - m_internalStateTransitionTimer > APOGEE_DEBOUNCE_TIMER_MS) {
             m_internalStateTransitionTimer = timestamp.runtime_ms;
-            return true;
+            if (state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M) {
+                return true;
+            }
         }
     } else {
         m_internalStateTransitionTimer = timestamp.runtime_ms;

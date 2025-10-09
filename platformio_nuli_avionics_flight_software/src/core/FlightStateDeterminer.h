@@ -32,7 +32,9 @@ private:
 
     uint32_t m_internalStateTransitionTimer = 0;
     uint32_t m_internalSecondaryTimer = 0;
-    double m_landingDetectionReferenceAltitude = 0;
+    float m_landingDetectionReferenceAltitude = 0;
+
+    float m_maxAltitude = 0;
 
     uint32_t m_flightStateStartTime = 0;
 };
