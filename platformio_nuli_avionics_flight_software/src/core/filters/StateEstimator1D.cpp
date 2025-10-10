@@ -40,7 +40,7 @@ State1D_s StateEstimator1D::getState1D() const {
     return m_currentState1D;
 }
 
-float StateEstimator1D::getPressurePa() const {
+float StateEstimator1D::getPressurePa() {
     float pressurePa = 0;
     int32_t count = 0;
     for (int32_t i = 0; i < m_hardware->getNumBarometers(); i++) {
@@ -52,14 +52,15 @@ float StateEstimator1D::getPressurePa() const {
     }
 
     if (count == 0) {
-        return -9999999.0; // @todo handle ticks with no valid sensor readings
+        return m_lastPressure;
     }
 
-    return pressurePa / float(count);
+    m_lastPressure = pressurePa / float(count);
+    return m_lastPressure;
 }
 
 float StateEstimator1D::getAccelerationMSS() const {
-    if (m_flightState.get() == DESCENT) {
+    if (m_flightState.get() == DESCENT || m_flightState.get() == POST_FLIGHT) {
         return 0;
     }
 
