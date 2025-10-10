@@ -5,6 +5,7 @@
 #include "core/HardwareAbstraction.h"
 #include "core/Configuration.h"
 #include "altitude_kf.h"
+#include "LowPass.h"
 
 
 class StateEstimator1D {
@@ -17,10 +18,15 @@ public:
 
     State1D_s getState1D() const;
 
+    void reset();
+
 private:
     float getPressurePa();
 
     float getAccelerationMSS() const;
+
+    void updateGroundReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
+
 
     State1D_s m_currentState1D = {};
     HardwareAbstraction* m_hardware = nullptr;
@@ -30,9 +36,14 @@ private:
     ConfigurationData<float> m_groundElevation;
     ConfigurationData<float> m_groundTemperature;
 
-    AltitudeKf kalmanFilter;
+    AltitudeKf m_kalmanFilter;
 
     float m_lastPressure = Constants::ATMOSPHERIC_PRESSURE_PA;
+
+    bool m_isInitialized = false;
+    LowPass m_lowPass{0.01};
+    uint32_t m_groundReferenceTimer = 0;
+
 };
 
 

@@ -13,9 +13,9 @@ public:
 
     FlightState_e loopOnce(const State1D_s& state1D, const Timestamp_s& timestamp);
 
-    FlightState_e getState() const;
+    FlightState_e getFlightState() const;
 
-    void setState(const FlightState_e& state, const Timestamp_s& timestamp);
+    void setFlightState(const FlightState_e& flightState, const Timestamp_s& timestamp);
 
     uint32_t getStateStartTime() const;
 
@@ -27,17 +27,11 @@ private:
     bool hasLanded(const State1D_s& state1D, const Timestamp_s& timestamp);
 
     ConfigurationData<int32_t> m_flightState;
-    ConfigurationData<float> m_groundElevation;
     Configuration* m_configuration = nullptr;
 
-    LowPass m_lowPass{0.01};
-
     uint32_t m_internalStateTransitionTimer = 0;
-    uint32_t m_internalSecondaryTimer = 0;
     float m_landingDetectionReferenceAltitude = 0;
-
     float m_maxAltitude = 0;
-
     uint32_t m_flightStateStartTime = 0;
 };
 

@@ -97,6 +97,11 @@ def main():
     csv_path = list_csv_files()
     port_name = list_serial_ports()
     ser = serial.Serial(port_name, 115200, timeout=0.1)
+    ser.write(b"--streamLog -start\n")
+    time.sleep(0.1)
+    ser.write(b"--sim\n")
+    time.sleep(0.1)
+
 
     # Start serial echo thread
     echo_thread = threading.Thread(target=serial_echo, args=(ser,), daemon=True)

@@ -75,14 +75,17 @@ ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
 
 SimulationParser simulationParser;
+bool simulationActive = false;
 
 // CLI
 void runCli();
 void fireCallback();
+SimpleFlag simFlag("--sim", "Send start", true, 255, []() { simulationActive = true; stateEstimator1D.reset(); });
 SimpleFlag testfire("--fire", "Send start", true, 255, fireCallback);
-SimpleFlag testDrogue("-d", "Send start", false, 255, [](){});
-SimpleFlag testMain("-m", "Send start", false, 255, [](){});
+SimpleFlag testDrogue("-d", "Send start", false, 255, []() {});
+SimpleFlag testMain("-m", "Send start", false, 255, []() {});
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+BaseFlag* simGroup[] = {&simFlag};
 ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
 ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
 ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageConfigurationCliBinding;
@@ -129,6 +132,7 @@ void setup() {
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
     // Setup cli
     cliParser.addFlagGroup(testfireGroup);
+    cliParser.addFlagGroup(simGroup);
     drogueConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     batteryVoltageConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
@@ -139,37 +143,27 @@ void setup() {
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
+
     // We are done!
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
-
-
-    // char buff[100] = "--streamLog -start";
-    // cliParser.parse(buff);
-    // cliParser.runFlags();
-    // cliParser.resetFlags();
 }
 
-// @todo Make sure that on boot stuff is populated correctly (ground elevation, etc), particularly for launch detection
-
 void loop() {
-    // uint32_t start = micros();
-    // simulationParser.blockingGetNextSimulationData();
-    // uint32_t end = micros();
-    // Serial.println(end - start);
-
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
-    // float tempK = simulationParser.getNextFloat();
-    // float pressurePa = simulationParser.getNextFloat();
-    // float ax = simulationParser.getNextFloat();
-    // float ay = simulationParser.getNextFloat();
-    // float az = simulationParser.getNextFloat();
-    // barometer.inject(tempK, 0, pressurePa);
-    // icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
-
+    if (simulationActive) {
+        simulationParser.blockingGetNextSimulationData();
+        const float tempK = simulationParser.getNextFloat();
+        const float pressurePa = simulationParser.getNextFloat();
+        const float ax = simulationParser.getNextFloat();
+        const float ay = simulationParser.getNextFloat();
+        const float az = simulationParser.getNextFloat();
+        barometer.inject(tempK, 0, pressurePa);
+        icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
+    }
 
     // Determine state
     state.state1D = stateEstimator1D.loopOnce(state.timestamp);
