@@ -4,11 +4,11 @@ ArduinoFram::ArduinoFram(int8_t csPin) : m_AdafruitFram(csPin) {
 
 }
 
-void ArduinoFram::setup() {
+void ArduinoFram::setup(DebugStream *debugStream) {
     if (m_AdafruitFram.begin()) {
-        Serial.println("Found SPI FRAM");
+        debugStream->message("FRAM initialized");
     } else {
-        Serial.println("No SPI FRAM found ... check your connections\r\n");
+        debugStream->error("FRAM initialization failed");
     }
 }
 

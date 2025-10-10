@@ -89,9 +89,7 @@ void initICM20602() {
 ICM20602Sensor::ICM20602Sensor() = default;
 
 
-void ICM20602Sensor::setup() {
-    Serial.println("Starting ICM20602 sensors");
-
+void ICM20602Sensor::setup(DebugStream* debugStream) {
     Wire.begin();
     Wire.setClock(400000);
 
@@ -100,10 +98,9 @@ void ICM20602Sensor::setup() {
     // Verify device ID
     const uint8_t whoAmI = readRegister(ICM20602_ADDR, WHO_AM_I_REG);
     if (whoAmI == 0x12) { // Expected device ID for ICM-20602
-        Serial.println("ICM-20602 detected!");
+        debugStream->message("ICM20602 initialized");
     } else {
-        Serial.print("Unexpected device ID: ");
-        Serial.println(whoAmI, HEX);
+        debugStream->error("ICM20602 initialization failed, unexpected device ID: %d", whoAmI);
     }
 }
 

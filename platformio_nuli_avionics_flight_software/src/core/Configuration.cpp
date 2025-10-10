@@ -46,7 +46,11 @@ void Configuration::setup(HardwareAbstraction *hardware, const uint8_t id) {
     readConfigFromMemory();
 
     // Handle restoring to default
-    if (getConfigurable<CONFIGURATION_VERSION_c>().get() != 0) {
+    // Get the default version
+    GetConfigurationType_s<CONFIGURATION_VERSION_c>::type defaultVersion;
+    getConfigurationDefault(CONFIGURATION_VERSION_c, &defaultVersion);
+    // Check version number
+    if (getConfigurable<CONFIGURATION_VERSION_c>().get() != defaultVersion) {
         // Restore default values
         memcpy(m_buffer, bufferDefaultValues, sizeof(m_buffer));
         // Flag all values to be updated, allowing
@@ -56,10 +60,10 @@ void Configuration::setup(HardwareAbstraction *hardware, const uint8_t id) {
         // Write default values
         pushUpdatesToMemory();
         // Notify user
-        m_debug->println("Configuration invalid, resetting to defaults");
+        m_debug->warn("Configuration invalid, resetting to defaults");
     } else {
         // As we have just read in everything, nothing should be updated
-        // This is a hack that just overwrites setDefault()'s unintended behavior of raising this flag
+        // This is a hack that just overwrites setDefault()'s behavior of raising this flag
         for (uint32_t i = 0; i < m_numConfigurations; i++) {
             m_configurations[i].m_isUpdated = false;
         }
@@ -131,7 +135,7 @@ void Configuration::pushUpdatesToMemory() {
 }
 
 void Configuration::outOfMemoryError() const {
-    m_debug->println("Configuration ran out of memory to start");
+    m_debug->error("Configuration ran out of memory to start");
     while (true);
 }
 

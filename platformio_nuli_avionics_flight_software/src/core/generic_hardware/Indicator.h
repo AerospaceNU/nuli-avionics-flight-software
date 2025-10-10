@@ -13,7 +13,7 @@ public:
         VISUAL,
     };
 
-    virtual void setup() {}
+    virtual void setup(DebugStream *debugStream) {}
 
     virtual void on() = 0;
 

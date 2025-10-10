@@ -14,7 +14,7 @@ public:
      * @brief Initialize the sensor
      * @details Enabling any peripherals, confirm sensor is talking, set configuration registers on the sensor
      */
-    void setup() override;
+    void setup(DebugStream* debugStream) override;
 
     /**
      * @brief Read data from the sensor

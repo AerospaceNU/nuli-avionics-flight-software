@@ -1,14 +1,16 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONMEMORY_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONMEMORY_H
 
+#include "core/generic_hardware/DebugStream.h"
+
 class FramMemory {
 public:
-    virtual void setup() {};
+    virtual ~FramMemory() = default;
+    virtual void setup(DebugStream* debugStream) {};
 
     virtual void write(uint32_t address, const uint8_t* buffer, uint32_t length) = 0;
 
     virtual void read(uint32_t address, uint8_t* buffer, uint32_t length) = 0;
-
 };
 
 /**
@@ -22,16 +24,16 @@ public:
  *
  * @tparam N Size of the memory
  */
-template<unsigned N>
+template <unsigned N>
 class VolatileConfigurationMemory : public FramMemory {
 public:
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override {
-        if(length > N) return;
+        if (length > N) return;
         memccpy(m_buffer, buffer, length);
     }
 
     void read(uint32_t address, uint8_t* buffer, uint32_t length) override {
-        if(length > N) return;
+        if (length > N) return;
         memccpy(buffer, m_buffer, length);
     }
 

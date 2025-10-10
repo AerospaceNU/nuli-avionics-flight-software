@@ -69,7 +69,7 @@ public:
         if (m_hardware == nullptr) {
             getConfigurable<N>().set(value);
         } else {
-            m_debug->println("It's too late to be setting a default");
+            m_debug->warn("It's too late to be setting a default");
         }
     }
 

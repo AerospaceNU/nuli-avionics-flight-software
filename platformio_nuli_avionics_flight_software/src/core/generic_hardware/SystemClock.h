@@ -6,7 +6,9 @@
 
 class SystemClock {
 public:
-    virtual void setup() {
+    virtual ~SystemClock() = default;
+
+    virtual void setup(DebugStream *debugStream) {
 
     }
 

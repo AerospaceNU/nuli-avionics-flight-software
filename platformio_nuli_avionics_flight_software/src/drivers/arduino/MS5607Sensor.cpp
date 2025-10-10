@@ -8,14 +8,13 @@
 #define PROM_READ  0xA0     // prom read command
 #define RESET 0x1E          // soft reset command
 
-void MS5607Sensor::setup() {
-    Serial.println("Starting barometric sensor");
+void MS5607Sensor::setup(DebugStream* debugStream) {
     Wire.begin();
     Wire.setClock(400000);
     if (readCalibration()) {
-        Serial.println("Started");
+        debugStream->message("MS5607 initialized");
     } else {
-        Serial.println("Failed");
+        debugStream->error("MS5607 initialization failed");
     }
     setOSR(256);
 }
@@ -57,7 +56,6 @@ bool MS5607Sensor::startMeasurement() const {
     if (error == 0) {
         return true;
     } else {
-        Serial.println("dsf");
         return false;
     }
 }

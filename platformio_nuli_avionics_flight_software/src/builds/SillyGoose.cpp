@@ -1,6 +1,7 @@
 #include "Avionics.h"
 #include <Arduino.h>
 #include "pinmaps/SillyGoosePinmap.h"
+#include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
 #include "drivers/arduino/MS5607Sensor.h"
@@ -21,8 +22,6 @@
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
 #include "util/StringHelper.h"
-
-// @todo: give all hardware access to the debug stream
 
 // clang-format off
 struct SillyGooseLogData {
@@ -49,12 +48,12 @@ struct SillyGooseLogData {
     bool mainFired;
 } remove_struct_padding;
 #define LOG_HEADER "timestampMs\tdtMS\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatterVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
-void printLog(const SillyGooseLogData &d) { char buf[256]; mini_snprintf(buf,sizeof(buf),"%lu\t%lu\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\n",d.timestampMs,d.dtMS,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); Serial.print(buf); }
+void printLog(const SillyGooseLogData &d) { char buf[256]; mini_snprintf(buf,sizeof(buf),"%lu\t%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\n",d.timestampMs,d.dtMS,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); Serial.print(buf); }
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(false);
+SerialDebug serialDebug(true);
 MS5607Sensor barometer;
 ICM20602Sensor icm20602;
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
@@ -73,15 +72,13 @@ BasicLogger<SillyGooseLogData> logger;
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c};
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
-ConfigurationData<float> mainElevation;
-ConfigurationData<uint32_t> drogueDelay;
+
 // CLI
 void runCli();
-void callback_none() {}
 void fireCallback();
 SimpleFlag testfire("--fire", "Send start", true, 255, fireCallback);
-SimpleFlag testDrogue("-d", "Send start", false, 255, callback_none);
-SimpleFlag testMain("-m", "Send start", false, 255, callback_none);
+SimpleFlag testDrogue("-d", "Send start", false, 255, [](){});
+SimpleFlag testMain("-m", "Send start", false, 255, [](){});
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
 ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
@@ -89,28 +86,25 @@ ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageCon
 ConfigurationCliBinding<GROUND_ELEVATION_c> groundElevationConfigurationCliBinding;
 ConfigurationCliBinding<GROUND_TEMPERATURE_c> groundTemperatureConfigurationCliBinding;
 ConfigurationCliBinding<CONFIGURATION_VERSION_c> versionConfigurationCliBinding;
-
+// Locally used configuration data
+ConfigurationData<float> mainElevation;
+ConfigurationData<uint32_t> drogueDelay;
+// Placeholder till we have a manager
 void runIndicators(const Timestamp_s&);
 
-
-void setup() {
-    Serial.begin(9600);
-    while (!Serial) {}
-
-    // Make all SPI devices play nice by deactivating them all TODO: is there a nice abstraction that would work here?
-    pinMode(FLASH_CS_PIN, OUTPUT);
-    digitalWrite(FLASH_CS_PIN, HIGH);
-    pinMode(FRAM_CS_PIN, OUTPUT);
-    digitalWrite(FRAM_CS_PIN, HIGH);
-
+void initialize() {
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN});
     // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE);
+    // Lower the LED Power
+    led.setOutputPercent(6.0);
+}
 
-    // System
-    hardware.setLoopRateHz(100);
-    hardware.setDebugStream(&serialDebug);
-    hardware.setSystemClock(&arduinoClock);
-    // Devices
+void setup() {
+    // Finalize object creation, ensure hardware is ready for setup
+    initialize();
+
+    // Hardware
     const int16_t framID = hardware.appendFramMemory(&fram);
     const int16_t flashID = hardware.appendFlashMemory(&flash);
     hardware.appendPyro(&droguePyro);
@@ -122,14 +116,15 @@ void setup() {
     hardware.appendGyroscope(icm20602.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
+    hardware.setup(&serialDebug, &arduinoClock, 100);
+
     // Setup components
-    hardware.setup();
+    serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID);
     stateEstimator1D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
-
-    // setup cli
+    // Setup cli
     cliParser.addFlagGroup(testfireGroup);
     drogueConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
@@ -137,31 +132,25 @@ void setup() {
     versionConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     groundElevationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     groundTemperatureConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
-
-    led.setOutputPercent(6.0);
-
-    logger.logMessage("System setup complete");
+    // We are done!
+    serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
 
 // @todo Make sure that on boot stuff is populated correctly (ground elevation, etc), particularly for launch detection
 
 void loop() {
-    RocketState_s state{};
-
     // Run core hardware
+    RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
     // Determine state
     state.state1D = stateEstimator1D.loopOnce(state.timestamp);
     state.flightState = flightStateDeterminer.loopOnce(state.state1D, state.timestamp);
-    state.state6D = State6D_s(); // Not implemented
-    state.rawGps = Coordinates_s(); // Not implemented
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
@@ -246,10 +235,7 @@ void runCli() {
                 cliParser.runFlags();
                 cliParser.resetFlags();
             } else {
-                Serial.print("Invalid message: ");
-                Serial.print(errorCode);
-                Serial.print(", ");
-                Serial.println(serialRead);
+                serialDebug.error("Invalid message: %d, %s", errorCode, serialRead);
             }
             serialReadIndex = 0;
         }
@@ -258,12 +244,12 @@ void runCli() {
 
 void fireCallback() {
     if (testDrogue.isSet()) {
-        Serial.println("Firing drogue");
+        serialDebug.message("Firing drogue");
         droguePyro.fire();
         delay(100);
         droguePyro.disable();
     } else if (testMain.isSet()) {
-        Serial.println("Firing main");
+        serialDebug.message("Firing main");
         mainPyro.fire();
         delay(100);
         mainPyro.disable();

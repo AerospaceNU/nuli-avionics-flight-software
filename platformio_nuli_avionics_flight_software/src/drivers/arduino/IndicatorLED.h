@@ -18,7 +18,7 @@ public:
         }
     }
 
-    void setup() override {
+    void setup(DebugStream *debugStream) override {
         pinMode(m_pin, OUTPUT);
     }
 

@@ -6,6 +6,7 @@
 #include <SPI.h>
 
 #include "core/generic_hardware/FlashMemory.h"
+#include "core/generic_hardware/DebugStream.h"
 
 class S25FL512 final : public FlashMemory {
 public:
@@ -13,7 +14,7 @@ public:
 
     void setSpiClass(SPIClass* spiClass);
 
-    void setup() override;
+    void setup(DebugStream* debugStream) override;
 
     static uint32_t getMemorySize();
 

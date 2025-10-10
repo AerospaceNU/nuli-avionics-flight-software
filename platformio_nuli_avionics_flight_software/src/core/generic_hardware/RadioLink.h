@@ -6,7 +6,7 @@
 
 class RadioLink {
 public:
-    virtual void setup() {}
+    virtual void setup(DebugStream *debugStream) {}
 
     virtual void loopOnce() {}
 
