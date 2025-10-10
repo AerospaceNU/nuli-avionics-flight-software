@@ -34,13 +34,12 @@ FlightState_e FlightStateDeterminer::loopOnce(const State1D_s& state1D, const Ti
         if (hasLaunched(state1D, timestamp) && timestamp.runtime_ms > 5000) { // @todo do something smarter than waiting 5s
             setState(ASCENT, timestamp);
         }
-    } else if (m_flightState.get() == ASCENT) {
+    } else if (getState() == ASCENT) {
         // Track maximum altitude
         if (state1D.altitudeM > m_maxAltitude) {
             m_maxAltitude = state1D.altitudeM;
         }
         // Check if we have reached apogee
-    } else if (getState() == ASCENT) {
         if (apogeeReached(state1D, timestamp)) {
             setState(DESCENT, timestamp);
         }
@@ -79,7 +78,6 @@ bool FlightStateDeterminer::hasLaunched(const State1D_s& state1D, const Timestam
 }
 
 bool FlightStateDeterminer::apogeeReached(const State1D_s& state1D, const Timestamp_s& timestamp) {
-    // @todo perhaps add a altitude below max seen check
     if (state1D.velocityMS < 0) { // If we are going down
         if (timestamp.runtime_ms - m_internalStateTransitionTimer > APOGEE_DEBOUNCE_TIMER_MS) {
             m_internalStateTransitionTimer = timestamp.runtime_ms;

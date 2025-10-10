@@ -157,8 +157,6 @@ void loop() {
     // uint32_t end = micros();
     // Serial.println(end - start);
 
-    RocketState_s state{};
-
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
