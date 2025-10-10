@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 
-void ArduinoPyro::setup() {
+void ArduinoPyro::setup(DebugStream *debugStream) {
     pinMode(m_firePin, OUTPUT);
     disable();
 }

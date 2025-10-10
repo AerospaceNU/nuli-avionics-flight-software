@@ -16,7 +16,7 @@ constexpr uint32_t LAUNCH_ACCELERATION_DEBOUNCE_TIMER_MS = 150;
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
-constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 5000;
+constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
 
 // Hardware Abstraction max size paramiters
 constexpr uint8_t MAX_PYRO_NUM = 10;
@@ -67,6 +67,7 @@ enum FlightState_e {
     ASCENT = 1,
     DESCENT = 2,
     POST_FLIGHT = 3,
+    UNKNOWN_FLIGHT_STATE = 4,
 };
 
 struct State1D_s {

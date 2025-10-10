@@ -5,7 +5,7 @@
 #include "Avionics.h"
 #include "core/generic_hardware/SystemClock.h"
 
-class ArduinoSystemClock : public SystemClock {
+class ArduinoSystemClock final : public SystemClock {
 public:
     uint32_t currentRuntimeMs() override {
         return millis();

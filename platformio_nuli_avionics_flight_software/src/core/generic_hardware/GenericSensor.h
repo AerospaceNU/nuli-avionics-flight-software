@@ -2,6 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GENERICSENSOR_H
 
 #include <Avionics.h>
+#include "DebugStream.h"
 
 /**
  * @class GenericSensor
@@ -16,7 +17,7 @@ public:
      * @brief Initialize the sensor
      * @details Enabling any peripherals, confirm sensor is talking, set configuration registers on the sensor
      */
-    virtual void setup() {}
+    virtual void setup(DebugStream *debugStream) {}
 
     /**
      * @brief Read data from the sensor

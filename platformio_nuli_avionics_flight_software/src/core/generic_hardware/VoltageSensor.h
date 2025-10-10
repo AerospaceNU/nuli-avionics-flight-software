@@ -10,7 +10,7 @@ public:
         m_scaleFactor = scaleFactor;
     }
 
-    void setup() override {}
+    void setup(DebugStream *debugStream) override {}
 
     void read() override {}
 

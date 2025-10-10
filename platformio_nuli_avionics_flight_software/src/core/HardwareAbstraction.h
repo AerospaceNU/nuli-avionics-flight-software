@@ -61,7 +61,7 @@ public:
      * @brief Sets up all hardware
      * @details Calls setup for each sensor, communication link, etc
      */
-    void setup();
+    void setup(DebugStream *debugStream, SystemClock *systemClock, uint32_t loopRateHz);
 
     /**
      * @brief Reads in all sensor data
@@ -73,9 +73,7 @@ public:
 
     uint32_t getTargetLoopTimeMs() const;
 
-    GENERATE_GET_SET_METHODS_MACRO(SystemClock, m_systemClock)
-
-    GENERATE_GET_SET_METHODS_MACRO(DebugStream, m_debugStream)
+    DebugStream* getDebugStream() const;
 
     GENERATE_GET_ADD_METHODS_MACRO(FramMemory, m_framMemoryArray, m_numFramMemory, MAX_FRAM_MEMORY_NUM)
 
@@ -100,21 +98,7 @@ public:
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
 private:
-    uint32_t getLastTickDuration() const;
-
     Timestamp_s getTimestamp() const;
-
-    /**
-     * Get the runtime at the start of this loop
-     * @return time in ms
-     */
-    uint32_t getLoopTimestampMs() const;
-
-    /**
-     * @brief Gets the time since the start of the last loop
-     * @return Loop time in ms
-     */
-    uint32_t getLoopDtMs() const;
 
     uint32_t m_loopTime = 10;
     uint32_t m_loopDtMs = 0; ///< Tracks the loop execution time
@@ -123,7 +107,7 @@ private:
     uint32_t m_tickCount = 0;
 
     SystemClock* m_systemClock = nullptr; ///< System clocks
-    DebugStream* m_debugStream = nullptr; ///< Debug stream
+    DebugStream* m_debug = nullptr; ///< Debug stream
 
     uint8_t m_numPyros = 0; ///< Number of Pyros in the system
     uint8_t m_numVoltageSensors = 0; ///< Number of VoltageSensors in the system
@@ -150,5 +134,4 @@ private:
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file
-#undef GENERATE_GET_SET_METHODS_MACRO
 #endif //DESKTOP_HARDWAREMANAGER_H

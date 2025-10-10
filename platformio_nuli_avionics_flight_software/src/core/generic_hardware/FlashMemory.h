@@ -2,12 +2,13 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_FLASHMEMORY_H
 
 #include <Avionics.h>
+#include "core/generic_hardware/DebugStream.h"
 
 class FlashMemory {
 public:
     virtual ~FlashMemory() = default;
 
-    virtual void setup() {}
+    virtual void setup(DebugStream *debugStream) {}
 
     virtual bool ready() const = 0;
 

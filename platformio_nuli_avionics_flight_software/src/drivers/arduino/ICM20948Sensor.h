@@ -31,7 +31,7 @@ public:
      * @brief Initializes the sensor
      * @details Starts communication, and configures parameters
      */
-    void setup() final;
+    void setup();
 
     /**
      * @brief Reads data from the sensor

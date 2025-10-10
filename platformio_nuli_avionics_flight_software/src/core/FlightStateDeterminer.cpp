@@ -7,13 +7,21 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
     m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
-    // @todo reboot detection
-    // For now we assume that flight always is PRE_FLIGHT on boot
-    m_flightState.set(PRE_FLIGHT);
+
+    // We need to determine the initial "boot" state
+    constexpr Timestamp_s bootTimestamp = {0,0, 0};
+    // If a flight was completed, we can assume that we are not currently in the air
+    if (getState() == POST_FLIGHT) {
+        setState(PRE_FLIGHT, bootTimestamp);
+    }
+    // If we have any other state that's not PRE_FLIGHT or POST_FLIGHT, we can no longer be sure that we are in that state.
+    if (getState() != PRE_FLIGHT) {
+        setState(UNKNOWN_FLIGHT_STATE, bootTimestamp);
+    }
 }
 
 FlightState_e FlightStateDeterminer::loopOnce(const State1D_s& state1D, const Timestamp_s& timestamp) {
-    if (m_flightState.get() == PRE_FLIGHT) {
+    if (getState() == PRE_FLIGHT) {
         // Update ground altitude reference: only update at maximum once per second, and if it has changed by over 2
         m_lowPass.update(state1D.unfilteredNoOffsetAltitudeM);
         if (timestamp.runtime_ms - m_internalSecondaryTimer > 1000) {
@@ -24,8 +32,7 @@ FlightState_e FlightStateDeterminer::loopOnce(const State1D_s& state1D, const Ti
         }
 
         if (hasLaunched(state1D, timestamp) && timestamp.runtime_ms > 5000) { // @todo do something smarter than waiting 5s
-            m_flightState.set(ASCENT);
-            m_flightStateStartTime = timestamp.runtime_ms;
+            setState(ASCENT, timestamp);
         }
     } else if (m_flightState.get() == ASCENT) {
         // Track maximum altitude
@@ -33,18 +40,16 @@ FlightState_e FlightStateDeterminer::loopOnce(const State1D_s& state1D, const Ti
             m_maxAltitude = state1D.altitudeM;
         }
         // Check if we have reached apogee
+    } else if (getState() == ASCENT) {
         if (apogeeReached(state1D, timestamp)) {
-            m_flightState.set(DESCENT);
-            m_flightStateStartTime = timestamp.runtime_ms;
+            setState(DESCENT, timestamp);
         }
-    } else if (m_flightState.get() == DESCENT) {
+    } else if (getState() == DESCENT) {
         if (hasLanded(state1D, timestamp)) {
-            m_flightState.set(POST_FLIGHT);
-            m_flightStateStartTime = timestamp.runtime_ms;
+            setState(POST_FLIGHT, timestamp);
         }
-    } else if (m_flightState.get() == POST_FLIGHT) {} else {
-        m_flightState.set(PRE_FLIGHT);
-        m_flightStateStartTime = timestamp.runtime_ms;
+    } else if (getState() == POST_FLIGHT) {} else {
+        setState(PRE_FLIGHT, timestamp);
     }
 
     return getState();
@@ -102,6 +107,12 @@ bool FlightStateDeterminer::hasLanded(const State1D_s& state1D, const Timestamp_
 
 FlightState_e FlightStateDeterminer::getState() const {
     return FlightState_e(m_flightState.get());
+}
+
+
+void FlightStateDeterminer::setState(const FlightState_e& state, const Timestamp_s& timestamp) {
+    m_flightState.set(state);
+    m_internalStateTransitionTimer = timestamp.runtime_ms;
 }
 
 uint32_t FlightStateDeterminer::getStateStartTime() const {

@@ -5,12 +5,13 @@
 #include "Arduino.h"
 #include "../../core/generic_hardware/FramMemory.h"
 #include "Adafruit_FRAM_SPI.h"
+#include "core/generic_hardware/DebugStream.h"
 
 class ArduinoFram : public FramMemory {
 public:
     explicit ArduinoFram(int8_t csPin);
 
-    void setup() override;
+    void setup(DebugStream *debugStream) override;
 
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override;
 

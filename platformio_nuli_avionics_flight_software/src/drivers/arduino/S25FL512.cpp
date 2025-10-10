@@ -32,10 +32,12 @@ void S25FL512::setSpiClass(SPIClass* spiClass) {
     m_spiBus = spiClass;
 }
 
-void S25FL512::setup() {
+void S25FL512::setup(DebugStream* debugStream) {
+    // @todo check a register to make sure the device is there
     m_spiBus->begin();
     pinMode(m_chipSelectPin, OUTPUT);
     disableSelectPin();
+    debugStream->message("S25FL512 initialized");
 }
 
 

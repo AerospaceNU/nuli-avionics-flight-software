@@ -15,6 +15,8 @@ public:
 
     FlightState_e getState() const;
 
+    void setState(const FlightState_e& state, const Timestamp_s& timestamp);
+
     uint32_t getStateStartTime() const;
 
 private:

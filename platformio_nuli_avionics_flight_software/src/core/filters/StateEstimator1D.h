@@ -18,7 +18,7 @@ public:
     State1D_s getState1D() const;
 
 private:
-    float getPressurePa() const;
+    float getPressurePa();
 
     float getAccelerationMSS() const;
 
@@ -31,6 +31,8 @@ private:
     ConfigurationData<float> m_groundTemperature;
 
     AltitudeKf kalmanFilter;
+
+    float m_lastPressure = Constants::ATMOSPHERIC_PRESSURE_PA;
 };
 
 

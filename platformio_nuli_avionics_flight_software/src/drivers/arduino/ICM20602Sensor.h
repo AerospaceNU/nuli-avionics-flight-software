@@ -24,14 +24,14 @@ public:
      * @brief Initializes the sensor
      * @details Starts communication, and configures parameters
      */
-    void setup() final;
+    void setup(DebugStream* debugStream) override;
 
     /**
      * @brief Reads data from the sensor
      * @details This uses injector classes, meaning that the data is read in, but then passed into "dummy" classes.
      * These "dummy" classes are what are actually used by the rest of the code to access data.
      */
-    void read() final;
+    void read() override;
 
     /**
      * @brief Gets the Accelerometer injector class
@@ -51,16 +51,15 @@ public:
 
 private:
     void readAccelAndGyroBatch();
-//    void updateAccel();
 
     // Abstraction
     Accelerometer m_accelerometer;          ///< Injector class used to pass data to the HardwareAbstraction
     Gyroscope m_gyroscope;                  ///< Injector class used to pass data to the HardwareAbstraction
 
     // For accelerometer
-    int16_t accelData[3];
-    int16_t gyroData[3];
-    int16_t tempRaw;
+    int16_t accelData[3] = {};
+    int16_t gyroData[3] = {};
+    int16_t tempRaw = 0;
 };
 
 
