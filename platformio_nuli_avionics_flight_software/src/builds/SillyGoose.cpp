@@ -22,6 +22,7 @@
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
 #include "util/StringHelper.h"
+#include "util/Debounce.h"
 #include "core/SimulationParser.h"
 
 // clang-format off
@@ -179,8 +180,8 @@ void loop() {
         if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get()) {
             droguePyro.fire();
         }
-
-        if (state.state1D.altitudeM < mainElevation.get()) {
+        static Debounce mainDeployDebounce(200);
+        if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp)) {
             mainPyro.fire();
         }
     } else if (state.flightState == POST_FLIGHT) {

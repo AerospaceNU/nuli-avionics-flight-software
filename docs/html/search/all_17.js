@@ -5,7 +5,7 @@ var searchData=
   ['readsensors_2',['readSensors',['../classHardwareAbstraction.html#a48a0d194e011882e3169837fedb0192c',1,'HardwareAbstraction']]],
   ['repeat_3',['5. Repeat',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md10',1,'']]],
   ['required_5fconfigs_4',['REQUIRED_CONFIGS',['../classConfiguration.html#ae4a311f24dd58852dd4b7bcbdb36c9e7',1,'Configuration']]],
-  ['reset_5',['reset',['../classArgumentFlag.html#a0e8cab89d936644b4ed33725aaea0d0d',1,'ArgumentFlag::reset()'],['../classBaseFlag.html#a2f4138383aea63878e750422156e0bea',1,'BaseFlag::reset()'],['../classSimpleFlag.html#abb91d35acb548126f7c8a0f34c1d5a9f',1,'SimpleFlag::reset()']]],
+  ['reset_5',['reset',['../classArgumentFlag.html#a0e8cab89d936644b4ed33725aaea0d0d',1,'ArgumentFlag::reset()'],['../classBaseFlag.html#a2f4138383aea63878e750422156e0bea',1,'BaseFlag::reset()'],['../classSimpleFlag.html#abb91d35acb548126f7c8a0f34c1d5a9f',1,'SimpleFlag::reset()'],['../classDebounce.html#a2f5c17db075b09ac587afa080e6e85ff',1,'Debounce::reset()']]],
   ['reset_20flags_20for_20next_20run_6',['8. Reset flags for next run',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md13',1,'']]],
   ['resetflags_7',['resetFlags',['../classParser.html#ae9740c4dfc29fdaed4bf463187e44462',1,'Parser']]],
   ['rfm9xradio_8',['RFM9xRadio',['../classRFM9xRadio.html',1,'']]],

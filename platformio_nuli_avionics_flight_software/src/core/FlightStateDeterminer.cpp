@@ -28,11 +28,6 @@ FlightState_e FlightStateDeterminer::loopOnce(const Timestamp_s& timestamp, cons
             setFlightState(timestamp, ASCENT);
         }
     } else if (getFlightState() == ASCENT) {
-        // Track maximum altitude
-        if (state1D.altitudeM > m_maxAltitude) {
-            m_maxAltitude = state1D.altitudeM;
-        }
-        // Check if we have reached apogee
         if (apogeeReached(timestamp, state1D)) {
             setFlightState(timestamp, DESCENT);
         }
@@ -44,55 +39,46 @@ FlightState_e FlightStateDeterminer::loopOnce(const Timestamp_s& timestamp, cons
         // @todo update detection logic
         setFlightState(timestamp, PRE_FLIGHT);
     }
-
     return getFlightState();
 }
 
 bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D) {
     // We have launched if we have seen a sufficiently high acceleration for enough time
-    if (state1D.accelerationMSS > LAUNCH_ACCELERATION_THRESHOLD_MSS) {
-        if (timestamp.runtime_ms - m_internalStateTransitionTimer > LAUNCH_ACCELERATION_DEBOUNCE_TIMER_MS) {
-            m_internalStateTransitionTimer = timestamp.runtime_ms;
-            return true;
-        }
-    } else {
-        m_internalStateTransitionTimer = timestamp.runtime_ms;
-    }
-
+    const bool aboveLaunchAcceleration = state1D.accelerationMSS >= LAUNCH_ACCELERATION_THRESHOLD_MSS;
     // We have also launched if we have reached a high enough altitude
     // Note that the ground reference recalculation creates a race condition here:
     // Pose is measured relative to the ground, and the ground reference is updated in PRE_FLIGHT
-    // This means that if the ground reference was updated every tick to be the current altitude, this would never trigger
-    // @todo perhaps fix the race condition, and add debounce?
-    if (state1D.altitudeM > LAUNCH_ALTITUDE_THRESHOLD_M) {
+    // This means that if the ground reference was updated every tick to be the current altitude, this would never trigger.
+    // A low pass filter with a low constant is used in StateEstimator1D to allow the race condition to work out.
+    const bool aboveLaunchAltitude = state1D.altitudeM >= LAUNCH_ALTITUDE_THRESHOLD_M;
+    // Run the debounce check
+    if (launchDebounce.check(aboveLaunchAcceleration || aboveLaunchAltitude, timestamp)) {
         return true;
     }
-
     return false;
 }
 
 bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D) {
-    if (state1D.velocityMS < 0) { // If we are going down
-        if (timestamp.runtime_ms - m_internalStateTransitionTimer > APOGEE_DEBOUNCE_TIMER_MS) {
-            m_internalStateTransitionTimer = timestamp.runtime_ms;
-            if (state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M) {
-                return true;
-            }
-        }
-    } else {
-        m_internalStateTransitionTimer = timestamp.runtime_ms;
+    // Track maximum altitude
+    if (state1D.altitudeM > m_maxAltitude) {
+        m_maxAltitude = state1D.altitudeM;
+    }
+    // Run debounce checks
+    const bool goingDown = state1D.velocityMS < 0;
+    const bool belowApogeeChangeThreshold = state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M;
+    if (apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp)) {
+        return true;
     }
     return false;
 }
 
 bool FlightStateDeterminer::hasLanded(const Timestamp_s& timestamp, const State1D_s& state1D) {
-    if (std::fabs(m_landingDetectionReferenceAltitude - state1D.altitudeM) > LANDING_ALTITUDE_CHANGE_THRESHOLD_M) {
+    const bool aboveAltitudeChangedThreshold = std::fabs(m_landingDetectionReferenceAltitude - state1D.altitudeM) > LANDING_ALTITUDE_CHANGE_THRESHOLD_M;
+    if (aboveAltitudeChangedThreshold) {
         m_landingDetectionReferenceAltitude = state1D.altitudeM;
-        m_internalStateTransitionTimer = timestamp.runtime_ms;
-    } else {
-        if (timestamp.runtime_ms - m_internalStateTransitionTimer > LANDING_DEBOUNCE_TIMER_MS) {
-            return true;
-        }
+    }
+    if (landingDebounce.check(!aboveAltitudeChangedThreshold, timestamp)) {
+        return true;
     }
     return false;
 }
@@ -104,7 +90,7 @@ FlightState_e FlightStateDeterminer::getFlightState() const {
 
 void FlightStateDeterminer::setFlightState(const Timestamp_s& timestamp, const FlightState_e& flightState) {
     m_flightState.set(flightState);
-    m_internalStateTransitionTimer = timestamp.runtime_ms;
+    m_flightStateStartTime = timestamp.runtime_ms;
 }
 
 uint32_t FlightStateDeterminer::getStateStartTime() const {

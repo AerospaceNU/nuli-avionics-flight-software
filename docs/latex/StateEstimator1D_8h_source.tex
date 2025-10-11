@@ -14,11 +14,11 @@
 \DoxyCodeLine{00010\ }
 \DoxyCodeLine{00011\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classStateEstimator1D}{StateEstimator1D}}\ \{}
 \DoxyCodeLine{00012\ \textcolor{keyword}{public}:}
-\DoxyCodeLine{00013\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ ConfigurationID\_t\ REQUIRED\_CONFIGS[]\ =\ \{FLIGHT\_STATE\_c,\ GROUND\_ELEVATION\_c,\ GROUND\_TEMPERATURE\_c\};}
+\DoxyCodeLine{00013\ \ \ \ \ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{static}\ ConfigurationID\_t\ REQUIRED\_CONFIGS[]\ =\ \{BOARD\_ORIENTATION\_c,\ GROUND\_ELEVATION\_c,\ GROUND\_TEMPERATURE\_c\};}
 \DoxyCodeLine{00014\ }
 \DoxyCodeLine{00015\ \ \ \ \ \textcolor{keywordtype}{void}\ setup(\mbox{\hyperlink{classHardwareAbstraction}{HardwareAbstraction}}*\ hardware,\ \mbox{\hyperlink{classConfiguration}{Configuration}}*\ configuration);}
 \DoxyCodeLine{00016\ }
-\DoxyCodeLine{00017\ \ \ \ \ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\ loopOnce(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp);}
+\DoxyCodeLine{00017\ \ \ \ \ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\ loopOnce(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp,\ \textcolor{keyword}{const}\ FlightState\_e\ \&flightState);}
 \DoxyCodeLine{00018\ }
 \DoxyCodeLine{00019\ \ \ \ \ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\ getState1D()\ \textcolor{keyword}{const};}
 \DoxyCodeLine{00020\ }
@@ -27,30 +27,38 @@
 \DoxyCodeLine{00023\ \textcolor{keyword}{private}:}
 \DoxyCodeLine{00024\ \ \ \ \ \textcolor{keywordtype}{float}\ getPressurePa();}
 \DoxyCodeLine{00025\ }
-\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{float}\ getAccelerationMSS()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordtype}{float}\ getAccelerationMSS(\textcolor{keyword}{const}\ FlightState\_e\ \&flightState)\ \textcolor{keyword}{const};}
 \DoxyCodeLine{00027\ }
-\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{void}\ updateGroundReference(\textcolor{keywordtype}{float}\ unfilteredAltitudeM,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp);}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{keywordtype}{void}\ updateGroundElevationReference(\textcolor{keywordtype}{float}\ unfilteredAltitudeM,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp);}
 \DoxyCodeLine{00029\ }
-\DoxyCodeLine{00030\ }
-\DoxyCodeLine{00031\ \ \ \ \ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\ m\_currentState1D\ =\ \{\};}
-\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{classHardwareAbstraction}{HardwareAbstraction}}*\ m\_hardware\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00033\ \ \ \ \ \mbox{\hyperlink{classConfiguration}{Configuration}}*\ m\_configuration\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00034\ }
-\DoxyCodeLine{00035\ \ \ \ \ \mbox{\hyperlink{classConfigurationData}{ConfigurationData<int32\_t>}}\ m\_flightState;}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordtype}{void}\ updateBoardOrientationReference(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\ \&timestamp);}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\ m\_currentState1D\ =\ \{\};}
+\DoxyCodeLine{00033\ \ \ \ \ \mbox{\hyperlink{classHardwareAbstraction}{HardwareAbstraction}}*\ m\_hardware\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00034\ \ \ \ \ \mbox{\hyperlink{classConfiguration}{Configuration}}*\ m\_configuration\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00035\ }
 \DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{classConfigurationData}{ConfigurationData<float>}}\ m\_groundElevation;}
 \DoxyCodeLine{00037\ \ \ \ \ \mbox{\hyperlink{classConfigurationData}{ConfigurationData<float>}}\ m\_groundTemperature;}
-\DoxyCodeLine{00038\ }
-\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{classAltitudeKf}{AltitudeKf}}\ m\_kalmanFilter;}
-\DoxyCodeLine{00040\ }
-\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_lastPressure\ =\ Constants::ATMOSPHERIC\_PRESSURE\_PA;}
-\DoxyCodeLine{00042\ }
-\DoxyCodeLine{00043\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_isInitialized\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00044\ \ \ \ \ \mbox{\hyperlink{classLowPass}{LowPass}}\ m\_lowPass\{0.01\};}
-\DoxyCodeLine{00045\ \ \ \ \ uint32\_t\ m\_groundReferenceTimer\ =\ 0;}
-\DoxyCodeLine{00046\ }
-\DoxyCodeLine{00047\ \};}
-\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00038\ \ \ \ \ \mbox{\hyperlink{classConfigurationData}{ConfigurationData<int32\_t>}}\ m\_boardOrientation;}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{classAltitudeKf}{AltitudeKf}}\ m\_kalmanFilter;}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_lastPressure\ =\ Constants::ATMOSPHERIC\_PRESSURE\_PA;}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_reInitializeKalman\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_needNewGroundReference\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00047\ \ \ \ \ \mbox{\hyperlink{classLowPass}{LowPass}}\ m\_lowPass\{0.01\};}
+\DoxyCodeLine{00048\ \ \ \ \ uint32\_t\ m\_groundReferenceTimer\ =\ 0;}
 \DoxyCodeLine{00049\ }
-\DoxyCodeLine{00050\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//STATEESTIMATER\_H}}
+\DoxyCodeLine{00050\ \ \ \ \ \mbox{\hyperlink{classLowPass}{LowPass}}\ m\_lowPassAX\{0.01\};}
+\DoxyCodeLine{00051\ \ \ \ \ \mbox{\hyperlink{classLowPass}{LowPass}}\ m\_lowPassAY\{0.01\};}
+\DoxyCodeLine{00052\ \ \ \ \ \mbox{\hyperlink{classLowPass}{LowPass}}\ m\_lowPassAZ\{0.01\};}
+\DoxyCodeLine{00053\ \ \ \ \ uint32\_t\ m\_boardOrientationReferenceTimer\ =\ 0;}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \};}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//STATEESTIMATER\_H}}
 
 \end{DoxyCode}

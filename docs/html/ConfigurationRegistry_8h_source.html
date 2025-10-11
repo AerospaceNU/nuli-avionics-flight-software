@@ -81,52 +81,55 @@ $(function() {
 <div class="fragment"><div class="line"><a id="l00001" name="l00001"></a><span class="lineno">    1</span><span class="preprocessor">#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H</span></div>
 <div class="line"><a id="l00002" name="l00002"></a><span class="lineno">    2</span><span class="preprocessor">#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H</span></div>
 <div class="line"><a id="l00003" name="l00003"></a><span class="lineno">    3</span> </div>
-<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;ConstantsUnits.h&quot;</span></div>
-<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="comment"></span> </div>
-<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment">/**</span></div>
-<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="comment"> * Register all config variables</span></div>
-<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="comment"> * This syntax enables the compile time type checking and fully safe configuration system</span></div>
-<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment"> * ALL variables used across all boards/builds must be declared here. Any given board/build</span></div>
-<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment"> * will only use a subset of these variable</span></div>
-<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment"> * To create a new configuration variable, use the following macro:</span></div>
-<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment"> *      DEFINE_CONFIGURATION_VARIABLE(NAME, type_t, defaultValue)</span></div>
-<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> * To construct a new configuration you need to pass it all configuration variables that</span></div>
-<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"> * ANY part of your code uses. You do this by passing an 2-dimensional array of IDs.</span></div>
-<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> * It&#39;s ok to have duplicates in this list: it will filter them out. You will allways need</span></div>
-<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> * Configuration::REQUIRED_CONFIGS in the constructor for the Configuration to work at all.</span></div>
-<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"> *      ConfigurationID_t requiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c};</span></div>
-<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment"> *      Configuration configuration({requiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});</span></div>
-<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment"> *      configuration.setup(&amp;hardware, framID);     // framID is the Index of the FRAM in the hardware list</span></div>
-<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"> * Interacting with an individual configuration variable:</span></div>
-<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> *      ConfigurationData&lt;int32_t&gt; flightState = configuration.getConfigurable&lt;FLIGHT_STATE_c&gt;();</span></div>
-<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> *      int32_t flightState = flightState.get();</span></div>
-<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> *      flightState.set(ASCENT);</span></div>
-<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> * Call this every loop, it checks for any changed configuration variables and writes the changes to FRAM</span></div>
-<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> *      configuration.pushUpdatesToMemory();</span></div>
-<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> *</span></div>
-<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="comment"> * System limitations:</span></div>
-<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="comment"> *      - There is a maximum number of configuration variables allowed per build, and max total bytes of data.</span></div>
-<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment"> *        This is defined in Avionics.h with MAX_CONFIGURATION_NUM and MAX_CONFIGURATION_LENGTH</span></div>
-<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment"> *      - Currently the system doesn&#39;t support any runtime variability of getConfigurable&lt;&gt;(). Use dependency</span></div>
-<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment"> *        injection if a class needs to be able to reference different configuration variables in different builds</span></div>
-<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment"> *      - There is a maximum number of configuration variables than can possibly be defined, due to template recursion</span></div>
-<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"> *        limits. Probably around 1000.</span></div>
-<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment"> */</span></div>
-<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span> </div>
-<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span><span class="comment">// clang-format off</span></div>
-<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span>DEFINE_CONFIGURATION_VARIABLE(FLIGHT_STATE, int32_t, UNKNOWN_FLIGHT_STATE)</div>
-<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>DEFINE_CONFIGURATION_VARIABLE(GROUND_ELEVATION, <span class="keywordtype">float</span>, 0.0)</div>
-<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>DEFINE_CONFIGURATION_VARIABLE(GROUND_TEMPERATURE, <span class="keywordtype">float</span>, <a class="code hl_class" href="classConstants.html">Constants</a>::STANDARD_TEMPERATURE_K)</div>
-<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>DEFINE_CONFIGURATION_VARIABLE(RADIO_FREQUENCY, <span class="keywordtype">float</span>, 915.0)</div>
-<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>DEFINE_CONFIGURATION_VARIABLE(MAIN_ELEVATION, <span class="keywordtype">float</span>, 200.0)</div>
-<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>DEFINE_CONFIGURATION_VARIABLE(DROGUE_DELAY, uint32_t, 1000)</div>
-<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>DEFINE_CONFIGURATION_VARIABLE(BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR, <span class="keywordtype">float</span>, 1.0)</div>
-<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span><span class="comment">// clang-format on</span></div>
-<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span> </div>
-<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="preprocessor">#endif </span><span class="comment">//PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H</span></div>
+<div class="line"><a id="l00004" name="l00004"></a><span class="lineno">    4</span><span class="preprocessor">#include &quot;<a class="code" href="Avionics_8h.html">Avionics.h</a>&quot;</span></div>
+<div class="line"><a id="l00005" name="l00005"></a><span class="lineno">    5</span><span class="preprocessor">#include &quot;ConstantsUnits.h&quot;</span></div>
+<div class="line"><a id="l00006" name="l00006"></a><span class="lineno">    6</span><span class="comment"></span> </div>
+<div class="line"><a id="l00007" name="l00007"></a><span class="lineno">    7</span><span class="comment">/**</span></div>
+<div class="line"><a id="l00008" name="l00008"></a><span class="lineno">    8</span><span class="comment"> * Register all config variables</span></div>
+<div class="line"><a id="l00009" name="l00009"></a><span class="lineno">    9</span><span class="comment"> * This syntax enables the compile time type checking and fully safe configuration system</span></div>
+<div class="line"><a id="l00010" name="l00010"></a><span class="lineno">   10</span><span class="comment"> * ALL variables used across all boards/builds must be declared here. Any given board/build</span></div>
+<div class="line"><a id="l00011" name="l00011"></a><span class="lineno">   11</span><span class="comment"> * will only use a subset of these variable</span></div>
+<div class="line"><a id="l00012" name="l00012"></a><span class="lineno">   12</span><span class="comment"> * To create a new configuration variable, use the following macro:</span></div>
+<div class="line"><a id="l00013" name="l00013"></a><span class="lineno">   13</span><span class="comment"> *      DEFINE_CONFIGURATION_VARIABLE(NAME, type_t, defaultValue)</span></div>
+<div class="line"><a id="l00014" name="l00014"></a><span class="lineno">   14</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00015" name="l00015"></a><span class="lineno">   15</span><span class="comment"> * To construct a new configuration you need to pass it all configuration variables that</span></div>
+<div class="line"><a id="l00016" name="l00016"></a><span class="lineno">   16</span><span class="comment"> * ANY part of your code uses. You do this by passing an 2-dimensional array of IDs.</span></div>
+<div class="line"><a id="l00017" name="l00017"></a><span class="lineno">   17</span><span class="comment"> * It&#39;s ok to have duplicates in this list: it will filter them out. You will allways need</span></div>
+<div class="line"><a id="l00018" name="l00018"></a><span class="lineno">   18</span><span class="comment"> * Configuration::REQUIRED_CONFIGS in the constructor for the Configuration to work at all.</span></div>
+<div class="line"><a id="l00019" name="l00019"></a><span class="lineno">   19</span><span class="comment"> *      ConfigurationID_t requiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c};</span></div>
+<div class="line"><a id="l00020" name="l00020"></a><span class="lineno">   20</span><span class="comment"> *      Configuration configuration({requiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});</span></div>
+<div class="line"><a id="l00021" name="l00021"></a><span class="lineno">   21</span><span class="comment"> *      configuration.setup(&amp;hardware, framID);     // framID is the Index of the FRAM in the hardware list</span></div>
+<div class="line"><a id="l00022" name="l00022"></a><span class="lineno">   22</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00023" name="l00023"></a><span class="lineno">   23</span><span class="comment"> * Interacting with an individual configuration variable:</span></div>
+<div class="line"><a id="l00024" name="l00024"></a><span class="lineno">   24</span><span class="comment"> *      ConfigurationData&lt;int32_t&gt; flightState = configuration.getConfigurable&lt;FLIGHT_STATE_c&gt;();</span></div>
+<div class="line"><a id="l00025" name="l00025"></a><span class="lineno">   25</span><span class="comment"> *      int32_t flightState = flightState.get();</span></div>
+<div class="line"><a id="l00026" name="l00026"></a><span class="lineno">   26</span><span class="comment"> *      flightState.set(ASCENT);</span></div>
+<div class="line"><a id="l00027" name="l00027"></a><span class="lineno">   27</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00028" name="l00028"></a><span class="lineno">   28</span><span class="comment"> * Call this every loop, it checks for any changed configuration variables and writes the changes to FRAM</span></div>
+<div class="line"><a id="l00029" name="l00029"></a><span class="lineno">   29</span><span class="comment"> *      configuration.pushUpdatesToMemory();</span></div>
+<div class="line"><a id="l00030" name="l00030"></a><span class="lineno">   30</span><span class="comment"> *</span></div>
+<div class="line"><a id="l00031" name="l00031"></a><span class="lineno">   31</span><span class="comment"> * System limitations:</span></div>
+<div class="line"><a id="l00032" name="l00032"></a><span class="lineno">   32</span><span class="comment"> *      - There is a maximum number of configuration variables allowed per build, and max total bytes of data.</span></div>
+<div class="line"><a id="l00033" name="l00033"></a><span class="lineno">   33</span><span class="comment"> *        This is defined in Avionics.h with MAX_CONFIGURATION_NUM and MAX_CONFIGURATION_LENGTH</span></div>
+<div class="line"><a id="l00034" name="l00034"></a><span class="lineno">   34</span><span class="comment"> *      - Currently the system doesn&#39;t support any runtime variability of getConfigurable&lt;&gt;(). Use dependency</span></div>
+<div class="line"><a id="l00035" name="l00035"></a><span class="lineno">   35</span><span class="comment"> *        injection if a class needs to be able to reference different configuration variables in different builds</span></div>
+<div class="line"><a id="l00036" name="l00036"></a><span class="lineno">   36</span><span class="comment"> *      - There is a maximum number of configuration variables than can possibly be defined, due to template recursion</span></div>
+<div class="line"><a id="l00037" name="l00037"></a><span class="lineno">   37</span><span class="comment"> *        limits. Probably around 1000.</span></div>
+<div class="line"><a id="l00038" name="l00038"></a><span class="lineno">   38</span><span class="comment"> */</span></div>
+<div class="line"><a id="l00039" name="l00039"></a><span class="lineno">   39</span> </div>
+<div class="line"><a id="l00040" name="l00040"></a><span class="lineno">   40</span><span class="comment">// clang-format off</span></div>
+<div class="line"><a id="l00041" name="l00041"></a><span class="lineno">   41</span>DEFINE_CONFIGURATION_VARIABLE(FLIGHT_STATE, int32_t, UNKNOWN_FLIGHT_STATE)</div>
+<div class="line"><a id="l00042" name="l00042"></a><span class="lineno">   42</span>DEFINE_CONFIGURATION_VARIABLE(GROUND_ELEVATION, <span class="keywordtype">float</span>, 0.0)</div>
+<div class="line"><a id="l00043" name="l00043"></a><span class="lineno">   43</span>DEFINE_CONFIGURATION_VARIABLE(GROUND_TEMPERATURE, <span class="keywordtype">float</span>, <a class="code hl_class" href="classConstants.html">Constants</a>::STANDARD_TEMPERATURE_K)</div>
+<div class="line"><a id="l00044" name="l00044"></a><span class="lineno">   44</span>DEFINE_CONFIGURATION_VARIABLE(BOARD_ORIENTATION, int32_t, ERROR_AXIS_DIRECTION)</div>
+<div class="line"><a id="l00045" name="l00045"></a><span class="lineno">   45</span>DEFINE_CONFIGURATION_VARIABLE(RADIO_FREQUENCY, <span class="keywordtype">float</span>, 915.0)</div>
+<div class="line"><a id="l00046" name="l00046"></a><span class="lineno">   46</span>DEFINE_CONFIGURATION_VARIABLE(MAIN_ELEVATION, <span class="keywordtype">float</span>, 200.0)</div>
+<div class="line"><a id="l00047" name="l00047"></a><span class="lineno">   47</span>DEFINE_CONFIGURATION_VARIABLE(DROGUE_DELAY, uint32_t, 1000)</div>
+<div class="line"><a id="l00048" name="l00048"></a><span class="lineno">   48</span>DEFINE_CONFIGURATION_VARIABLE(BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR, <span class="keywordtype">float</span>, 1.0)</div>
+<div class="line"><a id="l00049" name="l00049"></a><span class="lineno">   49</span><span class="comment">// clang-format on</span></div>
+<div class="line"><a id="l00050" name="l00050"></a><span class="lineno">   50</span> </div>
+<div class="line"><a id="l00051" name="l00051"></a><span class="lineno">   51</span><span class="preprocessor">#endif </span><span class="comment">//PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H</span></div>
+<div class="ttc" id="aAvionics_8h_html"><div class="ttname"><a href="Avionics_8h.html">Avionics.h</a></div><div class="ttdoc">Global definitions for the codebase.</div></div>
 <div class="ttc" id="aclassConstants_html"><div class="ttname"><a href="classConstants.html">Constants</a></div><div class="ttdef"><b>Definition</b> ConstantsUnits.h:4</div></div>
 </div><!-- fragment --></div><!-- contents -->
 <!-- start footer part -->

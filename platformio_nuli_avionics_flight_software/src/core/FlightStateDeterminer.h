@@ -4,6 +4,7 @@
 #include "Avionics.h"
 #include "Configuration.h"
 #include "core/filters/LowPass.h"
+#include "util/Debounce.h"
 
 class FlightStateDeterminer {
 public:
@@ -29,10 +30,13 @@ private:
     ConfigurationData<int32_t> m_flightState;
     Configuration* m_configuration = nullptr;
 
-    uint32_t m_internalStateTransitionTimer = 0;
     float m_landingDetectionReferenceAltitude = 0;
     float m_maxAltitude = 0;
     uint32_t m_flightStateStartTime = 0;
+
+    Debounce launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
+    Debounce apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);
+    Debounce landingDebounce = Debounce(LANDING_DEBOUNCE_TIMER_MS);
 };
 
 #endif //FLIGHT_STATEMACHINE_H
