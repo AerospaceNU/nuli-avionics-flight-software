@@ -151,6 +151,6 @@ float AltitudeKf::getAcceleration() {
     return getStateVector()[2];
 }
 
-void AltitudeKf::restState() {
-    x = {0, 0, 0};
+void AltitudeKf::restState(float altitude, float velocity, float acceleration) {
+    x = {altitude, velocity, acceleration};
 }

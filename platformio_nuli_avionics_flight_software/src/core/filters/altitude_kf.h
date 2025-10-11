@@ -50,7 +50,7 @@ public:
 
     float getAcceleration();
 
-    void restState();
+    void restState(float altitude, float velocity, float acceleration);
 
 protected:
     // I use the naming convention from the wikipedia page on kalman filters

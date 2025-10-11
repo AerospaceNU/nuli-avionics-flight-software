@@ -14,7 +14,7 @@ public:
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    State1D_s loopOnce(const Timestamp_s& timestamp);
+    State1D_s loopOnce(const Timestamp_s& timestamp, const FlightState_e &flightState);
 
     State1D_s getState1D() const;
 
@@ -23,7 +23,7 @@ public:
 private:
     float getPressurePa();
 
-    float getAccelerationMSS() const;
+    float getAccelerationMSS(const FlightState_e &flightState) const;
 
     void updateGroundReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
 
@@ -32,7 +32,6 @@ private:
     HardwareAbstraction* m_hardware = nullptr;
     Configuration* m_configuration = nullptr;
 
-    ConfigurationData<int32_t> m_flightState;
     ConfigurationData<float> m_groundElevation;
     ConfigurationData<float> m_groundTemperature;
 
@@ -40,7 +39,9 @@ private:
 
     float m_lastPressure = Constants::ATMOSPHERIC_PRESSURE_PA;
 
-    bool m_isInitialized = false;
+
+    bool m_reInitializeKalman = true;
+    bool m_needNewGroundReference = false;
     LowPass m_lowPass{0.01};
     uint32_t m_groundReferenceTimer = 0;
 

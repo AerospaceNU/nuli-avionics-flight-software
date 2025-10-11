@@ -5,11 +5,15 @@
 
 class SimulationParser {
 public:
-    void blockingGetNextSimulationData() {
+    bool blockingGetNextSimulationData() {
         Serial.println("--con");
         uint32_t index = 0;
         fieldNumber = 0;
+        const uint32_t startTime = millis();
         while (true) {
+            if (millis() - startTime > 1000) {
+                return false;
+            }
             if (Serial.available()) {
                 const char c = Serial.read();
                 if (c == '\n' || index >= sizeof(buff) - 1) {
@@ -19,6 +23,7 @@ public:
                 buff[index++] = c;
             }
         }
+        return true;
     }
 
     uint32_t getNextUnsignedInteger() {

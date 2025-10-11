@@ -162,6 +162,14 @@ public:
         m_debug->message("Done");
     }
 
+    void enableStreaming() {
+        m_enableStreaming = true;
+    }
+
+    void disableStreaming() {
+        m_enableStreaming = false;
+    }
+
     void logCallback() {
         m_debug->message("Entries in log: %d", getEntryNumber());
         m_debug->message("Remaining log length: %d seconds", getRemainingLogLengthSeconds());

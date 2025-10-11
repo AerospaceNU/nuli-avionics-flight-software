@@ -11,20 +11,20 @@ public:
 
     void setup(Configuration* configuration);
 
-    FlightState_e loopOnce(const State1D_s& state1D, const Timestamp_s& timestamp);
+    FlightState_e loopOnce(const Timestamp_s& timestamp, const State1D_s& state1D);
 
     FlightState_e getFlightState() const;
 
-    void setFlightState(const FlightState_e& flightState, const Timestamp_s& timestamp);
+    void setFlightState(const Timestamp_s& timestamp, const FlightState_e& flightState);
 
     uint32_t getStateStartTime() const;
 
 private:
-    bool hasLaunched(const State1D_s& state1D, const Timestamp_s& timestamp);
+    bool hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D);
 
-    bool apogeeReached(const State1D_s& state1D, const Timestamp_s& timestamp);
+    bool apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D);
 
-    bool hasLanded(const State1D_s& state1D, const Timestamp_s& timestamp);
+    bool hasLanded(const Timestamp_s& timestamp, const State1D_s& state1D);
 
     ConfigurationData<int32_t> m_flightState;
     Configuration* m_configuration = nullptr;

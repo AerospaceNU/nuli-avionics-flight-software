@@ -109,7 +109,7 @@ void setup() {
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     led.setOutputPercent(6.0); // Lower the LED Power
 
-    // Hardware
+    // Setup Hardware
     const int16_t framID = hardware.appendFramMemory(&fram);
     const int16_t flashID = hardware.appendFlashMemory(&flash);
     hardware.appendPyro(&droguePyro);
@@ -142,10 +142,7 @@ void setup() {
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
-
-    // drogueDelay.base->m_isUpdated
-
-    // We are done!
+    // Done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
 
@@ -156,7 +153,7 @@ void loop() {
     hardware.readSensors();
 
     if (simulationActive) {
-        simulationParser.blockingGetNextSimulationData();
+        simulationActive = simulationParser.blockingGetNextSimulationData();
         const float tempK = simulationParser.getNextFloat();
         const float pressurePa = simulationParser.getNextFloat();
         const float ax = simulationParser.getNextFloat();
@@ -167,8 +164,8 @@ void loop() {
     }
 
     // Determine state
-    state.state1D = stateEstimator1D.loopOnce(state.timestamp);
-    state.flightState = flightStateDeterminer.loopOnce(state.state1D, state.timestamp);
+    state.state1D = stateEstimator1D.loopOnce(state.timestamp, flightStateDeterminer.getFlightState());
+    state.flightState = flightStateDeterminer.loopOnce(state.timestamp, state.state1D);
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
@@ -192,6 +189,8 @@ void loop() {
         runCli();
         droguePyro.disable();
         mainPyro.disable();
+    } else if (state.flightState == UNKNOWN_FLIGHT_STATE) {
+        runCli();
     }
 
     //// Handle outputs: indicators, pyros, logging, config, etc
