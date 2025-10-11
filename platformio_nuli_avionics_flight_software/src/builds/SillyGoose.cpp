@@ -80,7 +80,10 @@ bool simulationActive = false;
 // CLI
 void runCli();
 void fireCallback();
-SimpleFlag simFlag("--sim", "Send start", true, 255, []() { simulationActive = true; stateEstimator1D.reset(); });
+SimpleFlag simFlag("--sim", "Send start", true, 255, []() {
+    simulationActive = true;
+    stateEstimator1D.reset();
+});
 SimpleFlag testfire("--fire", "Send start", true, 255, fireCallback);
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {});
 SimpleFlag testMain("-m", "Send start", false, 255, []() {});
@@ -98,17 +101,13 @@ ConfigurationData<uint32_t> drogueDelay;
 // Placeholder till we have a manager
 void runIndicators(const Timestamp_s&);
 
-void initialize() {
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN});
-    // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
-    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE);
-    // Lower the LED Power
-    led.setOutputPercent(6.0);
-}
+
 
 void setup() {
-    // Finalize object creation, ensure hardware is ready for setup
-    initialize();
+    // Initialize
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
+    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    led.setOutputPercent(6.0); // Lower the LED Power
 
     // Hardware
     const int16_t framID = hardware.appendFramMemory(&fram);
@@ -143,7 +142,6 @@ void setup() {
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
-
     // We are done!
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
