@@ -163,11 +163,6 @@ public:
     void pushUpdatesToMemory();
 
 private:
-    /**
-     * @brief afdsasdf
-     * @param id adfs
-     * @return afdsdafs
-     */
     BaseConfigurationData_s* getBaseConfigurationData(ConfigurationID_t id);
 
     bool hasError() const;
