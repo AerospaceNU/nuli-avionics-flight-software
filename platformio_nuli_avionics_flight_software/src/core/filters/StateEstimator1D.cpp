@@ -10,19 +10,21 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_configuration = configuration;
     m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
     m_groundTemperature = m_configuration->getConfigurable<GROUND_TEMPERATURE_c>();
+    m_boardOrientation = m_configuration->getConfigurable<BOARD_ORIENTATION_c>();
 
     m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
     m_kalmanFilter.setAccelerometerCovariance(1);
 }
 
-State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp, const FlightState_e &flightState) {
+State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp, const FlightState_e& flightState) {
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     const float pressurePa = getPressurePa();
     const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
     const float accelerationMSS = getAccelerationMSS(flightState);
 
-     if (flightState == PRE_FLIGHT) {
-        updateGroundReference(altitudeRawM, timestamp);
+    if (flightState == PRE_FLIGHT) {
+        updateBoardOrientationReference(timestamp);
+        updateGroundElevationReference(altitudeRawM, timestamp);
     }
 
     if (m_reInitializeKalman) {
@@ -66,12 +68,27 @@ float StateEstimator1D::getPressurePa() {
     return m_lastPressure;
 }
 
-float StateEstimator1D::getAccelerationMSS(const FlightState_e &flightState) const {
+float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) const {
     // @todo, full scale switching, bad reading detection, and coordinate transforms
     if ((flightState == PRE_FLIGHT || flightState == ASCENT) && m_hardware->getNumAccelerometers() > 0) {
-        return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().x - float(Constants::G_EARTH_MSS);
+        switch (m_boardOrientation.get()) {
+        case POS_X:
+            return m_hardware->getAccelerometer(0)->getAccelerationsMSS().x - float(Constants::G_EARTH_MSS);
+        case NEG_X:
+            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().x - float(Constants::G_EARTH_MSS);
+        case POS_Y:
+            return m_hardware->getAccelerometer(0)->getAccelerationsMSS().y - float(Constants::G_EARTH_MSS);
+        case NEG_Y:
+            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().y - float(Constants::G_EARTH_MSS);
+        case POS_Z:
+            return m_hardware->getAccelerometer(0)->getAccelerationsMSS().z - float(Constants::G_EARTH_MSS);
+        case NEG_Z:
+            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().z - float(Constants::G_EARTH_MSS);
+        case ERROR_AXIS_DIRECTION:
+        default:
+            return 0;
+        }
     }
-
     return 0;
 }
 
@@ -81,7 +98,8 @@ void StateEstimator1D::reset() {
     m_lowPass.reset();
 }
 
-void StateEstimator1D::updateGroundReference(const float unfilteredAltitudeM, const Timestamp_s& timestamp) {
+void StateEstimator1D::updateGroundElevationReference(const float unfilteredAltitudeM, const Timestamp_s& timestamp) {
+    // Ground elevation
     m_lowPass.update(unfilteredAltitudeM);
     if (m_needNewGroundReference || timestamp.runtime_ms - m_groundReferenceTimer > 1000) {
         if (m_needNewGroundReference || abs(m_groundElevation.get() - m_lowPass.value()) > 2.0f) {
@@ -90,5 +108,34 @@ void StateEstimator1D::updateGroundReference(const float unfilteredAltitudeM, co
             m_hardware->getDebugStream()->message("Ground elevation set to %f", m_groundElevation.get());
         }
         m_groundReferenceTimer = timestamp.runtime_ms;
+    }
+}
+
+void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timestamp) {
+    if (m_hardware->getNumAccelerometers() < 1) return;
+    Vector3D_s accelerations = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
+    m_lowPassAX.update(accelerations.x);
+    m_lowPassAY.update(accelerations.y);
+    m_lowPassAZ.update(accelerations.z);
+    accelerations = {m_lowPassAX.value(), m_lowPassAY.value(), m_lowPassAZ.value()};
+
+    if (m_needNewGroundReference || timestamp.runtime_ms - m_boardOrientationReferenceTimer > 1000) {
+        const float absX = fabs(accelerations.x);
+        const float absY = fabs(accelerations.y);
+        const float absZ = fabs(accelerations.z);
+        AxisDirection dir;
+        if (absX > absY && absX > absZ) {
+            dir = (accelerations.x > 0) ? POS_X : NEG_X;
+        } else if (absY > absZ) {
+            dir = (accelerations.y > 0) ? POS_Y : NEG_Y;
+        } else {
+            dir = (accelerations.z > 0) ? POS_Z : NEG_Z;
+        }
+        if (m_needNewGroundReference || m_boardOrientation.get() != dir) {
+            m_boardOrientation.set(dir);
+            const char* name = (dir == POS_X) ? "POS_X" : (dir == NEG_X) ? "NEG_X" : (dir == POS_Y) ? "POS_Y" : (dir == NEG_Y) ? "NEG_Y" : (dir == POS_Z) ? "POS_Z" : "NEG_Z";
+            m_hardware->getDebugStream()->message("Board orientation set to %s", name);
+        }
+        m_boardOrientationReferenceTimer = timestamp.runtime_ms;
     }
 }

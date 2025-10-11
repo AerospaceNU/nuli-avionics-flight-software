@@ -102,7 +102,6 @@ ConfigurationData<uint32_t> drogueDelay;
 void runIndicators(const Timestamp_s&);
 
 
-
 void setup() {
     // Initialize
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus

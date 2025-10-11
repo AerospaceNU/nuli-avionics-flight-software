@@ -95,6 +95,15 @@ struct RocketState_s {
     State6D_s state6D;
 };
 
+enum AxisDirection : int32_t {
+    ERROR_AXIS_DIRECTION,
+    POS_X,
+    NEG_X,
+    POS_Y,
+    NEG_Y,
+    POS_Z,
+    NEG_Z,
+};
 
 // This can be added in a struct definition to ensure the compiler doesn't add any padding bytes between variables
 #define remove_struct_padding __attribute__((packed))

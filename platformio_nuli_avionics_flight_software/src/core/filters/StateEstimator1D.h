@@ -10,7 +10,7 @@
 
 class StateEstimator1D {
 public:
-    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {FLIGHT_STATE_c, GROUND_ELEVATION_c, GROUND_TEMPERATURE_c};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {BOARD_ORIENTATION_c, GROUND_ELEVATION_c, GROUND_TEMPERATURE_c};
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
@@ -25,8 +25,9 @@ private:
 
     float getAccelerationMSS(const FlightState_e &flightState) const;
 
-    void updateGroundReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
+    void updateGroundElevationReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
 
+    void updateBoardOrientationReference(const Timestamp_s &timestamp);
 
     State1D_s m_currentState1D = {};
     HardwareAbstraction* m_hardware = nullptr;
@@ -34,6 +35,7 @@ private:
 
     ConfigurationData<float> m_groundElevation;
     ConfigurationData<float> m_groundTemperature;
+    ConfigurationData<int32_t> m_boardOrientation;
 
     AltitudeKf m_kalmanFilter;
 
@@ -44,6 +46,11 @@ private:
     bool m_needNewGroundReference = false;
     LowPass m_lowPass{0.01};
     uint32_t m_groundReferenceTimer = 0;
+
+    LowPass m_lowPassAX{0.01};
+    LowPass m_lowPassAY{0.01};
+    LowPass m_lowPassAZ{0.01};
+    uint32_t m_boardOrientationReferenceTimer = 0;
 
 };
 
