@@ -22,6 +22,7 @@
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
 #include "util/StringHelper.h"
+#include "core/SimulationParser.h"
 
 // clang-format off
 struct SillyGooseLogData {
@@ -73,13 +74,21 @@ BasicLogger<SillyGooseLogData> logger;
 ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c};
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
 
+SimulationParser simulationParser;
+bool simulationActive = false;
+
 // CLI
 void runCli();
 void fireCallback();
+SimpleFlag simFlag("--sim", "Send start", true, 255, []() {
+    simulationActive = true;
+    stateEstimator1D.reset();
+});
 SimpleFlag testfire("--fire", "Send start", true, 255, fireCallback);
-SimpleFlag testDrogue("-d", "Send start", false, 255, [](){});
-SimpleFlag testMain("-m", "Send start", false, 255, [](){});
+SimpleFlag testDrogue("-d", "Send start", false, 255, []() {});
+SimpleFlag testMain("-m", "Send start", false, 255, []() {});
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+BaseFlag* simGroup[] = {&simFlag};
 ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
 ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
 ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageConfigurationCliBinding;
@@ -92,17 +101,13 @@ ConfigurationData<uint32_t> drogueDelay;
 // Placeholder till we have a manager
 void runIndicators(const Timestamp_s&);
 
-void initialize() {
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN});
-    // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
-    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE);
-    // Lower the LED Power
-    led.setOutputPercent(6.0);
-}
+
 
 void setup() {
-    // Finalize object creation, ensure hardware is ready for setup
-    initialize();
+    // Initialize
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
+    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    led.setOutputPercent(6.0); // Lower the LED Power
 
     // Hardware
     const int16_t framID = hardware.appendFramMemory(&fram);
@@ -126,6 +131,7 @@ void setup() {
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
     // Setup cli
     cliParser.addFlagGroup(testfireGroup);
+    cliParser.addFlagGroup(simGroup);
     drogueConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     batteryVoltageConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
@@ -140,13 +146,22 @@ void setup() {
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
 
-// @todo Make sure that on boot stuff is populated correctly (ground elevation, etc), particularly for launch detection
-
 void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
+
+    if (simulationActive) {
+        simulationParser.blockingGetNextSimulationData();
+        const float tempK = simulationParser.getNextFloat();
+        const float pressurePa = simulationParser.getNextFloat();
+        const float ax = simulationParser.getNextFloat();
+        const float ay = simulationParser.getNextFloat();
+        const float az = simulationParser.getNextFloat();
+        barometer.inject(tempK, 0, pressurePa);
+        icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
+    }
 
     // Determine state
     state.state1D = stateEstimator1D.loopOnce(state.timestamp);

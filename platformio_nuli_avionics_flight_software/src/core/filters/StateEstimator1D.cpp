@@ -13,8 +13,8 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
     m_groundTemperature = m_configuration->getConfigurable<GROUND_TEMPERATURE_c>();
 
-    kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
-    kalmanFilter.setAccelerometerCovariance(1);
+    m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
+    m_kalmanFilter.setAccelerometerCovariance(1);
 }
 
 State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp) {
@@ -23,14 +23,21 @@ State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp) {
     const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
     const float accelerationMSS = getAccelerationMSS();
 
+    if (!m_isInitialized) {
+        m_groundElevation.set(altitudeRawM);
+        m_isInitialized = true;
+    } else if (m_flightState.get() == PRE_FLIGHT) {
+        updateGroundReference(altitudeRawM, timestamp);
+    }
+
     // @todo update covariances with velocity
 
-    kalmanFilter.predict();
-    kalmanFilter.altitudeAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
+    m_kalmanFilter.predict();
+    m_kalmanFilter.altitudeAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
 
-    m_currentState1D.altitudeM = kalmanFilter.getAltitude();
-    m_currentState1D.velocityMS = kalmanFilter.getVelocity();
-    m_currentState1D.accelerationMSS = kalmanFilter.getAcceleration();
+    m_currentState1D.altitudeM = m_kalmanFilter.getAltitude();
+    m_currentState1D.velocityMS = m_kalmanFilter.getVelocity();
+    m_currentState1D.accelerationMSS = m_kalmanFilter.getAcceleration();
     m_currentState1D.unfilteredNoOffsetAltitudeM = altitudeRawM;
 
     return m_currentState1D;
@@ -70,4 +77,19 @@ float StateEstimator1D::getAccelerationMSS() const {
     }
 
     return 0;
+}
+
+void StateEstimator1D::reset() {
+    m_isInitialized = false;
+    m_kalmanFilter.restState();
+}
+
+void StateEstimator1D::updateGroundReference(const float unfilteredAltitudeM, const Timestamp_s& timestamp) {
+    m_lowPass.update(unfilteredAltitudeM);
+    if (timestamp.runtime_ms - m_groundReferenceTimer > 1000) {
+        if (abs(m_groundElevation.get() - m_lowPass.value()) > 2.0f) {
+            m_groundElevation.set(m_lowPass.value());
+        }
+        m_groundReferenceTimer = timestamp.runtime_ms;
+    }
 }
