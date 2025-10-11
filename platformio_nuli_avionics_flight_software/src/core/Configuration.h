@@ -41,7 +41,7 @@ struct ConfigurationData {
 
 class Configuration {
 public:
-    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION_c, CONFIGURATION_VERSION_HASH_c, CONFIGURATION_CRC_c};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION_c, CONFIGURATION_ALL_ID_CRC_c, CONFIGURATION_CRC_c};
 
     template <unsigned N, unsigned M>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
@@ -95,6 +95,8 @@ private:
         return nullptr;
     }
 
+    bool hasError() const;
+
     void construct(const ConfigurationIDSet_s* allConfigs, uint16_t allConfigsLength);
 
     void readConfigFromMemory() const;
@@ -105,7 +107,11 @@ private:
 
     void assignMemory();
 
-    void outOfMemoryError() const;
+    void criticalError(const char *str) const;
+
+    uint32_t calculateCrc() const;
+
+    uint32_t calculateAllIdCrc() const;
 
     uint8_t* m_dataBuffer;
     uint32_t m_dataBufferIndex = 0;
@@ -114,6 +120,10 @@ private:
     uint8_t m_buffer[MAX_CONFIGURATION_LENGTH] = {};
     BaseConfigurationData_s m_configurations[MAX_CONFIGURATION_NUM] = {};
     uint32_t m_numConfigurations = 0;
+
+    ConfigurationData<uint32_t> m_configurationCRC;
+    ConfigurationData<uint32_t> m_configurationAllIdCRC;
+    ConfigurationData<uint32_t> m_configurationVersion;
 
     HardwareAbstraction* m_hardware = nullptr;
     FramMemory* m_memory = nullptr;

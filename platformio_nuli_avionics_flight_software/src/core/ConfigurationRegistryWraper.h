@@ -14,6 +14,9 @@ enum { CONFIGURATION_COUNT_BASE = __COUNTER__ };
 
 // Register all the configurables
 DEFINE_CONFIGURATION_VARIABLE(NONE, int, 0)                                               // Base case
+DEFINE_CONFIGURATION_VARIABLE(CONFIGURATION_CRC, uint32_t, 0)
+DEFINE_CONFIGURATION_VARIABLE(CONFIGURATION_ALL_ID_CRC, uint32_t, 0)
+DEFINE_CONFIGURATION_VARIABLE(CONFIGURATION_VERSION, uint32_t, 1)
 #include "../ConfigurationRegistry.h"                                                   // All user defined variables
 DEFINE_CONFIGURATION_VARIABLE(LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE, int, 0)      // End case
 

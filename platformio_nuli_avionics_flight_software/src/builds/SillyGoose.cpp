@@ -194,6 +194,8 @@ void loop() {
     //// Handle outputs: indicators, pyros, logging, config, etc
     // Runs light and buzzer
     runIndicators(state.timestamp);
+    // Update any changes to the configuration
+    configuration.pushUpdatesToMemory();
     // Run logging
     SillyGooseLogData logData{};
     logData.timestampMs = state.timestamp.runtime_ms;
@@ -218,7 +220,6 @@ void loop() {
     logData.mainContinuity = mainPyro.hasContinuity();
     logData.mainFired = mainPyro.isFired();
     logger.log(logData);
-    configuration.pushUpdatesToMemory();
 }
 
 
