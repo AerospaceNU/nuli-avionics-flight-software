@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['bod_5frate_0',['BOD_RATE',['../classAprsTransmitter.html#ad3742d1c3d24b2300f515617bf7ef338',1,'AprsTransmitter']]]
+  ['altitudem_0',['altitudeM',['../structCoordinates__s.html#ac6bcaea2c6149745c65500d67cca5ee3',1,'Coordinates_s']]]
 ];

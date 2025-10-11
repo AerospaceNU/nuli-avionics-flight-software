@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['z_0',['z',['../structVector3D__s.html#a739a412350d6df90a793938e02eb1f25',1,'Vector3D_s']]]
+  ['sample_5ffrequency_0',['SAMPLE_FREQUENCY',['../classAprsTransmitter.html#ac3f6a73f10a751297fa0be8362908bf7',1,'AprsTransmitter']]],
+  ['size_1',['size',['../structBaseConfigurationData__s.html#a4b7ed581a9ed78c50cac508f18a4ca41',1,'BaseConfigurationData_s']]]
 ];

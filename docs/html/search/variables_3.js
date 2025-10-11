@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['sample_5ffrequency_0',['SAMPLE_FREQUENCY',['../classAprsTransmitter.html#ac3f6a73f10a751297fa0be8362908bf7',1,'AprsTransmitter']]]
+  ['id_0',['id',['../structBaseConfigurationData__s.html#afbb0ccdbf50bbe814b0a799bf0ca647d',1,'BaseConfigurationData_s']]]
 ];

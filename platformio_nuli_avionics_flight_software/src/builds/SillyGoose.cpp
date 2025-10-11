@@ -142,6 +142,9 @@ void setup() {
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
+
+    // drogueDelay.base->m_isUpdated
+
     // We are done!
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }

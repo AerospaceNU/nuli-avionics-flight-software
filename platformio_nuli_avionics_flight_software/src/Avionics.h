@@ -33,7 +33,7 @@ constexpr uint8_t MAX_INDICATOR_NUM = 4;
 constexpr uint8_t MAX_GENERIC_SENSOR_NUM = 10;
 // Configuration max size paramiters
 constexpr uint8_t MAX_CONFIGURATION_NUM = 30;
-constexpr uint8_t MAX_CONFIGURATION_LENGTH = 50;
+constexpr uint8_t MAX_CONFIGURATION_LENGTH = 120;
 
 
 /**
@@ -49,11 +49,12 @@ struct Vector3D_s {
 /**
  * @struct Coordinates_s
  * @brief Geographic coordinates with latitude and longitude
+ * @details Intended for use with GPS
  */
 struct Coordinates_s {
-    float latitudeDeg; ///< Latitude
-    float longitudeDeg; ///< Longitude
-    float altitudeM;
+    float latitudeDeg; ///< Latitude in degrees
+    float longitudeDeg; ///< Longitude in degrees
+    float altitudeM; ///< Altitude in meters
 };
 
 struct Timestamp_s {

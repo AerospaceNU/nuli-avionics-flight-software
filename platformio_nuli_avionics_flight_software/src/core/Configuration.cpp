@@ -15,7 +15,7 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 
             const ConfigurationID_t requestedConfig = allConfigs[i].data[j];
             if (!configExists(requestedConfig)) {
-                m_configurations[m_numConfigurations].name = requestedConfig;
+                m_configurations[m_numConfigurations].id = requestedConfig;
                 m_numConfigurations++;
             }
         }
@@ -26,7 +26,7 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 
     // Write all default values to the data structure
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        getConfigurationDefault(m_configurations[i].name, m_configurations[i].data);
+        getConfigurationDefault(m_configurations[i].id, m_configurations[i].data);
     }
 }
 
@@ -74,9 +74,9 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     }
 }
 
-bool Configuration::configExists(const ConfigurationID_t name) const {
+bool Configuration::configExists(const ConfigurationID_t id) const {
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        if (m_configurations[i].name == name) {
+        if (m_configurations[i].id == id) {
             return true;
         }
     }
@@ -86,11 +86,11 @@ bool Configuration::configExists(const ConfigurationID_t name) const {
 void Configuration::sortConfigs() {
     for (uint32_t i = 0; i < m_numConfigurations; ++i) {
         for (uint32_t j = 0; j < m_numConfigurations - 1 - i; ++j) {
-            if (m_configurations[j].name > m_configurations[j + 1].name) {
+            if (m_configurations[j].id > m_configurations[j + 1].id) {
                 // Swap
-                ConfigurationID_t temp = m_configurations[j].name;
-                m_configurations[j].name = m_configurations[j + 1].name;
-                m_configurations[j + 1].name = temp;
+                ConfigurationID_t temp = m_configurations[j].id;
+                m_configurations[j].id = m_configurations[j + 1].id;
+                m_configurations[j + 1].id = temp;
             }
         }
     }
@@ -99,7 +99,7 @@ void Configuration::sortConfigs() {
 void Configuration::assignMemory() {
     m_dataBufferIndex = 0;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        uint16_t configurationLength = getConfigurationLength(m_configurations[i].name);
+        uint16_t configurationLength = getConfigurationLength(m_configurations[i].id);
         if (m_dataBufferIndex + configurationLength >= m_dataBufferMaxLength) {
             criticalError("Out of memory error");
             m_numConfigurations = i;
@@ -145,13 +145,32 @@ void Configuration::pushUpdatesToMemory() {
     }
 }
 
+BaseConfigurationData_s* Configuration::getBaseConfigurationData(const ConfigurationID_t id) {
+    int32_t left = 0;
+    int32_t right = (int32_t)m_numConfigurations - 1;
+
+    while (left <= right) {
+        const int32_t mid = left + (right - left) / 2;
+        const int32_t midName = m_configurations[mid].id;
+
+        if (midName == id) {
+            return &m_configurations[mid];
+        } else if (midName < id) {
+            left = mid + 1;
+        } else {
+            right = mid - 1;
+        }
+    }
+    return nullptr;
+}
+
 void Configuration::criticalError(const char* str) const {
     m_debug->error("Critical configuration error: %s", str);
     while (true);
 }
 
 bool Configuration::hasError() const {
-    if (m_numConfigurations < 3 || m_configurations[0].name != CONFIGURATION_CRC_c || m_configurations[1].name != CONFIGURATION_ALL_ID_CRC_c || m_configurations[2].name != CONFIGURATION_VERSION_c) {
+    if (m_numConfigurations < 3 || m_configurations[0].id != CONFIGURATION_CRC_c || m_configurations[1].id != CONFIGURATION_ALL_ID_CRC_c || m_configurations[2].id != CONFIGURATION_VERSION_c) {
         criticalError("Required configurations for Configuration class not included");
     }
     // Ensure the memory has not been corrupted
@@ -181,7 +200,7 @@ uint32_t Configuration::calculateCrc() const {
 uint32_t Configuration::calculateAllIdCrc() const {
     ConfigurationID_t allIDs[MAX_CONFIGURATION_NUM];
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        allIDs[i] = m_configurations[i].name;
+        allIDs[i] = m_configurations[i].id;
     }
     return crc32(&allIDs, m_numConfigurations * sizeof(ConfigurationID_t));
 }

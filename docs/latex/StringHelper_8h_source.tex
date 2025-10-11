@@ -1,0 +1,151 @@
+\doxysection{String\+Helper.\+h}
+\hypertarget{StringHelper_8h_source}{}\label{StringHelper_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/util/StringHelper.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/util/StringHelper.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ STRINGHELPER\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ STRINGHELPER\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ reverse\_str(\textcolor{keywordtype}{char}*\ str,\ \textcolor{keywordtype}{int}\ len)\ \{}
+\DoxyCodeLine{00005\ \ \ \ \ \textcolor{keywordtype}{int}\ i\ =\ 0,\ j\ =\ len\ -\/\ 1;}
+\DoxyCodeLine{00006\ \ \ \ \ \textcolor{keywordflow}{while}\ (i\ <\ j)\ \{}
+\DoxyCodeLine{00007\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ tmp\ =\ str[i];}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ \ str[i++]\ =\ str[j];}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ str[j-\/-\/]\ =\ tmp;}
+\DoxyCodeLine{00010\ \ \ \ \ \}}
+\DoxyCodeLine{00011\ \}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ int\_to\_str(int32\_t\ value,\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ base,\ \textcolor{keywordtype}{bool}\ is\_unsigned)\ \{}
+\DoxyCodeLine{00014\ \ \ \ \ \textcolor{keywordtype}{int}\ i\ =\ 0;}
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{keywordtype}{bool}\ neg\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordflow}{if}\ (!is\_unsigned\ \&\&\ value\ <\ 0)\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ neg\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ value\ =\ -\/value;}
+\DoxyCodeLine{00020\ \ \ \ \ \}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \ \ \ \ uint32\_t\ uvalue\ =\ (uint32\_t)value;}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keywordflow}{do}\ \{}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ rem\ =\ uvalue\ \%\ base;}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ buf[i++]\ =\ (rem\ <\ 10)\ ?\ (\textcolor{charliteral}{'0'}\ +\ rem)\ :\ (\textcolor{charliteral}{'a'}\ +\ rem\ -\/\ 10);}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ uvalue\ /=\ base;}
+\DoxyCodeLine{00028\ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (uvalue\ !=\ 0);}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordflow}{if}\ (neg)\ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ buf[i++]\ =\ \textcolor{charliteral}{'-\/'};}
+\DoxyCodeLine{00032\ \ \ \ \ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \ \ \ \ reverse\_str(buf,\ i);}
+\DoxyCodeLine{00035\ \ \ \ \ buf[i]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordflow}{return}\ i;}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ uint\_to\_str(uint32\_t\ value,\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ base)\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordflow}{return}\ int\_to\_str((int32\_t)value,\ buf,\ base,\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00041\ \}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ float\_to\_str(\textcolor{keywordtype}{float}\ f,\ \textcolor{keywordtype}{char}*\ buf,\ \textcolor{keywordtype}{int}\ precision\ =\ 2)\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordflow}{if}\ (f\ !=\ f)\ \{\ \textcolor{comment}{//\ NaN}}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \ \ buf[0]=\textcolor{charliteral}{'N'};\ buf[1]=\textcolor{charliteral}{'a'};\ buf[2]=\textcolor{charliteral}{'N'};\ buf[3]=\textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 3;}
+\DoxyCodeLine{00047\ \ \ \ \ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keywordtype}{char}*\ start\ =\ buf;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{comment}{//\ Handle\ negative\ numbers}}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{if}\ (f\ <\ 0.0f)\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ *buf++\ =\ \textcolor{charliteral}{'-\/'};}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ f\ =\ -\/f;}
+\DoxyCodeLine{00055\ \ \ \ \ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{comment}{//\ Compute\ rounding\ factor}}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordtype}{float}\ rounding\ =\ 0.5f;}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ precision;\ ++i)}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ rounding\ /=\ 10.0f;}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ f\ +=\ rounding;\ \textcolor{comment}{//\ round\ to\ the\ desired\ precision}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordtype}{int}\ int\_part\ =\ (int)f;}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keywordtype}{float}\ frac\_part\ =\ f\ -\/\ (float)int\_part;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ Convert\ integer\ part}}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{int}\ len\ =\ int\_to\_str(int\_part,\ buf,\ 10,\ \textcolor{keyword}{false});}
+\DoxyCodeLine{00069\ \ \ \ \ buf\ +=\ len;}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Add\ decimal\ point}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{if}\ (precision\ >\ 0)\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ *buf++\ =\ \textcolor{charliteral}{'.'};}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Convert\ fractional\ part}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ precision;\ ++i)\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ frac\_part\ *=\ 10.0f;}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ digit\ =\ (int)frac\_part;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ *buf++\ =\ \textcolor{charliteral}{'0'}\ +\ digit;}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ frac\_part\ -\/=\ digit;}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ *buf\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(buf\ -\/\ start);}
+\DoxyCodeLine{00085\ \}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ mini\_snprintf(\textcolor{keywordtype}{char}*\ out,\ \textcolor{keywordtype}{int}\ out\_size,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ fmt,\ ...)\ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordtype}{char}*\ start\ =\ out;}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{char}*\ end\ =\ out\ +\ out\_size\ -\/\ 1;\ \textcolor{comment}{//\ reserve\ space\ for\ null\ terminator}}
+\DoxyCodeLine{00090\ \ \ \ \ va\_list\ args;}
+\DoxyCodeLine{00091\ \ \ \ \ va\_start(args,\ fmt);}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{while}\ (*fmt\ \&\&\ out\ <\ end)\ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*fmt\ ==\ \textcolor{charliteral}{'\%'})\ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ fmt++;}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ precision\ =\ 6;\ \textcolor{comment}{//\ default\ float\ precision}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*fmt\ ==\ \textcolor{charliteral}{'l'})\ \{\ fmt++;\ \}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ parse\ optional\ precision\ for\ float}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*fmt\ ==\ \textcolor{charliteral}{'.'})\ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt++;}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ precision\ =\ 0;}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (*fmt\ >=\ \textcolor{charliteral}{'0'}\ \&\&\ *fmt\ <=\ \textcolor{charliteral}{'9'})\ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ precision\ =\ precision\ *\ 10\ +\ (*fmt\ -\/\ \textcolor{charliteral}{'0'});}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ fmt++;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ buf[32];}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ len\ =\ 0;}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{switch}\ (*fmt)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'d'}:\ len\ =\ int\_to\_str(va\_arg(args,\ \textcolor{keywordtype}{int}),\ buf,\ 10,\ \textcolor{keyword}{false});\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'u'}:\ len\ =\ uint\_to\_str(va\_arg(args,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}),\ buf,\ 10);\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'x'}:\ len\ =\ uint\_to\_str(va\_arg(args,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}),\ buf,\ 16);\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'f'}:\ len\ =\ float\_to\_str((\textcolor{keywordtype}{float})va\_arg(args,\ \textcolor{keywordtype}{double}),\ buf,\ precision);\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'c'}:\ buf[0]\ =\ (char)va\_arg(args,\ \textcolor{keywordtype}{int});\ buf[1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};\ len\ =\ 1;\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'s'}:\ \{}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ s\ =\ va\_arg(args,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (len\ =\ 0;\ s[len]\ \&\&\ out\ +\ len\ <\ end;\ ++len)}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[len]\ =\ s[len];}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ buf[len]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ \textcolor{charliteral}{'\%'}:\ buf[0]\ =\ \textcolor{charliteral}{'\%'};\ buf[1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};\ len\ =\ 1;\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:\ buf[0]\ =\ \textcolor{charliteral}{'?'};\ buf[1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};\ len\ =\ 1;\ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 0;\ i\ <\ len\ \&\&\ out\ <\ end;\ ++i)\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *out++\ =\ buf[i];}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ *out++\ =\ *fmt;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ fmt++;}
+\DoxyCodeLine{00137\ \ \ \ \ \}}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ *out\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00140\ \ \ \ \ va\_end(args);}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{int})(out\ -\/\ start);}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//STRINGHELPER\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,80 @@
+\doxysection{Configuration\+Cli\+Binding.\+h}
+\hypertarget{ConfigurationCliBinding_8h_source}{}\label{ConfigurationCliBinding_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/ConfigurationCliBinding.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/ConfigurationCliBinding.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <cstdint>}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{unsigned}\ ConfigurationID>}
+\DoxyCodeLine{00005\ \textcolor{keyword}{class\ }ConfigurationCliBinding\ \{}
+\DoxyCodeLine{00006\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00007\ \ \ \ \ ConfigurationCliBinding()}
+\DoxyCodeLine{00008\ \ \ \ \ \ \ \ \ :\ m\_setValueFlag(\textcolor{stringliteral}{"{}-\/set"{}},\ \textcolor{stringliteral}{"{}"{}},\ \textcolor{keyword}{false},\ 255,\ []()\ \{\}),}
+\DoxyCodeLine{00009\ \ \ \ \ \ \ \ \ \ \ m\_configurationFlag(command(),\ \textcolor{stringliteral}{"{}"{}},\ \textcolor{keyword}{true},\ 255,\ [\textcolor{keyword}{this}]()\ \{\ this-\/>callback();\ \})\ \{\}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \ \ \ \ \textcolor{keywordtype}{void}\ setup(\mbox{\hyperlink{classConfiguration}{Configuration}}*\ configuration,\ \mbox{\hyperlink{classParser}{Parser}}*\ parser,\ \mbox{\hyperlink{classDebugStream}{DebugStream}}*\ debugStream)\ \{}
+\DoxyCodeLine{00012\ \ \ \ \ \ \ \ \ m\_data\ =\ configuration-\/>getConfigurable<ConfigurationID>();}
+\DoxyCodeLine{00013\ \ \ \ \ \ \ \ \ parser-\/>\mbox{\hyperlink{classParser_abe4ff3e3ab2bbe35be3053c3510d37f2}{addFlagGroup}}(m\_configurationGeneratorGroup);}
+\DoxyCodeLine{00014\ \ \ \ \ \ \ \ \ m\_debug\ =\ debugStream;}
+\DoxyCodeLine{00015\ \ \ \ \ \}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordtype}{void}\ callback()\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_debug)\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_setValueFlag.isSet())\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ \ \ \ \ m\_data.set(m\_setValueFlag.getValueDerived());}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ printValue(name(),\ \textcolor{stringliteral}{"{}has\ been\ set\ to"{}},\ m\_data.get());}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ \ \ \ \ printValue(name(),\ \textcolor{stringliteral}{"{}is\ set\ to"{}},\ m\_data.get());}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00026\ \ \ \ \ \}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ name()\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<ConfigurationID>::name}};}
+\DoxyCodeLine{00031\ \ \ \ \ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{constexpr}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ command()\ \{}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<ConfigurationID>::command}};}
+\DoxyCodeLine{00035\ \ \ \ \ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keyword}{using\ }config\_type\_t\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<ConfigurationID>::type}};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{comment}{//\ Overload\ for\ floating\ point\ types}}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{typename}\ std::enable\_if<std::is\_floating\_point<T>::value>::type}
+\DoxyCodeLine{00042\ \ \ \ \ printValue(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nameStr,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keyword}{const}\ T\&\ value)\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}\%s\ \%s:\ \%.8f"{}},\ nameStr,\ msg,\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(value));}
+\DoxyCodeLine{00044\ \ \ \ \ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ Overload\ for\ unsigned\ integral\ types}}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{typename}\ std::enable\_if<std::is\_integral<T>::value\ \&\&\ std::is\_unsigned<T>::value>::type}
+\DoxyCodeLine{00049\ \ \ \ \ printValue(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nameStr,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keyword}{const}\ T\&\ value)\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}\%s\ \%s:\ \%llu"{}},\ nameStr,\ msg,}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\textcolor{keyword}{>}(value));}
+\DoxyCodeLine{00052\ \ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{comment}{//\ Overload\ for\ signed\ integral\ types}}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{typename}\ std::enable\_if<std::is\_integral<T>::value\ \&\&\ std::is\_signed<T>::value>::type}
+\DoxyCodeLine{00057\ \ \ \ \ printValue(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nameStr,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keyword}{const}\ T\&\ value)\ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}\%s\ \%s:\ \%lld"{}},\ nameStr,\ msg,}
+\DoxyCodeLine{00059\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\textcolor{keyword}{>}(value));}
+\DoxyCodeLine{00060\ \ \ \ \ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ Fallback\ for\ unsupported\ types}}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{typename}\ std::enable\_if<!std::is\_integral<T>::value\ \&\&\ !std::is\_floating\_point<T>::value>::type}
+\DoxyCodeLine{00065\ \ \ \ \ printValue(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ nameStr,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ msg,\ \textcolor{keyword}{const}\ T\&)\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}\%s\ \%s:\ (unsupported\ type)"{}},\ nameStr,\ msg);}
+\DoxyCodeLine{00067\ \ \ \ \ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{classDebugStream}{DebugStream}}*\ m\_debug\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00070\ \ \ \ \ \mbox{\hyperlink{classConfigurationData}{ConfigurationData<config\_type\_t>}}\ m\_data;}
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{classArgumentFlag}{ArgumentFlag<config\_type\_t>}}\ m\_setValueFlag;}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_configurationFlag;}
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_configurationGeneratorGroup[2]\ =\ \{\ \&m\_configurationFlag,\ \&m\_setValueFlag\ \};}
+\DoxyCodeLine{00074\ \};}
+
+\end{DoxyCode}

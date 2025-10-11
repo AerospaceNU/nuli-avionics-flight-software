@@ -1,0 +1,147 @@
+\doxysection{Configuration\+Registry\+Wraper.\+h}
+\hypertarget{ConfigurationRegistryWraper_8h_source}{}\label{ConfigurationRegistryWraper_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/ConfigurationRegistryWraper.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/ConfigurationRegistryWraper.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ PLATFORMIO\_NULI\_AVIONICS\_FLIGHT\_SOFTWARE\_CONFIGURATIONREGISTRYWRAP\_H}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ PLATFORMIO\_NULI\_AVIONICS\_FLIGHT\_SOFTWARE\_CONFIGURATIONREGISTRYWRAP\_H}}
+\DoxyCodeLine{00003\ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <\mbox{\hyperlink{Avionics_8h}{Avionics.h}}>}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{keyword}{typedef}\ int16\_t\ ConfigurationID\_t;}
+\DoxyCodeLine{00007\ }
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ This\ creates\ a\ unique\ ID\ for\ each\ config\ name,\ creates\ and\ enum\ alias,}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ and\ a\ struct\ that\ allows\ type\ to\ be\ determined\ from\ ID\ at\ compile\ time}}
+\DoxyCodeLine{00010\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{signed}\ N>}
+\DoxyCodeLine{00011\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s}};}
+\DoxyCodeLine{00012\ \textcolor{keyword}{enum}\ \{\ CONFIGURATION\_COUNT\_BASE\ =\ \_\_COUNTER\_\_\ \};}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ DEFINE\_CONFIGURATION\_VARIABLE(CONFIGURATION\_ENUM,\ dataType,\ DefaultValue)\ enum\ class\ Dasf328ThisOnlyExistsToMakeConfigurationRegistryLookPrettyAndCanBeRemovedkasdfhkdasfa\#\#CONFIGURATION\_ENUM\ \{\ CONFIGURATION\_ENUM\ \};\ enum\ :\ int16\_t\ \{\ CONFIGURATION\_ENUM\#\#\_c\ =\ (\_\_COUNTER\_\_\ -\/\ CONFIGURATION\_COUNT\_BASE\ -\/\ 2)\ \};\ template<>\ struct\ GetConfigurationType\_s<CONFIGURATION\_ENUM\#\#\_c>\ \{using\ type\ =\ dataType;\ static\ constexpr\ const\ char\ *\ name\ =\ \#CONFIGURATION\_ENUM;\ static\ constexpr\ const\ char\ *\ command\ =\ "{}-\/-\/"{}\ \#CONFIGURATION\_ENUM;\ static\ constexpr\ const\ dataType\ defaultValue\ =\ DefaultValue;\ \};}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ Register\ all\ the\ configurables}}
+\DoxyCodeLine{00016\ DEFINE\_CONFIGURATION\_VARIABLE(NONE,\ \textcolor{keywordtype}{int},\ 0)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Base\ case}}
+\DoxyCodeLine{00017\ DEFINE\_CONFIGURATION\_VARIABLE(CONFIGURATION\_CRC,\ uint32\_t,\ 0)}
+\DoxyCodeLine{00018\ DEFINE\_CONFIGURATION\_VARIABLE(CONFIGURATION\_ALL\_ID\_CRC,\ uint32\_t,\ 0)}
+\DoxyCodeLine{00019\ DEFINE\_CONFIGURATION\_VARIABLE(CONFIGURATION\_VERSION,\ uint32\_t,\ 1)}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#include\ "{}../ConfigurationRegistry.h"{}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }\textcolor{comment}{//\ All\ user\ defined\ variables}}
+\DoxyCodeLine{00021\ DEFINE\_CONFIGURATION\_VARIABLE(LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE,\ \textcolor{keywordtype}{int},\ 0)\ \ \ \ \ \ \textcolor{comment}{//\ End\ case}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ struct\ ConfigurationIDSet\_s\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \textcolor{keyword}{const}\ ConfigurationID\_t*\ data;}
+\DoxyCodeLine{00025\ \ \ \ \ uint16\_t\ length;}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ \textcolor{comment}{//\ Templated\ constructor\ to\ deduce\ length\ from\ array\ reference}}
+\DoxyCodeLine{00028\ \ \ \ \ \textcolor{comment}{//\ This\ must\ ALLOW\ for\ implicit\ conversion,\ to\ keep\ syntax\ clean}}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ N>}
+\DoxyCodeLine{00030\ \ \ \ \ ConfigurationIDSet\_s(\textcolor{keyword}{const}\ ConfigurationID\_t\ (\&arr)[N])\ :\ data(arr),\ length(N)\ \{\}}
+\DoxyCodeLine{00031\ \};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{signed}\ N>}
+\DoxyCodeLine{00034\ \textcolor{keyword}{inline}\ uint16\_t\ getConfigurationLengthGenerator(\textcolor{keyword}{const}\ ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00035\ \ \ \ \ \textcolor{keywordflow}{if}\ (name\ ==\ N)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{sizeof}(\textcolor{keyword}{typename}\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<N>::type}});}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationLengthGenerator<N\ -\/\ 1>(name);}
+\DoxyCodeLine{00037\ \}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00040\ \textcolor{keyword}{inline}\ uint16\_t\ getConfigurationLengthGenerator<-\/1>(ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00045\ \textcolor{keyword}{inline}\ uint16\_t\ getConfigurationLengthGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(\textcolor{keyword}{const}\ ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationLengthGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c\ -\/\ 1>(name);}
+\DoxyCodeLine{00047\ \}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{inline}\ uint16\_t\ getConfigurationLength(\textcolor{keyword}{const}\ ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationLengthGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(name);}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{comment}{//\ Recursive\ generator\ to\ get\ the\ name\ of\ a\ given\ configuration\ ID}}
+\DoxyCodeLine{00054\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{signed}\ N>}
+\DoxyCodeLine{00055\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getConfigurationNameGenerator(\textcolor{keyword}{const}\ ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordflow}{if}\ (name\ ==\ N)\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<N>::name}};}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationNameGenerator<N\ -\/\ 1>(name);}
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ Base\ case\ specialization:\ stop\ recursion\ at\ -\/1}}
+\DoxyCodeLine{00061\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00062\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getConfigurationNameGenerator<-\/1>(\textcolor{keyword}{const}\ ConfigurationID\_t)\ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}NONE"{}};}
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ Skip\ over\ the\ last\ placeholder\ entry}}
+\DoxyCodeLine{00067\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00068\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getConfigurationNameGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(\textcolor{keyword}{const}\ ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationNameGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c\ -\/\ 1>(name);}
+\DoxyCodeLine{00070\ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ Public\ function}}
+\DoxyCodeLine{00073\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ getConfigurationName(\textcolor{keyword}{const}\ ConfigurationID\_t\ name)\ \{}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationNameGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(name);}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ strEquals(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ b)\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordflow}{while}\ (*a\ \&\&\ *b)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*a\ !=\ *b)\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ ++a;}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ ++b;}
+\DoxyCodeLine{00082\ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{return}\ *a\ ==\ *b;}
+\DoxyCodeLine{00084\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ Recursive\ generator\ to\ get\ ID\ from\ exact\ string}}
+\DoxyCodeLine{00087\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{signed}\ N>}
+\DoxyCodeLine{00088\ \textcolor{keyword}{inline}\ ConfigurationID\_t\ getConfigurationIDGenerator(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str)\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordflow}{if}\ (strEquals(str,\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<N>::name}}))\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}ConfigurationID\_t\textcolor{keyword}{>}(N);}
+\DoxyCodeLine{00091\ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationIDGenerator<N\ -\/\ 1>(str);}
+\DoxyCodeLine{00093\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \textcolor{comment}{//\ Base\ case}}
+\DoxyCodeLine{00096\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00097\ \textcolor{keyword}{inline}\ ConfigurationID\_t\ getConfigurationIDGenerator<-\/1>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*)\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{return}\ NONE\_c;}
+\DoxyCodeLine{00099\ \}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ Skip\ over\ placeholder}}
+\DoxyCodeLine{00102\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00103\ \textcolor{keyword}{inline}\ ConfigurationID\_t\ getConfigurationIDGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str)\ \{}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationIDGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c\ -\/\ 1>(str);}
+\DoxyCodeLine{00105\ \}}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \textcolor{comment}{//\ Public\ function}}
+\DoxyCodeLine{00108\ \textcolor{keyword}{inline}\ ConfigurationID\_t\ getConfigurationID(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str)\ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationIDGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(str);}
+\DoxyCodeLine{00110\ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ Recursive\ generator\ to\ get\ the\ name\ of\ a\ given\ configuration\ ID}}
+\DoxyCodeLine{00113\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{signed}\ N>}
+\DoxyCodeLine{00114\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ getConfigurationDefaultGenerator(\textcolor{keyword}{const}\ ConfigurationID\_t\ name,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \textcolor{keywordflow}{if}\ (name\ ==\ N)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keyword}{using\ }config\_type\_t\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<N>::type}};}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ *((config\_type\_t\ *)\ dst)\ =\ \mbox{\hyperlink{structGetConfigurationType__s}{GetConfigurationType\_s<N>::defaultValue}};}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationDefaultGenerator<N\ -\/\ 1>(name,\ dst);}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \textcolor{comment}{//\ Base\ case\ specialization:\ stop\ recursion\ at\ -\/1}}
+\DoxyCodeLine{00124\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00125\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ getConfigurationDefaultGenerator<-\/1>(\textcolor{keyword}{const}\ ConfigurationID\_t,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ Skip\ over\ the\ last\ placeholder\ entry}}
+\DoxyCodeLine{00130\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00131\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ getConfigurationDefaultGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(\textcolor{keyword}{const}\ ConfigurationID\_t\ name,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{return}\ getConfigurationDefaultGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c\ -\/\ 1>(name,\ dst);}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ Public\ function}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ getConfigurationDefault(\textcolor{keyword}{const}\ ConfigurationID\_t\ name,\ \textcolor{keywordtype}{void}*\ dst)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ getConfigurationDefaultGenerator<LEAVE\_THIS\_ENTRY\_LAST\_WITH\_THE\_HIGHEST\_VALUE\_c>(name,\ dst);}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//PLATFORMIO\_NULI\_AVIONICS\_FLIGHT\_SOFTWARE\_CONFIGURATIONREGISTRYWRAP\_H}}
+
+\end{DoxyCode}

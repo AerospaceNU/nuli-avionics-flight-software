@@ -6,55 +6,132 @@
 #include "HardwareAbstraction.h"
 #include "generic_hardware/FramMemory.h"
 #include "generic_hardware/DebugStream.h"
-#include <Arduino.h>
 
-
+/**
+ * @struct BaseConfigurationData_s
+ * @brief Data structure representing a configuration varable
+ * @details Contains pointer to the actual configuration data
+ */
 struct BaseConfigurationData_s {
-    uint8_t* data = nullptr;
-    uint16_t size = 0;
-    ConfigurationID_t name = NONE_c;
-    bool m_isUpdated = false;
+    uint8_t* data = nullptr; ///< pointer to the actual varable
+    uint16_t size = 0; ///< Size of the varable
+    ConfigurationID_t id = NONE_c; ///< ID of the varable
+    bool m_isUpdated = false; ///< Tracks if the varable needs to be writen to memory
 };
 
+/**
+ * @class ConfigurationData
+ * @brief Wrapper object for users to interact with configuration variables
+ * @details Tracks updates, allowing for automatic writes to FRAM with Configuration.pushUpdatesToMemory();
+ * @tparam T Data type of the configuration varable. Must match ConfigurationRegistry.h
+ */
 template <typename T>
-struct ConfigurationData {
-    BaseConfigurationData_s* base = nullptr; // pointer to the underlying data
-
+class ConfigurationData {
+public:
+    /**
+     * @brief Default constructor
+     * @details Used to allow temporary invalid objects to be made in classes
+     * before the varable is assigned to a valid object with Configuration.getConfigurable<>();
+     */
     ConfigurationData() = default;
 
-    // Constructor from BaseConfigurationData_s*
+    /**
+     * @brief Constructs a new ConfigurationData, used internally to Configuration
+     * @details This class acts largely as a pointer container, letting Configuration
+     * data to be promoted to the templated type.
+     * @param b BaseConfigurationData_s that this object will reference
+     */
     explicit ConfigurationData(BaseConfigurationData_s* b) : base(b) {}
 
+    /**
+     * @brief Getter method for the configuration variable
+     * @details Will return default constructed T if the default constructor was used.
+     * @return The value of the configuration variable
+     */
     T get() const {
         if (!base || !base->data) return T{}; // default-constructed T
         return *reinterpret_cast<const T*>(base->data);
     }
 
+    /**
+     * @brief Sets the value of the configuration varable
+     * @details Does nothing if object was created with the default constructor
+     * @param newVal Value to set the configuration variable to
+     */
     void set(const T& newVal) {
         if (!base || !base->data) return;
         *reinterpret_cast<T*>(base->data) = newVal;
         base->m_isUpdated = true;
     }
 
+    /**
+     * @brief Determines if the object is a valid configuration varable
+     * @details If the Configuration object was not created with your
+     * intended configuration varable, or if the default constructor was
+     * used this will return false.
+     * @return if the varable is valid
+     */
     bool isValid() const { return base != nullptr; }
+
+private:
+    BaseConfigurationData_s* base = nullptr; ///< pointer to the underlying data
 };
 
+/**
+ * @class Configuration
+ * @brief Manages the configuration system
+ * @details Handles interactions with FRAM, CRC validation, and interfacing with the rest of the code
+ */
 class Configuration {
 public:
-    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION_c, CONFIGURATION_ALL_ID_CRC_c, CONFIGURATION_CRC_c};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {CONFIGURATION_VERSION_c, CONFIGURATION_ALL_ID_CRC_c, CONFIGURATION_CRC_c}; ///< All configuration variables required for this to function
 
+    /**
+     * @brief Construct a Configuration object with an external buffer
+     * @details Takes in an array of ConfigurationIDSet_s (which is an array of ConfigurationID_t).
+     * These arrays must contain all configuration IDs that will be used anywhere in the specific
+     * build of code. Duplicates are expected in will be filtered out.
+     * @tparam N Size of the array of ConfigurationIDSet_s
+     * @tparam M Size of the external buffer
+     * @param allConfigs 2D array of all ConfigurationID_t that are going to be in the configuration
+     * @param buffer data buffer to store all the configuration variables in
+     */
     template <unsigned N, unsigned M>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
         construct(allConfigs, N);
     }
 
+    /**
+     * @brief Construct a Configuration object using the internal buffer
+     * @details Takes in an array of ConfigurationIDSet_s (which is an array of ConfigurationID_t).
+     * These arrays must contain all configuration IDs that will be used anywhere in the specific
+     * build of code. Duplicates are expected in will be filtered out.
+     * @tparam N Size of the array of ConfigurationIDSet_s
+     * @param allConfigs 2D array of all ConfigurationID_t that are going to be in the configuration
+     */
     template <unsigned N>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N]): m_dataBuffer(m_buffer), m_dataBufferMaxLength(MAX_CONFIGURATION_LENGTH) {
         construct(allConfigs, N);
     }
 
+    /**
+     * @brief Reads in the Configuration from FRAM
+     * @details Checks that the configuration passes a CRC check, version number check, and a CRC check
+     * on all the IDs present (to track if the set of configuration varables has changed). If any errors are
+     * present, it restores the default values.
+     * @param hardware HardwareAbstraction to retrieve the FRAM and DebugStream from
+     * @param id Index of the FRAM in the HardwareAbstraction FRAM array
+     */
     void setup(HardwareAbstraction* hardware, uint8_t id);
 
+    /**
+     * @brief Gets a configuration varable
+     * @details Returns a ConfigurationData, which is a wrapper class that provides an interface to
+     * configuration varables. It tracks changes to the value, allowing for a seamless update proces
+     * with pushUpdatesToMemory().
+     * @tparam N Configuration varable ID to retrieve. Templating allows for compile time type checks
+     * @return Configuration varable
+     */
     template <unsigned N>
     ConfigurationData<typename GetConfigurationType_s<N>::type> getConfigurable() {
         using T = typename GetConfigurationType_s<N>::type;
@@ -63,37 +140,35 @@ public:
         return ConfigurationData<T>(base);
     }
 
+    /**
+     * @brief Overwrites the existing default value for a configuration varable
+     * @details MUST be called prior to Configuration.setup() or it will have no effect
+     * @tparam N Configuration varable ID
+     * @param value New default value
+     */
     template <unsigned N>
-    void setDefault(const typename GetConfigurationType_s<N>::type &value) {
+    void setDefault(const typename GetConfigurationType_s<N>::type& value) {
         // Ensure setup has not been called
         if (m_hardware == nullptr) {
             getConfigurable<N>().set(value);
         } else {
-            m_debug->warn("It's too late to be setting a default");
+            m_debug->warn("It's too late to be setting a configuration default");
         }
     }
 
+    /**
+     * @brief Writes all updated configuration varables to FRAM
+     * @details Should be called every loop. Manages CRCs and efficiently blocks FRAM writes
+     */
     void pushUpdatesToMemory();
 
 private:
-    BaseConfigurationData_s* getBaseConfigurationData(const ConfigurationID_t name) {
-        int32_t left = 0;
-        int32_t right = (int32_t)m_numConfigurations - 1;
-
-        while (left <= right) {
-            const int32_t mid = left + (right - left) / 2;
-            const int32_t midName = m_configurations[mid].name;
-
-            if (midName == name) {
-                return &m_configurations[mid];
-            } else if (midName < name) {
-                left = mid + 1;
-            } else {
-                right = mid - 1;
-            }
-        }
-        return nullptr;
-    }
+    /**
+     * @brief afdsasdf
+     * @param id adfs
+     * @return afdsdafs
+     */
+    BaseConfigurationData_s* getBaseConfigurationData(ConfigurationID_t id);
 
     bool hasError() const;
 
@@ -101,13 +176,13 @@ private:
 
     void readConfigFromMemory() const;
 
-    bool configExists(ConfigurationID_t name) const;
+    bool configExists(ConfigurationID_t id) const;
 
     void sortConfigs();
 
     void assignMemory();
 
-    void criticalError(const char *str) const;
+    void criticalError(const char* str) const;
 
     uint32_t calculateCrc() const;
 

@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['logger_0',['Logger',['../classLogger.html',1,'']]]
+  ['lowpass_0',['LowPass',['../classLowPass.html',1,'']]]
 ];

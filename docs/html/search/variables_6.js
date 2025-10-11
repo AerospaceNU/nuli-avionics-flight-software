@@ -1,4 +1,4 @@
 var searchData=
 [
-  ['y_0',['y',['../structVector3D__s.html#a802fd385e17ca81e64237a4a712b2e06',1,'Vector3D_s']]]
+  ['required_5fconfigs_0',['REQUIRED_CONFIGS',['../classConfiguration.html#ae4a311f24dd58852dd4b7bcbdb36c9e7',1,'Configuration']]]
 ];
