@@ -103,8 +103,8 @@ private:
     uint32_t m_loopTime = 10;
     uint32_t m_loopDtMs = 0; ///< Tracks the loop execution time
     uint32_t m_currentLoopTimestampMs = 0; ///< Tracks the start time of each loop
-    uint32_t m_lastTickDuration = 0;
     uint32_t m_tickCount = 0;
+    uint32_t m_intendedTickEndtimeUs = 0;
 
     SystemClock* m_systemClock = nullptr; ///< System clocks
     DebugStream* m_debug = nullptr; ///< Debug stream

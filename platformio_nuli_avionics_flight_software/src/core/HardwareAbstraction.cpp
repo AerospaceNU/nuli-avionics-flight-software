@@ -2,7 +2,7 @@
 #include <Arduino.h>
 #include <cmath>
 
-void HardwareAbstraction::setup(DebugStream *debugStream, SystemClock *systemClock, const uint32_t loopRateHz) {
+void HardwareAbstraction::setup(DebugStream* debugStream, SystemClock* systemClock, const uint32_t loopRateHz) {
     m_debug = debugStream;
     m_systemClock = systemClock;
     setLoopRateHz(loopRateHz);
@@ -49,24 +49,29 @@ void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
 }
 
 Timestamp_s HardwareAbstraction::enforceLoopTime() {
-    // @todo ensure more reliable tick time using microseconds()
-    // Track the end of the tick
-    const uint32_t actualLoopEnd = m_systemClock->currentRuntimeMs();
-    const uint32_t desiredLoopEnd = m_currentLoopTimestampMs + m_loopTime;
-    // Enforce loop time, detect overruns
-    if (actualLoopEnd > desiredLoopEnd) {
-        if (m_tickCount == 0) {
-            m_debug->message("First loop start time: %d", actualLoopEnd);
-        } else {
-            m_debug->warn("Loop overrun by %d ms", (actualLoopEnd - desiredLoopEnd));
-        }
+    uint32_t actualLoopEndtimeUs = m_systemClock->currentRuntimeUs();
+
+    if (m_tickCount == 0) {
+        m_loopDtMs = m_loopTime;
+        m_debug->message("First loop start time: %d", m_systemClock->currentRuntimeMs());
+        m_intendedTickEndtimeUs = actualLoopEndtimeUs + (m_loopTime * Units::MS_TO_US);
     } else {
-        while (m_systemClock->currentRuntimeMs() < desiredLoopEnd) {};
+        const uint32_t diff = actualLoopEndtimeUs - m_intendedTickEndtimeUs;
+
+        if ((int32_t)diff > 0) { // overrun
+            m_loopDtMs = (diff + (m_loopTime * Units::MS_TO_US)) / Units::MS_TO_US;
+            m_debug->warn("Loop overrun, lasting %d ms", m_loopDtMs);
+            m_intendedTickEndtimeUs = actualLoopEndtimeUs + (m_loopTime * Units::MS_TO_US);
+        } else {
+            while ((int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) > 0) {
+                actualLoopEndtimeUs = m_systemClock->currentRuntimeUs();
+            }
+            m_intendedTickEndtimeUs += (m_loopTime * Units::MS_TO_US);
+            m_loopDtMs = m_loopTime;
+        }
     }
-    // Update timers
-    const uint32_t lastTime = m_currentLoopTimestampMs;
+
     m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
-    m_loopDtMs = m_currentLoopTimestampMs - lastTime;
     m_tickCount++;
     return getTimestamp();
 }
@@ -84,3 +89,25 @@ uint32_t HardwareAbstraction::getTargetLoopTimeMs() const {
 }
 
 DebugStream* HardwareAbstraction::getDebugStream() const { return m_debug; }
+
+
+// // @todo ensure more reliable tick time using microseconds()
+// // Track the end of the tick
+// const uint32_t actualLoopEnd = m_systemClock->currentRuntimeMs();
+// const uint32_t desiredLoopEnd = m_currentLoopTimestampMs + m_loopTime;
+// // Enforce loop time, detect overruns
+// if (actualLoopEnd > desiredLoopEnd) {
+//     if (m_tickCount == 0) {
+//         m_debug->message("First loop start time: %d", actualLoopEnd);
+//     } else {
+//         m_debug->warn("Loop overrun by %d ms", (actualLoopEnd - desiredLoopEnd));
+//     }
+// } else {
+//     while (m_systemClock->currentRuntimeMs() < desiredLoopEnd) {};
+// }
+// // Update timers
+// const uint32_t lastTime = m_currentLoopTimestampMs;
+// m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
+// m_loopDtMs = m_currentLoopTimestampMs - lastTime;
+// m_tickCount++;
+// return getTimestamp();

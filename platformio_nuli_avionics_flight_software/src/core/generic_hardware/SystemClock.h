@@ -14,6 +14,7 @@ public:
 
     virtual uint32_t currentRuntimeMs() = 0;
 
+    virtual uint32_t currentRuntimeUs() = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SYSTEMCLOCK_H
