@@ -49,6 +49,7 @@ void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
 }
 
 Timestamp_s HardwareAbstraction::enforceLoopTime() {
+    // @todo ensure more reliable tick time using microseconds()
     // Track the end of the tick
     const uint32_t actualLoopEnd = m_systemClock->currentRuntimeMs();
     const uint32_t desiredLoopEnd = m_currentLoopTimestampMs + m_loopTime;

@@ -15,13 +15,12 @@ var searchData=
   ['setup_12',['setup',['../classConfiguration.html#aa50415a19aaf8bdf9ee91a7084d0246c',1,'Configuration::setup()'],['../classGenericSensor.html#a5a36a9bb47566ccd26ca89ed7a1754ba',1,'GenericSensor::setup()'],['../classPyro.html#a1bad55391631d30871cdf4091ed8aa28',1,'Pyro::setup()'],['../classVoltageSensor.html#ade28bbe10e8f5ff5f5b59815552b19b1',1,'VoltageSensor::setup()'],['../classHardwareAbstraction.html#acc44bbde86f56219189814a3763bffd3',1,'HardwareAbstraction::setup()'],['../classArduinoPyro.html#a8c5497be4ecc09d4e6db04b98e8ccfba',1,'ArduinoPyro::setup()'],['../classICM20602Sensor.html#a07a7e98fcf7553eccd0d9dc0932be150',1,'ICM20602Sensor::setup()'],['../classICM20948Sensor.html#a8255fd6e52237a7e7dbd59b9f6c179bd',1,'ICM20948Sensor::setup()'],['../classMS5607Sensor.html#a415fdfe989c730f65b51b872585233f8',1,'MS5607Sensor::setup()'],['../classMS8607Sensor.html#ab5de03749781ad4518116e36402c6f14',1,'MS8607Sensor::setup()'],['../classRFM9xRadio.html#a85b8e633a244007660e16f13435d2198',1,'RFM9xRadio::setup()'],['../classAprsTransmitter.html#a87cad7a70fc7f201e0cd0ae7e8a3f776',1,'AprsTransmitter::setup()']]],
   ['sillygooselogdata_13',['SillyGooseLogData',['../structSillyGooseLogData.html',1,'']]],
   ['simpleflag_14',['SimpleFlag',['../classSimpleFlag.html',1,'SimpleFlag'],['../classSimpleFlag.html#a3c4a035d8c0beadb22508572847b368f',1,'SimpleFlag::SimpleFlag()']]],
-  ['simulationparser_15',['SimulationParser',['../classSimulationParser.html',1,'']]],
-  ['size_16',['size',['../structBaseConfigurationData__s.html#a4b7ed581a9ed78c50cac508f18a4ca41',1,'BaseConfigurationData_s']]],
-  ['software_17',['NULI Avionics Flight Software',['../index.html',1,'']]],
-  ['state1d_5fs_18',['State1D_s',['../structState1D__s.html',1,'']]],
-  ['state6d_5fs_19',['State6D_s',['../structState6D__s.html',1,'']]],
-  ['stateestimator1d_20',['StateEstimator1D',['../classStateEstimator1D.html',1,'']]],
-  ['string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_21',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['structs_20enums_20typedefs_20and_20functions_22',['Structs, Enums, Typedefs and Functions',['../index.html#autotoc_md38',1,'']]],
-  ['systemclock_23',['SystemClock',['../classSystemClock.html',1,'']]]
+  ['size_15',['size',['../structBaseConfigurationData__s.html#a4b7ed581a9ed78c50cac508f18a4ca41',1,'BaseConfigurationData_s']]],
+  ['software_16',['NULI Avionics Flight Software',['../index.html',1,'']]],
+  ['state1d_5fs_17',['State1D_s',['../structState1D__s.html',1,'']]],
+  ['state6d_5fs_18',['State6D_s',['../structState6D__s.html',1,'']]],
+  ['stateestimator1d_19',['StateEstimator1D',['../classStateEstimator1D.html',1,'']]],
+  ['string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_20',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['structs_20enums_20typedefs_20and_20functions_21',['Structs, Enums, Typedefs and Functions',['../index.html#autotoc_md38',1,'']]],
+  ['systemclock_22',['SystemClock',['../classSystemClock.html',1,'']]]
 ];

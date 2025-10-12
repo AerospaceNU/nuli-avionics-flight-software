@@ -1,6 +1,8 @@
 #include "Avionics.h"
 #include <Arduino.h>
 #include "pinmaps/SillyGoosePinmap.h"
+#include "util/StringHelper.h"
+#include "util/Debounce.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
@@ -11,19 +13,19 @@
 #include "drivers/arduino/ArduinoFram.h"
 #include "drivers/arduino/ArduinoVoltageSensor.h"
 #include "drivers/arduino/IndicatorLED.h"
+#include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
+#include "drivers/arduino/ArduinoSimulationParser.h"
 #include "core/HardwareAbstraction.h"
 #include "core/Configuration.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
-#include "core/cli/Parser.h"
+#include "core/cli/IntegratedParser.h"
 #include "core/ConfigurationCliBinding.h"
 #include "core/FlightStateDeterminer.h"
+#include "core/IndicatorManager.h"
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
-#include "util/StringHelper.h"
-#include "util/Debounce.h"
-#include "core/SimulationParser.h"
 
 // clang-format off
 struct SillyGooseLogData {
@@ -64,30 +66,37 @@ ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE
 S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
-IndicatorBuzzer buzzer(BUZZER_PIN, 4000);
+IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 // Core components
 HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
-Parser cliParser;
 BasicLogger<SillyGooseLogData> logger;
-// Configuration
-ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c};
+ArduinoSerialReader<500> serialReader(true);
+IntegratedParser cliParser;
+ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
-
-SimulationParser simulationParser;
-bool simulationActive = false;
-
+ArduinoSimulationParser simulationParser;
+IndicatorManager indicatorManager;
+// Locally used configuration data
+ConfigurationData<float> mainElevation;
+ConfigurationData<uint32_t> drogueDelay;
+ConfigurationData<uint32_t> pyroFireDuration;
 // CLI
-void runCli();
 void fireCallback();
 SimpleFlag simFlag("--sim", "Send start", true, 255, []() {
-    simulationActive = true;
+    simulationParser.activate();
     stateEstimator1D.reset();
 });
-SimpleFlag testfire("--fire", "Send start", true, 255, fireCallback);
-SimpleFlag testDrogue("-d", "Send start", false, 255, []() {});
-SimpleFlag testMain("-m", "Send start", false, 255, []() {});
+SimpleFlag testfire("--fire", "Send start", true, 255, [](){});
+SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
+    serialDebug.message("Firing drogue");
+    droguePyro.fireFor(pyroFireDuration.get());
+});
+SimpleFlag testMain("-m", "Send start", false, 255, []() {
+    serialDebug.message("Firing main");
+    mainPyro.fireFor(pyroFireDuration.get());
+});
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 BaseFlag* simGroup[] = {&simFlag};
 ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
@@ -96,12 +105,7 @@ ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageCon
 ConfigurationCliBinding<GROUND_ELEVATION_c> groundElevationConfigurationCliBinding;
 ConfigurationCliBinding<GROUND_TEMPERATURE_c> groundTemperatureConfigurationCliBinding;
 ConfigurationCliBinding<CONFIGURATION_VERSION_c> versionConfigurationCliBinding;
-// Locally used configuration data
-ConfigurationData<float> mainElevation;
-ConfigurationData<uint32_t> drogueDelay;
-// Placeholder till we have a manager
-void runIndicators(const Timestamp_s&);
-
+ConfigurationCliBinding<PYRO_FIRE_DURATION_c> pyroFireDurationConfigurationCliBinding;
 
 void setup() {
     // Initialize
@@ -112,8 +116,8 @@ void setup() {
     // Setup Hardware
     const int16_t framID = hardware.appendFramMemory(&fram);
     const int16_t flashID = hardware.appendFlashMemory(&flash);
-    hardware.appendPyro(&droguePyro);
-    hardware.appendPyro(&mainPyro);
+    const int16_t drogueID = hardware.appendPyro(&droguePyro);
+    const int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendBarometer(&barometer);
     hardware.appendGenericSensor(&icm20602);
@@ -128,7 +132,9 @@ void setup() {
     configuration.setup(&hardware, framID);
     stateEstimator1D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
+    indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
+    cliParser.setup(&serialReader, &serialDebug);
     // Setup cli
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(simGroup);
@@ -138,9 +144,11 @@ void setup() {
     versionConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     groundElevationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     groundTemperatureConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    pyroFireDurationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
+    pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
     // Done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
@@ -152,15 +160,18 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
-    if (simulationActive) {
-        simulationActive = simulationParser.blockingGetNextSimulationData();
-        const float tempK = simulationParser.getNextFloat();
-        const float pressurePa = simulationParser.getNextFloat();
-        const float ax = simulationParser.getNextFloat();
-        const float ay = simulationParser.getNextFloat();
-        const float az = simulationParser.getNextFloat();
-        barometer.inject(tempK, 0, pressurePa);
-        icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
+    if (simulationParser.isActive()) {
+        if (simulationParser.blockingGetNextSimulationData()) {
+            const float tempK = simulationParser.getNextFloat();
+            const float pressurePa = simulationParser.getNextFloat();
+            const float ax = simulationParser.getNextFloat();
+            const float ay = simulationParser.getNextFloat();
+            const float az = simulationParser.getNextFloat();
+            barometer.inject(tempK, 0, pressurePa);
+            icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
+        } else {
+            stateEstimator1D.reset();
+        }
     }
 
     // Determine state
@@ -169,33 +180,46 @@ void loop() {
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
-        runCli();
+        static Debounce logTimer(5000);
+        if (logTimer.check(true, state.timestamp)) {
+            logger.logOnce();
+            logTimer.reset();
+        }
+        indicatorManager.beepContinuity(state.timestamp);
+        cliParser.runCli();
     } else if (state.flightState == ASCENT) {
+        indicatorManager.keepAliveBeep(state.timestamp);
         if (!logger.isLoggingEnabled()) {
             logger.enableLogging();
             logger.newFlight();
         }
     } else if (state.flightState == DESCENT) {
-        // @todo turn off pyros after some time
-        if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get()) {
-            droguePyro.fire();
+        indicatorManager.keepAliveBeep(state.timestamp);
+        static uint8_t deployState = 0; // Ensure each is only fired once
+        if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get() && deployState == 0) {
+            droguePyro.fireFor(pyroFireDuration.get());
+            deployState = 1;
         }
         static Debounce mainDeployDebounce(200);
-        if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp)) {
-            mainPyro.fire();
+        if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp) && deployState == 1) {
+            mainPyro.fireFor(pyroFireDuration.get());
+            deployState = 2;
         }
     } else if (state.flightState == POST_FLIGHT) {
         logger.disableLogging();
-        runCli();
-        droguePyro.disable();
-        mainPyro.disable();
-    } else if (state.flightState == UNKNOWN_FLIGHT_STATE) {
-        runCli();
+        static Debounce logTimer(5000);
+        if (logTimer.check(true, state.timestamp)) {
+            logger.logOnce();
+            logTimer.reset();
+        }
+        indicatorManager.siren(state.timestamp);
+        cliParser.runCli();
+    } else {
+        logger.enableLogging();
+        indicatorManager.siren(state.timestamp);
+        cliParser.runCli();
     }
 
-    //// Handle outputs: indicators, pyros, logging, config, etc
-    // Runs light and buzzer
-    runIndicators(state.timestamp);
     // Update any changes to the configuration
     configuration.pushUpdatesToMemory();
     // Run logging
@@ -222,54 +246,4 @@ void loop() {
     logData.mainContinuity = mainPyro.hasContinuity();
     logData.mainFired = mainPyro.isFired();
     logger.log(logData);
-}
-
-
-////////////////////////////////////////////
-////////////////////////////////////////////
-
-
-void runIndicators(const Timestamp_s& timestamp) {
-    for (int i = 0; i < hardware.getNumIndicators(); i++) {
-        if ((timestamp.runtime_ms / 200) % 2 == 0) {
-            hardware.getIndicator(i)->on();
-        } else {
-            hardware.getIndicator(i)->off();
-        }
-    }
-}
-
-void runCli() {
-    static char serialRead[500] = "";
-    static int32_t serialReadIndex = 0;
-    while (Serial.available() > 0) {
-        const char c = Serial.read();
-        serialRead[serialReadIndex++] = c;
-        Serial.print(c);
-        if (c == '\n') {
-            serialRead[serialReadIndex] = '\0';
-            const int errorCode = cliParser.parse(serialRead);
-            if (errorCode == 0) {
-                cliParser.runFlags();
-                cliParser.resetFlags();
-            } else {
-                serialDebug.error("Invalid message: %d, %s", errorCode, serialRead);
-            }
-            serialReadIndex = 0;
-        }
-    }
-}
-
-void fireCallback() {
-    if (testDrogue.isSet()) {
-        serialDebug.message("Firing drogue");
-        droguePyro.fire();
-        delay(100);
-        droguePyro.disable();
-    } else if (testMain.isSet()) {
-        serialDebug.message("Firing main");
-        mainPyro.fire();
-        delay(100);
-        mainPyro.disable();
-    }
 }

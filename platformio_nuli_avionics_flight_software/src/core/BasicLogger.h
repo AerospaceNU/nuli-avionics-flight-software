@@ -66,7 +66,10 @@ public:
     }
 
     void log(const LogDataStruct& logDataStruct) {
-        if (m_enableLogging) {
+        if (m_enableLogging || m_logOnce) {
+            if (m_logOnce) {
+                m_logOnce = false;
+            }
             m_dataStruct.id = 0x01;
             m_dataStruct.data = logDataStruct;
             m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
@@ -200,6 +203,10 @@ public:
         m_enableLogging = true;
     }
 
+    void logOnce() {
+        m_logOnce = true;
+    }
+
     void disableLogging() {
         m_enableLogging = false;
     }
@@ -209,6 +216,7 @@ public:
     }
 
 private:
+    bool m_logOnce = false;
     bool m_enableLogging = false;
     bool m_enableStreaming = false;
 

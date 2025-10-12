@@ -4,5 +4,7 @@ var searchData=
   ['icm20948sensor_1',['ICM20948Sensor',['../classICM20948Sensor.html',1,'']]],
   ['indicator_2',['Indicator',['../classIndicator.html',1,'']]],
   ['indicatorbuzzer_3',['IndicatorBuzzer',['../classIndicatorBuzzer.html',1,'']]],
-  ['indicatorled_4',['IndicatorLED',['../classIndicatorLED.html',1,'']]]
+  ['indicatorled_4',['IndicatorLED',['../classIndicatorLED.html',1,'']]],
+  ['indicatormanager_5',['IndicatorManager',['../classIndicatorManager.html',1,'']]],
+  ['integratedparser_6',['IntegratedParser',['../classIntegratedParser.html',1,'']]]
 ];

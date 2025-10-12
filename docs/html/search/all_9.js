@@ -16,12 +16,14 @@ var searchData=
   ['aprstransmitter_13',['AprsTransmitter',['../classAprsTransmitter.html',1,'']]],
   ['arduinofram_14',['ArduinoFram',['../classArduinoFram.html',1,'']]],
   ['arduinopyro_15',['ArduinoPyro',['../classArduinoPyro.html',1,'ArduinoPyro'],['../classArduinoPyro.html#ad2b6314479e5d28ae1a8fda0bcb32ca6',1,'ArduinoPyro::ArduinoPyro()']]],
-  ['arduinosystemclock_16',['ArduinoSystemClock',['../classArduinoSystemClock.html',1,'']]],
-  ['arduinovoltagesensor_17',['ArduinoVoltageSensor',['../classArduinoVoltageSensor.html',1,'']]],
-  ['argumentflag_18',['ArgumentFlag',['../classArgumentFlag.html',1,'ArgumentFlag&lt; T &gt;'],['../classArgumentFlag.html#a7ceaf37fbc50cc453c6e00904617fc20',1,'ArgumentFlag::ArgumentFlag(const char *name, T defaultValue, const char *helpText, bool m_required, uint8_t uid, const std::function&lt; void(void)&gt; &amp;callback)'],['../classArgumentFlag.html#a9adbb5b6dcc63368dafae6cdd3d4a7af',1,'ArgumentFlag::ArgumentFlag(const char *name, const char *helpText, bool m_required, uint8_t uid, const std::function&lt; void(void)&gt; &amp;callback)']]],
-  ['argumentflag_3c_20config_5ftype_5ft_20_3e_19',['ArgumentFlag&lt; config_type_t &gt;',['../classArgumentFlag.html',1,'']]],
-  ['as_20string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_20',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['avionics_20flight_20software_21',['NULI Avionics Flight Software',['../index.html',1,'']]],
-  ['avionics_2eh_22',['Avionics.h',['../Avionics_8h.html',1,'']]],
-  ['avoid_20the_20following_3a_23',['AVOID THE FOLLOWING:',['../index.html#autotoc_md33',1,'']]]
+  ['arduinoserialreader_16',['ArduinoSerialReader',['../classArduinoSerialReader.html',1,'ArduinoSerialReader&lt; N &gt;'],['../classArduinoSerialReader.html#ad37564fed2b1dafd6d0b2a4bf9d058a3',1,'ArduinoSerialReader::ArduinoSerialReader()']]],
+  ['arduinosimulationparser_17',['ArduinoSimulationParser',['../classArduinoSimulationParser.html',1,'']]],
+  ['arduinosystemclock_18',['ArduinoSystemClock',['../classArduinoSystemClock.html',1,'']]],
+  ['arduinovoltagesensor_19',['ArduinoVoltageSensor',['../classArduinoVoltageSensor.html',1,'']]],
+  ['argumentflag_20',['ArgumentFlag',['../classArgumentFlag.html',1,'ArgumentFlag&lt; T &gt;'],['../classArgumentFlag.html#a7ceaf37fbc50cc453c6e00904617fc20',1,'ArgumentFlag::ArgumentFlag(const char *name, T defaultValue, const char *helpText, bool m_required, uint8_t uid, const std::function&lt; void(void)&gt; &amp;callback)'],['../classArgumentFlag.html#a9adbb5b6dcc63368dafae6cdd3d4a7af',1,'ArgumentFlag::ArgumentFlag(const char *name, const char *helpText, bool m_required, uint8_t uid, const std::function&lt; void(void)&gt; &amp;callback)']]],
+  ['argumentflag_3c_20config_5ftype_5ft_20_3e_21',['ArgumentFlag&lt; config_type_t &gt;',['../classArgumentFlag.html',1,'']]],
+  ['as_20string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_22',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['avionics_20flight_20software_23',['NULI Avionics Flight Software',['../index.html',1,'']]],
+  ['avionics_2eh_24',['Avionics.h',['../Avionics_8h.html',1,'']]],
+  ['avoid_20the_20following_3a_25',['AVOID THE FOLLOWING:',['../index.html#autotoc_md33',1,'']]]
 ];

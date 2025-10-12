@@ -51,17 +51,12 @@ def offload_data(ser):
                     current_file.close()
                 break
 
-            # Ignore unwanted lines
+            # Split into new file on 'Logger setup'
             if line == "Logger setup":
-                continue
-
-            # Split into new file on 'New flight'
-            if line == "New flight":
                 if current_file:
                     current_file.close()
                 flight_number += 1
                 current_file = open(generate_flight_filename(flight_number), "w", buffering=1)
-                continue
 
             # Write to current file if recording
             if current_file:

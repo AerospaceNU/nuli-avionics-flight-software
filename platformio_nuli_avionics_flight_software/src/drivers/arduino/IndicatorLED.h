@@ -7,18 +7,18 @@
 
 class IndicatorLED final : public Indicator {
 public:
-    explicit IndicatorLED(const int8_t pin) {
+    explicit IndicatorLED(const int8_t pin) : Indicator(VISUAL) {
         m_pin = pin;
     }
 
     void setOutputPercent(float power) {
         if (power <= 100 && power >= 0) {
             power *= 2.55;
-            m_outputPower = (int16_t) power;
+            m_outputPower = (int16_t)power;
         }
     }
 
-    void setup(DebugStream *debugStream) override {
+    void setup(DebugStream* debugStream) override {
         pinMode(m_pin, OUTPUT);
     }
 
@@ -36,6 +36,11 @@ public:
         } else {
             digitalWrite(m_pin, LOW);
         }
+    }
+
+    void setPercent(float percent) override {
+        percent = constrain(percent, 0.0f, 100.0f) * 2.55f;
+        analogWrite(m_pin, (int16_t)percent);
     }
 
 private:

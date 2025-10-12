@@ -43,6 +43,8 @@ public:
      */
     virtual void fire() {}
 
+    virtual void fireFor(uint32_t timeMs) {}
+
     /**
      * @brief Disables they pyro channel
      * @details Writes the fireDrogue pin low

@@ -108,4 +108,7 @@ enum AxisDirection : int32_t {
 // This can be added in a struct definition to ensure the compiler doesn't add any padding bytes between variables
 #define remove_struct_padding __attribute__((packed))
 
+#define US_TIMER_START(id) uint32_t startTime##id = micros();
+#define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
+
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['lowpass_0',['LowPass',['../classLowPass.html',1,'']]]
+  ['linereader_0',['LineReader',['../classLineReader.html',1,'']]],
+  ['lowpass_1',['LowPass',['../classLowPass.html',1,'']]]
 ];

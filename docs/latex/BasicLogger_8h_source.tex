@@ -70,178 +70,186 @@
 \DoxyCodeLine{00066\ \ \ \ \ \}}
 \DoxyCodeLine{00067\ }
 \DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordtype}{void}\ log(\textcolor{keyword}{const}\ LogDataStruct\&\ logDataStruct)\ \{}
-\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_enableLogging)\ \{}
-\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ m\_dataStruct.id\ =\ 0x01;}
-\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ m\_dataStruct.data\ =\ logDataStruct;}
-\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ m\_flash-\/>write(m\_logWriteIndex\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ \textcolor{keyword}{true});}
-\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ m\_logWriteIndex++;}
-\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_enableStreaming)\ \{}
-\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ m\_printFunction(logDataStruct);}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_enableLogging\ ||\ m\_logOnce)\ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_logOnce)\ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_logOnce\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ m\_dataStruct.id\ =\ 0x01;}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ m\_dataStruct.data\ =\ logDataStruct;}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ \ \ m\_flash-\/>write(m\_logWriteIndex\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ m\_logWriteIndex++;}
 \DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00078\ \ \ \ \ \}}
-\DoxyCodeLine{00079\ }
-\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keywordtype}{void}\ logMessage(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str)\ \{}
-\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ m\_dataStruct.id\ =\ 0x03;}
-\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ memcpy(\&m\_dataStruct.data,\ str,\ min(\textcolor{keyword}{sizeof}(LogDataStruct),\ strlen(str)\ +\ 1));}
-\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ ((\textcolor{keywordtype}{char}*)(\&m\_dataStruct.data))[\textcolor{keyword}{sizeof}(LogDataStruct)\ -\/\ 1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};\ \textcolor{comment}{//\ Ensure\ null\ termination}}
-\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ m\_flash-\/>write(m\_logWriteIndex\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ \textcolor{keyword}{true});}
-\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ m\_logWriteIndex++;}
-\DoxyCodeLine{00086\ \ \ \ \ \}}
-\DoxyCodeLine{00087\ }
-\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordtype}{void}\ newFlight()\ \{}
-\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ m\_dataStruct.id\ =\ 0x02;}
-\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ m\_flash-\/>write(m\_logWriteIndex\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ \textcolor{keyword}{true});}
-\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ m\_logWriteIndex++;}
-\DoxyCodeLine{00092\ \ \ \ \ \}}
-\DoxyCodeLine{00093\ }
-\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordtype}{void}\ erase()\ \{}
-\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ m\_flash-\/>eraseAll(\textcolor{keyword}{true});}
-\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ m\_logWriteIndex\ =\ 0;}
-\DoxyCodeLine{00097\ \ \ \ \ \}}
-\DoxyCodeLine{00098\ }
-\DoxyCodeLine{00099\ \ \ \ \ LogDataStruct\ offload(\textcolor{keyword}{const}\ uint32\_t\ index,\ uint8\_t\&\ \textcolor{keywordtype}{id})\ \{}
-\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ m\_flash-\/>read(index\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s));}
-\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{id}\ =\ m\_dataStruct.id;}
-\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_dataStruct.data;}
-\DoxyCodeLine{00103\ \ \ \ \ \}}
-\DoxyCodeLine{00104\ }
-\DoxyCodeLine{00105\ \ \ \ \ uint32\_t\ getEntryNumber()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_logWriteIndex;}
-\DoxyCodeLine{00107\ \ \ \ \ \}}
-\DoxyCodeLine{00108\ }
-\DoxyCodeLine{00109\ \ \ \ \ uint32\_t\ getMaxLogLengthSeconds()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Total\ entries\ the\ flash\ can\ hold}}
-\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ totalEntries\ =\ m\_flash-\/>getMemorySizeBytes()\ /\ \textcolor{keyword}{sizeof}(InternalStruct\_s);}
-\DoxyCodeLine{00112\ }
-\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Convert\ loop\ time\ from\ ms\ to\ seconds}}
-\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ loopTimeSec\ =\ m\_hardware-\/>getTargetLoopTimeMs()\ /\ 1000.0f;}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_enableStreaming)\ \{}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ \ \ \ \ m\_printFunction(logDataStruct);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordtype}{void}\ logMessage(\textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ str)\ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ m\_dataStruct.id\ =\ 0x03;}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ memcpy(\&m\_dataStruct.data,\ str,\ min(\textcolor{keyword}{sizeof}(LogDataStruct),\ strlen(str)\ +\ 1));}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ ((\textcolor{keywordtype}{char}*)(\&m\_dataStruct.data))[\textcolor{keyword}{sizeof}(LogDataStruct)\ -\/\ 1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};\ \textcolor{comment}{//\ Ensure\ null\ termination}}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ m\_flash-\/>write(m\_logWriteIndex\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ m\_logWriteIndex++;}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{keywordtype}{void}\ newFlight()\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ m\_dataStruct.id\ =\ 0x02;}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ m\_flash-\/>write(m\_logWriteIndex\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ m\_logWriteIndex++;}
+\DoxyCodeLine{00095\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{keywordtype}{void}\ erase()\ \{}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ m\_flash-\/>eraseAll(\textcolor{keyword}{true});}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ m\_logWriteIndex\ =\ 0;}
+\DoxyCodeLine{00100\ \ \ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ LogDataStruct\ offload(\textcolor{keyword}{const}\ uint32\_t\ index,\ uint8\_t\&\ \textcolor{keywordtype}{id})\ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ m\_flash-\/>read(index\ *\ \textcolor{keyword}{sizeof}(InternalStruct\_s),\ m\_dataStructStart,\ \textcolor{keyword}{sizeof}(InternalStruct\_s));}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{id}\ =\ m\_dataStruct.id;}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_dataStruct.data;}
+\DoxyCodeLine{00106\ \ \ \ \ \}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \ \ uint32\_t\ getEntryNumber()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_logWriteIndex;}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \ \ uint32\_t\ getMaxLogLengthSeconds()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Total\ entries\ the\ flash\ can\ hold}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ totalEntries\ =\ m\_flash-\/>getMemorySizeBytes()\ /\ \textcolor{keyword}{sizeof}(InternalStruct\_s);}
 \DoxyCodeLine{00115\ }
-\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Maximum\ duration\ =\ total\ entries\ *\ loop\ time}}
-\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(totalEntries\ *\ loopTimeSec);}
-\DoxyCodeLine{00118\ \ \ \ \ \}}
-\DoxyCodeLine{00119\ }
-\DoxyCodeLine{00120\ \ \ \ \ uint32\_t\ getRemainingLogLengthSeconds()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Total\ entries\ the\ flash\ can\ hold}}
-\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ totalEntries\ =\ m\_flash-\/>getMemorySizeBytes()\ /\ \textcolor{keyword}{sizeof}(InternalStruct\_s);}
-\DoxyCodeLine{00123\ }
-\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remaining\ entries}}
-\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ remainingEntries\ =\ totalEntries\ -\/\ m\_logWriteIndex;}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Convert\ loop\ time\ from\ ms\ to\ seconds}}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ loopTimeSec\ =\ m\_hardware-\/>getTargetLoopTimeMs()\ /\ 1000.0f;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Maximum\ duration\ =\ total\ entries\ *\ loop\ time}}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(totalEntries\ *\ loopTimeSec);}
+\DoxyCodeLine{00121\ \ \ \ \ \}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ uint32\_t\ getRemainingLogLengthSeconds()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Total\ entries\ the\ flash\ can\ hold}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ totalEntries\ =\ m\_flash-\/>getMemorySizeBytes()\ /\ \textcolor{keyword}{sizeof}(InternalStruct\_s);}
 \DoxyCodeLine{00126\ }
-\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Convert\ loop\ time\ from\ ms\ to\ seconds}}
-\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ loopTimeSec\ =\ m\_hardware-\/>getTargetLoopTimeMs()\ /\ 1000.0f;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remaining\ entries}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ uint32\_t\ remainingEntries\ =\ totalEntries\ -\/\ m\_logWriteIndex;}
 \DoxyCodeLine{00129\ }
-\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remaining\ duration\ =\ remaining\ entries\ *\ loop\ time}}
-\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(remainingEntries\ *\ loopTimeSec);}
-\DoxyCodeLine{00132\ \ \ \ \ \}}
-\DoxyCodeLine{00133\ }
-\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keywordtype}{void}\ offloadCallback()\ \{}
-\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ uint32\_t\ failCount\ =\ 0;}
-\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Starting\ Offload"{}});}
-\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ m\_debug-\/>data(m\_headerStr);}
-\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ \textcolor{keyword}{true};\ i++)\ \{}
-\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ id;}
-\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LogDataStruct\ logData\ =\ offload(i,\ \textcolor{keywordtype}{id});}
-\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0xFF)\ \{}
-\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ failCount++;}
-\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (failCount\ >=\ 4)\ \{}
-\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
-\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0x01)\ \{}
-\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_printFunction(logData);}
-\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0x02)\ \{}
-\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>data(\textcolor{stringliteral}{"{}New\ flight"{}});}
-\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0x03)\ \{}
-\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ str\ =\ (\textcolor{keywordtype}{char}*)\&logData;}
-\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ str[\textcolor{keyword}{sizeof}(LogDataStruct)\ -\/\ 1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
-\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>data(\textcolor{stringliteral}{"{}\%s"{}},\ str);}
-\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Ending\ Offload"{}});}
-\DoxyCodeLine{00157\ \ \ \ \ \}}
-\DoxyCodeLine{00158\ }
-\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{void}\ eraseCallback()\ \{}
-\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Erasing\ all"{}});}
-\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ erase();}
-\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Done"{}});}
-\DoxyCodeLine{00163\ \ \ \ \ \}}
-\DoxyCodeLine{00164\ }
-\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordtype}{void}\ enableStreaming()\ \{}
-\DoxyCodeLine{00166\ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00167\ \ \ \ \ \}}
-\DoxyCodeLine{00168\ }
-\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordtype}{void}\ disableStreaming()\ \{}
-\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00171\ \ \ \ \ \}}
-\DoxyCodeLine{00172\ }
-\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{void}\ logCallback()\ \{}
-\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Entries\ in\ log:\ \%d"{}},\ getEntryNumber());}
-\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Remaining\ log\ length:\ \%d\ seconds"{}},\ getRemainingLogLengthSeconds());}
-\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_startFlag.isSet()\ \&\&\ !m\_endFlag.isSet())\ \{}
-\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Logging\ enabled"{}});}
-\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_endFlag.isSet()\ \&\&\ !m\_startFlag.isSet())\ \{}
-\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Logging\ disabled"{}});}
-\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(m\_enableLogging\ ?\ \textcolor{stringliteral}{"{}Logging\ is\ enabled"{}}\ :\ \textcolor{stringliteral}{"{}Logging\ is\ disabled"{}});}
-\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00185\ \ \ \ \ \}}
-\DoxyCodeLine{00186\ }
-\DoxyCodeLine{00187\ \ \ \ \ \textcolor{keywordtype}{void}\ streamCallback()\ \{}
-\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_startFlag.isSet()\ \&\&\ !m\_endFlag.isSet())\ \{}
-\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Streaming\ enabled"{}});}
-\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_endFlag.isSet()\ \&\&\ !m\_startFlag.isSet())\ \{}
-\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Streaming\ disabled"{}});}
-\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
-\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(m\_enableStreaming\ ?\ \textcolor{stringliteral}{"{}Streaming\ is\ enabled"{}}\ :\ \textcolor{stringliteral}{"{}Streaming\ is\ disabled"{}});}
-\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \}}
-\DoxyCodeLine{00197\ \ \ \ \ \}}
-\DoxyCodeLine{00198\ }
-\DoxyCodeLine{00199\ \ \ \ \ \textcolor{keywordtype}{void}\ enableLogging()\ \{}
-\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{true};}
-\DoxyCodeLine{00201\ \ \ \ \ \}}
-\DoxyCodeLine{00202\ }
-\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordtype}{void}\ disableLogging()\ \{}
-\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00205\ \ \ \ \ \}}
-\DoxyCodeLine{00206\ }
-\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keywordtype}{bool}\ isLoggingEnabled()\textcolor{keyword}{\ const\ }\{}
-\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_enableLogging;}
-\DoxyCodeLine{00209\ \ \ \ \ \}}
-\DoxyCodeLine{00210\ }
-\DoxyCodeLine{00211\ \textcolor{keyword}{private}:}
-\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enableLogging\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enableStreaming\ =\ \textcolor{keyword}{false};}
-\DoxyCodeLine{00214\ }
-\DoxyCodeLine{00215\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_logFlag;}
-\DoxyCodeLine{00216\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_startFlag;}
-\DoxyCodeLine{00217\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_endFlag;}
-\DoxyCodeLine{00218\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_offloadBinaryFlag;}
-\DoxyCodeLine{00219\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_eraseFlag;}
-\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_offloadFlag;}
-\DoxyCodeLine{00221\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_streamFlag;}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Convert\ loop\ time\ from\ ms\ to\ seconds}}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ loopTimeSec\ =\ m\_hardware-\/>getTargetLoopTimeMs()\ /\ 1000.0f;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Remaining\ duration\ =\ remaining\ entries\ *\ loop\ time}}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}uint32\_t\textcolor{keyword}{>}(remainingEntries\ *\ loopTimeSec);}
+\DoxyCodeLine{00135\ \ \ \ \ \}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{void}\ offloadCallback()\ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ uint32\_t\ failCount\ =\ 0;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Starting\ Offload"{}});}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ m\_debug-\/>data(m\_headerStr);}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (uint32\_t\ i\ =\ 0;\ \textcolor{keyword}{true};\ i++)\ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ uint8\_t\ id;}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LogDataStruct\ logData\ =\ offload(i,\ \textcolor{keywordtype}{id});}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0xFF)\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ failCount++;}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (failCount\ >=\ 4)\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0x01)\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_printFunction(logData);}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0x02)\ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>data(\textcolor{stringliteral}{"{}New\ flight"{}});}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\textcolor{keywordtype}{id}\ ==\ 0x03)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}*\ str\ =\ (\textcolor{keywordtype}{char}*)\&logData;}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ str[\textcolor{keyword}{sizeof}(LogDataStruct)\ -\/\ 1]\ =\ \textcolor{charliteral}{'\(\backslash\)0'};}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>data(\textcolor{stringliteral}{"{}\%s"{}},\ str);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Ending\ Offload"{}});}
+\DoxyCodeLine{00160\ \ \ \ \ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}\ eraseCallback()\ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Erasing\ all"{}});}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ erase();}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Done"{}});}
+\DoxyCodeLine{00166\ \ \ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordtype}{void}\ enableStreaming()\ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00170\ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{void}\ disableStreaming()\ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00174\ \ \ \ \ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{void}\ logCallback()\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Entries\ in\ log:\ \%d"{}},\ getEntryNumber());}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Remaining\ log\ length:\ \%d\ seconds"{}},\ getRemainingLogLengthSeconds());}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_startFlag.isSet()\ \&\&\ !m\_endFlag.isSet())\ \{}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Logging\ enabled"{}});}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_endFlag.isSet()\ \&\&\ !m\_startFlag.isSet())\ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Logging\ disabled"{}});}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(m\_enableLogging\ ?\ \textcolor{stringliteral}{"{}Logging\ is\ enabled"{}}\ :\ \textcolor{stringliteral}{"{}Logging\ is\ disabled"{}});}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00188\ \ \ \ \ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordtype}{void}\ streamCallback()\ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_startFlag.isSet()\ \&\&\ !m\_endFlag.isSet())\ \{}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Streaming\ enabled"{}});}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (m\_endFlag.isSet()\ \&\&\ !m\_startFlag.isSet())\ \{}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ m\_enableStreaming\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(\textcolor{stringliteral}{"{}Streaming\ disabled"{}});}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ m\_debug-\/>message(m\_enableStreaming\ ?\ \textcolor{stringliteral}{"{}Streaming\ is\ enabled"{}}\ :\ \textcolor{stringliteral}{"{}Streaming\ is\ disabled"{}});}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00200\ \ \ \ \ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordtype}{void}\ enableLogging()\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00204\ \ \ \ \ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keywordtype}{void}\ logOnce()\ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ m\_logOnce\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00208\ \ \ \ \ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{void}\ disableLogging()\ \{}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ m\_enableLogging\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00212\ \ \ \ \ \}}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordtype}{bool}\ isLoggingEnabled()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_enableLogging;}
+\DoxyCodeLine{00216\ \ \ \ \ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_logOnce\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enableLogging\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_enableStreaming\ =\ \textcolor{keyword}{false};}
 \DoxyCodeLine{00222\ }
-\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_logGroup[3]\ =\ \{\&m\_logFlag,\ \&m\_startFlag,\ \&m\_endFlag\};}
-\DoxyCodeLine{00224\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_eraseGroup[1]\ =\ \{\&m\_eraseFlag\};}
-\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_offloadGroup[2]\ =\ \{\&m\_offloadFlag,\ \&m\_offloadBinaryFlag\};}
-\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_streamGroup[3]\ =\ \{\&m\_streamFlag,\ \&m\_startFlag,\ \&m\_endFlag\};}
-\DoxyCodeLine{00227\ }
-\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{classHardwareAbstraction}{HardwareAbstraction}}*\ m\_hardware\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00229\ \ \ \ \ \mbox{\hyperlink{classDebugStream}{DebugStream}}*\ m\_debug\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00230\ \ \ \ \ \mbox{\hyperlink{classFlashMemory}{FlashMemory}}*\ m\_flash\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00231\ \ \ \ \ uint32\_t\ m\_logWriteIndex\ =\ 0;}
-\DoxyCodeLine{00232\ }
-\DoxyCodeLine{00233\ \ \ \ \ InternalStruct\_s\ m\_dataStruct\{\};}
-\DoxyCodeLine{00234\ \ \ \ \ uint8\_t*\ m\_dataStructStart\ =\ (uint8\_t*)\&m\_dataStruct;}
+\DoxyCodeLine{00223\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_logFlag;}
+\DoxyCodeLine{00224\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_startFlag;}
+\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_endFlag;}
+\DoxyCodeLine{00226\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_offloadBinaryFlag;}
+\DoxyCodeLine{00227\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_eraseFlag;}
+\DoxyCodeLine{00228\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_offloadFlag;}
+\DoxyCodeLine{00229\ \ \ \ \ \mbox{\hyperlink{classSimpleFlag}{SimpleFlag}}\ m\_streamFlag;}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_logGroup[3]\ =\ \{\&m\_logFlag,\ \&m\_startFlag,\ \&m\_endFlag\};}
+\DoxyCodeLine{00232\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_eraseGroup[1]\ =\ \{\&m\_eraseFlag\};}
+\DoxyCodeLine{00233\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_offloadGroup[2]\ =\ \{\&m\_offloadFlag,\ \&m\_offloadBinaryFlag\};}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{classBaseFlag}{BaseFlag}}*\ m\_streamGroup[3]\ =\ \{\&m\_streamFlag,\ \&m\_startFlag,\ \&m\_endFlag\};}
 \DoxyCodeLine{00235\ }
-\DoxyCodeLine{00236\ }
-\DoxyCodeLine{00237\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ m\_headerStr\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00238\ \ \ \ \ void\ (*m\_printFunction)(\textcolor{keyword}{const}\ LogDataStruct\&)\ =\ \textcolor{keyword}{nullptr};}
-\DoxyCodeLine{00239\ \};}
+\DoxyCodeLine{00236\ \ \ \ \ \mbox{\hyperlink{classHardwareAbstraction}{HardwareAbstraction}}*\ m\_hardware\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00237\ \ \ \ \ \mbox{\hyperlink{classDebugStream}{DebugStream}}*\ m\_debug\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00238\ \ \ \ \ \mbox{\hyperlink{classFlashMemory}{FlashMemory}}*\ m\_flash\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00239\ \ \ \ \ uint32\_t\ m\_logWriteIndex\ =\ 0;}
 \DoxyCodeLine{00240\ }
-\DoxyCodeLine{00241\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//BASICLOGGER\_H}}
+\DoxyCodeLine{00241\ \ \ \ \ InternalStruct\_s\ m\_dataStruct\{\};}
+\DoxyCodeLine{00242\ \ \ \ \ uint8\_t*\ m\_dataStructStart\ =\ (uint8\_t*)\&m\_dataStruct;}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}*\ m\_headerStr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00246\ \ \ \ \ void\ (*m\_printFunction)(\textcolor{keyword}{const}\ LogDataStruct\&)\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00247\ \};}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//BASICLOGGER\_H}}
 
 \end{DoxyCode}

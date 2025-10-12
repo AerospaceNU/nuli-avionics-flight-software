@@ -38,11 +38,16 @@ public:
      * @return If there is continuity
      */
     bool hasContinuity() const override;
+
     /**
      * @brief Fires the pyro channel
      * @details Writes the fireDrogue pin high
      */
     void fire() override;
+
+    void fireFor(uint32_t timeMs) override;
+
+
     /**
      * @brief Disables they pyro channel
      * @details Writes the fireDrogue pin low
@@ -64,6 +69,7 @@ private:
     const uint8_t m_firePin;                    ///< Pin for firing the pyro
     const uint8_t m_continuityPin;              ///< Pin for reading pyro continuity
     const int32_t m_continuityThreshold;        ///< Analog threshold for determining if a pin has continuity
+    uint32_t m_fireEndTime = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINO_PYRO_H

@@ -17,6 +17,11 @@ void ArduinoPyro::read() {
     } else {
         m_hasContinuity = m_continuityValue >= m_continuityThreshold;
     }
+
+    if (m_fireEndTime != 0 && millis() > m_fireEndTime) {
+        disable();
+        m_fireEndTime = 0;
+    }
 }
 
 bool ArduinoPyro::hasContinuity() const {
@@ -25,6 +30,7 @@ bool ArduinoPyro::hasContinuity() const {
 
 void ArduinoPyro::fire() {
     m_isFired = true;
+    m_fireEndTime = 0;
     digitalWrite(m_firePin, HIGH);
 }
 
@@ -39,4 +45,10 @@ int ArduinoPyro::rawAdcValue() const {
 
 bool ArduinoPyro::isFired() const {
     return m_isFired;
+}
+
+void ArduinoPyro::fireFor(const uint32_t timeMs) {
+    m_isFired = true;
+    fire();
+    m_fireEndTime = millis() + timeMs;
 }
