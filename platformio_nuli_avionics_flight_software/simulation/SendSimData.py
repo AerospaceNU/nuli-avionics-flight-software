@@ -12,7 +12,7 @@ DATA_DIR = "data/"
 STREAM_HZ = 100.0
 STREAM_DT = 1.0 / STREAM_HZ
 
-# Event flag set by serial_echo when "--continue" is received
+# Event flag set by serial_echo when "--sendtinue" is received
 continue_event = threading.Event()
 
 # Output file for received serial data
@@ -43,7 +43,7 @@ def list_serial_ports():
     return ports[choice].device
 
 def serial_echo(ser):
-    """ Continuously read from serial, echo to stdout, log everything to file, and set event on '--con' """
+    """ Continuously read from serial, echo to stdout, log everything to file, and set event on '--send' """
     buffer = b""
     with open(OUTPUT_FILE, "w", buffering=1) as logfile:  # line-buffered write
         while True:
@@ -62,7 +62,7 @@ def serial_echo(ser):
                     # Log every received line to file
                     logfile.write(line_str + "\n")
 
-                    if line_str == "--con":
+                    if line_str == "--send":
                         continue_event.set()
                     else:
                         sys.stdout.buffer.write(line + b'\n')
@@ -106,7 +106,7 @@ def main():
     stream_end_ms = df['timestamp_ms'].iloc[-1]
 
     current_t_ms = stream_start_ms
-    print(f"\nStreaming {csv_path} to {port_name} (waiting for '--con' between lines)...\n")
+    print(f"\nStreaming {csv_path} to {port_name} (waiting for '--send' between lines)...\n")
 
     started_stream = False
     while current_t_ms <= stream_end_ms:

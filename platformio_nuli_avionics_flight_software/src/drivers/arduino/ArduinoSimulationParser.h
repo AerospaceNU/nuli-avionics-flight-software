@@ -6,7 +6,7 @@
 class ArduinoSimulationParser {
 public:
     void blockingGetNextSimulationData() {
-        Serial.println("--con");
+        Serial.println("--send");
         uint32_t index = 0;
         m_fieldNumber = 0;
         uint32_t startTime = millis();

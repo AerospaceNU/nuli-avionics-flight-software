@@ -23,7 +23,7 @@ public:
                     m_offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
                     m_streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
 
-    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&)) {
+    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&, DebugStream *)) {
         m_hardware = hardware;
         m_debug = m_hardware->getDebugStream();
         m_flash = m_hardware->getFlashMemory(flashID);
@@ -76,7 +76,7 @@ public:
             m_logWriteIndex++;
         }
         if (m_enableStreaming) {
-            m_printFunction(logDataStruct);
+            m_printFunction(logDataStruct, m_debug);
         }
     }
 
@@ -147,7 +147,7 @@ public:
                     break;
                 }
             } else if (id == 0x01) {
-                m_printFunction(logData);
+                m_printFunction(logData, m_debug);
             } else if (id == 0x02) {
                 m_debug->data("New flight");
             } else if (id == 0x03) {
@@ -243,7 +243,7 @@ private:
 
 
     const char* m_headerStr = nullptr;
-    void (*m_printFunction)(const LogDataStruct&) = nullptr;
+    void (*m_printFunction)(const LogDataStruct&, DebugStream*) = nullptr;
 };
 
 #endif //BASICLOGGER_H

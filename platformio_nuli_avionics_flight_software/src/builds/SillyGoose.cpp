@@ -1,7 +1,6 @@
 #include "Avionics.h"
 #include <Arduino.h>
 #include "pinmaps/SillyGoosePinmap.h"
-#include "util/StringHelper.h"
 #include "util/Debounce.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
@@ -18,51 +17,35 @@
 #include "drivers/arduino/ArduinoSimulationParser.h"
 #include "core/HardwareAbstraction.h"
 #include "core/Configuration.h"
-#include "core/cli/SimpleFlag.h"
-#include "core/cli/ArgumentFlag.h"
-#include "core/cli/IntegratedParser.h"
 #include "core/ConfigurationCliBinding.h"
 #include "core/FlightStateDeterminer.h"
 #include "core/IndicatorManager.h"
-#include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
+#include "core/cli/SimpleFlag.h"
+#include "core/cli/IntegratedParser.h"
 #include "core/filters/StateEstimatorBasic6D.h"
+#include "core/filters/StateEstimator1D.h"
 
 // @todo Configuration min/max value checks
 // @todo Kalman gains
 // @todo Offload -> simulation data pipeline
 
-
 // clang-format off
 struct SillyGooseLogData {
     uint32_t timestampMs;
-    float pressurePa;
-    float barometerTemperatureK;
-    float accelerationMSS_x;
-    float accelerationMSS_y;
-    float accelerationMSS_z;
-    float velocityRadS_x;
-    float velocityRadS_y;
-    float velocityRadS_z;
-    float imuTemperatureK;
-    float batterVoltageV;
-    float altitudeM;
-    float velocityMS;
-    float accelerationMSS;
-    float unfilteredAltitudeM;
+    float pressurePa, barometerTemperatureK;
+    float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
+    float batterVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
     int32_t flightState;
-    bool drogueContinuity;
-    bool drogueFired;
-    bool mainContinuity;
-    bool mainFired;
+    bool drogueContinuity, drogueFired, mainContinuity, mainFired;
 } remove_struct_padding;
 #define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatterVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
-void printLog(const SillyGooseLogData &d) { char buf[256]; mini_snprintf(buf,sizeof(buf),"%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\n",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); Serial.print(buf); }
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(true);
+SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
 ICM20602Sensor icm20602;
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
@@ -79,11 +62,12 @@ StateEstimator1D stateEstimator1D;
 StateEstimatorBasic6D stateEstimatorBasic6D;
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(true);
+IndicatorManager indicatorManager;
+ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
+// Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
-ArduinoSimulationParser simulationParser;
-IndicatorManager indicatorManager;
 // Locally used configuration data
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
@@ -100,13 +84,14 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
-ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
-ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
-ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageConfigurationCliBinding;
-ConfigurationCliBinding<GROUND_ELEVATION_c> groundElevationConfigurationCliBinding;
-ConfigurationCliBinding<GROUND_TEMPERATURE_c> groundTemperatureConfigurationCliBinding;
-ConfigurationCliBinding<CONFIGURATION_VERSION_c> versionConfigurationCliBinding;
-ConfigurationCliBinding<PYRO_FIRE_DURATION_c> pyroFireDurationConfigurationCliBinding;
+// CLI -> configuration bindings. Generates a CLI command to get/set config value.
+ConfigurationCliBindings<DROGUE_DELAY_c,
+                         MAIN_ELEVATION_c,
+                         BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+                         GROUND_ELEVATION_c,
+                         GROUND_TEMPERATURE_c,
+                         CONFIGURATION_VERSION_c,
+                         PYRO_FIRE_DURATION_c> cliBindings;
 
 void setup() {
     // Initialize
@@ -139,13 +124,7 @@ void setup() {
     cliParser.setup(&serialReader, &serialDebug);
     // Setup cli
     cliParser.addFlagGroup(testfireGroup);
-    drogueConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-    mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-    batteryVoltageConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-    versionConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-    groundElevationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-    groundTemperatureConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
-    pyroFireDurationConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
+    cliBindings.setupAll(&configuration, &cliParser, &serialDebug);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
@@ -220,26 +199,11 @@ void loop() {
     // Update any changes to the configuration
     configuration.pushUpdatesToMemory();
     // Run logging
-    SillyGooseLogData logData{};
-    logData.timestampMs = state.timestamp.runtime_ms;
-    logData.pressurePa = hardware.getBarometer(0)->getPressurePa();
-    logData.barometerTemperatureK = hardware.getBarometer(0)->getTemperatureK();
-    logData.accelerationMSS_x = icm20602.getAccelerometer()->getAccelerationsMSS().x;
-    logData.accelerationMSS_y = icm20602.getAccelerometer()->getAccelerationsMSS().y;
-    logData.accelerationMSS_z = icm20602.getAccelerometer()->getAccelerationsMSS().z;
-    logData.velocityRadS_x = icm20602.getGyroscope()->getVelocitiesRadS().x;
-    logData.velocityRadS_y = icm20602.getGyroscope()->getVelocitiesRadS().y;
-    logData.velocityRadS_z = icm20602.getGyroscope()->getVelocitiesRadS().z;
-    logData.imuTemperatureK = icm20602.getGyroscope()->getTemperatureK();
-    logData.batterVoltageV = batteryVoltageSensor.getVoltage();
-    logData.altitudeM = state.state1D.altitudeM;
-    logData.velocityMS = state.state1D.velocityMS;
-    logData.accelerationMSS = state.state1D.accelerationMSS;
-    logData.unfilteredAltitudeM = state.state1D.unfilteredNoOffsetAltitudeM;
-    logData.flightState = state.flightState;
-    logData.drogueContinuity = droguePyro.hasContinuity();
-    logData.drogueFired = droguePyro.isFired();
-    logData.mainContinuity = mainPyro.hasContinuity();
-    logData.mainFired = mainPyro.isFired();
-    logger.log(logData);
+    logger.log({
+            state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
+            icm20602.getAccelerometer()->getAccelerationsMSS().x, icm20602.getAccelerometer()->getAccelerationsMSS().y, icm20602.getAccelerometer()->getAccelerationsMSS().z,
+            icm20602.getGyroscope()->getVelocitiesRadS().x, icm20602.getGyroscope()->getVelocitiesRadS().y, icm20602.getGyroscope()->getVelocitiesRadS().z, icm20602.getGyroscope()->getTemperatureK(),
+            batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
+            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
+        });
 }

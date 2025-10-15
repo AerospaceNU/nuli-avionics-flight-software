@@ -120,6 +120,10 @@ struct Quaternion {
 #define AVIONICS_ARGUMENT_isSim false
 #endif
 
+#ifndef AVIONICS_ARGUMENT_isDev
+#define AVIONICS_ARGUMENT_isDev false
+#endif
+
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
 

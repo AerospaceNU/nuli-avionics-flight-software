@@ -1,5 +1,9 @@
 #include <type_traits>
 #include <cstdint>
+#include "Avionics.h"
+#include "core/cli/Parser.h"
+#include "core/cli/SimpleFlag.h"
+#include "core/cli/ArgumentFlag.h"
 
 template <unsigned ConfigurationID>
 class ConfigurationCliBinding {
@@ -47,7 +51,7 @@ private:
     template <typename T>
     typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type
     printValue(const char* nameStr, const char* msg, const T& value) {
-        m_debug->message("%s %s: %llu", nameStr, msg,
+        m_debug->message("%s %s: %ll", nameStr, msg,        // @todo this should be %llu and support unsigned
                                static_cast<unsigned long long>(value));
     }
 
@@ -72,3 +76,32 @@ private:
     SimpleFlag m_configurationFlag;
     BaseFlag* m_configurationGeneratorGroup[2] = { &m_configurationFlag, &m_setValueFlag };
 };
+
+template<std::size_t... Is>
+struct index_sequence {};
+
+template<std::size_t N, std::size_t... Is>
+struct make_index_sequence : make_index_sequence<N - 1, N - 1, Is...> {};
+
+template<std::size_t... Is>
+struct make_index_sequence<0, Is...> : index_sequence<Is...> {};
+
+
+// Variadic wrapper
+template <unsigned... Configs>
+struct ConfigurationCliBindings {
+    std::tuple<ConfigurationCliBinding<Configs>...> bindings;
+
+    void setupAll(Configuration* configuration, Parser* parser, DebugStream* debugStream) {
+        setupAllImpl(make_index_sequence<sizeof...(Configs)>(), configuration, parser, debugStream);
+    }
+
+private:
+    template <std::size_t... Is>
+    void setupAllImpl(index_sequence<Is...>, Configuration* configuration, Parser* parser, DebugStream* debugStream) {
+        // Expand parameter pack using initializer list trick
+        int dummy[] = { (std::get<Is>(bindings).setup(configuration, parser, debugStream), 0)... };
+        (void)dummy; // suppress unused warning
+    }
+};
+
