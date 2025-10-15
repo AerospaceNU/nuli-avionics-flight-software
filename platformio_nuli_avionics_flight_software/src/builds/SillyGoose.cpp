@@ -72,8 +72,15 @@ Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
+// CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
+ConfigurationCliBindings<DROGUE_DELAY_c,
+                         MAIN_ELEVATION_c,
+                         BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+                         GROUND_ELEVATION_c,
+                         GROUND_TEMPERATURE_c,
+                         CONFIGURATION_VERSION_c,
+                         PYRO_FIRE_DURATION_c> configurationCliBindings;
 // CLI
-void fireCallback();
 SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
     serialDebug.message("Firing drogue");
@@ -84,14 +91,6 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
-// CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
-ConfigurationCliBindings<DROGUE_DELAY_c,
-                         MAIN_ELEVATION_c,
-                         BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-                         GROUND_ELEVATION_c,
-                         GROUND_TEMPERATURE_c,
-                         CONFIGURATION_VERSION_c,
-                         PYRO_FIRE_DURATION_c> configurationCliBindings;
 
 void setup() {
     // Initialize
@@ -115,16 +114,15 @@ void setup() {
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
-    configuration.setup(&hardware, framID);
+    configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
+    configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
+    cliParser.addFlagGroup(testfireGroup);
+    cliParser.setup(&serialReader, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
     stateEstimatorBasic6D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
-    cliParser.setup(&serialReader, &serialDebug);
-    // Setup cli
-    cliParser.addFlagGroup(testfireGroup);
-    configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
@@ -140,7 +138,7 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
-    // Read in sim data
+    // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
         float simData[5];
         simulationParser.blockingGetFloatArray(simData);
