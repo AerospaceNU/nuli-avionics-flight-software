@@ -91,7 +91,7 @@ ConfigurationCliBindings<DROGUE_DELAY_c,
                          GROUND_ELEVATION_c,
                          GROUND_TEMPERATURE_c,
                          CONFIGURATION_VERSION_c,
-                         PYRO_FIRE_DURATION_c> cliBindings;
+                         PYRO_FIRE_DURATION_c> configurationCliBindings;
 
 void setup() {
     // Initialize
@@ -124,7 +124,7 @@ void setup() {
     cliParser.setup(&serialReader, &serialDebug);
     // Setup cli
     cliParser.addFlagGroup(testfireGroup);
-    cliBindings.setupAll(&configuration, &cliParser, &serialDebug);
+    configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();

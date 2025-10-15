@@ -8,9 +8,8 @@
 template <unsigned ConfigurationID>
 class ConfigurationCliBinding {
 public:
-    ConfigurationCliBinding()
-        : m_setValueFlag("-set", "", false, 255, []() {}),
-          m_configurationFlag(command(), "", true, 255, [this]() { this->callback(); }) {}
+    ConfigurationCliBinding() : m_setValueFlag("-set", "", false, 255, []() {}),
+                                m_configurationFlag(command(), "", true, 255, [this]() { this->callback(); }) {}
 
     void setup(Configuration* configuration, Parser* parser, DebugStream* debugStream) {
         m_data = configuration->getConfigurable<ConfigurationID>();
@@ -19,8 +18,6 @@ public:
     }
 
     void callback() {
-        if (!m_debug) return;
-
         if (m_setValueFlag.isSet()) {
             m_data.set(m_setValueFlag.getValueDerived());
             printValue(name(), "has been set to", m_data.get());
@@ -51,8 +48,8 @@ private:
     template <typename T>
     typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type
     printValue(const char* nameStr, const char* msg, const T& value) {
-        m_debug->message("%s %s: %ll", nameStr, msg,        // @todo this should be %llu and support unsigned
-                               static_cast<unsigned long long>(value));
+        m_debug->message("%s %s: %ll", nameStr, msg, // @todo this should be %llu and support unsigned
+                         static_cast<unsigned long long>(value));
     }
 
     // Overload for signed integral types
@@ -60,7 +57,7 @@ private:
     typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type
     printValue(const char* nameStr, const char* msg, const T& value) {
         m_debug->message("%s %s: %lld", nameStr, msg,
-                               static_cast<long long>(value));
+                         static_cast<long long>(value));
     }
 
     // Fallback for unsupported types
@@ -71,19 +68,19 @@ private:
     }
 
     DebugStream* m_debug = nullptr;
-    ConfigurationData<config_type_t> m_data;
-    ArgumentFlag<config_type_t> m_setValueFlag;
+    ConfigurationData<config_type_t> m_data{};
+    ArgumentFlag<config_type_t> m_setValueFlag{};
     SimpleFlag m_configurationFlag;
-    BaseFlag* m_configurationGeneratorGroup[2] = { &m_configurationFlag, &m_setValueFlag };
+    BaseFlag* m_configurationGeneratorGroup[2] = {&m_configurationFlag, &m_setValueFlag};
 };
 
-template<std::size_t... Is>
+template <std::size_t... Is>
 struct index_sequence {};
 
-template<std::size_t N, std::size_t... Is>
+template <std::size_t N, std::size_t... Is>
 struct make_index_sequence : make_index_sequence<N - 1, N - 1, Is...> {};
 
-template<std::size_t... Is>
+template <std::size_t... Is>
 struct make_index_sequence<0, Is...> : index_sequence<Is...> {};
 
 
@@ -100,8 +97,7 @@ private:
     template <std::size_t... Is>
     void setupAllImpl(index_sequence<Is...>, Configuration* configuration, Parser* parser, DebugStream* debugStream) {
         // Expand parameter pack using initializer list trick
-        int dummy[] = { (std::get<Is>(bindings).setup(configuration, parser, debugStream), 0)... };
+        int dummy[] = {(std::get<Is>(bindings).setup(configuration, parser, debugStream), 0)...};
         (void)dummy; // suppress unused warning
     }
 };
-
