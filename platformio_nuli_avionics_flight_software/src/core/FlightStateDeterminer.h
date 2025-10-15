@@ -31,12 +31,17 @@ private:
     Configuration* m_configuration = nullptr;
 
     float m_landingDetectionReferenceAltitude = 0;
-    float m_maxAltitude = 0;
+    float m_maxAltitude = -999999999.0f;
     uint32_t m_flightStateStartTime = 0;
 
-    Debounce launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
-    Debounce apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);
-    Debounce landingDebounce = Debounce(LANDING_DEBOUNCE_TIMER_MS);
+    Debounce m_launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
+    Debounce m_apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);
+    Debounce m_landingDebounce = Debounce(LANDING_DEBOUNCE_TIMER_MS);
+
+    Debounce m_unknownStateTimer = Debounce(UNKNOWN_STATE_TIMER_MS);
+    LowPass m_unknownStateVelocityLowPass{0.1};
+    float m_unknownStateMaximumAltitude = -999999999.0f;
+    float m_unknownStateMinimumAltitude = 99999999.0f;
 };
 
 #endif //FLIGHT_STATEMACHINE_H

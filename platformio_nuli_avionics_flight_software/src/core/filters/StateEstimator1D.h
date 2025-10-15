@@ -43,7 +43,7 @@ private:
 
 
     bool m_reInitializeKalman = true;
-    bool m_needNewGroundReference = false;
+    bool m_needNewGroundReference = true;
     LowPass m_lowPass{0.01};
     uint32_t m_groundReferenceTimer = 0;
 

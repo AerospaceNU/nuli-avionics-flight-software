@@ -97,12 +97,6 @@ def main():
     csv_path = list_csv_files()
     port_name = list_serial_ports()
     ser = serial.Serial(port_name, 115200, timeout=0.1)
-    ser.write(b"--streamLog -start\n")
-    time.sleep(0.1)
-    ser.write(b"--sim\n")
-    time.sleep(0.1)
-
-
     # Start serial echo thread
     echo_thread = threading.Thread(target=serial_echo, args=(ser,), daemon=True)
     echo_thread.start()
@@ -114,16 +108,22 @@ def main():
     current_t_ms = stream_start_ms
     print(f"\nStreaming {csv_path} to {port_name} (waiting for '--con' between lines)...\n")
 
+    started_stream = False
     while current_t_ms <= stream_end_ms:
         row = interpolate_row(df, current_t_ms)
         line = ','.join(f"{val:.6f}" for val in row.values[1:]) + "\n"
         ser.write(line.encode('utf-8'))
+
+        if not started_stream:
+            ser.write(b"--streamLog -start\n")
+            started_stream = True
 
         # Wait for continue_event from serial_echo
         continue_event.wait()
         continue_event.clear()
 
         current_t_ms += STREAM_DT * 1000.0
+
 
     print("\nStreaming complete.")
     ser.close()

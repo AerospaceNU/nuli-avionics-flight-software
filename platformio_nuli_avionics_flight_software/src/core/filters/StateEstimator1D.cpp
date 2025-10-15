@@ -28,7 +28,7 @@ State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp, const FlightS
     }
 
     if (m_reInitializeKalman) {
-        m_kalmanFilter.restState(altitudeRawM - m_groundElevation.get(), 0, accelerationMSS);
+        m_kalmanFilter.restState(altitudeRawM - m_groundElevation.get(), m_kalmanFilter.getVelocity(), m_kalmanFilter.getAcceleration());
         m_reInitializeKalman = false;
     }
 
@@ -104,6 +104,7 @@ void StateEstimator1D::updateGroundElevationReference(const float unfilteredAlti
     if (m_needNewGroundReference || timestamp.runtime_ms - m_groundReferenceTimer > 1000) {
         if (m_needNewGroundReference || abs(m_groundElevation.get() - m_lowPass.value()) > 2.0f) {
             m_needNewGroundReference = false;
+            m_reInitializeKalman = true;
             m_groundElevation.set(m_lowPass.value());
             m_hardware->getDebugStream()->message("Ground elevation set to %f", m_groundElevation.get());
         }

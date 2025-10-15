@@ -5,28 +5,25 @@
 
 class ArduinoSimulationParser {
 public:
-    bool blockingGetNextSimulationData() {
-        if (m_active) {
-            Serial.println("--con");
-            uint32_t index = 0;
-            m_fieldNumber = 0;
-            const uint32_t startTime = millis();
-            while (true) {
-                if (millis() - startTime > 1000) {
-                    m_active = false;
-                    return isActive();
+    void blockingGetNextSimulationData() {
+        Serial.println("--con");
+        uint32_t index = 0;
+        m_fieldNumber = 0;
+        uint32_t startTime = millis();
+        while (true) {
+            if (millis() - startTime > m_timeout) {
+                startTime = millis();
+                Serial.println("--con");
+            }
+            if (Serial.available()) {
+                const char c = Serial.read();
+                if (c == '\n' || index >= sizeof(m_buff) - 1) {
+                    m_buff[index] = '\0'; // null terminate
+                    break;
                 }
-                if (Serial.available()) {
-                    const char c = Serial.read();
-                    if (c == '\n' || index >= sizeof(m_buff) - 1) {
-                        m_buff[index] = '\0'; // null terminate
-                        break;
-                    }
-                    m_buff[index++] = c;
-                }
+                m_buff[index++] = c;
             }
         }
-        return isActive();
     }
 
     uint32_t getNextUnsignedInteger() {
@@ -39,20 +36,16 @@ public:
         return token ? strtof(token, nullptr) : 0.0f;
     }
 
-    void activate() {
-        m_active = true;
-    }
-
-    void deactivate() {
-        m_active = false;
-    }
-
-    bool isActive() const {
-        return m_active;
+    template <unsigned N>
+    void blockingGetFloatArray(float (&arr)[N]) {
+        blockingGetNextSimulationData();
+        for (uint32_t i = 0; i < N; i++) {
+            arr[i] = getNextFloat();
+        }
     }
 
 private:
-    bool m_active = false;
+    uint32_t m_timeout = 100;
     char m_buff[200] = {};
     uint32_t m_fieldNumber = 0;
 

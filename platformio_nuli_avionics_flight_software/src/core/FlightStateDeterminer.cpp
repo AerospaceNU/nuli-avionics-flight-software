@@ -3,7 +3,7 @@
 #include <delay.h>
 
 #include "HardwareAbstraction.h"
-
+#include "Arduino.h"
 constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
 
 void FlightStateDeterminer::setup(Configuration* configuration) {
@@ -12,13 +12,19 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
 
     // We need to determine the initial "boot" state
     constexpr Timestamp_s bootTimestamp = {0, 0, 0};
+
     // If a flight was completed, we can assume that we are not currently in the air
     if (getFlightState() == POST_FLIGHT) {
         setFlightState(bootTimestamp, PRE_FLIGHT);
     }
     // If we have any other state that's not PRE_FLIGHT or POST_FLIGHT, we can no longer be sure that we are in that state.
-    if (getFlightState() != PRE_FLIGHT) {
+    if (getFlightState() == ASCENT || getFlightState() == DESCENT) {
         setFlightState(bootTimestamp, UNKNOWN_FLIGHT_STATE);
+    }
+
+    // This should never happen, but if it does: we assume we are in PRE_FLIGHT
+    if (getFlightState() != UNKNOWN_FLIGHT_STATE && getFlightState() != PRE_FLIGHT) {
+        setFlightState(bootTimestamp, PRE_FLIGHT);
     }
 }
 
@@ -35,9 +41,32 @@ FlightState_e FlightStateDeterminer::loopOnce(const Timestamp_s& timestamp, cons
         if (hasLanded(timestamp, state1D)) {
             setFlightState(timestamp, POST_FLIGHT);
         }
-    } else if (getFlightState() == POST_FLIGHT) {} else {
-        // @todo update detection logic
-        setFlightState(timestamp, PRE_FLIGHT);
+    } else if (getFlightState() == POST_FLIGHT) {
+        // Nothing to do
+    } else if (getFlightState() == UNKNOWN_FLIGHT_STATE) {
+        m_unknownStateVelocityLowPass.update(state1D.velocityMS);
+        if (state1D.altitudeM > m_unknownStateMaximumAltitude) {
+            m_unknownStateMaximumAltitude = state1D.altitudeM;
+        }
+        if (state1D.altitudeM < m_unknownStateMinimumAltitude) {
+            m_unknownStateMinimumAltitude = state1D.altitudeM;
+        }
+        if (m_unknownStateTimer.check(true, timestamp)) {
+             const bool sufficientDeltaAltitude = m_unknownStateMaximumAltitude - m_unknownStateMinimumAltitude > UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M;
+            const bool sufficientVelocity = std::fabs(m_unknownStateVelocityLowPass.value()) > UNKNOWN_STATE_VELOCITY_THRESHOLD_MS;
+            if (sufficientDeltaAltitude && sufficientVelocity) {
+                setFlightState(timestamp, ASCENT); // Always set to ascent to because ASCENT will rapidly determine if in ASCENT or DESCENT
+            } else {
+                setFlightState(timestamp, PRE_FLIGHT);
+            }
+            // Reset in case we ever use the state again, but this shouldn't happen
+            m_unknownStateTimer.reset();
+            m_unknownStateVelocityLowPass.reset();
+            m_unknownStateMaximumAltitude = -999999999.0f;
+            m_unknownStateMinimumAltitude = 99999999.0f;
+        }
+    } else {
+        setFlightState(timestamp, UNKNOWN_FLIGHT_STATE);
     }
     return getFlightState();
 }
@@ -52,7 +81,7 @@ bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const Stat
     // A low pass filter with a low constant is used in StateEstimator1D to allow the race condition to work out.
     const bool aboveLaunchAltitude = state1D.altitudeM >= LAUNCH_ALTITUDE_THRESHOLD_M;
     // Run the debounce check
-    if (launchDebounce.check(aboveLaunchAcceleration || aboveLaunchAltitude, timestamp)) {
+    if (m_launchDebounce.check(aboveLaunchAcceleration || aboveLaunchAltitude, timestamp)) {
         return true;
     }
     return false;
@@ -66,7 +95,7 @@ bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const St
     // Run debounce checks
     const bool goingDown = state1D.velocityMS < 0;
     const bool belowApogeeChangeThreshold = state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M;
-    if (apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp)) {
+    if (m_apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp)) {
         return true;
     }
     return false;
@@ -77,7 +106,7 @@ bool FlightStateDeterminer::hasLanded(const Timestamp_s& timestamp, const State1
     if (aboveAltitudeChangedThreshold) {
         m_landingDetectionReferenceAltitude = state1D.altitudeM;
     }
-    if (landingDebounce.check(!aboveAltitudeChangedThreshold, timestamp)) {
+    if (m_landingDebounce.check(!aboveAltitudeChangedThreshold, timestamp)) {
         return true;
     }
     return false;

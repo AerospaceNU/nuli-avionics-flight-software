@@ -30,7 +30,6 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
     }
 }
 
-// @todo min/max value checks
 void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     if (!hardware || hardware->getNumFramMemorys() < id) {
         criticalError("Either no hardware or no fram");

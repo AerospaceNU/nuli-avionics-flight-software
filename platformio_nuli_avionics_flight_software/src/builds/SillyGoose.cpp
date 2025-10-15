@@ -26,11 +26,16 @@
 #include "core/IndicatorManager.h"
 #include "core/filters/StateEstimator1D.h"
 #include "core/BasicLogger.h"
+#include "core/filters/StateEstimatorBasic6D.h"
+
+// @todo Configuration min/max value checks
+// @todo Kalman gains
+// @todo Offload -> simulation data pipeline
+
 
 // clang-format off
 struct SillyGooseLogData {
     uint32_t timestampMs;
-    uint32_t dtMS;
     float pressurePa;
     float barometerTemperatureK;
     float accelerationMSS_x;
@@ -51,8 +56,8 @@ struct SillyGooseLogData {
     bool mainContinuity;
     bool mainFired;
 } remove_struct_padding;
-#define LOG_HEADER "timestampMs\tdtMS\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatterVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
-void printLog(const SillyGooseLogData &d) { char buf[256]; mini_snprintf(buf,sizeof(buf),"%lu\t%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\n",d.timestampMs,d.dtMS,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); Serial.print(buf); }
+#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatterVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
+void printLog(const SillyGooseLogData &d) { char buf[256]; mini_snprintf(buf,sizeof(buf),"%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\n",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); Serial.print(buf); }
 // clang-format on
 
 // Hardware
@@ -71,6 +76,7 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
+StateEstimatorBasic6D stateEstimatorBasic6D;
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(true);
 IntegratedParser cliParser;
@@ -84,11 +90,7 @@ ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
 // CLI
 void fireCallback();
-SimpleFlag simFlag("--sim", "Send start", true, 255, []() {
-    simulationParser.activate();
-    stateEstimator1D.reset();
-});
-SimpleFlag testfire("--fire", "Send start", true, 255, [](){});
+SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
     serialDebug.message("Firing drogue");
     droguePyro.fireFor(pyroFireDuration.get());
@@ -98,7 +100,6 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
-BaseFlag* simGroup[] = {&simFlag};
 ConfigurationCliBinding<DROGUE_DELAY_c> drogueConfigurationCliBinding;
 ConfigurationCliBinding<MAIN_ELEVATION_c> mainConfigurationCliBinding;
 ConfigurationCliBinding<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c> batteryVoltageConfigurationCliBinding;
@@ -131,13 +132,13 @@ void setup() {
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID);
     stateEstimator1D.setup(&hardware, &configuration);
+    stateEstimatorBasic6D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
     cliParser.setup(&serialReader, &serialDebug);
     // Setup cli
     cliParser.addFlagGroup(testfireGroup);
-    cliParser.addFlagGroup(simGroup);
     drogueConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     mainConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
     batteryVoltageConfigurationCliBinding.setup(&configuration, &cliParser, &serialDebug);
@@ -160,23 +161,18 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
-    if (simulationParser.isActive()) {
-        if (simulationParser.blockingGetNextSimulationData()) {
-            const float tempK = simulationParser.getNextFloat();
-            const float pressurePa = simulationParser.getNextFloat();
-            const float ax = simulationParser.getNextFloat();
-            const float ay = simulationParser.getNextFloat();
-            const float az = simulationParser.getNextFloat();
-            barometer.inject(tempK, 0, pressurePa);
-            icm20602.getAccelerometer()->inject({-az, ax, ay}, 0);
-        } else {
-            stateEstimator1D.reset();
-        }
+    // Read in sim data
+    if (AVIONICS_ARGUMENT_isSim) {
+        float simData[5];
+        simulationParser.blockingGetFloatArray(simData);
+        barometer.inject(simData[0], 0, simData[1]);
+        icm20602.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
     }
 
     // Determine state
     state.state1D = stateEstimator1D.loopOnce(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.loopOnce(state.timestamp, state.state1D);
+    state.state6D = stateEstimatorBasic6D.loopOnce(state.timestamp, state.state1D, state.flightState);
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
@@ -194,6 +190,7 @@ void loop() {
             logger.newFlight();
         }
     } else if (state.flightState == DESCENT) {
+        logger.enableLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
         static uint8_t deployState = 0; // Ensure each is only fired once
         if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get() && deployState == 0) {
@@ -225,7 +222,6 @@ void loop() {
     // Run logging
     SillyGooseLogData logData{};
     logData.timestampMs = state.timestamp.runtime_ms;
-    logData.dtMS = state.timestamp.dt_ms;
     logData.pressurePa = hardware.getBarometer(0)->getPressurePa();
     logData.barometerTemperatureK = hardware.getBarometer(0)->getTemperatureK();
     logData.accelerationMSS_x = icm20602.getAccelerometer()->getAccelerationsMSS().x;

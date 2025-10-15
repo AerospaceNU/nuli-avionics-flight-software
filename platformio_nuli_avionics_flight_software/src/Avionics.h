@@ -17,6 +17,10 @@ constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
+constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
+constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
+constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
+
 
 // Hardware Abstraction max size paramiters
 constexpr uint8_t MAX_PYRO_NUM = 10;
@@ -105,8 +109,16 @@ enum AxisDirection : int32_t {
     NEG_Z,
 };
 
+struct Quaternion {
+    float w, x, y, z;
+};
+
 // This can be added in a struct definition to ensure the compiler doesn't add any padding bytes between variables
 #define remove_struct_padding __attribute__((packed))
+
+#ifndef AVIONICS_ARGUMENT_isSim
+#define AVIONICS_ARGUMENT_isSim false
+#endif
 
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
