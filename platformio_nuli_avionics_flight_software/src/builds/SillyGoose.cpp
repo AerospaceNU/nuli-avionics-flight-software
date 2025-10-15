@@ -84,7 +84,7 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
-// CLI -> configuration bindings. Generates a CLI command to get/set config value.
+// CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
 ConfigurationCliBindings<DROGUE_DELAY_c,
                          MAIN_ELEVATION_c,
                          BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
