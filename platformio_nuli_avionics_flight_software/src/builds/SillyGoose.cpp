@@ -55,6 +55,7 @@ S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
+
 // Core components
 HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
@@ -92,6 +93,7 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 
+
 void setup() {
     // Initialize
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
@@ -128,7 +130,6 @@ void setup() {
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
-    // Done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
 
@@ -153,22 +154,17 @@ void loop() {
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
-        static Debounce logTimer(5000);
-        if (logTimer.check(true, state.timestamp)) {
-            logger.logOnce();
-            logTimer.reset();
-        }
-        indicatorManager.beepContinuity(state.timestamp);
+        logger.disableContinuousLogging();
+        logger.setLogDelay(5000);
         cliParser.runCli();
+        indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
+        logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
-        if (!logger.isLoggingEnabled()) {
-            logger.enableLogging();
-            logger.newFlight();
-        }
     } else if (state.flightState == DESCENT) {
-        logger.enableLogging();
+        logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
+        // Fire both pyros at the appropriate conditions
         static uint8_t deployState = 0; // Ensure each is only fired once
         if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get() && deployState == 0) {
             droguePyro.fireFor(pyroFireDuration.get());
@@ -180,18 +176,14 @@ void loop() {
             deployState = 2;
         }
     } else if (state.flightState == POST_FLIGHT) {
-        logger.disableLogging();
-        static Debounce logTimer(5000);
-        if (logTimer.check(true, state.timestamp)) {
-            logger.logOnce();
-            logTimer.reset();
-        }
-        indicatorManager.siren(state.timestamp);
+        logger.disableContinuousLogging();
+        logger.setLogDelay(5000);
         cliParser.runCli();
+        indicatorManager.siren(state.timestamp);
     } else {
-        logger.enableLogging();
-        indicatorManager.siren(state.timestamp);
+        logger.enableContinuousLogging();
         cliParser.runCli();
+        indicatorManager.siren(state.timestamp);
     }
 
     // Update any changes to the configuration

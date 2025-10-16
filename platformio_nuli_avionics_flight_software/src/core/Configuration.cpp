@@ -87,7 +87,7 @@ void Configuration::sortConfigs() {
         for (uint32_t j = 0; j < m_numConfigurations - 1 - i; ++j) {
             if (m_configurations[j].id > m_configurations[j + 1].id) {
                 // Swap
-                ConfigurationID_t temp = m_configurations[j].id;
+                const ConfigurationID_t temp = m_configurations[j].id;
                 m_configurations[j].id = m_configurations[j + 1].id;
                 m_configurations[j + 1].id = temp;
             }
@@ -98,7 +98,7 @@ void Configuration::sortConfigs() {
 void Configuration::assignMemory() {
     m_dataBufferIndex = 0;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        uint16_t configurationLength = getConfigurationLength(m_configurations[i].id);
+        const uint16_t configurationLength = getConfigurationLength(m_configurations[i].id);
         if (m_dataBufferIndex + configurationLength >= m_dataBufferMaxLength) {
             criticalError("Out of memory error");
             m_numConfigurations = i;
@@ -118,6 +118,7 @@ void Configuration::pushUpdatesToMemory() {
     const uint8_t* writeStartLocation = m_dataBuffer;
     uint32_t bytesToWrite = 0;
 
+    // Update the CRC if any config has been updated
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].m_isUpdated) {
             m_configurationCRC.set(calculateCrc());

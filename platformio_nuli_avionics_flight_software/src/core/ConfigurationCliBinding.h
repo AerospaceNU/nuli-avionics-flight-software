@@ -48,7 +48,7 @@ private:
     template <typename T>
     typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type
     printValue(const char* nameStr, const char* msg, const T& value) {
-        m_debug->message("%s %s: %ll", nameStr, msg, // @todo this should be %llu and support unsigned
+        m_debug->message("%s %s: %llu", nameStr, msg,
                          static_cast<unsigned long long>(value));
     }
 

@@ -96,10 +96,11 @@ private:
             char tmp[32];
             size_t ti = 0;
             if (val == 0) tmp[ti++] = '0';
-            else while (val && ti < sizeof(tmp)) {
-                tmp[ti++] = digits[val % base];
-                val /= base;
-            }
+            else
+                while (val && ti < sizeof(tmp)) {
+                    tmp[ti++] = digits[val % base];
+                    val /= base;
+                }
             size_t oi = 0;
             while (ti > 0 && oi + 1 < outlen) out[oi++] = tmp[--ti];
             out[oi] = '\0';
@@ -111,7 +112,6 @@ private:
             char numbuf[32];
             size_t len = uint_to_str(uv, base, upper, numbuf, sizeof(numbuf));
             if (is_signed && negative) putch('-');
-
             for (int i = (int)len; i < width; ++i) putch(pad);
             for (size_t i = 0; i < len; ++i) putch(numbuf[i]);
         };
@@ -173,45 +173,74 @@ private:
 
             // length modifiers
             bool long_flag = false;
+            bool long_long_flag = false;
             if (*fmt == 'l') {
-                long_flag = true;
                 ++fmt;
+                if (*fmt == 'l') {
+                    long_long_flag = true;
+                    ++fmt;
+                } else {
+                    long_flag = true;
+                }
             }
 
             char spec = *fmt++;
 
             switch (spec) {
             case 'd': {
-                long v = long_flag ? va_arg(args, long) : va_arg(args, int);
+                long long v;
+                if (long_long_flag)
+                    v = va_arg(args, long long);
+                else if (long_flag)
+                    v = va_arg(args, long);
+                else
+                    v = va_arg(args, int);
+
                 bool neg = v < 0;
-                unsigned long uv = neg ? -v : v;
+                unsigned long long uv = neg ? (unsigned long long)(-v) : (unsigned long long)v;
                 format_integer(uv, true, neg, 10, false, width, pad);
                 break;
             }
-            case 'u':
-            case 'l':
-            case 'U':
-            case 'L': {
-                unsigned long v = va_arg(args, unsigned long);
+
+            case 'u': {
+                unsigned long long v;
+                if (long_long_flag)
+                    v = va_arg(args, unsigned long long);
+                else if (long_flag)
+                    v = va_arg(args, unsigned long);
+                else
+                    v = va_arg(args, unsigned int);
+
                 format_integer(v, false, false, 10, false, width, pad);
                 break;
             }
+
             case 'x':
             case 'X': {
-                unsigned int v = va_arg(args, unsigned int);
+                unsigned long long v;
+                if (long_long_flag)
+                    v = va_arg(args, unsigned long long);
+                else if (long_flag)
+                    v = va_arg(args, unsigned long);
+                else
+                    v = va_arg(args, unsigned int);
+
                 format_integer(v, false, false, 16, spec == 'X', width, pad);
                 break;
             }
+
             case 'c': {
                 putch((char)va_arg(args, int));
                 break;
             }
+
             case 's': {
                 const char* s = va_arg(args, const char*);
                 if (!s) s = "(null)";
                 puts_lit(s);
                 break;
             }
+
             case 'f': {
                 double fv = va_arg(args, double);
                 if (precision < 0) precision = 6; // default
@@ -219,6 +248,7 @@ private:
                 format_float(fv, precision);
                 break;
             }
+
             case 'p': {
                 void* ptr = va_arg(args, void*);
                 puts_lit("0x");
@@ -228,9 +258,13 @@ private:
                 for (size_t i = 0; i < len; ++i) putch(tmp[i]);
                 break;
             }
-            case '%': putch('%');
+
+            case '%':
+                putch('%');
                 break;
-            default: putch('%');
+
+            default:
+                putch('%');
                 putch(spec);
                 break;
             }
@@ -238,6 +272,166 @@ private:
 
         write(buf, bi);
     }
+
+    // void vformat(const char* fmt, va_list args) {
+    //     char buf[1024]; // bigger buffer for long lines
+    //     size_t bi = 0;
+    //
+    //     auto putch = [&](char c) {
+    //         if (bi < sizeof(buf)) buf[bi++] = c;
+    //     };
+    //
+    //     auto puts_lit = [&](const char* s) {
+    //         while (*s && bi < sizeof(buf)) buf[bi++] = *s++;
+    //     };
+    //
+    //     auto uint_to_str = [](unsigned long long val, unsigned base, bool upper, char* out, size_t outlen) -> size_t {
+    //         const char* digits = upper ? "0123456789ABCDEF" : "0123456789abcdef";
+    //         char tmp[32];
+    //         size_t ti = 0;
+    //         if (val == 0) tmp[ti++] = '0';
+    //         else while (val && ti < sizeof(tmp)) {
+    //             tmp[ti++] = digits[val % base];
+    //             val /= base;
+    //         }
+    //         size_t oi = 0;
+    //         while (ti > 0 && oi + 1 < outlen) out[oi++] = tmp[--ti];
+    //         out[oi] = '\0';
+    //         return oi;
+    //     };
+    //
+    //     auto format_integer = [&](unsigned long long uv, bool is_signed, bool negative,
+    //                               int base, bool upper, int width, char pad) {
+    //         char numbuf[32];
+    //         size_t len = uint_to_str(uv, base, upper, numbuf, sizeof(numbuf));
+    //         if (is_signed && negative) putch('-');
+    //
+    //         for (int i = (int)len; i < width; ++i) putch(pad);
+    //         for (size_t i = 0; i < len; ++i) putch(numbuf[i]);
+    //     };
+    //
+    //     auto format_float = [&](double val, int precision) {
+    //         if (val < 0) {
+    //             putch('-');
+    //             val = -val;
+    //         }
+    //         unsigned long long int_part = (unsigned long long)val;
+    //         double frac = val - (double)int_part;
+    //
+    //         char intbuf[32];
+    //         size_t intlen = uint_to_str(int_part, 10, false, intbuf, sizeof(intbuf));
+    //         for (size_t i = 0; i < intlen; ++i) putch(intbuf[i]);
+    //
+    //         if (precision > 0) {
+    //             putch('.');
+    //             for (int i = 0; i < precision; ++i) {
+    //                 frac *= 10.0;
+    //                 int digit = (int)frac;
+    //                 putch('0' + digit);
+    //                 frac -= digit;
+    //             }
+    //         }
+    //     };
+    //
+    //     while (*fmt && bi < sizeof(buf)) {
+    //         if (*fmt != '%') {
+    //             putch(*fmt++);
+    //             continue;
+    //         }
+    //         ++fmt;
+    //
+    //         // flags (only '0' supported)
+    //         char pad = ' ';
+    //         if (*fmt == '0') {
+    //             pad = '0';
+    //             ++fmt;
+    //         }
+    //
+    //         // width
+    //         int width = 0;
+    //         while (*fmt >= '0' && *fmt <= '9') {
+    //             width = width * 10 + (*fmt - '0');
+    //             ++fmt;
+    //         }
+    //
+    //         // precision
+    //         int precision = -1;
+    //         if (*fmt == '.') {
+    //             ++fmt;
+    //             precision = 0;
+    //             while (*fmt >= '0' && *fmt <= '9') {
+    //                 precision = precision * 10 + (*fmt - '0');
+    //                 ++fmt;
+    //             }
+    //         }
+    //
+    //         // length modifiers
+    //         bool long_flag = false;
+    //         if (*fmt == 'l') {
+    //             long_flag = true;
+    //             ++fmt;
+    //         }
+    //
+    //         char spec = *fmt++;
+    //
+    //         switch (spec) {
+    //         case 'd': {
+    //             long v = long_flag ? va_arg(args, long) : va_arg(args, int);
+    //             bool neg = v < 0;
+    //             unsigned long uv = neg ? -v : v;
+    //             format_integer(uv, true, neg, 10, false, width, pad);
+    //             break;
+    //         }
+    //         case 'u':
+    //         case 'l':
+    //         case 'U':
+    //         case 'L': {
+    //             unsigned long v = va_arg(args, unsigned long);
+    //             format_integer(v, false, false, 10, false, width, pad);
+    //             break;
+    //         }
+    //         case 'x':
+    //         case 'X': {
+    //             unsigned int v = va_arg(args, unsigned int);
+    //             format_integer(v, false, false, 16, spec == 'X', width, pad);
+    //             break;
+    //         }
+    //         case 'c': {
+    //             putch((char)va_arg(args, int));
+    //             break;
+    //         }
+    //         case 's': {
+    //             const char* s = va_arg(args, const char*);
+    //             if (!s) s = "(null)";
+    //             puts_lit(s);
+    //             break;
+    //         }
+    //         case 'f': {
+    //             double fv = va_arg(args, double);
+    //             if (precision < 0) precision = 6; // default
+    //             if (precision > 9) precision = 9; // cap
+    //             format_float(fv, precision);
+    //             break;
+    //         }
+    //         case 'p': {
+    //             void* ptr = va_arg(args, void*);
+    //             puts_lit("0x");
+    //             unsigned long long v = (uintptr_t)ptr;
+    //             char tmp[32];
+    //             size_t len = uint_to_str(v, 16, false, tmp, sizeof(tmp));
+    //             for (size_t i = 0; i < len; ++i) putch(tmp[i]);
+    //             break;
+    //         }
+    //         case '%': putch('%');
+    //             break;
+    //         default: putch('%');
+    //             putch(spec);
+    //             break;
+    //         }
+    //     }
+    //
+    //     write(buf, bi);
+    // }
 
     // Primary vformat implementation
     // void vformat(const char* fmt, va_list args) {
