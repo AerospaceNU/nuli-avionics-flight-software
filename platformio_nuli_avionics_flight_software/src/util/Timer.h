@@ -3,21 +3,6 @@
 
 #include "Avionics.h"
 
-// class Timer {
-// public:
-//     void start(uint32_t ms);
-
-//     hasReached(unsigned long timeFromStart);
-
-// private:
-// };
-
-/*
-    m_startTime = Actual Start Time by the System
-    m_durationTime = Actual Duration Time by the System
-
-*/
-
 class Alarm{
     uint32_t m_startTime, m_durationTime;
 
