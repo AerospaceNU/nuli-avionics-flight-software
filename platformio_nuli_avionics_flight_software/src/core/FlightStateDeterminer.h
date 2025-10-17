@@ -4,7 +4,7 @@
 #include "Avionics.h"
 #include "Configuration.h"
 #include "core/filters/LowPass.h"
-#include "util/Debounce.h"
+#include "util/Timer.h"
 
 class FlightStateDeterminer {
 public:
@@ -18,7 +18,7 @@ public:
 
     void setFlightState(const Timestamp_s& timestamp, const FlightState_e& flightState);
 
-    uint32_t getStateStartTime() const;
+    const StopWatch* getStateTimer() const;
 
 private:
     bool hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D);
@@ -32,7 +32,8 @@ private:
 
     float m_landingDetectionReferenceAltitude = 0;
     float m_maxAltitude = -999999999.0f;
-    uint32_t m_flightStateStartTime = 0;
+
+    StopWatch m_stateStopWatch;
 
     Debounce m_launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
     Debounce m_apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);

@@ -1,7 +1,7 @@
 #include "Avionics.h"
 #include <Arduino.h>
 #include "pinmaps/SillyGoosePinmap.h"
-#include "util/Debounce.h"
+#include "util/Timer.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
@@ -29,18 +29,22 @@
 // @todo Configuration min/max value checks
 // @todo Kalman gains
 // @todo Offload -> simulation data pipeline
+// @todo Use temperature in altitude calcs
+// @todo Have barometer re-init code
+// @todo handle log overflow
+
 
 // clang-format off
 struct SillyGooseLogData {
     uint32_t timestampMs;
     float pressurePa, barometerTemperatureK;
     float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
-    float batterVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
+    float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
     int32_t flightState;
     bool drogueContinuity, drogueFired, mainContinuity, mainFired;
 } remove_struct_padding;
 #define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatterVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batterVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
 // clang-format on
 
 // Hardware
@@ -67,7 +71,7 @@ IndicatorManager indicatorManager;
 ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
 // Configuration
-ConfigurationID_t sillyGooseRequiredConfigs[] = {DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
+ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
 Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
 // Locally used configuration data
 ConfigurationData<float> mainElevation;
@@ -79,8 +83,9 @@ ConfigurationCliBindings<DROGUE_DELAY_c,
                          BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
                          GROUND_ELEVATION_c,
                          GROUND_TEMPERATURE_c,
-                         CONFIGURATION_VERSION_c,
-                         PYRO_FIRE_DURATION_c> configurationCliBindings;
+                         PYRO_FIRE_DURATION_c,
+                         BOARD_NAME_c,
+                         CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
 SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
@@ -98,6 +103,7 @@ void setup() {
     // Initialize
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    configuration.setDefault<BOARD_NAME_c>("SillyGoose");
     led.setOutputPercent(6.0); // Lower the LED Power
 
     // Setup Hardware
@@ -154,7 +160,6 @@ void loop() {
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
-        logger.disableContinuousLogging();
         logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
@@ -166,12 +171,12 @@ void loop() {
         indicatorManager.keepAliveBeep(state.timestamp);
         // Fire both pyros at the appropriate conditions
         static uint8_t deployState = 0; // Ensure each is only fired once
-        if (state.timestamp.runtime_ms - flightStateDeterminer.getStateStartTime() > drogueDelay.get() && deployState == 0) {
+        if (flightStateDeterminer.getStateTimer()->getTimeElapsed(state.timestamp.runtime_ms) > drogueDelay.get() && deployState == 0) {
             droguePyro.fireFor(pyroFireDuration.get());
             deployState = 1;
         }
         static Debounce mainDeployDebounce(200);
-        if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp) && deployState == 1) {
+        if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp.runtime_ms) && deployState == 1) {
             mainPyro.fireFor(pyroFireDuration.get());
             deployState = 2;
         }

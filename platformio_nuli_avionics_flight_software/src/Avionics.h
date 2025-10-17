@@ -37,7 +37,7 @@ constexpr uint8_t MAX_INDICATOR_NUM = 4;
 constexpr uint8_t MAX_GENERIC_SENSOR_NUM = 10;
 // Configuration max size paramiters
 constexpr uint8_t MAX_CONFIGURATION_NUM = 30;
-constexpr uint8_t MAX_CONFIGURATION_LENGTH = 120;
+constexpr uint16_t MAX_CONFIGURATION_LENGTH = 500;
 
 
 /**

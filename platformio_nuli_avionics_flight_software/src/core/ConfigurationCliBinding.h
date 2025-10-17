@@ -5,6 +5,22 @@
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
 
+template <typename T>
+struct is_configuration_string : std::false_type {};
+
+template <unsigned N>
+struct is_configuration_string<ConfigurationString<N>> : std::true_type {};
+
+template <typename T>
+struct config_flag_type {
+    using type = T;
+};
+
+template <unsigned N>
+struct config_flag_type<ConfigurationString<N>> {
+    using type = const char*;
+};
+
 template <unsigned ConfigurationID>
 class ConfigurationCliBinding {
 public:
@@ -37,6 +53,12 @@ private:
 
     using config_type_t = typename GetConfigurationType_s<ConfigurationID>::type;
 
+    template <typename T>
+    typename std::enable_if<is_configuration_string<T>::value>::type
+    printValue(const char* nameStr, const char* msg, const T& value) {
+        m_debug->message("%s %s: %s", nameStr, msg, value.str);
+    }
+
     // Overload for floating point types
     template <typename T>
     typename std::enable_if<std::is_floating_point<T>::value>::type
@@ -62,14 +84,16 @@ private:
 
     // Fallback for unsupported types
     template <typename T>
-    typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value>::type
+    // typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value>::type
+    typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value && !is_configuration_string<T>::value>::type
     printValue(const char* nameStr, const char* msg, const T&) {
         m_debug->message("%s %s: (unsupported type)", nameStr, msg);
     }
 
     DebugStream* m_debug = nullptr;
     ConfigurationData<config_type_t> m_data{};
-    ArgumentFlag<config_type_t> m_setValueFlag{};
+    // ArgumentFlag<config_type_t> m_setValueFlag{};
+    ArgumentFlag<typename config_flag_type<config_type_t>::type> m_setValueFlag{};
     SimpleFlag m_configurationFlag;
     BaseFlag* m_configurationGeneratorGroup[2] = {&m_configurationFlag, &m_setValueFlag};
 };

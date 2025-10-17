@@ -42,9 +42,11 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     m_configurationAllIdCRC = getConfigurable<CONFIGURATION_ALL_ID_CRC_c>();
     m_configurationVersion = getConfigurable<CONFIGURATION_VERSION_c>();
 
-    // Copy all the default values, in case they need to be restored
-    uint8_t bufferDefaultValues[sizeof(m_buffer)] = {};
-    memcpy(bufferDefaultValues, m_buffer, sizeof(m_buffer));
+    // Copy all the default values, in case they need to be restored.
+    // This uses dynamic stack memory (i.e. alloca) (I think; could be wrong)
+    // This is not ideal @todo fix. But also there isn't a way to fix it
+    uint8_t bufferDefaultValues[m_dataBufferMaxLength] = {};
+    memcpy(bufferDefaultValues, m_dataBuffer, m_dataBufferMaxLength);
 
     // Read in from memory
     readConfigFromMemory();
@@ -53,24 +55,32 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     // Check version number
     if (hasError()) {
         // Restore default values
-        memcpy(m_buffer, bufferDefaultValues, sizeof(m_buffer));
+        memcpy(m_dataBuffer, bufferDefaultValues, m_dataBufferMaxLength);
         // Flag all values to be updated, allowing
         for (uint32_t i = 0; i < m_numConfigurations; i++) {
             m_configurations[i].m_isUpdated = true;
         }
         // Overwrite the all ID crc
         m_configurationAllIdCRC.set(calculateAllIdCrc());
-        // Write default values
-        pushUpdatesToMemory();
-        // Notify user
-        m_debug->warn("Configuration invalid, resetting to defaults");
     } else {
-        // As we have just read in everything, nothing should be updated
+        // As we have just read in everything, nothing should be updated (unless it's invalid)
         // This is a hack that just overwrites setDefault()'s behavior of raising this flag
+        // Lastly, we need to check that all values are valid, and reset invalid values to default
         for (uint32_t i = 0; i < m_numConfigurations; i++) {
-            m_configurations[i].m_isUpdated = false;
+            if (!getConfigurationValid(m_configurations[i].id, m_configurations[i].data)) {
+                // This retrieves a specific default value from the buffer
+                memcpy(m_configurations[i].data, (m_configurations[i].data - m_dataBuffer) + bufferDefaultValues, m_configurations[i].size);
+                m_configurations[i].m_isUpdated = true;
+                m_debug->warn("%s invalid value, resting to default", getConfigurationName(m_configurations[i].id));
+            } else {
+                m_configurations[i].m_isUpdated = false;
+            }
         }
     }
+
+
+    // Write default values
+    pushUpdatesToMemory();
 }
 
 bool Configuration::configExists(const ConfigurationID_t id) const {
@@ -165,6 +175,7 @@ BaseConfigurationData_s* Configuration::getBaseConfigurationData(const Configura
 }
 
 void Configuration::criticalError(const char* str) const {
+    m_debug->setup();
     m_debug->error("Critical configuration error: %s", str);
     while (true);
 }
@@ -175,16 +186,19 @@ bool Configuration::hasError() const {
     }
     // Ensure the memory has not been corrupted
     if (m_configurationCRC.get() != calculateCrc()) {
+        m_debug->warn("Configuration invalid CRC, resetting to defaults");
         return true;
     }
     // Ensure the list of IDs is the same
     if (m_configurationAllIdCRC.get() != calculateAllIdCrc()) {
+        m_debug->warn("Configuration invalid ID list, resetting to defaults %d", int(m_configurationAllIdCRC.get()));
         return true;
     }
     // Ensure the version is the correct one
     GetConfigurationType_s<CONFIGURATION_VERSION_c>::type defaultVersion;
     getConfigurationDefault(CONFIGURATION_VERSION_c, &defaultVersion);
     if (m_configurationVersion.get() != defaultVersion) {
+        m_debug->warn("Configuration invalid version %d, resetting to defaults", int(m_configurationVersion.get()));
         return true;
     }
     return false;
