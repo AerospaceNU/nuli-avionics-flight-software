@@ -17,7 +17,7 @@ public:
      * @param velocitiesRadS Angular velocities in Rad/s
      * @param temperatureK Temperature in kelvin
      */
-    inline void inject(Vector3D_s velocitiesRadS, float temperatureK) {
+    void inject(Vector3D_s velocitiesRadS, float temperatureK) {
         m_velocitiesRadS = velocitiesRadS;
         m_temperatureK = temperatureK;
     }
@@ -26,7 +26,7 @@ public:
      * @brief Gets the angular velocities
      * @return Angular velocities in Rad/s
      */
-    inline Vector3D_s getVelocitiesRadS() const {
+    Vector3D_s getVelocitiesRadS() const {
         return m_velocitiesRadS;
     }
 
@@ -34,7 +34,7 @@ public:
      * @brief Gets the temperature
      * @return Temperature in K
      */
-    inline float getTemperatureK() const {
+    float getTemperatureK() const {
         return m_temperatureK;
     }
 
@@ -44,3 +44,4 @@ protected:
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GYROSCOPE_H
+

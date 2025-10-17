@@ -16,20 +16,21 @@ class BasicLogger {
     // clang-format on
 public:
     BasicLogger() : m_logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
-                    m_startFlag("-start", "", false, 255, []() {}),
-                    m_endFlag("-end", "", false, 255, []() {}),
+                    m_startFlag("-b", "", false, 255, []() {}),
+                    m_endFlag("-e", "", false, 255, []() {}),
                     m_offloadBinaryFlag("-b", "binary", false, 255, []() {}),
                     m_eraseFlag("--erase", "Send start", true, 255, [this]() { this->eraseCallback(); }),
                     m_offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
                     m_streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
 
-    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&, DebugStream *)) {
+    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&, DebugStream*)) {
         m_hardware = hardware;
         m_debug = m_hardware->getDebugStream();
         m_flash = m_hardware->getFlashMemory(flashID);
         m_logWriteIndex = 0;
         m_headerStr = header;
         m_printFunction = printFunction;
+        m_loopTime = hardware->getTargetLoopTimeMs();
 
         // Setup CLI interface
         m_offloadBinaryFlag.setDependency(&m_offloadBinaryFlag);
@@ -66,9 +67,10 @@ public:
     }
 
     void log(const LogDataStruct& logDataStruct) {
-        if (m_enableLogging || m_logOnce) {
-            if (m_logOnce) {
-                m_logOnce = false;
+        m_currentTick++;
+        if (m_enableLogging || m_currentTick >= m_ticksPerLog) {
+            if (m_currentTick >= m_ticksPerLog) {
+                m_currentTick = 0;
             }
             m_dataStruct.id = 0x01;
             m_dataStruct.data = logDataStruct;
@@ -199,15 +201,15 @@ public:
         }
     }
 
-    void enableLogging() {
+    void enableContinuousLogging() {
         m_enableLogging = true;
     }
 
-    void logOnce() {
-        m_logOnce = true;
+    void setLogDelay(const uint32_t delay) {
+        m_ticksPerLog = delay / m_loopTime;
     }
 
-    void disableLogging() {
+    void disableContinuousLogging() {
         m_enableLogging = false;
     }
 
@@ -216,7 +218,6 @@ public:
     }
 
 private:
-    bool m_logOnce = false;
     bool m_enableLogging = false;
     bool m_enableStreaming = false;
 
@@ -241,6 +242,9 @@ private:
     InternalStruct_s m_dataStruct{};
     uint8_t* m_dataStructStart = (uint8_t*)&m_dataStruct;
 
+    uint32_t m_loopTime = 0;
+    uint32_t m_ticksPerLog = 1;
+    uint32_t m_currentTick = 0;
 
     const char* m_headerStr = nullptr;
     void (*m_printFunction)(const LogDataStruct&, DebugStream*) = nullptr;

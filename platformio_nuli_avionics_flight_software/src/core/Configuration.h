@@ -58,10 +58,26 @@ public:
      * @details Does nothing if object was created with the default constructor
      * @param newVal Value to set the configuration variable to
      */
-    void set(const T& newVal) {
-        if (!base || !base->data) return;
+    bool set(const T& newVal) {
+        if (!base || !base->data) return false;
+        if (getConfigurationValid(base->id, &newVal)) {
+            *reinterpret_cast<T*>(base->data) = newVal;
+            base->m_isUpdated = true;
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * @brief Sets the value of the configuration varable, but doesn't have a default value check
+     * @details Does nothing if object was created with the default constructor, but doesn't have a default value check
+     * @param newVal Value to set the configuration variable to
+     */
+    bool forceSet(const T& newVal) {
+        if (!base || !base->data) return false;
         *reinterpret_cast<T*>(base->data) = newVal;
         base->m_isUpdated = true;
+        return true;
     }
 
     /**
@@ -110,7 +126,7 @@ public:
      * @param allConfigs 2D array of all ConfigurationID_t that are going to be in the configuration
      */
     template <unsigned N>
-    explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N]): m_dataBuffer(m_buffer), m_dataBufferMaxLength(MAX_CONFIGURATION_LENGTH) {
+    explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N]): m_dataBuffer(m_bufferDO_NOT_USE), m_dataBufferMaxLength(MAX_CONFIGURATION_LENGTH) {
         construct(allConfigs, N);
     }
 
@@ -187,7 +203,7 @@ private:
     uint32_t m_dataBufferIndex = 0;
     const uint32_t m_dataBufferMaxLength = 0;
 
-    uint8_t m_buffer[MAX_CONFIGURATION_LENGTH] = {};
+    uint8_t m_bufferDO_NOT_USE[MAX_CONFIGURATION_LENGTH] = {};
     BaseConfigurationData_s m_configurations[MAX_CONFIGURATION_NUM] = {};
     uint32_t m_numConfigurations = 0;
 

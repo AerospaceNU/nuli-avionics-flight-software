@@ -2,6 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINO_PYRO_H
 
 #include <Avionics.h>
+#include "util/Timer.h"
 #include "../../core/generic_hardware/GenericSensor.h"
 #include "../../core/generic_hardware/Pyro.h"
 
@@ -11,7 +12,7 @@
  * @brief Represents a pyro channel
  * @details Ability to fire, reading continuity. This assumes the device is an arduino with a pin to read state and a pin to fireDrogue
  */
-class ArduinoPyro : public Pyro {
+class ArduinoPyro final : public Pyro {
 public:
     /**
      * @brief Creates a pyro object
@@ -19,7 +20,7 @@ public:
      * @param continuityPin Pin to read in continuity
      * @param continuityThreshold Analog threshold for determining continuity
      */
-    ArduinoPyro(uint8_t firePin, uint8_t continuityPin, int32_t continuityThreshold) :
+    ArduinoPyro(const uint8_t firePin, const uint8_t continuityPin, const int32_t continuityThreshold) :
             m_firePin(firePin), m_continuityPin(continuityPin), m_continuityThreshold(continuityThreshold) {}
 
     /**
@@ -69,7 +70,8 @@ private:
     const uint8_t m_firePin;                    ///< Pin for firing the pyro
     const uint8_t m_continuityPin;              ///< Pin for reading pyro continuity
     const int32_t m_continuityThreshold;        ///< Analog threshold for determining if a pin has continuity
-    uint32_t m_fireEndTime = 0;
+
+    Alarm m_timedFireAlarm;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINO_PYRO_H

@@ -107,8 +107,7 @@ void ICM20602Sensor::setup(DebugStream* debugStream) {
 void ICM20602Sensor::read() {
     readAccelAndGyroBatch();
 
-    // @todo is this right? incorporate into rest of code
-    //    float temperature_K = (((float) tempRaw / 326.8) + 25.0) + Units::C_TO_K;
+    float temperature_K = (((float) tempRaw / 326.8) + 25.0) + Units::C_TO_K;
 
     // Convert accelerometer data to g
     const float accelX_g = (float)accelData[0] / accelScaleFactor;
@@ -134,8 +133,8 @@ void ICM20602Sensor::read() {
             float(gyroZ_dps * Units::DEGS_TO_RAD),
         };
 
-    m_accelerometer.inject(accelerationsMSS, 0);
-    m_gyroscope.inject(velocitiesRadS, 0);
+    m_accelerometer.inject(accelerationsMSS, temperature_K);
+    m_gyroscope.inject(velocitiesRadS, temperature_K);
 }
 
 Accelerometer* ICM20602Sensor::getAccelerometer() {

@@ -14,6 +14,10 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
 
     m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
     m_kalmanFilter.setAccelerometerCovariance(1);
+
+    // Trigger both alarms immediately, required for them to initialize
+    m_boardOrientationReferenceTimer.startAlarm(0, 0);
+    m_groundReferenceTimer.startAlarm(0, 0);
 }
 
 State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp, const FlightState_e& flightState) {
@@ -101,14 +105,14 @@ void StateEstimator1D::reset() {
 void StateEstimator1D::updateGroundElevationReference(const float unfilteredAltitudeM, const Timestamp_s& timestamp) {
     // Ground elevation
     m_lowPass.update(unfilteredAltitudeM);
-    if (m_needNewGroundReference || timestamp.runtime_ms - m_groundReferenceTimer > 1000) {
+    if (m_needNewGroundReference || m_groundReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
+        m_groundReferenceTimer.startAlarm(timestamp.runtime_ms, 1000);
         if (m_needNewGroundReference || abs(m_groundElevation.get() - m_lowPass.value()) > 2.0f) {
             m_needNewGroundReference = false;
             m_reInitializeKalman = true;
             m_groundElevation.set(m_lowPass.value());
             m_hardware->getDebugStream()->message("Ground elevation set to %f", m_groundElevation.get());
         }
-        m_groundReferenceTimer = timestamp.runtime_ms;
     }
 }
 
@@ -120,7 +124,8 @@ void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timest
     m_lowPassAZ.update(accelerations.z);
     accelerations = {m_lowPassAX.value(), m_lowPassAY.value(), m_lowPassAZ.value()};
 
-    if (m_needNewGroundReference || timestamp.runtime_ms - m_boardOrientationReferenceTimer > 1000) {
+    if (m_needNewGroundReference || m_boardOrientationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
+        m_boardOrientationReferenceTimer.startAlarm(timestamp.runtime_ms, 1000);
         const float absX = fabs(accelerations.x);
         const float absY = fabs(accelerations.y);
         const float absZ = fabs(accelerations.z);
@@ -137,6 +142,5 @@ void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timest
             const char* name = (dir == POS_X) ? "POS_X" : (dir == NEG_X) ? "NEG_X" : (dir == POS_Y) ? "POS_Y" : (dir == NEG_Y) ? "NEG_Y" : (dir == POS_Z) ? "POS_Z" : "NEG_Z";
             m_hardware->getDebugStream()->message("Board orientation set to %s", name);
         }
-        m_boardOrientationReferenceTimer = timestamp.runtime_ms;
     }
 }

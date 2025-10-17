@@ -115,7 +115,7 @@ def main():
         ser.write(line.encode('utf-8'))
 
         if not started_stream:
-            ser.write(b"--streamLog -start\n")
+            ser.write(b"--streamLog -b\n")
             started_stream = True
 
         # Wait for continue_event from serial_echo

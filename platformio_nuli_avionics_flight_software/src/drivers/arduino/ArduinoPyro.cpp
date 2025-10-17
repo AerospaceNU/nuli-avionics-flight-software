@@ -5,7 +5,7 @@
 #include "Arduino.h"
 
 
-void ArduinoPyro::setup(DebugStream *debugStream) {
+void ArduinoPyro::setup(DebugStream* debugStream) {
     pinMode(m_firePin, OUTPUT);
     disable();
 }
@@ -18,9 +18,9 @@ void ArduinoPyro::read() {
         m_hasContinuity = m_continuityValue >= m_continuityThreshold;
     }
 
-    if (m_fireEndTime != 0 && millis() > m_fireEndTime) {
+    if (m_timedFireAlarm.isInitialized() && m_timedFireAlarm.isAlarmFinished(millis())) {
         disable();
-        m_fireEndTime = 0;
+        m_timedFireAlarm.reset();
     }
 }
 
@@ -30,7 +30,7 @@ bool ArduinoPyro::hasContinuity() const {
 
 void ArduinoPyro::fire() {
     m_isFired = true;
-    m_fireEndTime = 0;
+    m_timedFireAlarm.reset();
     digitalWrite(m_firePin, HIGH);
 }
 
@@ -48,7 +48,6 @@ bool ArduinoPyro::isFired() const {
 }
 
 void ArduinoPyro::fireFor(const uint32_t timeMs) {
-    m_isFired = true;
     fire();
-    m_fireEndTime = millis() + timeMs;
+    m_timedFireAlarm.startAlarm(millis(), timeMs);
 }

@@ -2,7 +2,6 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H
 
 #include "Avionics.h"
-#include "ConstantsUnits.h"
 
 /**
  * Register all config variables
@@ -10,7 +9,14 @@
  * ALL variables used across all boards/builds must be declared here. Any given board/build
  * will only use a subset of these variable
  * To create a new configuration variable, use the following macro:
- *      DEFINE_CONFIGURATION_VARIABLE(NAME, type_t, defaultValue)
+ *      DEFINE_CONFIGURATION_VARIABLE(NAME, type_t, defaultValue, conditionForValueToBeValid)
+ *
+ * How to use conditionForValueToBeValid
+ *      This will basically be inserted into a function isValid(const type_t& value) { return conditionForValueToBeValid; };
+ *      So you can write 'true' if you want to disable valid checks.
+ *      Valid checks will not invalidate the entire configuration, just the single varable
+ *      A common way to write this would be 'value >= 0 && value <= 10'
+ *      If type_t is a struct: you can access it as a struct: 'value.member >= 0 && value.member <= 10'
  *
  * To construct a new configuration you need to pass it all configuration variables that
  * ANY part of your code uses. You do this by passing an 2-dimensional array of IDs.
@@ -38,15 +44,18 @@
  */
 
 // clang-format off
-DEFINE_CONFIGURATION_VARIABLE(FLIGHT_STATE, int32_t, UNKNOWN_FLIGHT_STATE)
-DEFINE_CONFIGURATION_VARIABLE(GROUND_ELEVATION, float, 0.0)
-DEFINE_CONFIGURATION_VARIABLE(GROUND_TEMPERATURE, float, Constants::STANDARD_TEMPERATURE_K)
-DEFINE_CONFIGURATION_VARIABLE(BOARD_ORIENTATION, int32_t, ERROR_AXIS_DIRECTION)
-DEFINE_CONFIGURATION_VARIABLE(RADIO_FREQUENCY, float, 915.0)
-DEFINE_CONFIGURATION_VARIABLE(MAIN_ELEVATION, float, 200.0)
-DEFINE_CONFIGURATION_VARIABLE(DROGUE_DELAY, uint32_t, 1000)
-DEFINE_CONFIGURATION_VARIABLE(PYRO_FIRE_DURATION, uint32_t, 1000)
-DEFINE_CONFIGURATION_VARIABLE(BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR, float, 1.0)
+DEFINE_CONFIGURATION_VARIABLE(FLIGHT_STATE, int32_t, PRE_FLIGHT, value >= PRE_FLIGHT && value <= UNKNOWN_FLIGHT_STATE)
+DEFINE_CONFIGURATION_VARIABLE(GROUND_ELEVATION, float, 0.0, value >= -500.0 && value <= 9000.0)
+DEFINE_CONFIGURATION_VARIABLE(GROUND_TEMPERATURE, float, Constants::STANDARD_TEMPERATURE_K, value >= 180.0 && value <= 350.0)
+DEFINE_CONFIGURATION_VARIABLE(BOARD_ORIENTATION, int32_t, ERROR_AXIS_DIRECTION, value >= ERROR_AXIS_DIRECTION && value <= NEG_Z)
+DEFINE_CONFIGURATION_VARIABLE(BOARD_NAME, ConfigurationString<100>, "UNKNOWN_BOARD", strlen(value.str) < 100);
+DEFINE_CONFIGURATION_VARIABLE(RADIO_FREQUENCY, float, 915.0, value > 0)
+DEFINE_CONFIGURATION_VARIABLE(MAIN_ELEVATION, float, 200.0, value > 50)
+DEFINE_CONFIGURATION_VARIABLE(DROGUE_DELAY, uint32_t, 1000, value < 60 * Units::S_TO_MS)
+DEFINE_CONFIGURATION_VARIABLE(PYRO_FIRE_DURATION, uint32_t, 1000, value >= 10 && value <= 60 * Units::S_TO_MS)
+DEFINE_CONFIGURATION_VARIABLE(BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR, float, 1.0, true)
+DEFINE_CONFIGURATION_VARIABLE(TEST_STRUCT, Vector3D_s, Vector3D_s({1.0, 2.0, 3.0}), value.x >= 1)
+DEFINE_CONFIGURATION_VARIABLE(TEST_STRING, ConfigurationString<100>, "DEFAULT", strcmp(value.str, "DEFAULT") == 0 || value.str[0] == 'P')
 // clang-format on
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H

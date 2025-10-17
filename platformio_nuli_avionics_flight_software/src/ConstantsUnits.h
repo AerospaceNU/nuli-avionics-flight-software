@@ -13,6 +13,7 @@ public:
 
 class Units {
 public:
+    static constexpr uint32_t S_TO_MS = 1000;
     static constexpr uint32_t MS_TO_US = 1000;
     static constexpr double MICRO_TO_BASE = 1.0 / 1000000.0;
     static constexpr double MILLI_TO_BASE = 1.0 / 1000.0;

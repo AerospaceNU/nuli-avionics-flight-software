@@ -6,6 +6,7 @@
 #include "core/Configuration.h"
 #include "altitude_kf.h"
 #include "LowPass.h"
+#include "util/Timer.h"
 
 
 class StateEstimator1D {
@@ -45,12 +46,12 @@ private:
     bool m_reInitializeKalman = true;
     bool m_needNewGroundReference = true;
     LowPass m_lowPass{0.01};
-    uint32_t m_groundReferenceTimer = 0;
+    Alarm m_groundReferenceTimer;
 
     LowPass m_lowPassAX{0.01};
     LowPass m_lowPassAY{0.01};
     LowPass m_lowPassAZ{0.01};
-    uint32_t m_boardOrientationReferenceTimer = 0;
+    Alarm m_boardOrientationReferenceTimer;
 
 };
 
