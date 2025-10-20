@@ -56,12 +56,12 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     if (hasError()) {
         // Restore default values
         memcpy(m_dataBuffer, bufferDefaultValues, m_dataBufferMaxLength);
-        // Flag all values to be updated, allowing
+        // Overwrite the all ID crc
+        m_configurationAllIdCRC.set(calculateAllIdCrc());
+        // Flag all values to be updated
         for (uint32_t i = 0; i < m_numConfigurations; i++) {
             m_configurations[i].m_isUpdated = true;
         }
-        // Overwrite the all ID crc
-        m_configurationAllIdCRC.set(calculateAllIdCrc());
     } else {
         // As we have just read in everything, nothing should be updated (unless it's invalid)
         // This is a hack that just overwrites setDefault()'s behavior of raising this flag
@@ -84,6 +84,7 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
 }
 
 bool Configuration::configExists(const ConfigurationID_t id) const {
+    // Can't use binary search, because it's called in the constructor prior to sorting
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].id == id) {
             return true;

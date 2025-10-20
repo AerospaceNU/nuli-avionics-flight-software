@@ -40,6 +40,8 @@ public:
 
     void altitudeAndAccelerationDataUpdate(float altitude, float acceleration);
 
+    void velocityAndAccelerationDataUpdate(float velocity, float acceleration);
+
     void allDataUpdate(float altitude, float velocity, float acceleration);
 
     Eigen::Matrix<float, 3, 1> getStateVector();

@@ -79,16 +79,26 @@ struct State1D_s {
     float altitudeM;
     float velocityMS;
     float accelerationMSS;
-
     float unfilteredNoOffsetAltitudeM;
+};
+
+struct Quaternion_s {
+    float x;
+    float y;
+    float z;
+    float w;
+};
+
+struct Orientation_s {
+    Vector3D_s angle;
+    Vector3D_s angularVelocity;
+    Quaternion_s angleQuaternion;
 };
 
 struct State6D_s {
     Vector3D_s position;
     Vector3D_s velocity;
     Vector3D_s acceleration;
-    Vector3D_s orientation;
-    Vector3D_s angularVelocity;
 };
 
 struct RocketState_s {
@@ -96,6 +106,7 @@ struct RocketState_s {
     Coordinates_s rawGps;
     FlightState_e flightState;
     State1D_s state1D;
+    Orientation_s orientation;
     State6D_s state6D;
 };
 
@@ -109,8 +120,12 @@ enum AxisDirection : int32_t {
     NEG_Z,
 };
 
-struct Quaternion {
-    float w, x, y, z;
+struct GyroscopeBias_s {
+    Vector3D_s bias[MAX_GYROSCOPE_NUM] = {};
+
+    GyroscopeBias_s() {
+        for (auto& v : bias) v = {0, 0, 0};
+    }
 };
 
 // This can be added in a struct definition to ensure the compiler doesn't add any padding bytes between variables

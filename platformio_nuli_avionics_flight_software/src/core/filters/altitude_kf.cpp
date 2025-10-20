@@ -131,6 +131,11 @@ void AltitudeKf::altitudeAndAccelerationDataUpdate(float altitude, float acceler
     genericUpdate({altitude, 0, acceleration}, {1, 0, 1});
 }
 
+void AltitudeKf::velocityAndAccelerationDataUpdate(float velocity, float acceleration) {
+    genericUpdate({0, velocity, acceleration}, {0, 1, 1});
+}
+
+
 void AltitudeKf::allDataUpdate(float altitude, float velocity, float acceleration) {
     genericUpdate({altitude, velocity, acceleration}, {1, 1, 1});
 }
