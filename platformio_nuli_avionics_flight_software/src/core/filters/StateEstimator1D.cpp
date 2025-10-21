@@ -20,7 +20,7 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_groundReferenceTimer.startAlarm(0, 0);
 }
 
-State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp, const FlightState_e& flightState) {
+State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     const float pressurePa = getPressurePa();
     const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());

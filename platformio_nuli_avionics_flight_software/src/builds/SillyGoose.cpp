@@ -35,6 +35,7 @@
 // @todo Use temperature in altitude calcs
 // @todo Have barometer re-init code
 // @todo handle log overflow
+// @todo Make it clear how Pyro.fireFor() works: it's currently handled in hardware.readSensors(), which is weird
 
 
 // clang-format off
@@ -109,6 +110,12 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 
+ArgumentFlag<const char *> testCommand("--test", "", true, 255, []() {
+    Serial.print("Received string: ");
+    Serial.print(testCommand.getValueDerived());
+});
+BaseFlag* testGroup[] = {&testCommand};
+
 
 void setup() {
     // Initialize
@@ -143,6 +150,7 @@ void setup() {
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
+    cliParser.addFlagGroup(testGroup);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
@@ -166,10 +174,10 @@ void loop() {
     }
 
     // Determine state
-    state.state1D = stateEstimator1D.loopOnce(state.timestamp, flightStateDeterminer.getFlightState());
-    state.flightState = flightStateDeterminer.loopOnce(state.timestamp, state.state1D);
-    state.orientation = orientationEstimator.loopOnce(state.timestamp, state.flightState);
-    state.state6D = stateEstimatorBasic6D.loopOnce(state.timestamp, state.state1D, state.orientation);
+    // state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
+    state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
+    // state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
+    state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {

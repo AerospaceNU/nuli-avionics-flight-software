@@ -16,7 +16,7 @@ public:
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    const Orientation_s& loopOnce(const Timestamp_s& timestamp, const FlightState_e& flightState);
+    const Orientation_s& update(const Timestamp_s& timestamp, const FlightState_e& flightState);
 
     const Orientation_s& getOrientation() const;
 

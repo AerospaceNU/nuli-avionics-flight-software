@@ -27,7 +27,7 @@ void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* 
     m_kalmanFilterY.setPitoCovariance(2);
 }
 
-State6D_s StateEstimatorBasic6D::loopOnce(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation) {
+State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation) {
     // const Vector3D_s accelerationsMSS_board = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
     // m_currentState6D.acceleration = QuaternionTransform(orientation.angleQuaternion).transform(accelerationsMSS_board);
     //

@@ -28,7 +28,7 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
     }
 }
 
-FlightState_e FlightStateDeterminer::loopOnce(const Timestamp_s& timestamp, const State1D_s& state1D) {
+FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const State1D_s& state1D) {
     if (getFlightState() == PRE_FLIGHT) {
         if (hasLaunched(timestamp, state1D)) {
             setFlightState(timestamp, ASCENT);

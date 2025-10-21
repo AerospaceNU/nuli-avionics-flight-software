@@ -15,7 +15,7 @@ public:
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    State1D_s loopOnce(const Timestamp_s& timestamp, const FlightState_e &flightState);
+    State1D_s update(const Timestamp_s& timestamp, const FlightState_e &flightState);
 
     State1D_s getState1D() const;
 

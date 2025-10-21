@@ -16,7 +16,7 @@ class StateEstimatorBasic6D {
 public:
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    State6D_s loopOnce(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation);
+    State6D_s update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation);
 
     State6D_s getState6D() const;
 

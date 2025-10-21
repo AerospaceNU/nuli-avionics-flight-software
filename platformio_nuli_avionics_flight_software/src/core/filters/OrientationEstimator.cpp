@@ -15,7 +15,7 @@ void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* c
     m_gyroscopeBiasAlarm.startAlarm(0, 0);
 }
 
-const Orientation_s& OrientationEstimator::loopOnce(const Timestamp_s& timestamp, const FlightState_e& flightState) {
+const Orientation_s& OrientationEstimator::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
     if (flightState == PRE_FLIGHT) {
         updateLaunchAngle(timestamp);
         updateGyroscopeBias(timestamp);
