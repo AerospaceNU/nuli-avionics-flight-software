@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # ========Desktop configuration========
 include_directories(platformio_nuli_avionics_flight_software/include)
+include_directories(platformio_nuli_avionics_flight_software/lib)
 include_directories(platformio_nuli_avionics_flight_software/src)
 
 

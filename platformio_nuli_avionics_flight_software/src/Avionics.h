@@ -139,11 +139,10 @@ struct GyroscopeBias_s {
 #define AVIONICS_ARGUMENT_isDev false
 #endif
 
-#define US_TIMER_START(id) uint32_t startTime##id = micros();
-#define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
 
 #ifdef PLATFORMIO
-`
+#define US_TIMER_START(id) uint32_t startTime##id = micros();
+#define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
 #else
 void setup();
 void loop();

@@ -5,7 +5,11 @@
 #ifndef ALTITUDE_KF_H
 #define ALTITUDE_KF_H
 
+#ifdef PLATFORMIO
 #include "ArduinoEigenDense.h"
+#else
+#include "Eigen/Dense"
+#endif
 
 float altitudeFromPressure(float pressure_pa);
 
