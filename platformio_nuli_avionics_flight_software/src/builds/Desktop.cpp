@@ -1,7 +1,9 @@
 #include "Avionics.h"
 AVIONICS_DESKTOP_MAIN
+#include "drivers/desktop/CSVParser.h"
 #include "drivers/desktop/DesktopDebug.h"
 #include "drivers/desktop/DesktopSystemClock.h"
+#include "drivers/desktop/DummySystemClock.h"
 #include "drivers/desktop/DesktopSerialReader.h"
 #include "core/HardwareAbstraction.h"
 #include "core/Configuration.h"
@@ -14,11 +16,13 @@ AVIONICS_DESKTOP_MAIN
 #include "core/filters/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
+CSVReader csvReader;
+
 // Hardware
-DesktopSystemClock desktopClock;
+DummySystemClock desktopClock(100);
 DesktopDebug debug;
 Barometer barometer;
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90().rotateX90().inverse();
+const DiscreteRotation imuRotation = DiscreteRotation::identity();
 Accelerometer accelerometer(&imuRotation);
 Gyroscope gyroscope(&imuRotation);
 VolatileConfigurationMemory<1000> fram;
@@ -31,21 +35,17 @@ OrientationEstimator orientationEstimator;
 StateEstimatorBasic6D stateEstimatorBasic6D;
 DesktopSerialReader<1000> serialReader;
 IntegratedParser cliParser;
-// // Configuration
 ConfigurationID_t desktopRequiredConfigs[] = {BOARD_NAME_c};
-Configuration configuration({
-        desktopRequiredConfigs,
-        Configuration::REQUIRED_CONFIGS,
-        FlightStateDeterminer::REQUIRED_CONFIGS,
-        StateEstimator1D::REQUIRED_CONFIGS,
-        OrientationEstimator::REQUIRED_CONFIGS
-    });
-// // CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
+Configuration configuration({desktopRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS, OrientationEstimator::REQUIRED_CONFIGS});
 ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
 
 void setup() {
+    csvReader.setup("../simulation/data/Avionics Flight Data - 2023-04-15-beanboozler-output-FCB.csv");
+    debug.outputToFile("../simulation/output.txt");
+
     // Initialize
     configuration.setDefault<BOARD_NAME_c>("Desktop");
+    configuration.setDefault<FLIGHT_STATE_c>(PRE_FLIGHT);
 
     // Setup Hardware
     const int16_t framID = hardware.appendFramMemory(&fram);
@@ -72,6 +72,12 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
+    // Read in the .csv data
+    csvReader.interpolateNext(state.timestamp.runtime_ms);
+    barometer.inject((csvReader.getKey<float>("baro1_temp") - 32) * 5.0f / 9.0f + 273.15f, 0, csvReader.getKey<float>("baro1_pres") * 101325);
+    accelerometer.inject({csvReader.getKey<float>("imu1_accel_x") / 128.0f, csvReader.getKey<float>("imu1_accel_y") / 128.0f, csvReader.getKey<float>("imu1_accel_z") / 128.0f}, 0);
+    gyroscope.inject({csvReader.getKey<float>("imu1_gyro_x") / 128.0f, csvReader.getKey<float>("imu1_gyro_y") / 128.0f, csvReader.getKey<float>("imu1_gyro_z") / 128.0f}, 0);
+
     // Determine state
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
@@ -83,4 +89,13 @@ void loop() {
 
     // Update any changes to the configuration
     configuration.pushUpdatesToMemory();
+
+    // Print out current values
+    debug.message("%d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%d",
+                  state.timestamp.runtime_ms,
+                  barometer.getPressurePa(), barometer.getTemperatureK(),
+                  accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
+                  gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
+                  state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
+    );
 }
