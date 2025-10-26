@@ -72,12 +72,11 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
 
-
     // Determine state
-    // state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
+    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    // state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
-    // state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
+    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
+    state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // Run CLI
     cliParser.runCli();

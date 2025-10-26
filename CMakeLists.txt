@@ -29,8 +29,6 @@ set(desktopSimFiles
 add_executable(desktop ${desktopSimFiles})
 
 
-
-
 # ========Doxygen Build Configuration========
 option(BUILD_DOC "Build documentation" ON)
 find_package(Doxygen)
