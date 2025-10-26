@@ -1,17 +1,6 @@
-//
-// Created by nathan on 5/18/25.
-//
+#include "KalmanFilter1D.h"
 
-#include "altitude_kf.h"
-
-float altitudeFromPressure(float pressure_pa) {
-    // https://en.wikipedia.org/wiki/Pressure_altitude, converted to use m and pa
-    float pressure_mbar = pressure_pa / 100.0f;
-    float altitude_ft = 145366.45f * (1 - std::pow((pressure_mbar / 1013.25f), 0.190284f));
-    return altitude_ft * 0.3048f;
-}
-
-AltitudeKf::AltitudeKf() {
+KalmanFilter1D::KalmanFilter1D() {
     // States are [position, velocity, acceleration]
     x = {0, 0, 0};
 
@@ -49,32 +38,28 @@ AltitudeKf::AltitudeKf() {
     setAccelerometerCovariance(0.1);    // m/s^2
 }
 
-void AltitudeKf::setDeltaTime(float delta_t) {
-// #ifdef EIGEN_UNSUPPORTED
-//     F_d = (F * delta_t).exp();
-// #elif
+void KalmanFilter1D::setDeltaTime(float delta_t) {
     // Can't use matrix exponential on embedded systems, because that's not in ArduinoEigen
     // Instead, we calculate this ourselves
     F_d = Eigen::Matrix<float, 3, 3>{{1, delta_t, 0.5f * std::pow(delta_t, 2.0f)},
                                      {0, 1,       delta_t},
                                      {0, 0,       1}
     };
-// #endif
 }
 
-void AltitudeKf::setBarometerCovariance(float covariance) {
+void KalmanFilter1D::setBarometerCovariance(float covariance) {
     R_baro = {covariance, 0, 0};
 }
 
-void AltitudeKf::setPitoCovariance(float covariance) {
+void KalmanFilter1D::setPitoCovariance(float covariance) {
     R_pito = {0, covariance, 0};
 }
 
-void AltitudeKf::setAccelerometerCovariance(float covariance) {
+void KalmanFilter1D::setAccelerometerCovariance(float covariance) {
     R_accel = {0, 0, covariance};
 }
 
-void AltitudeKf::predict(double current_time) {
+void KalmanFilter1D::predict(double current_time) {
     // Calculate time since last loop
     auto delta_t = std::min((float) (current_time - lastTime), 1.0f); // The clamping should only matter the first time through.  If you call this slower than once per second there will be a problem
     lastTime = current_time;
@@ -86,7 +71,7 @@ void AltitudeKf::predict(double current_time) {
     predict();
 }
 
-void AltitudeKf::predict() {
+void KalmanFilter1D::predict() {
     // Move state estimate forward in time
     x = F_d * x;
 
@@ -94,7 +79,7 @@ void AltitudeKf::predict() {
     P = F_d * P * F_d.transpose() + Q;
 }
 
-void AltitudeKf::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement, const Eigen::Matrix<float, 3, 1> &mask) {
+void KalmanFilter1D::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement, const Eigen::Matrix<float, 3, 1> &mask) {
     // Update R matrix
     R.row(0) = R_baro;
     R.row(1) = R_pito;
@@ -119,43 +104,43 @@ void AltitudeKf::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement, co
     P = (I - K * H) * P;
 }
 
-void AltitudeKf::altitudeDataUpdate(float altitude) {
-    genericUpdate({altitude, 0, 0}, {1, 0, 0});
+void KalmanFilter1D::positionDataUpdate(float position) {
+    genericUpdate({position, 0, 0}, {1, 0, 0});
 }
 
-void AltitudeKf::accelerationDataUpdate(float acceleration) {
+void KalmanFilter1D::accelerationDataUpdate(float acceleration) {
     genericUpdate({0, 0, acceleration}, {0, 0, 1});
 }
 
-void AltitudeKf::altitudeAndAccelerationDataUpdate(float altitude, float acceleration) {
-    genericUpdate({altitude, 0, acceleration}, {1, 0, 1});
+void KalmanFilter1D::positionAndAccelerationDataUpdate(float position, float acceleration) {
+    genericUpdate({position, 0, acceleration}, {1, 0, 1});
 }
 
-void AltitudeKf::velocityAndAccelerationDataUpdate(float velocity, float acceleration) {
+void KalmanFilter1D::velocityAndAccelerationDataUpdate(float velocity, float acceleration) {
     genericUpdate({0, velocity, acceleration}, {0, 1, 1});
 }
 
 
-void AltitudeKf::allDataUpdate(float altitude, float velocity, float acceleration) {
-    genericUpdate({altitude, velocity, acceleration}, {1, 1, 1});
+void KalmanFilter1D::allDataUpdate(float position, float velocity, float acceleration) {
+    genericUpdate({position, velocity, acceleration}, {1, 1, 1});
 }
 
-Eigen::Matrix<float, 3, 1> AltitudeKf::getStateVector() {
+Eigen::Matrix<float, 3, 1> KalmanFilter1D::getStateVector() {
     return x;
 }
 
-float AltitudeKf::getAltitude() {
+float KalmanFilter1D::getPosition() {
     return getStateVector()[0];
 }
 
-float AltitudeKf::getVelocity() {
+float KalmanFilter1D::getVelocity() {
     return getStateVector()[1];
 }
 
-float AltitudeKf::getAcceleration() {
+float KalmanFilter1D::getAcceleration() {
     return getStateVector()[2];
 }
 
-void AltitudeKf::restState(float altitude, float velocity, float acceleration) {
-    x = {altitude, velocity, acceleration};
+void KalmanFilter1D::restState(float position, float velocity, float acceleration) {
+    x = {position, velocity, acceleration};
 }

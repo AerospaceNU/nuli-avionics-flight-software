@@ -1,11 +1,11 @@
 #ifndef STATEESTIMATER_H
 #define STATEESTIMATER_H
 
+#include "../filters/KalmanFilter1D.h"
 #include "Avionics.h"
 #include "core/HardwareAbstraction.h"
-#include "core/Configuration.h"
-#include "altitude_kf.h"
-#include "LowPass.h"
+#include "../configuration/Configuration.h"
+#include "../filters/LowPass.h"
 #include "util/Timer.h"
 
 
@@ -38,7 +38,7 @@ private:
     ConfigurationData<float> m_groundTemperature;
     ConfigurationData<int32_t> m_boardOrientation;
 
-    AltitudeKf m_kalmanFilter;
+    KalmanFilter1D m_kalmanFilter;
 
     float m_lastPressure = Constants::ATMOSPHERIC_PRESSURE_PA;
 

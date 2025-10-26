@@ -2,19 +2,17 @@
 AVIONICS_DESKTOP_MAIN
 #include "drivers/desktop/CSVParser.h"
 #include "drivers/desktop/DesktopDebug.h"
-#include "drivers/desktop/DesktopSystemClock.h"
 #include "drivers/desktop/DummySystemClock.h"
 #include "drivers/desktop/DesktopSerialReader.h"
 #include "core/HardwareAbstraction.h"
-#include "core/Configuration.h"
-#include "core/ConfigurationCliBinding.h"
-#include "core/FlightStateDeterminer.h"
-#include "core/BasicLogger.h"
 #include "core/cli/IntegratedParser.h"
-#include "core/filters/OrientationEstimator.h"
-#include "core/filters/StateEstimatorBasic6D.h"
-#include "core/filters/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
+#include "core/configuration/Configuration.h"
+#include "core/configuration/ConfigurationCliBinding.h"
+#include "core/state_estimation/FlightStateDeterminer.h"
+#include "core/state_estimation/OrientationEstimator.h"
+#include "core/state_estimation/StateEstimatorBasic6D.h"
+#include "core/state_estimation/StateEstimator1D.h"
 
 
 constexpr float FCB_V0_ACCEL_SCALE_FACTOR = 0.0071784678f;
@@ -25,7 +23,7 @@ CSVReader csvReader;
 DummySystemClock desktopClock(100);
 DesktopDebug debug;
 Barometer barometer;
-const DiscreteRotation imuRotation = DiscreteRotation::identity();
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local().rotateZ90local().rotateX90local().inverse();
 Accelerometer accelerometer(&imuRotation);
 Gyroscope gyroscope(&imuRotation);
 VolatileConfigurationMemory<1000> fram;
@@ -74,8 +72,7 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.readSensors();
-
+    hardware.readSensors(); // Has no effect because we are using simulated data
     // Read in the .csv data
     csvReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
     barometer.inject((csvReader.getKey<float>("baro1_temp") - 32) * 5.0f / 9.0f + 273.15f, 0, csvReader.getKey<float>("baro1_pres") * 101325);

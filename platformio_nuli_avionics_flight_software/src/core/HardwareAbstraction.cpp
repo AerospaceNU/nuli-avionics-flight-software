@@ -72,10 +72,7 @@ Timestamp_s HardwareAbstraction::enforceLoopTime() {
 
     m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
     m_tickCount++;
-    return getTimestamp();
-}
-
-Timestamp_s HardwareAbstraction::getTimestamp() const {
+    // Return a new timestamp
     Timestamp_s timestamp{};
     timestamp.runtime_ms = m_currentLoopTimestampMs;
     timestamp.dt_ms = m_loopDtMs;
@@ -89,24 +86,3 @@ uint32_t HardwareAbstraction::getTargetLoopTimeMs() const {
 
 DebugStream* HardwareAbstraction::getDebugStream() const { return m_debug; }
 
-
-// // @todo ensure more reliable tick time using microseconds()
-// // Track the end of the tick
-// const uint32_t actualLoopEnd = m_systemClock->currentRuntimeMs();
-// const uint32_t desiredLoopEnd = m_currentLoopTimestampMs + m_loopTime;
-// // Enforce loop time, detect overruns
-// if (actualLoopEnd > desiredLoopEnd) {
-//     if (m_tickCount == 0) {
-//         m_debug->message("First loop start time: %d", actualLoopEnd);
-//     } else {
-//         m_debug->warn("Loop overrun by %d ms", (actualLoopEnd - desiredLoopEnd));
-//     }
-// } else {
-//     while (m_systemClock->currentRuntimeMs() < desiredLoopEnd) {};
-// }
-// // Update timers
-// const uint32_t lastTime = m_currentLoopTimestampMs;
-// m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
-// m_loopDtMs = m_currentLoopTimestampMs - lastTime;
-// m_tickCount++;
-// return getTimestamp();

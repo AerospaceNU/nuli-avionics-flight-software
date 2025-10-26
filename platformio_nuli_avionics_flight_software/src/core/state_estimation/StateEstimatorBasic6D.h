@@ -1,15 +1,16 @@
 #ifndef STATEESTIMATORBASIC6D_H
 #define STATEESTIMATORBASIC6D_H
 
+#include "../filters/KalmanFilter1D.h"
 #include "Avionics.h"
-#include "core/Configuration.h"
+#include "../configuration/Configuration.h"
 #include "ConstantsUnits.h"
 #include "core/generic_hardware/Accelerometer.h"
 #include "core/generic_hardware/Gyroscope.h"
 #include "core/generic_hardware/Barometer.h"
 #include "core/transform/Quaternion.h"
-#include "LowPass.h"
-#include "altitude_kf.h"
+#include "../filters/LowPass.h"
+
 
 
 class StateEstimatorBasic6D {
@@ -28,9 +29,9 @@ private:
     State6D_s m_currentState6D = {};
     ConfigurationData<float> m_groundElevation;
 
-    AltitudeKf m_kalmanFilterX;
-    AltitudeKf m_kalmanFilterY;
-    AltitudeKf m_kalmanFilterZ;
+    KalmanFilter1D m_kalmanFilterX;
+    KalmanFilter1D m_kalmanFilterY;
+    KalmanFilter1D m_kalmanFilterZ;
 };
 
 

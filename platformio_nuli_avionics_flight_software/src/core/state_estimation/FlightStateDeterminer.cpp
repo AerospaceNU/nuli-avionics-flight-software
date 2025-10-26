@@ -1,6 +1,6 @@
 #include "FlightStateDeterminer.h"
 
-#include "HardwareAbstraction.h"
+#include "../HardwareAbstraction.h"
 constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
 
 void FlightStateDeterminer::setup(Configuration* configuration) {

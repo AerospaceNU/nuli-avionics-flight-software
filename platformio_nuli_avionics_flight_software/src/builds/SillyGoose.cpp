@@ -1,5 +1,5 @@
+#include "Arduino.h"
 #include "Avionics.h"
-#include <Arduino.h>
 #include "pinmaps/SillyGoosePinmap.h"
 #include "util/Timer.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
@@ -16,18 +16,17 @@
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoSimulationParser.h"
 #include "core/HardwareAbstraction.h"
-#include "core/Configuration.h"
-#include "core/ConfigurationCliBinding.h"
-#include "core/FlightStateDeterminer.h"
+#include "core/configuration/Configuration.h"
+#include "core/configuration/ConfigurationCliBinding.h"
+#include "core/state_estimation/FlightStateDeterminer.h"
 #include "core/IndicatorManager.h"
 #include "core/BasicLogger.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/IntegratedParser.h"
-#include "core/filters/OrientationEstimator.h"
-#include "core/filters/StateEstimatorBasic6D.h"
-#include "core/filters/StateEstimator1D.h"
+#include "core/state_estimation/OrientationEstimator.h"
+#include "core/state_estimation/StateEstimatorBasic6D.h"
+#include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
-
 
 // @todo Configuration min/max value checks
 // @todo Kalman gains
@@ -57,7 +56,7 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90().rotateX90().inverse();
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM20602Sensor icm20602(&imuRotation);
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);

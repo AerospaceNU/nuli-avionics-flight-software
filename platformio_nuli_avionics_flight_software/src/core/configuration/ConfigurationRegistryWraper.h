@@ -46,7 +46,7 @@ DEFINE_CONFIGURATION_VARIABLE(NONE, int, 0, true) // Base case
 DEFINE_CONFIGURATION_VARIABLE(CONFIGURATION_CRC, uint32_t, 0, true)
 DEFINE_CONFIGURATION_VARIABLE(CONFIGURATION_ALL_ID_CRC, uint32_t, 0, true)
 DEFINE_CONFIGURATION_VARIABLE(CONFIGURATION_VERSION, uint32_t, 1, true)
-#include "../ConfigurationRegistry.h"                                                   // All user defined variables
+#include "../../ConfigurationRegistry.h"
 DEFINE_CONFIGURATION_VARIABLE(LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE, int, 0, true) // End case
 
 struct ConfigurationIDSet_s {
