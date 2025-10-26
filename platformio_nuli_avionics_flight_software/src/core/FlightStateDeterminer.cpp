@@ -1,9 +1,6 @@
 #include "FlightStateDeterminer.h"
 
-#include <delay.h>
-
 #include "HardwareAbstraction.h"
-#include "Arduino.h"
 constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
 
 void FlightStateDeterminer::setup(Configuration* configuration) {

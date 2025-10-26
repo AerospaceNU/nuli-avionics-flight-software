@@ -32,10 +32,12 @@
 // @todo Configuration min/max value checks
 // @todo Kalman gains
 // @todo Offload -> simulation data pipeline
-// @todo Use temperature in altitude calcs
+// @todo Use temperature in altitude calcs Update: THIS WORKS! but need to do cleanly
 // @todo Have barometer re-init code
 // @todo handle log overflow
 // @todo Make it clear how Pyro.fireFor() works: it's currently handled in hardware.readSensors(), which is weird
+// @todo disable write in flash driver
+// @todo fix low pass implementation
 
 
 // clang-format off
@@ -110,13 +112,6 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 
-ArgumentFlag<const char *> testCommand("--test", "", true, 255, []() {
-    Serial.print("Received string: ");
-    Serial.print(testCommand.getValueDerived());
-});
-BaseFlag* testGroup[] = {&testCommand};
-
-
 void setup() {
     // Initialize
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
@@ -150,7 +145,6 @@ void setup() {
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
-    cliParser.addFlagGroup(testGroup);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();

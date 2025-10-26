@@ -1,5 +1,4 @@
 #include "HardwareAbstraction.h"
-#include <Arduino.h>
 #include <cmath>
 
 void HardwareAbstraction::setup(DebugStream* debugStream, SystemClock* systemClock, const uint32_t loopRateHz) {

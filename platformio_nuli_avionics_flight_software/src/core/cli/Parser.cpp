@@ -111,6 +111,7 @@ CLIReturnCode_e Parser::parse(char* input) {
         switch(*p) {
             case '\t':
             case '\n':
+            case '\r':
             case ' ':
                 *p = '\0';  // mark the end of a string
                 p++;

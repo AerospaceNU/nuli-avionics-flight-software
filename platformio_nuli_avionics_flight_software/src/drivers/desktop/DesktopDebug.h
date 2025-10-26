@@ -8,23 +8,13 @@
 #include "core/generic_hardware/DebugStream.h"
 #include <iostream>
 
-class DesktopDebug : public DebugStream {
+class DesktopDebug final : public DebugStream {
 public:
-
-    void setup() override {
-
-    }
-
-    void print(const char* str) override {
-        std::cout << (str);
-    }
-
-    void print(int64_t num) override {
-        std::cout << (num);
-    }
-
-    void print(double num) override {
-        std::cout << (num);
+    size_t write(const void* buffer, const size_t size) override {
+        const char* data = static_cast<const char*>(buffer);
+        std::cout.write(data, size);
+        std::cout.flush(); // ensure immediate output (like Serial)
+        return size;
     }
 };
 

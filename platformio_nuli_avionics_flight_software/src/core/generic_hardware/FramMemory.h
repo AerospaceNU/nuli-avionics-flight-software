@@ -29,12 +29,12 @@ class VolatileConfigurationMemory : public FramMemory {
 public:
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override {
         if (length > N) return;
-        memccpy(m_buffer, buffer, length);
+        memcpy(m_buffer, buffer, length);
     }
 
     void read(uint32_t address, uint8_t* buffer, uint32_t length) override {
         if (length > N) return;
-        memccpy(buffer, m_buffer, length);
+        memcpy(buffer, m_buffer, length);
     }
 
 private:
