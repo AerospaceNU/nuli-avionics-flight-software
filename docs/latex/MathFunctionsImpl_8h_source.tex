@@ -1,0 +1,206 @@
+\doxysection{Math\+Functions\+Impl.\+h}
+\hypertarget{MathFunctionsImpl_8h_source}{}\label{MathFunctionsImpl_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/MathFunctionsImpl.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/MathFunctionsImpl.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Pedro\ Gonnet\ (pedro.gonnet@gmail.com)}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2016\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_MATHFUNCTIONSIMPL\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_MATHFUNCTIONSIMPL\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ \textcolor{comment}{}}
+\DoxyCodeLine{00018\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ hyperbolic\ tan\ of\ \(\backslash\)a\ a\ (coeff-\/wise)}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ \ \ Doesn't\ do\ anything\ fancy,\ just\ a\ 13/6-\/degree\ rational\ interpolant\ which}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ \ \ is\ accurate\ up\ to\ a\ couple\ of\ ulps\ in\ the\ (approximate)\ range\ [-\/8,\ 8],}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ \ \ outside\ of\ which\ tanh(x)\ =\ +/-\/1\ in\ single\ precision.\ The\ input\ is\ clamped}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ \ \ to\ the\ range\ [-\/c,\ c].\ The\ value\ c\ is\ chosen\ as\ the\ smallest\ value\ where}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ \ \ the\ approximation\ evaluates\ to\ exactly\ 1.\ In\ the\ reange\ [-\/0.0004,\ 0.0004]}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ \ \ the\ approxmation\ tanh(x)\ \string~=\ x\ is\ used\ for\ better\ accuracy\ as\ x\ tends\ to\ zero.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ \ \ This\ implementation\ works\ on\ both\ scalars\ and\ packets.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00028\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00029\ T\ generic\_fast\_tanh\_float(\textcolor{keyword}{const}\ T\&\ a\_x)}
+\DoxyCodeLine{00030\ \{}
+\DoxyCodeLine{00031\ \ \ \textcolor{comment}{//\ Clamp\ the\ inputs\ to\ the\ range\ [-\/c,\ c]}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00033\ \ \ \textcolor{keyword}{const}\ T\ plus\_clamp\ =\ pset1<T>(7.99881172180175781f);}
+\DoxyCodeLine{00034\ \ \ \textcolor{keyword}{const}\ T\ minus\_clamp\ =\ pset1<T>(-\/7.99881172180175781f);}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00036\ \ \ \textcolor{keyword}{const}\ T\ plus\_clamp\ =\ pset1<T>(7.90531110763549805f);}
+\DoxyCodeLine{00037\ \ \ \textcolor{keyword}{const}\ T\ minus\_clamp\ =\ pset1<T>(-\/7.90531110763549805f);}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00039\ \ \ \textcolor{keyword}{const}\ T\ tiny\ =\ pset1<T>(0.0004f);}
+\DoxyCodeLine{00040\ \ \ \textcolor{keyword}{const}\ T\ x\ =\ pmax(pmin(a\_x,\ plus\_clamp),\ minus\_clamp);}
+\DoxyCodeLine{00041\ \ \ \textcolor{keyword}{const}\ T\ tiny\_mask\ =\ pcmp\_lt(pabs(a\_x),\ tiny);}
+\DoxyCodeLine{00042\ \ \ \textcolor{comment}{//\ The\ monomial\ coefficients\ of\ the\ numerator\ polynomial\ (odd).}}
+\DoxyCodeLine{00043\ \ \ \textcolor{keyword}{const}\ T\ alpha\_1\ =\ pset1<T>(4.89352455891786e-\/03f);}
+\DoxyCodeLine{00044\ \ \ \textcolor{keyword}{const}\ T\ alpha\_3\ =\ pset1<T>(6.37261928875436e-\/04f);}
+\DoxyCodeLine{00045\ \ \ \textcolor{keyword}{const}\ T\ alpha\_5\ =\ pset1<T>(1.48572235717979e-\/05f);}
+\DoxyCodeLine{00046\ \ \ \textcolor{keyword}{const}\ T\ alpha\_7\ =\ pset1<T>(5.12229709037114e-\/08f);}
+\DoxyCodeLine{00047\ \ \ \textcolor{keyword}{const}\ T\ alpha\_9\ =\ pset1<T>(-\/8.60467152213735e-\/11f);}
+\DoxyCodeLine{00048\ \ \ \textcolor{keyword}{const}\ T\ alpha\_11\ =\ pset1<T>(2.00018790482477e-\/13f);}
+\DoxyCodeLine{00049\ \ \ \textcolor{keyword}{const}\ T\ alpha\_13\ =\ pset1<T>(-\/2.76076847742355e-\/16f);}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ \textcolor{comment}{//\ The\ monomial\ coefficients\ of\ the\ denominator\ polynomial\ (even).}}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{const}\ T\ beta\_0\ =\ pset1<T>(4.89352518554385e-\/03f);}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{const}\ T\ beta\_2\ =\ pset1<T>(2.26843463243900e-\/03f);}
+\DoxyCodeLine{00054\ \ \ \textcolor{keyword}{const}\ T\ beta\_4\ =\ pset1<T>(1.18534705686654e-\/04f);}
+\DoxyCodeLine{00055\ \ \ \textcolor{keyword}{const}\ T\ beta\_6\ =\ pset1<T>(1.19825839466702e-\/06f);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \textcolor{comment}{//\ Since\ the\ polynomials\ are\ odd/even,\ we\ need\ x\string^2.}}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{const}\ T\ x2\ =\ pmul(x,\ x);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \textcolor{comment}{//\ Evaluate\ the\ numerator\ polynomial\ p.}}
+\DoxyCodeLine{00061\ \ \ T\ p\ =\ pmadd(x2,\ alpha\_13,\ alpha\_11);}
+\DoxyCodeLine{00062\ \ \ p\ =\ pmadd(x2,\ p,\ alpha\_9);}
+\DoxyCodeLine{00063\ \ \ p\ =\ pmadd(x2,\ p,\ alpha\_7);}
+\DoxyCodeLine{00064\ \ \ p\ =\ pmadd(x2,\ p,\ alpha\_5);}
+\DoxyCodeLine{00065\ \ \ p\ =\ pmadd(x2,\ p,\ alpha\_3);}
+\DoxyCodeLine{00066\ \ \ p\ =\ pmadd(x2,\ p,\ alpha\_1);}
+\DoxyCodeLine{00067\ \ \ p\ =\ pmul(x,\ p);}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ \textcolor{comment}{//\ Evaluate\ the\ denominator\ polynomial\ q.}}
+\DoxyCodeLine{00070\ \ \ T\ q\ =\ pmadd(x2,\ beta\_6,\ beta\_4);}
+\DoxyCodeLine{00071\ \ \ q\ =\ pmadd(x2,\ q,\ beta\_2);}
+\DoxyCodeLine{00072\ \ \ q\ =\ pmadd(x2,\ q,\ beta\_0);}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ \textcolor{comment}{//\ Divide\ the\ numerator\ by\ the\ denominator.}}
+\DoxyCodeLine{00075\ \ \ \textcolor{keywordflow}{return}\ pselect(tiny\_mask,\ x,\ pdiv(p,\ q));}
+\DoxyCodeLine{00076\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ RealScalar>}
+\DoxyCodeLine{00079\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00080\ RealScalar\ positive\_real\_hypot(\textcolor{keyword}{const}\ RealScalar\&\ x,\ \textcolor{keyword}{const}\ RealScalar\&\ y)}
+\DoxyCodeLine{00081\ \{}
+\DoxyCodeLine{00082\ \ \ \textcolor{comment}{//\ IEEE\ IEC\ 6059\ special\ cases.}}
+\DoxyCodeLine{00083\ \ \ \textcolor{keywordflow}{if}\ ((numext::isinf)(x)\ ||\ (numext::isinf)(y))}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keywordflow}{return}\ NumTraits<RealScalar>::infinity();}
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordflow}{if}\ ((numext::isnan)(x)\ ||\ (numext::isnan)(y))}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{return}\ NumTraits<RealScalar>::quiet\_NaN();}
+\DoxyCodeLine{00087\ \ \ \ \ }
+\DoxyCodeLine{00088\ \ \ EIGEN\_USING\_STD(sqrt);}
+\DoxyCodeLine{00089\ \ \ RealScalar\ p,\ qp;}
+\DoxyCodeLine{00090\ \ \ p\ =\ numext::maxi(x,y);}
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordflow}{if}(p==RealScalar(0))\ \textcolor{keywordflow}{return}\ RealScalar(0);}
+\DoxyCodeLine{00092\ \ \ qp\ =\ numext::mini(y,x)\ /\ p;}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordflow}{return}\ p\ *\ sqrt(RealScalar(1)\ +\ qp*qp);}
+\DoxyCodeLine{00094\ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00097\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1hypot__impl}{hypot\_impl}}}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00100\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00101\ \ \ \textcolor{keyword}{inline}\ RealScalar\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\&\ x,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\&\ y)}
+\DoxyCodeLine{00102\ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ EIGEN\_USING\_STD(abs);}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{return}\ positive\_real\_hypot<RealScalar>(abs(x),\ abs(y));}
+\DoxyCodeLine{00105\ \ \ \}}
+\DoxyCodeLine{00106\ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ Generic\ complex\ sqrt\ implementation\ that\ correctly\ handles\ corner\ cases}}
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ according\ to\ https://en.cppreference.com/w/cpp/numeric/complex/sqrt}}
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00111\ EIGEN\_DEVICE\_FUNC\ std::complex<T>\ complex\_sqrt(\textcolor{keyword}{const}\ std::complex<T>\&\ z)\ \{}
+\DoxyCodeLine{00112\ \ \ \textcolor{comment}{//\ Computes\ the\ principal\ sqrt\ of\ the\ input.}}
+\DoxyCodeLine{00113\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00114\ \ \ \textcolor{comment}{//\ For\ a\ complex\ square\ root\ of\ the\ number\ x\ +\ i*y.\ We\ want\ to\ find\ real}}
+\DoxyCodeLine{00115\ \ \ \textcolor{comment}{//\ numbers\ u\ and\ v\ such\ that}}
+\DoxyCodeLine{00116\ \ \ \textcolor{comment}{//\ \ \ \ (u\ +\ i*v)\string^2\ =\ x\ +\ i*y\ \ <=>}}
+\DoxyCodeLine{00117\ \ \ \textcolor{comment}{//\ \ \ \ u\string^2\ -\/\ v\string^2\ +\ i*2*u*v\ =\ x\ +\ i*v.}}
+\DoxyCodeLine{00118\ \ \ \textcolor{comment}{//\ By\ equating\ the\ real\ and\ imaginary\ parts\ we\ get:}}
+\DoxyCodeLine{00119\ \ \ \textcolor{comment}{//\ \ \ \ u\string^2\ -\/\ v\string^2\ =\ x}}
+\DoxyCodeLine{00120\ \ \ \textcolor{comment}{//\ \ \ \ 2*u*v\ =\ y.}}
+\DoxyCodeLine{00121\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00122\ \ \ \textcolor{comment}{//\ For\ x\ >=\ 0,\ this\ has\ the\ numerically\ stable\ solution}}
+\DoxyCodeLine{00123\ \ \ \textcolor{comment}{//\ \ \ \ u\ =\ sqrt(0.5\ *\ (x\ +\ sqrt(x\string^2\ +\ y\string^2)))}}
+\DoxyCodeLine{00124\ \ \ \textcolor{comment}{//\ \ \ \ v\ =\ y\ /\ (2\ *\ u)}}
+\DoxyCodeLine{00125\ \ \ \textcolor{comment}{//\ and\ for\ x\ <\ 0,}}
+\DoxyCodeLine{00126\ \ \ \textcolor{comment}{//\ \ \ \ v\ =\ sign(y)\ *\ sqrt(0.5\ *\ (-\/x\ +\ sqrt(x\string^2\ +\ y\string^2)))}}
+\DoxyCodeLine{00127\ \ \ \textcolor{comment}{//\ \ \ \ u\ =\ y\ /\ (2\ *\ v)}}
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00129\ \ \ \textcolor{comment}{//\ Letting\ w\ =\ sqrt(0.5\ *\ (|x|\ +\ |z|)),}}
+\DoxyCodeLine{00130\ \ \ \textcolor{comment}{//\ \ \ if\ x\ ==\ 0:\ u\ =\ w,\ v\ =\ sign(y)\ *\ w}}
+\DoxyCodeLine{00131\ \ \ \textcolor{comment}{//\ \ \ if\ x\ >\ 0:\ \ u\ =\ w,\ v\ =\ y\ /\ (2\ *\ w)}}
+\DoxyCodeLine{00132\ \ \ \textcolor{comment}{//\ \ \ if\ x\ <\ 0:\ \ u\ =\ |y|\ /\ (2\ *\ w),\ v\ =\ sign(y)\ *\ w}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{const}\ T\ x\ =\ numext::real(z);}
+\DoxyCodeLine{00135\ \ \ \textcolor{keyword}{const}\ T\ y\ =\ numext::imag(z);}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{const}\ T\ zero\ =\ T(0);}
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{const}\ T\ w\ =\ numext::sqrt(T(0.5)\ *\ (numext::abs(x)\ +\ numext::hypot(x,\ y)));}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \textcolor{keywordflow}{return}}
+\DoxyCodeLine{00140\ \ \ \ \ (numext::isinf)(y)\ ?\ std::complex<T>(NumTraits<T>::infinity(),\ y)}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ :\ x\ ==\ zero\ ?\ std::complex<T>(w,\ y\ <\ zero\ ?\ -\/w\ :\ w)}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ :\ x\ >\ zero\ ?\ std::complex<T>(w,\ y\ /\ (2\ *\ w))}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ :\ std::complex<T>(numext::abs(y)\ /\ (2\ *\ w),\ y\ <\ zero\ ?\ -\/w\ :\ w\ );}
+\DoxyCodeLine{00144\ \}}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ Generic\ complex\ rsqrt\ implementation.}}
+\DoxyCodeLine{00147\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00148\ EIGEN\_DEVICE\_FUNC\ std::complex<T>\ complex\_rsqrt(\textcolor{keyword}{const}\ std::complex<T>\&\ z)\ \{}
+\DoxyCodeLine{00149\ \ \ \textcolor{comment}{//\ Computes\ the\ principal\ reciprocal\ sqrt\ of\ the\ input.}}
+\DoxyCodeLine{00150\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00151\ \ \ \textcolor{comment}{//\ For\ a\ complex\ reciprocal\ square\ root\ of\ the\ number\ z\ =\ x\ +\ i*y.\ We\ want\ to}}
+\DoxyCodeLine{00152\ \ \ \textcolor{comment}{//\ find\ real\ numbers\ u\ and\ v\ such\ that}}
+\DoxyCodeLine{00153\ \ \ \textcolor{comment}{//\ \ \ \ (u\ +\ i*v)\string^2\ =\ 1\ /\ (x\ +\ i*y)\ \ <=>}}
+\DoxyCodeLine{00154\ \ \ \textcolor{comment}{//\ \ \ \ u\string^2\ -\/\ v\string^2\ +\ i*2*u*v\ =\ x/|z|\string^2\ -\/\ i*v/|z|\string^2.}}
+\DoxyCodeLine{00155\ \ \ \textcolor{comment}{//\ By\ equating\ the\ real\ and\ imaginary\ parts\ we\ get:}}
+\DoxyCodeLine{00156\ \ \ \textcolor{comment}{//\ \ \ \ u\string^2\ -\/\ v\string^2\ =\ x/|z|\string^2}}
+\DoxyCodeLine{00157\ \ \ \textcolor{comment}{//\ \ \ \ 2*u*v\ =\ y/|z|\string^2.}}
+\DoxyCodeLine{00158\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00159\ \ \ \textcolor{comment}{//\ For\ x\ >=\ 0,\ this\ has\ the\ numerically\ stable\ solution}}
+\DoxyCodeLine{00160\ \ \ \textcolor{comment}{//\ \ \ \ u\ =\ sqrt(0.5\ *\ (x\ +\ |z|))\ /\ |z|}}
+\DoxyCodeLine{00161\ \ \ \textcolor{comment}{//\ \ \ \ v\ =\ -\/y\ /\ (2\ *\ u\ *\ |z|)}}
+\DoxyCodeLine{00162\ \ \ \textcolor{comment}{//\ and\ for\ x\ <\ 0,}}
+\DoxyCodeLine{00163\ \ \ \textcolor{comment}{//\ \ \ \ v\ =\ -\/sign(y)\ *\ sqrt(0.5\ *\ (-\/x\ +\ |z|))\ /\ |z|}}
+\DoxyCodeLine{00164\ \ \ \textcolor{comment}{//\ \ \ \ u\ =\ -\/y\ /\ (2\ *\ v\ *\ |z|)}}
+\DoxyCodeLine{00165\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00166\ \ \ \textcolor{comment}{//\ Letting\ w\ =\ sqrt(0.5\ *\ (|x|\ +\ |z|)),}}
+\DoxyCodeLine{00167\ \ \ \textcolor{comment}{//\ \ \ if\ x\ ==\ 0:\ u\ =\ w\ /\ |z|,\ v\ =\ -\/sign(y)\ *\ w\ /\ |z|}}
+\DoxyCodeLine{00168\ \ \ \textcolor{comment}{//\ \ \ if\ x\ >\ 0:\ \ u\ =\ w\ /\ |z|,\ v\ =\ -\/y\ /\ (2\ *\ w\ *\ |z|)}}
+\DoxyCodeLine{00169\ \ \ \textcolor{comment}{//\ \ \ if\ x\ <\ 0:\ \ u\ =\ |y|\ /\ (2\ *\ w\ *\ |z|),\ v\ =\ -\/sign(y)\ *\ w\ /\ |z|}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \textcolor{keyword}{const}\ T\ x\ =\ numext::real(z);}
+\DoxyCodeLine{00172\ \ \ \textcolor{keyword}{const}\ T\ y\ =\ numext::imag(z);}
+\DoxyCodeLine{00173\ \ \ \textcolor{keyword}{const}\ T\ zero\ =\ T(0);}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \textcolor{keyword}{const}\ T\ abs\_z\ =\ numext::hypot(x,\ y);}
+\DoxyCodeLine{00176\ \ \ \textcolor{keyword}{const}\ T\ w\ =\ numext::sqrt(T(0.5)\ *\ (numext::abs(x)\ +\ abs\_z));}
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{const}\ T\ woz\ =\ w\ /\ abs\_z;}
+\DoxyCodeLine{00178\ \ \ \textcolor{comment}{//\ Corner\ cases\ consistent\ with\ 1/sqrt(z)\ on\ gcc/clang.}}
+\DoxyCodeLine{00179\ \ \ \textcolor{keywordflow}{return}}
+\DoxyCodeLine{00180\ \ \ \ \ abs\_z\ ==\ zero\ ?\ std::complex<T>(NumTraits<T>::infinity(),\ NumTraits<T>::quiet\_NaN())}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ :\ ((numext::isinf)(x)\ ||\ (numext::isinf)(y))\ ?\ std::complex<T>(zero,\ zero)}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ :\ x\ ==\ zero\ ?\ std::complex<T>(woz,\ y\ <\ zero\ ?\ woz\ :\ -\/woz)}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ :\ x\ >\ zero\ ?\ std::complex<T>(woz,\ -\/y\ /\ (2\ *\ w\ *\ abs\_z))}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ :\ std::complex<T>(numext::abs(y)\ /\ (2\ *\ w\ *\ abs\_z),\ y\ <\ zero\ ?\ woz\ :\ -\/woz\ );}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00188\ EIGEN\_DEVICE\_FUNC\ std::complex<T>\ complex\_log(\textcolor{keyword}{const}\ std::complex<T>\&\ z)\ \{}
+\DoxyCodeLine{00189\ \ \ \textcolor{comment}{//\ Computes\ complex\ log.}}
+\DoxyCodeLine{00190\ \ \ T\ a\ =\ numext::abs(z);}
+\DoxyCodeLine{00191\ \ \ EIGEN\_USING\_STD(atan2);}
+\DoxyCodeLine{00192\ \ \ T\ b\ =\ atan2(z.imag(),\ z.real());}
+\DoxyCodeLine{00193\ \ \ \textcolor{keywordflow}{return}\ std::complex<T>(numext::log(a),\ b);}
+\DoxyCodeLine{00194\ \}}
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_MATHFUNCTIONSIMPL\_H}}
+
+\end{DoxyCode}

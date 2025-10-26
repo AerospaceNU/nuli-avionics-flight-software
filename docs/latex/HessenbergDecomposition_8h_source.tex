@@ -1,0 +1,380 @@
+\doxysection{Hessenberg\+Decomposition.\+h}
+\hypertarget{HessenbergDecomposition_8h_source}{}\label{HessenbergDecomposition_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/HessenbergDecomposition.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/HessenbergDecomposition.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2009\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Jitse\ Niesen\ <jitse@maths.leeds.ac.uk>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_HESSENBERGDECOMPOSITION\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_HESSENBERGDECOMPOSITION\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ \ \ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1HessenbergDecompositionMatrixHReturnType}{HessenbergDecompositionMatrixHReturnType}};}
+\DoxyCodeLine{00019\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00020\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{structEigen_1_1internal_1_1HessenbergDecompositionMatrixHReturnType}{HessenbergDecompositionMatrixHReturnType}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}>\ >}
+\DoxyCodeLine{00021\ \{}
+\DoxyCodeLine{00022\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\ ReturnType;}
+\DoxyCodeLine{00023\ \};}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \}}
+\DoxyCodeLine{00026\ \textcolor{comment}{}}
+\DoxyCodeLine{00027\ \textcolor{comment}{/**\ \(\backslash\)eigenvalues\_module\ \(\backslash\)ingroup\ Eigenvalues\_Module}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ HessenbergDecomposition}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Reduces\ a\ square\ matrix\ to\ Hessenberg\ form\ by\ an\ orthogonal\ similarity\ transformation}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ matrix\ of\ which\ we\ are\ computing\ the\ Hessenberg\ decomposition}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ This\ class\ performs\ an\ Hessenberg\ decomposition\ of\ a\ matrix\ \(\backslash\)f\$\ A\ \(\backslash\)f\$.\ In}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ the\ real\ case,\ the\ Hessenberg\ decomposition\ consists\ of\ an\ orthogonal}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *\ matrix\ \(\backslash\)f\$\ Q\ \(\backslash\)f\$\ and\ a\ Hessenberg\ matrix\ \(\backslash\)f\$\ H\ \(\backslash\)f\$\ such\ that\ \(\backslash\)f\$\ A\ =\ Q\ H}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ Q\string^T\ \(\backslash\)f\$.\ An\ orthogonal\ matrix\ is\ a\ matrix\ whose\ inverse\ equals\ its}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ transpose\ (\(\backslash\)f\$\ Q\string^\{-\/1\}\ =\ Q\string^T\ \(\backslash\)f\$).\ A\ Hessenberg\ matrix\ has\ zeros\ below\ the}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ subdiagonal,\ so\ it\ is\ almost\ upper\ triangular.\ The\ Hessenberg\ decomposition}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *\ of\ a\ complex\ matrix\ is\ \(\backslash\)f\$\ A\ =\ Q\ H\ Q\string^*\ \(\backslash\)f\$\ with\ \(\backslash\)f\$\ Q\ \(\backslash\)f\$\ unitary\ (that\ is,}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *\ \(\backslash\)f\$\ Q\string^\{-\/1\}\ =\ Q\string^*\ \(\backslash\)f\$).}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *\ Call\ the\ function\ compute()\ to\ compute\ the\ Hessenberg\ decomposition\ of\ a}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ *\ given\ matrix.\ Alternatively,\ you\ can\ use\ the}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ *\ HessenbergDecomposition(const\ MatrixType\&)\ constructor\ which\ computes\ the}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ *\ Hessenberg\ decomposition\ at\ construction\ time.\ Once\ the\ decomposition\ is}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ *\ computed,\ you\ can\ use\ the\ matrixH()\ and\ matrixQ()\ functions\ to\ construct}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ *\ the\ matrices\ H\ and\ Q\ in\ the\ decomposition.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ *\ The\ documentation\ for\ matrixH()\ contains\ an\ example\ of\ the\ typical\ use\ of}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ *\ this\ class.}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ ComplexSchur,\ class\ Tridiagonalization,\ \(\backslash\)ref\ QR\_Module\ "{}QR\ Module"{}}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_aee1724cb6418ede1a8b9045036a5a319}{HessenbergDecomposition}}}
+\DoxyCodeLine{00058\ \{}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00060\ \textcolor{comment}{}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Synonym\ for\ the\ template\ parameter\ \(\backslash\)p\ \_MatrixType.\ */}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a93a611350a7db9d1da18f2c828ecea9f}{MatrixType}};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ Size\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ SizeMinusOne\ =\ Size\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ Size\ -\/\ 1,}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ Options\ =\ MatrixType::Options,}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ MaxSize\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ MaxSizeMinusOne\ =\ MaxSize\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ MaxSize\ -\/\ 1}
+\DoxyCodeLine{00070\ \ \ \ \ \};}
+\DoxyCodeLine{00071\ \textcolor{comment}{}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Scalar\ type\ for\ matrices\ of\ type\ \#MatrixType.\ */}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a9420c36226cae7d92da8308a3f97ac2f}{Scalar}};}
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a8e287ac222f53e2c8ce82faa43e95ac6}{Index}};\ \textcolor{comment}{///<\ \(\backslash\)deprecated\ since\ Eigen\ 3.3}}
+\DoxyCodeLine{00075\ \textcolor{comment}{}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Type\ for\ vector\ of\ Householder\ coefficients.}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ is\ column\ vector\ with\ entries\ of\ type\ \#Scalar.\ The\ length\ of\ the}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ \ \ \ \ *\ vector\ is\ one\ less\ than\ the\ size\ of\ \#MatrixType,\ if\ it\ is\ a\ fixed-\/side}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ \ \ *\ type.}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ SizeMinusOne,\ 1,\ Options\ \&\ \string~RowMajor,\ MaxSizeMinusOne,\ 1>}}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a567f99f3770365777b67bf9832b6fac1}{CoeffVectorType}};}
+\DoxyCodeLine{00083\ \textcolor{comment}{}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Return\ type\ of\ matrixQ()\ */}}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<MatrixType,typename\ internal::remove\_all<typename\ CoeffVectorType::ConjugateReturnType>::type}}>\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a7c1188cd5d8f550c8941df75a50a7d08}{HouseholderSequenceType}};}
+\DoxyCodeLine{00086\ \ \ \ \ }
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1HessenbergDecompositionMatrixHReturnType}{internal::HessenbergDecompositionMatrixHReturnType<MatrixType>}}\ MatrixHReturnType;}
+\DoxyCodeLine{00088\ \textcolor{comment}{}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Default\ constructor;\ the\ decomposition\ will\ be\ computed\ later.}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ size\ \ The\ size\ of\ the\ matrix\ whose\ Hessenberg\ decomposition\ will\ be\ computed.}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ default\ constructor\ is\ useful\ in\ cases\ in\ which\ the\ user\ intends\ to}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ \ \ \ \ *\ perform\ decompositions\ via\ compute().\ \ The\ \(\backslash\)p\ size\ parameter\ is\ only}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ \ \ *\ used\ as\ a\ hint.\ It\ is\ not\ an\ error\ to\ give\ a\ wrong\ \(\backslash\)p\ size,\ but\ it\ may}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ \ \ *\ impair\ performance.}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute()\ for\ an\ example.}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_aee1724cb6418ede1a8b9045036a5a319}{HessenbergDecomposition}}(\mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a8e287ac222f53e2c8ce82faa43e95ac6}{Index}}\ size\ =\ Size==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ 2\ :\ Size)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ :\ m\_matrix(size,size),}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ m\_temp(size),}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ m\_isInitialized(false)}
+\DoxyCodeLine{00104\ \ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(size>1)}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ m\_hCoeffs.resize(size-\/1);}
+\DoxyCodeLine{00107\ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \textcolor{comment}{}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor;\ computes\ Hessenberg\ decomposition\ of\ given\ matrix.}}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matrix\ \ Square\ matrix\ whose\ Hessenberg\ decomposition\ is\ to\ be\ computed.}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ constructor\ calls\ compute()\ to\ compute\ the\ Hessenberg}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \ \ *\ decomposition.}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ matrixH()\ for\ an\ example.}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ InputType>}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_acd22602a3e3e5a02f79990ba1e445dc9}{HessenbergDecomposition}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase<InputType>}}\&\ matrix)}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ :\ m\_matrix(matrix.derived()),}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ m\_temp(matrix.rows()),}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ m\_isInitialized(false)}
+\DoxyCodeLine{00123\ \ \ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}}()<2)}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ m\_isInitialized\ =\ true;}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ return;}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ m\_hCoeffs.resize(matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}}()-\/1,1);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \_compute(m\_matrix,\ m\_hCoeffs,\ m\_temp);}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00132\ \ \ \ \ \}}
+\DoxyCodeLine{00133\ \textcolor{comment}{}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Computes\ Hessenberg\ decomposition\ of\ given\ matrix.}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matrix\ \ Square\ matrix\ whose\ Hessenberg\ decomposition\ is\ to\ be\ computed.}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \ \ \ Reference\ to\ \(\backslash\)c\ *this}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ Hessenberg\ decomposition\ is\ computed\ by\ bringing\ the\ columns\ of\ the}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ \ \ \ \ *\ matrix\ successively\ in\ the\ required\ form\ using\ Householder\ reflections}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ \ \ \ *\ (see,\ e.g.,\ Algorithm\ 7.4.2\ in\ Golub\ \(\backslash\)\&\ Van\ Loan,\ <i>\%Matrix}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ \ \ \ \ *\ Computations</i>).\ The\ cost\ is\ \(\backslash\)f\$\ 10n\string^3/3\ \(\backslash\)f\$\ flops,\ where\ \(\backslash\)f\$\ n\ \(\backslash\)f\$}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ \ \ \ *\ denotes\ the\ size\ of\ the\ given\ matrix.}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ method\ reuses\ of\ the\ allocated\ data\ in\ the\ HessenbergDecomposition}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ \ \ \ *\ object.}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ HessenbergDecomposition\_compute.cpp}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ HessenbergDecomposition\_compute.out}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ InputType>}
+\DoxyCodeLine{00152\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_aee1724cb6418ede1a8b9045036a5a319}{HessenbergDecomposition}}\&\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a334e62ab2a1d99e5a3a4f5de76207840}{compute}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase<InputType>}}\&\ matrix)}
+\DoxyCodeLine{00153\ \ \ \ \ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ m\_matrix\ =\ matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_ab4cf3e6bb046a94a46b69b857bd3dbc9}{derived}}();}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}}()<2)}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ m\_hCoeffs.resize(matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}}()-\/1,1);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \_compute(m\_matrix,\ m\_hCoeffs,\ m\_temp);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00164\ \ \ \ \ \}}
+\DoxyCodeLine{00165\ \textcolor{comment}{}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ Householder\ coefficients.}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ const\ reference\ to\ the\ vector\ of\ Householder\ coefficients}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ HessenbergDecomposition(const\ MatrixType\&)}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ \ \ \ *\ or\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ \ *\ before\ to\ compute\ the\ Hessenberg\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ Householder\ coefficients\ allow\ the\ reconstruction\ of\ the\ matrix}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ Q\ \(\backslash\)f\$\ in\ the\ Hessenberg\ decomposition\ from\ the\ packed\ data.}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00177\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ packedMatrix(),\ \(\backslash\)ref\ Householder\_Module\ "{}Householder\ module"{}}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00179\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a567f99f3770365777b67bf9832b6fac1}{CoeffVectorType}}\&\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_af689fda2463dfc963ac59c123f6bb24d}{householderCoefficients}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00180\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}HessenbergDecomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_hCoeffs;}
+\DoxyCodeLine{00183\ \ \ \ \ \}}
+\DoxyCodeLine{00184\ \textcolor{comment}{}}
+\DoxyCodeLine{00185\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ internal\ representation\ of\ the\ decomposition}}
+\DoxyCodeLine{00186\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00187\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ const\ reference\ to\ a\ matrix\ with\ the\ internal\ representation}}
+\DoxyCodeLine{00188\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ of\ the\ decomposition.}}
+\DoxyCodeLine{00189\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00190\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ HessenbergDecomposition(const\ MatrixType\&)}}
+\DoxyCodeLine{00191\ \textcolor{comment}{\ \ \ \ \ \ *\ or\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called}}
+\DoxyCodeLine{00192\ \textcolor{comment}{\ \ \ \ \ \ *\ before\ to\ compute\ the\ Hessenberg\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00193\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00194\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ returned\ matrix\ contains\ the\ following\ information:}}
+\DoxyCodeLine{00195\ \textcolor{comment}{\ \ \ \ \ \ *\ \ -\/\ the\ upper\ part\ and\ lower\ sub-\/diagonal\ represent\ the\ Hessenberg\ matrix\ H}}
+\DoxyCodeLine{00196\ \textcolor{comment}{\ \ \ \ \ \ *\ \ -\/\ the\ rest\ of\ the\ lower\ part\ contains\ the\ Householder\ vectors\ that,\ combined\ with}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ Householder\ coefficients\ returned\ by\ householderCoefficients(),}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ allows\ to\ reconstruct\ the\ matrix\ Q\ as}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ Q\ =\ H\_\{N-\/1\}\ \(\backslash\)ldots\ H\_1\ H\_0\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ Here,\ the\ matrices\ \(\backslash\)f\$\ H\_i\ \(\backslash\)f\$\ are\ the\ Householder\ transformations}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ H\_i\ =\ (I\ -\/\ h\_i\ v\_i\ v\_i\string^T)\ \(\backslash\)f\$}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ where\ \(\backslash\)f\$\ h\_i\ \(\backslash\)f\$\ is\ the\ \(\backslash\)f\$\ i\ \(\backslash\)f\$th\ Householder\ coefficient\ and}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \(\backslash\)f\$\ v\_i\ \(\backslash\)f\$\ is\ the\ Householder\ vector\ defined\ by}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ v\_i\ =\ [\ 0,\ \(\backslash\)ldots,\ 0,\ 1,\ M(i+2,i),\ \(\backslash\)ldots,\ M(N-\/1,i)\ ]\string^T\ \(\backslash\)f\$}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ with\ M\ the\ matrix\ returned\ by\ this\ function.}}
+\DoxyCodeLine{00206\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00207\ \textcolor{comment}{\ \ \ \ \ \ *\ See\ LAPACK\ for\ further\ details\ on\ this\ packed\ storage.}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ HessenbergDecomposition\_packedMatrix.cpp}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ HessenbergDecomposition\_packedMatrix.out}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ householderCoefficients()}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a93a611350a7db9d1da18f2c828ecea9f}{MatrixType}}\&\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a3a35a592a13172dbdf4c28c74a27ca3d}{packedMatrix}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00215\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}HessenbergDecomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_matrix;}
+\DoxyCodeLine{00218\ \ \ \ \ \}}
+\DoxyCodeLine{00219\ \textcolor{comment}{}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Reconstructs\ the\ orthogonal\ matrix\ Q\ in\ the\ decomposition}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00222\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ object\ representing\ the\ matrix\ Q}}
+\DoxyCodeLine{00223\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00224\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ HessenbergDecomposition(const\ MatrixType\&)}}
+\DoxyCodeLine{00225\ \textcolor{comment}{\ \ \ \ \ \ *\ or\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called}}
+\DoxyCodeLine{00226\ \textcolor{comment}{\ \ \ \ \ \ *\ before\ to\ compute\ the\ Hessenberg\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00227\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ function\ returns\ a\ light-\/weight\ object\ of\ template\ class}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ \ \ *\ HouseholderSequence.\ You\ can\ either\ apply\ it\ directly\ to\ a\ matrix\ or}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ \ \ \ \ *\ you\ can\ convert\ it\ to\ a\ matrix\ of\ type\ \#MatrixType.}}
+\DoxyCodeLine{00231\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00232\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ matrixH()\ for\ an\ example,\ class\ HouseholderSequence}}
+\DoxyCodeLine{00233\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00234\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a7c1188cd5d8f550c8941df75a50a7d08}{HouseholderSequenceType}}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a346441e4902a58d43d698ac3da6ff791}{matrixQ}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00235\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}HessenbergDecomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a7c1188cd5d8f550c8941df75a50a7d08}{HouseholderSequenceType}}(m\_matrix,\ m\_hCoeffs.conjugate())}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ .setLength(m\_matrix.rows()\ -\/\ 1)}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \ \ \ .setShift(1);}
+\DoxyCodeLine{00240\ \ \ \ \ \}}
+\DoxyCodeLine{00241\ \textcolor{comment}{}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ the\ Hessenberg\ matrix\ H\ in\ the\ decomposition}}
+\DoxyCodeLine{00243\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00244\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ expression\ object\ representing\ the\ matrix\ H}}
+\DoxyCodeLine{00245\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00246\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ HessenbergDecomposition(const\ MatrixType\&)}}
+\DoxyCodeLine{00247\ \textcolor{comment}{\ \ \ \ \ \ *\ or\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called}}
+\DoxyCodeLine{00248\ \textcolor{comment}{\ \ \ \ \ \ *\ before\ to\ compute\ the\ Hessenberg\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00249\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00250\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ object\ returned\ by\ this\ function\ constructs\ the\ Hessenberg\ matrix\ H}}
+\DoxyCodeLine{00251\ \textcolor{comment}{\ \ \ \ \ \ *\ when\ it\ is\ assigned\ to\ a\ matrix\ or\ otherwise\ evaluated.\ The\ matrix\ H\ is}}
+\DoxyCodeLine{00252\ \textcolor{comment}{\ \ \ \ \ \ *\ constructed\ from\ the\ packed\ matrix\ as\ returned\ by\ packedMatrix():\ The}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ \ \ \ \ *\ upper\ part\ (including\ the\ subdiagonal)\ of\ the\ packed\ matrix\ contains}}
+\DoxyCodeLine{00254\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ matrix\ H.\ It\ may\ sometimes\ be\ better\ to\ directly\ use\ the\ packed}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ \ \ \ *\ matrix\ instead\ of\ constructing\ the\ matrix\ H.}}
+\DoxyCodeLine{00256\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00257\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ HessenbergDecomposition\_matrixH.cpp}}
+\DoxyCodeLine{00258\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ HessenbergDecomposition\_matrixH.out}}
+\DoxyCodeLine{00259\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00260\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ matrixQ(),\ packedMatrix()}}
+\DoxyCodeLine{00261\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00262\ \ \ \ \ MatrixHReturnType\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a8e781d2e22a2304647bcf0ae913cc8ea}{matrixH}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00263\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}HessenbergDecomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MatrixHReturnType(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00266\ \ \ \ \ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<\mbox{\hyperlink{classEigen_1_1Product}{Scalar}},\ 1,\ Size,\ int(Options)\ |\ int(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}),\ 1,\ MaxSize>\ VectorType;}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ \_compute(\mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ matA,\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a567f99f3770365777b67bf9832b6fac1}{CoeffVectorType}}\&\ hCoeffs,\ VectorType\&\ temp);}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00275\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\ m\_matrix;}
+\DoxyCodeLine{00276\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a567f99f3770365777b67bf9832b6fac1}{CoeffVectorType}}\ m\_hCoeffs;}
+\DoxyCodeLine{00277\ \ \ \ \ VectorType\ m\_temp;}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_isInitialized;}
+\DoxyCodeLine{00279\ \};}
+\DoxyCodeLine{00280\ \textcolor{comment}{}}
+\DoxyCodeLine{00281\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00282\ \textcolor{comment}{\ \ *\ Performs\ a\ tridiagonal\ decomposition\ of\ \(\backslash\)a\ matA\ in\ place.}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ *\ \(\backslash\)param\ matA\ the\ input\ selfadjoint\ matrix}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ *\ \(\backslash\)param\ hCoeffs\ returned\ Householder\ coefficients}}
+\DoxyCodeLine{00286\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ \ *\ The\ result\ is\ written\ in\ the\ lower\ triangular\ part\ of\ \(\backslash\)a\ matA.}}
+\DoxyCodeLine{00288\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00289\ \textcolor{comment}{\ \ *\ Implemented\ from\ Golub's\ "{}\%Matrix\ Computations"{},\ algorithm\ 8.3.1.}}
+\DoxyCodeLine{00290\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00291\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ packedMatrix()}}
+\DoxyCodeLine{00292\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00293\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00294\ \textcolor{keywordtype}{void}\ HessenbergDecomposition<MatrixType>::\_compute(MatrixType\&\ matA,\ CoeffVectorType\&\ hCoeffs,\ VectorType\&\ temp)}
+\DoxyCodeLine{00295\ \{}
+\DoxyCodeLine{00296\ \ \ eigen\_assert(matA.rows()==matA.cols());}
+\DoxyCodeLine{00297\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ matA.rows();}
+\DoxyCodeLine{00298\ \ \ temp.resize(n);}
+\DoxyCodeLine{00299\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i<n-\/1;\ ++i)}
+\DoxyCodeLine{00300\ \ \ \{}
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{comment}{//\ let's\ consider\ the\ vector\ v\ =\ i-\/th\ column\ starting\ at\ position\ i+1}}
+\DoxyCodeLine{00302\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ remainingSize\ =\ n-\/i-\/1;}
+\DoxyCodeLine{00303\ \ \ \ \ RealScalar\ beta;}
+\DoxyCodeLine{00304\ \ \ \ \ Scalar\ h;}
+\DoxyCodeLine{00305\ \ \ \ \ matA.col(i).tail(remainingSize).makeHouseholderInPlace(h,\ beta);}
+\DoxyCodeLine{00306\ \ \ \ \ matA.col(i).coeffRef(i+1)\ =\ beta;}
+\DoxyCodeLine{00307\ \ \ \ \ hCoeffs.coeffRef(i)\ =\ h;}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{comment}{//\ Apply\ similarity\ transformation\ to\ remaining\ columns,}}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{comment}{//\ i.e.,\ compute\ A\ =\ H\ A\ H'}}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ \textcolor{comment}{//\ A\ =\ H\ A}}
+\DoxyCodeLine{00313\ \ \ \ \ matA.bottomRightCorner(remainingSize,\ remainingSize)}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ .applyHouseholderOnTheLeft(matA.col(i).tail(remainingSize-\/1),\ h,\ \&temp.coeffRef(0));}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{comment}{//\ A\ =\ A\ H'}}
+\DoxyCodeLine{00317\ \ \ \ \ matA.rightCols(remainingSize)}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ .applyHouseholderOnTheRight(matA.col(i).tail(remainingSize-\/1),\ numext::conj(h),\ \&temp.coeffRef(0));}
+\DoxyCodeLine{00319\ \ \ \}}
+\DoxyCodeLine{00320\ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00323\ \textcolor{comment}{}}
+\DoxyCodeLine{00324\ \textcolor{comment}{/**\ \(\backslash\)eigenvalues\_module\ \(\backslash\)ingroup\ Eigenvalues\_Module}}
+\DoxyCodeLine{00325\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00326\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00327\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Expression\ type\ for\ return\ value\ of\ HessenbergDecomposition::matrixH()}}
+\DoxyCodeLine{00328\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ MatrixType\ type\ of\ matrix\ in\ the\ Hessenberg\ decomposition}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00331\ \textcolor{comment}{\ \ *\ Objects\ of\ this\ type\ represent\ the\ Hessenberg\ matrix\ in\ the\ Hessenberg}}
+\DoxyCodeLine{00332\ \textcolor{comment}{\ \ *\ decomposition\ of\ some\ matrix.\ The\ object\ holds\ a\ reference\ to\ the}}
+\DoxyCodeLine{00333\ \textcolor{comment}{\ \ *\ HessenbergDecomposition\ class\ until\ the\ it\ is\ assigned\ or\ evaluated\ for}}
+\DoxyCodeLine{00334\ \textcolor{comment}{\ \ *\ some\ other\ reason\ (the\ reference\ should\ remain\ valid\ during\ the\ life\ time}}
+\DoxyCodeLine{00335\ \textcolor{comment}{\ \ *\ of\ this\ object).\ This\ class\ is\ the\ return\ type\ of}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ \ *\ HessenbergDecomposition::matrixH();\ there\ is\ probably\ no\ other\ use\ for\ this}}
+\DoxyCodeLine{00337\ \textcolor{comment}{\ \ *\ class.}}
+\DoxyCodeLine{00338\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00339\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1HessenbergDecompositionMatrixHReturnType_aa6d46d84c1343c964c50457ca4ddf9fa}{HessenbergDecompositionMatrixHReturnType}}}
+\DoxyCodeLine{00340\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1ReturnByValue}{ReturnByValue}}<HessenbergDecompositionMatrixHReturnType<MatrixType>\ >}
+\DoxyCodeLine{00341\ \{}
+\DoxyCodeLine{00342\ \ \ \textcolor{keyword}{public}:\textcolor{comment}{}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor.}}
+\DoxyCodeLine{00344\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ hess\ \ Hessenberg\ decomposition}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00347\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1HessenbergDecompositionMatrixHReturnType_aa6d46d84c1343c964c50457ca4ddf9fa}{HessenbergDecompositionMatrixHReturnType}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1HessenbergDecomposition}{HessenbergDecomposition<MatrixType>}}\&\ hess)\ :\ m\_hess(hess)\ \{\ \}}
+\DoxyCodeLine{00348\ \textcolor{comment}{}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Hessenberg\ matrix\ in\ decomposition.}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[out]\ result\ \ Hessenberg\ matrix\ in\ decomposition\ \(\backslash\)p\ hess\ which}}
+\DoxyCodeLine{00352\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ was\ passed\ to\ the\ constructor}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ResultType>}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{structEigen_1_1internal_1_1HessenbergDecompositionMatrixHReturnType_a7f1d84113072d2d2e507d3821ff9f15c}{evalTo}}(ResultType\&\ result)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00356\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ result\ =\ m\_hess.packedMatrix();}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ result.rows();}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (n>2)}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ result.bottomLeftCorner(n-\/2,\ n-\/2).template\ triangularView<Lower>().setZero();}
+\DoxyCodeLine{00361\ \ \ \ \ \}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_hess.\mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a3a35a592a13172dbdf4c28c74a27ca3d}{packedMatrix}}().rows();\ \}}
+\DoxyCodeLine{00364\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_hess.\mbox{\hyperlink{classEigen_1_1HessenbergDecomposition_a3a35a592a13172dbdf4c28c74a27ca3d}{packedMatrix}}().cols();\ \}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00367\ \ \ \ \ \textcolor{keyword}{const}\ HessenbergDecomposition<MatrixType>\&\ m\_hess;}
+\DoxyCodeLine{00368\ \};}
+\DoxyCodeLine{00369\ }
+\DoxyCodeLine{00370\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_HESSENBERGDECOMPOSITION\_H}}
+
+\end{DoxyCode}

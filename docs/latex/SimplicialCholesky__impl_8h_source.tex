@@ -1,0 +1,180 @@
+\doxysection{Simplicial\+Cholesky\+\_\+impl.\+h}
+\hypertarget{SimplicialCholesky__impl_8h_source}{}\label{SimplicialCholesky__impl_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCholesky/SimplicialCholesky\_impl.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCholesky/SimplicialCholesky\_impl.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2012\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00011\ \textcolor{comment}{NOTE:\ these\ functions\ have\ been\ adapted\ from\ the\ LDL\ library:}}
+\DoxyCodeLine{00012\ \textcolor{comment}{}}
+\DoxyCodeLine{00013\ \textcolor{comment}{LDL\ Copyright\ (c)\ 2005\ by\ Timothy\ A.\ Davis.\ \ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{}}
+\DoxyCodeLine{00015\ \textcolor{comment}{The\ author\ of\ LDL,\ Timothy\ A.\ Davis.,\ has\ executed\ a\ license\ with\ Google\ LLC}}
+\DoxyCodeLine{00016\ \textcolor{comment}{to\ permit\ distribution\ of\ this\ code\ and\ derivative\ works\ as\ part\ of\ Eigen\ under}}
+\DoxyCodeLine{00017\ \textcolor{comment}{the\ Mozilla\ Public\ License\ v.\ 2.0,\ as\ stated\ at\ the\ top\ of\ this\ file.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SIMPLICIAL\_CHOLESKY\_IMPL\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ EIGEN\_SIMPLICIAL\_CHOLESKY\_IMPL\_H}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00026\ \textcolor{keywordtype}{void}\ SimplicialCholeskyBase<Derived>::analyzePattern\_preordered(\textcolor{keyword}{const}\ CholMatrixType\&\ ap,\ \textcolor{keywordtype}{bool}\ doLDLT)}
+\DoxyCodeLine{00027\ \{}
+\DoxyCodeLine{00028\ \ \ \textcolor{keyword}{const}\ StorageIndex\ size\ =\ StorageIndex(ap.rows());}
+\DoxyCodeLine{00029\ \ \ m\_matrix.resize(size,\ size);}
+\DoxyCodeLine{00030\ \ \ m\_parent.resize(size);}
+\DoxyCodeLine{00031\ \ \ m\_nonZerosPerCol.resize(size);}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(StorageIndex,\ tags,\ size,\ 0);}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \ \ \textcolor{keywordflow}{for}(StorageIndex\ k\ =\ 0;\ k\ <\ size;\ ++k)}
+\DoxyCodeLine{00036\ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{comment}{/*\ L(k,:)\ pattern:\ all\ nodes\ reachable\ in\ etree\ from\ nz\ in\ A(0:k-\/1,k)\ */}}
+\DoxyCodeLine{00038\ \ \ \ \ m\_parent[k]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ parent\ of\ k\ is\ not\ yet\ known\ */}}
+\DoxyCodeLine{00039\ \ \ \ \ tags[k]\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ mark\ node\ k\ as\ visited\ */}}
+\DoxyCodeLine{00040\ \ \ \ \ m\_nonZerosPerCol[k]\ =\ 0;\ \ \ \ \ \ \textcolor{comment}{/*\ count\ of\ nonzeros\ in\ column\ k\ of\ L\ */}}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{typename}\ CholMatrixType::InnerIterator\ it(ap,k);\ it;\ ++it)}
+\DoxyCodeLine{00042\ \ \ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ StorageIndex\ i\ =\ it.index();}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i\ <\ k)}
+\DoxyCodeLine{00045\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ follow\ path\ from\ i\ to\ root\ of\ etree,\ stop\ at\ flagged\ node\ */}}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ tags[i]\ !=\ k;\ i\ =\ m\_parent[i])}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ find\ parent\ of\ i\ if\ not\ yet\ determined\ */}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_parent[i]\ ==\ -\/1)}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ m\_parent[i]\ =\ k;}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ m\_nonZerosPerCol[i]++;\ \ \ \ \ \ \ \ \textcolor{comment}{/*\ L\ (k,i)\ is\ nonzero\ */}}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ \ \ \ \ tags[i]\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ mark\ i\ as\ visited\ */}}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \ \ \}}
+\DoxyCodeLine{00057\ \ \ \}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \textcolor{comment}{/*\ construct\ Lp\ index\ array\ from\ m\_nonZerosPerCol\ column\ counts\ */}}
+\DoxyCodeLine{00060\ \ \ StorageIndex*\ Lp\ =\ m\_matrix.outerIndexPtr();}
+\DoxyCodeLine{00061\ \ \ Lp[0]\ =\ 0;}
+\DoxyCodeLine{00062\ \ \ \textcolor{keywordflow}{for}(StorageIndex\ k\ =\ 0;\ k\ <\ size;\ ++k)}
+\DoxyCodeLine{00063\ \ \ \ \ Lp[k+1]\ =\ Lp[k]\ +\ m\_nonZerosPerCol[k]\ +\ (doLDLT\ ?\ 0\ :\ 1);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ m\_matrix.resizeNonZeros(Lp[size]);}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ m\_isInitialized\ \ \ \ \ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00068\ \ \ m\_info\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00069\ \ \ m\_analysisIsOk\ \ \ \ \ \ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00070\ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00075\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ DoLDLT>}
+\DoxyCodeLine{00076\ \textcolor{keywordtype}{void}\ SimplicialCholeskyBase<Derived>::factorize\_preordered(\textcolor{keyword}{const}\ CholMatrixType\&\ ap)}
+\DoxyCodeLine{00077\ \{}
+\DoxyCodeLine{00078\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ eigen\_assert(m\_analysisIsOk\ \&\&\ \textcolor{stringliteral}{"{}You\ must\ first\ call\ analyzePattern()"{}});}
+\DoxyCodeLine{00081\ \ \ eigen\_assert(ap.rows()==ap.cols());}
+\DoxyCodeLine{00082\ \ \ eigen\_assert(m\_parent.size()==ap.rows());}
+\DoxyCodeLine{00083\ \ \ eigen\_assert(m\_nonZerosPerCol.size()==ap.rows());}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \textcolor{keyword}{const}\ StorageIndex\ size\ =\ StorageIndex(ap.rows());}
+\DoxyCodeLine{00086\ \ \ \textcolor{keyword}{const}\ StorageIndex*\ Lp\ =\ m\_matrix.outerIndexPtr();}
+\DoxyCodeLine{00087\ \ \ StorageIndex*\ Li\ =\ m\_matrix.innerIndexPtr();}
+\DoxyCodeLine{00088\ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}*\ Lx\ =\ m\_matrix.valuePtr();}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(\mbox{\hyperlink{classEigen_1_1Product}{Scalar}},\ y,\ size,\ 0);}
+\DoxyCodeLine{00091\ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(StorageIndex,\ \ pattern,\ size,\ 0);}
+\DoxyCodeLine{00092\ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(StorageIndex,\ \ tags,\ size,\ 0);}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \textcolor{keywordtype}{bool}\ ok\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00095\ \ \ m\_diag.resize(DoLDLT\ ?\ size\ :\ 0);}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \textcolor{keywordflow}{for}(StorageIndex\ k\ =\ 0;\ k\ <\ size;\ ++k)}
+\DoxyCodeLine{00098\ \ \ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{comment}{//\ compute\ nonzero\ pattern\ of\ kth\ row\ of\ L,\ in\ topological\ order}}
+\DoxyCodeLine{00100\ \ \ \ \ y[k]\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Y(0:k)\ is\ now\ all\ zero}}
+\DoxyCodeLine{00101\ \ \ \ \ StorageIndex\ top\ =\ size;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ stack\ for\ pattern\ is\ empty}}
+\DoxyCodeLine{00102\ \ \ \ \ tags[k]\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ mark\ node\ k\ as\ visited}}
+\DoxyCodeLine{00103\ \ \ \ \ m\_nonZerosPerCol[k]\ =\ 0;\ \ \ \ \ \ \ \ \textcolor{comment}{//\ count\ of\ nonzeros\ in\ column\ k\ of\ L}}
+\DoxyCodeLine{00104\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{typename}\ CholMatrixType::InnerIterator\ it(ap,k);\ it;\ ++it)}
+\DoxyCodeLine{00105\ \ \ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ StorageIndex\ i\ =\ it.index();}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i\ <=\ k)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ y[i]\ +=\ numext::conj(it.value());\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ scatter\ A(i,k)\ into\ Y\ (sum\ duplicates)\ */}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ len;}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(len\ =\ 0;\ tags[i]\ !=\ k;\ i\ =\ m\_parent[i])}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ pattern[len++]\ =\ i;\ \ \ \ \ \textcolor{comment}{/*\ L(k,i)\ is\ nonzero\ */}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ tags[i]\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ mark\ i\ as\ visited\ */}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(len\ >\ 0)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ pattern[-\/-\/top]\ =\ pattern[-\/-\/len];}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{comment}{/*\ compute\ numerical\ values\ kth\ row\ of\ L\ (a\ sparse\ triangular\ solve)\ */}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ RealScalar\ d\ =\ numext::real(y[k])\ *\ m\_shiftScale\ +\ m\_shiftOffset;\ \ \ \ \textcolor{comment}{//\ get\ D(k,k),\ apply\ the\ shift\ function,\ and\ clear\ Y(k)}}
+\DoxyCodeLine{00124\ \ \ \ \ y[k]\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0);}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{for}(;\ top\ <\ size;\ ++top)}
+\DoxyCodeLine{00126\ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ pattern[top];\ \ \ \ \ \ \ \textcolor{comment}{/*\ pattern[top:n-\/1]\ is\ pattern\ of\ L(:,k)\ */}}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ yi\ =\ y[i];\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ get\ and\ clear\ Y(i)\ */}}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ y[i]\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0);}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{comment}{/*\ the\ nonzero\ entry\ L(k,i)\ */}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ l\_ki;}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(DoLDLT)}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ l\_ki\ =\ yi\ /\ numext::real(m\_diag[i]);}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ yi\ =\ l\_ki\ =\ yi\ /\ Lx[Lp[i]];}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p2\ =\ Lp[i]\ +\ m\_nonZerosPerCol[i];}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p;}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ Lp[i]\ +\ (DoLDLT\ ?\ 0\ :\ 1);\ p\ <\ p2;\ ++p)}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ y[Li[p]]\ -\/=\ numext::conj(Lx[p])\ *\ yi;}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ d\ -\/=\ numext::real(l\_ki\ *\ numext::conj(yi));}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ Li[p]\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ store\ L(k,i)\ in\ column\ form\ of\ L\ */}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ Lx[p]\ =\ l\_ki;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ ++m\_nonZerosPerCol[i];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ increment\ count\ of\ nonzeros\ in\ col\ i\ */}}
+\DoxyCodeLine{00146\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordflow}{if}(DoLDLT)}
+\DoxyCodeLine{00148\ \ \ \ \ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ m\_diag[k]\ =\ d;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(d\ ==\ RealScalar(0))}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ ok\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ failure,\ D(k,k)\ is\ zero\ */}}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00157\ \ \ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p\ =\ Lp[k]\ +\ m\_nonZerosPerCol[k]++;}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ Li[p]\ =\ k\ ;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ store\ L(k,k)\ =\ sqrt\ (d)\ in\ column\ k\ */}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(d\ <=\ RealScalar(0))\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ ok\ =\ \textcolor{keyword}{false};\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ failure,\ matrix\ is\ not\ positive\ definite\ */}}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ Lx[p]\ =\ sqrt(d)\ ;}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ m\_info\ =\ ok\ ?\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ :\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};}
+\DoxyCodeLine{00169\ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00170\ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SIMPLICIAL\_CHOLESKY\_IMPL\_H}}
+
+\end{DoxyCode}

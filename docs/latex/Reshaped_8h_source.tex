@@ -1,0 +1,460 @@
+\doxysection{Reshaped.\+h}
+\hypertarget{Reshaped_8h_source}{}\label{Reshaped_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Reshaped.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Reshaped.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2017\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ yoco\ <peter.xiau@gmail.com>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_RESHAPED\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_RESHAPED\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ \textcolor{comment}{}}
+\DoxyCodeLine{00016\ \textcolor{comment}{/**\ \(\backslash\)class\ Reshaped}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Expression\ of\ a\ fixed-\/size\ or\ dynamic-\/size\ reshape}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ XprType\ the\ type\ of\ the\ expression\ in\ which\ we\ are\ taking\ a\ reshape}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Rows\ the\ number\ of\ rows\ of\ the\ reshape\ we\ are\ taking\ at\ compile\ time\ (optional)}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Cols\ the\ number\ of\ columns\ of\ the\ reshape\ we\ are\ taking\ at\ compile\ time\ (optional)}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Order\ can\ be\ ColMajor\ or\ RowMajor,\ default\ is\ ColMajor.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ *\ This\ class\ represents\ an\ expression\ of\ either\ a\ fixed-\/size\ or\ dynamic-\/size\ reshape.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ *\ It\ is\ the\ return\ type\ of\ DenseBase::reshaped(NRowsType,NColsType)\ and}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ *\ most\ of\ the\ time\ this\ is\ the\ only\ way\ it\ is\ used.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ *\ However,\ in\ C++98,\ if\ you\ want\ to\ directly\ maniputate\ reshaped\ expressions,}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ *\ for\ instance\ if\ you\ want\ to\ write\ a\ function\ returning\ such\ an\ expression,\ you}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ *\ will\ need\ to\ use\ this\ class.\ In\ C++11,\ it\ is\ advised\ to\ use\ the\ \(\backslash\)em\ auto}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *\ keyword\ for\ such\ use\ cases.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ *\ Here\ is\ an\ example\ illustrating\ the\ dynamic\ case:}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ \(\backslash\)include\ class\_Reshaped.cpp}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ Output:\ \(\backslash\)verbinclude\ class\_Reshaped.out}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ Here\ is\ an\ example\ illustrating\ the\ fixed-\/size\ case:}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ \(\backslash\)include\ class\_FixedReshaped.cpp}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ Output:\ \(\backslash\)verbinclude\ class\_FixedReshaped.out}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ DenseBase::reshaped(NRowsType,NColsType)}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00049\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped}}<XprType,\ Rows,\ Cols,\ Order>\ >\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<XprType>}
+\DoxyCodeLine{00050\ \{}
+\DoxyCodeLine{00051\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::Scalar}}\ Scalar;}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::StorageKind}}\ StorageKind;}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::XprKind}}\ XprKind;}
+\DoxyCodeLine{00054\ \ \ \textcolor{keyword}{enum}\{}
+\DoxyCodeLine{00055\ \ \ \ \ MatrixRows\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::RowsAtCompileTime}},}
+\DoxyCodeLine{00056\ \ \ \ \ MatrixCols\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::ColsAtCompileTime}},}
+\DoxyCodeLine{00057\ \ \ \ \ RowsAtCompileTime\ =\ Rows,}
+\DoxyCodeLine{00058\ \ \ \ \ ColsAtCompileTime\ =\ Cols,}
+\DoxyCodeLine{00059\ \ \ \ \ MaxRowsAtCompileTime\ =\ Rows,}
+\DoxyCodeLine{00060\ \ \ \ \ MaxColsAtCompileTime\ =\ Cols,}
+\DoxyCodeLine{00061\ \ \ \ \ XpxStorageOrder\ =\ ((int(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::Flags}})\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ==\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},}
+\DoxyCodeLine{00062\ \ \ \ \ ReshapedStorageOrder\ =\ (RowsAtCompileTime\ ==\ 1\ \&\&\ ColsAtCompileTime\ !=\ 1)\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (ColsAtCompileTime\ ==\ 1\ \&\&\ RowsAtCompileTime\ !=\ 1)\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ XpxStorageOrder,}
+\DoxyCodeLine{00065\ \ \ \ \ HasSameStorageOrderAsXprType\ =\ (ReshapedStorageOrder\ ==\ XpxStorageOrder),}
+\DoxyCodeLine{00066\ \ \ \ \ InnerSize\ =\ (ReshapedStorageOrder==\textcolor{keywordtype}{int}(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}))\ ?\ int(ColsAtCompileTime)\ :\ int(RowsAtCompileTime),}
+\DoxyCodeLine{00067\ \ \ \ \ InnerStrideAtCompileTime\ =\ HasSameStorageOrderAsXprType}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ int(inner\_stride\_at\_compile\_time<XprType>::ret)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00070\ \ \ \ \ OuterStrideAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ HasDirectAccess\ =\ internal::has\_direct\_access<XprType>::ret}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (Order==int(XpxStorageOrder))}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ ((\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<XprType>::Flags}}\&\mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}})==\mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}),}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ MaskPacketAccessBit\ =\ (InnerSize\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ||\ (InnerSize\ \%\ packet\_traits<Scalar>::size)\ ==\ 0)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (InnerStrideAtCompileTime\ ==\ 1)}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ \mbox{\hyperlink{group__flags_ga1a306a438e1ab074e8be59512e887b9f}{PacketAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00079\ \ \ \ \ \textcolor{comment}{//MaskAlignedBit\ =\ ((OuterStrideAtCompileTime!=Dynamic)\ \&\&\ (((OuterStrideAtCompileTime\ *\ int(sizeof(Scalar)))\ \%\ 16)\ ==\ 0))\ ?\ AlignedBit\ :\ 0,}}
+\DoxyCodeLine{00080\ \ \ \ \ FlagsLinearAccessBit\ =\ (RowsAtCompileTime\ ==\ 1\ ||\ ColsAtCompileTime\ ==\ 1)\ ?\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00081\ \ \ \ \ FlagsLvalueBit\ =\ is\_lvalue<XprType>::value\ ?\ \mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}}\ :\ 0,}
+\DoxyCodeLine{00082\ \ \ \ \ FlagsRowMajorBit\ =\ (ReshapedStorageOrder==int(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}))\ ?\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ :\ 0,}
+\DoxyCodeLine{00083\ \ \ \ \ FlagsDirectAccessBit\ =\ HasDirectAccess\ ?\ \mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00084\ \ \ \ \ Flags0\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::Flags}}\ \&\ (\ (HereditaryBits\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{\string~RowMajorBit}})\ |\ MaskPacketAccessBit),}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ Flags\ =\ (Flags0\ |\ FlagsLinearAccessBit\ |\ FlagsLvalueBit\ |\ FlagsRowMajorBit\ |\ FlagsDirectAccessBit)}
+\DoxyCodeLine{00087\ \ \ \};}
+\DoxyCodeLine{00088\ \};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order,\ \textcolor{keywordtype}{bool}\ HasDirectAccess>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense}{ReshapedImpl\_dense}};}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order,\ \textcolor{keyword}{typename}\ StorageKind>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1ReshapedImpl}{ReshapedImpl}};}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1Reshaped_aeb41b44bf341c2876a74eab537825396}{Reshaped}}}
+\DoxyCodeLine{00097\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1ReshapedImpl}{ReshapedImpl}}<XprType,\ Rows,\ Cols,\ Order,\ typename\ internal::traits<XprType>::StorageKind>}
+\DoxyCodeLine{00098\ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1ReshapedImpl}{ReshapedImpl<XprType,\ Rows,\ Cols,\ Order,\ typename\ internal::traits<XprType>::StorageKind}}>\ Impl;}
+\DoxyCodeLine{00100\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//typedef\ typename\ Impl::Base\ Base;}}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{typedef}\ Impl\ Base;}
+\DoxyCodeLine{00103\ \ \ \ \ EIGEN\_GENERIC\_PUBLIC\_INTERFACE(\mbox{\hyperlink{classEigen_1_1Reshaped_aeb41b44bf341c2876a74eab537825396}{Reshaped}})}
+\DoxyCodeLine{00104\ \ \ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(\mbox{\hyperlink{classEigen_1_1Reshaped_aeb41b44bf341c2876a74eab537825396}{Reshaped}})}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{comment}{/**\ Fixed-\/size\ constructor}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00108\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Reshaped_aeb41b44bf341c2876a74eab537825396}{Reshaped}}(XprType\&\ xpr)}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ :\ Impl(xpr)}
+\DoxyCodeLine{00111\ \ \ \ \ \{}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT(RowsAtCompileTime!=\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ \&\&\ ColsAtCompileTime!=\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},THIS\_METHOD\_IS\_ONLY\_FOR\_FIXED\_SIZE)}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ eigen\_assert(Rows\ *\ Cols\ ==\ xpr.rows()\ *\ xpr.cols());}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \textcolor{comment}{}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ \ /**\ Dynamic-\/size\ constructor}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00118\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Reshaped_a0d77eac9f63a5b8aa77205ba58c2074b}{Reshaped}}(XprType\&\ xpr,}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ reshapeRows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ reshapeCols)}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ :\ Impl(xpr,\ reshapeRows,\ reshapeCols)}
+\DoxyCodeLine{00122\ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ eigen\_assert((RowsAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ||\ RowsAtCompileTime==reshapeRows)}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \&\&\ (ColsAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ||\ ColsAtCompileTime==reshapeCols));}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ eigen\_assert(reshapeRows\ *\ reshapeCols\ ==\ xpr.rows()\ *\ xpr.cols());}
+\DoxyCodeLine{00126\ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \};}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ The\ generic\ default\ implementation\ for\ dense\ reshape\ simply\ forward\ to\ the\ internal::ReshapedImpl\_dense}}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ that\ must\ be\ specialized\ for\ direct\ and\ non-\/direct\ access...}}
+\DoxyCodeLine{00131\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00132\ \textcolor{keyword}{class\ }ReshapedImpl<XprType,\ Rows,\ Cols,\ Order,\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00133\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense}{internal::ReshapedImpl\_dense}}<XprType,\ Rows,\ Cols,\ Order,internal::traits<Reshaped<XprType,Rows,Cols,Order>\ >::HasDirectAccess>}
+\DoxyCodeLine{00134\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense}{internal::ReshapedImpl\_dense<XprType,\ Rows,\ Cols,\ Order,internal::traits<Reshaped<XprType,Rows,Cols,Order>}}\ >::HasDirectAccess>\ Impl;}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{typedef}\ Impl\ Base;}
+\DoxyCodeLine{00138\ \ \ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(ReshapedImpl)}
+\DoxyCodeLine{00139\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ ReshapedImpl(XprType\&\ xpr)\ :\ Impl(xpr)\ \{\}}
+\DoxyCodeLine{00140\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ ReshapedImpl(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ reshapeRows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ reshapeCols)}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ :\ Impl(xpr,\ reshapeRows,\ reshapeCols)\ \{\}}
+\DoxyCodeLine{00142\ \};}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00145\ \textcolor{comment}{}}
+\DoxyCodeLine{00146\ \textcolor{comment}{/**\ \(\backslash\)internal\ Internal\ implementation\ of\ dense\ Reshaped\ in\ the\ general\ case.\ */}}
+\DoxyCodeLine{00147\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00148\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01false_01_4_a78fd214625a0330610158bf709a34e21}{ReshapedImpl\_dense}}<XprType,Rows,Cols,Order,false>}
+\DoxyCodeLine{00149\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1dense__xpr__base}{internal::dense\_xpr\_base}}<Reshaped<XprType,\ Rows,\ Cols,\ Order>\ >\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}}
+\DoxyCodeLine{00150\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped<XprType,\ Rows,\ Cols,\ Order>}}\ ReshapedType;}
+\DoxyCodeLine{00152\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::dense\_xpr\_base<ReshapedType>::type\ Base;}
+\DoxyCodeLine{00155\ \ \ \ \ EIGEN\_DENSE\_PUBLIC\_INTERFACE(ReshapedType)}
+\DoxyCodeLine{00156\ \ \ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(\mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01false_01_4_a78fd214625a0330610158bf709a34e21}{ReshapedImpl\_dense}})}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::ref\_selector<XprType>::non\_const\_type\ MatrixTypeNested;}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::remove\_all<XprType>::type\ NestedExpression;}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{InnerIterator}};}
+\DoxyCodeLine{00162\ \textcolor{comment}{}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ \ \ /**\ Fixed-\/size\ constructor}}
+\DoxyCodeLine{00164\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00165\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01false_01_4_a78fd214625a0330610158bf709a34e21}{ReshapedImpl\_dense}}(XprType\&\ xpr)}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ :\ m\_xpr(xpr),\ m\_rows(Rows),\ m\_cols(Cols)}
+\DoxyCodeLine{00168\ \ \ \ \ \{\}}
+\DoxyCodeLine{00169\ \textcolor{comment}{}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ \ \ /**\ Dynamic-\/size\ constructor}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00172\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01false_01_4_a2ee394e65e66ad87d5d98ff365f0ed8f}{ReshapedImpl\_dense}}(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nRows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nCols)}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ :\ m\_xpr(xpr),\ m\_rows(nRows),\ m\_cols(nCols)}
+\DoxyCodeLine{00175\ \ \ \ \ \{\}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_rows;\ \}}
+\DoxyCodeLine{00178\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cols;\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ EIGEN\_PARSED\_BY\_DOXYGEN}\textcolor{comment}{}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)sa\ MapBase::data()\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00182\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Scalar*\ data()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00183\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ innerStride()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00184\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outerStride()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00186\ \textcolor{comment}{}}
+\DoxyCodeLine{00187\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ nested\ expression\ */}}
+\DoxyCodeLine{00188\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ internal::remove\_all<XprType>::type\&}
+\DoxyCodeLine{00190\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01false_01_4_a6b94185bcce31c73c4c580944f212c84}{nestedExpression}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_xpr;\ \}}
+\DoxyCodeLine{00191\ \textcolor{comment}{}}
+\DoxyCodeLine{00192\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ nested\ expression\ */}}
+\DoxyCodeLine{00193\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{typename}\ internal::remove\_reference<XprType>::type\&}
+\DoxyCodeLine{00195\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01false_01_4_ae7151b97e68ab054832921d237f9d808}{nestedExpression}}()\ \{\ \textcolor{keywordflow}{return}\ m\_xpr;\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixTypeNested}}\ m\_xpr;}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1internal_1_1variable__if__dynamic}{internal::variable\_if\_dynamic<Index,\ Rows>}}\ m\_rows;}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1internal_1_1variable__if__dynamic}{internal::variable\_if\_dynamic<Index,\ Cols>}}\ m\_cols;}
+\DoxyCodeLine{00202\ \};}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \textcolor{comment}{}}
+\DoxyCodeLine{00205\ \textcolor{comment}{/**\ \(\backslash\)internal\ Internal\ implementation\ of\ dense\ Reshaped\ in\ the\ direct\ access\ case.\ */}}
+\DoxyCodeLine{00206\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00207\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01true_01_4_aa0765fde1c86418a1cbf272d158028bc}{ReshapedImpl\_dense}}<XprType,\ Rows,\ Cols,\ Order,\ true>}
+\DoxyCodeLine{00208\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1MapBase}{MapBase}}<Reshaped<XprType,\ Rows,\ Cols,\ Order>\ >}
+\DoxyCodeLine{00209\ \{}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped<XprType,\ Rows,\ Cols,\ Order>}}\ ReshapedType;}
+\DoxyCodeLine{00211\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::ref\_selector<XprType>::non\_const\_type\ XprTypeNested;}
+\DoxyCodeLine{00212\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1MapBase}{MapBase<ReshapedType>}}\ Base;}
+\DoxyCodeLine{00215\ \ \ \ \ EIGEN\_DENSE\_PUBLIC\_INTERFACE(ReshapedType)}
+\DoxyCodeLine{00216\ \ \ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(\mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01true_01_4_aa0765fde1c86418a1cbf272d158028bc}{ReshapedImpl\_dense}})}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{comment}{/**\ Fixed-\/size\ constructor}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00220\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01true_01_4_aa0765fde1c86418a1cbf272d158028bc}{ReshapedImpl\_dense}}(XprType\&\ xpr)}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ :\ Base(xpr.data()),\ m\_xpr(xpr)}
+\DoxyCodeLine{00223\ \ \ \ \ \{\}}
+\DoxyCodeLine{00224\ \textcolor{comment}{}}
+\DoxyCodeLine{00225\ \textcolor{comment}{\ \ \ \ /**\ Dynamic-\/size\ constructor}}
+\DoxyCodeLine{00226\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00227\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01true_01_4_a94fb0e3dcb021f81c40db6e91c61b3ae}{ReshapedImpl\_dense}}(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nRows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nCols)}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ :\ Base(xpr.data(),\ nRows,\ nCols),}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ m\_xpr(xpr)}
+\DoxyCodeLine{00231\ \ \ \ \ \{\}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00234\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ internal::remove\_all<XprTypeNested>::type\&\ nestedExpression()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00235\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_xpr;}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00240\ \ \ \ \ XprType\&\ nestedExpression()\ \{\ \textcolor{keywordflow}{return}\ m\_xpr;\ \}}
+\DoxyCodeLine{00241\ \textcolor{comment}{}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)sa\ MapBase::innerStride()\ */}}
+\DoxyCodeLine{00243\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01true_01_4_af5ff479a1c1a506af160d4d56019e8cd}{innerStride}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00245\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_xpr.innerStride();}
+\DoxyCodeLine{00247\ \ \ \ \ \}}
+\DoxyCodeLine{00248\ \textcolor{comment}{}}
+\DoxyCodeLine{00249\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)sa\ MapBase::outerStride()\ */}}
+\DoxyCodeLine{00250\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1internal_1_1ReshapedImpl__dense_3_01XprType_00_01Rows_00_01Cols_00_01Order_00_01true_01_4_aaf1ec7351722965fe1311567c2025231}{outerStride}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00252\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (((Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})==\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ this-\/>cols()\ :\ this-\/>rows())\ *\ m\_xpr.innerStride();}
+\DoxyCodeLine{00254\ \ \ \ \ \}}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ XprTypeNested\ m\_xpr;}
+\DoxyCodeLine{00259\ \};}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \textcolor{comment}{//\ Evaluators}}
+\DoxyCodeLine{00262\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ArgType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order,\ \textcolor{keywordtype}{bool}\ HasDirectAccess>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1reshaped__evaluator}{reshaped\_evaluator}};}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ArgType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00265\ \textcolor{keyword}{struct\ }evaluator<\mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped}}<ArgType,\ Rows,\ Cols,\ Order>\ >}
+\DoxyCodeLine{00266\ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1reshaped__evaluator}{reshaped\_evaluator}}<ArgType,\ Rows,\ Cols,\ Order,\ traits<Reshaped<ArgType,Rows,Cols,Order>\ >::HasDirectAccess>}
+\DoxyCodeLine{00267\ \{}
+\DoxyCodeLine{00268\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped<ArgType,\ Rows,\ Cols,\ Order>}}\ XprType;}
+\DoxyCodeLine{00269\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ Scalar;}
+\DoxyCodeLine{00270\ \ \ \textcolor{comment}{//\ TODO:\ should\ check\ for\ smaller\ packet\ types}}
+\DoxyCodeLine{00271\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ packet\_traits<Scalar>::type\ PacketScalar;}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ CoeffReadCost\ =\ evaluator<ArgType>::CoeffReadCost,}
+\DoxyCodeLine{00275\ \ \ \ \ HasDirectAccess\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::HasDirectAccess}},}
+\DoxyCodeLine{00276\ }
+\DoxyCodeLine{00277\ \textcolor{comment}{//\ \ \ \ \ RowsAtCompileTime\ =\ traits<XprType>::RowsAtCompileTime,}}
+\DoxyCodeLine{00278\ \textcolor{comment}{//\ \ \ \ \ ColsAtCompileTime\ =\ traits<XprType>::ColsAtCompileTime,}}
+\DoxyCodeLine{00279\ \textcolor{comment}{//\ \ \ \ \ MaxRowsAtCompileTime\ =\ traits<XprType>::MaxRowsAtCompileTime,}}
+\DoxyCodeLine{00280\ \textcolor{comment}{//\ \ \ \ \ MaxColsAtCompileTime\ =\ traits<XprType>::MaxColsAtCompileTime,}}
+\DoxyCodeLine{00281\ \textcolor{comment}{//}}
+\DoxyCodeLine{00282\ \textcolor{comment}{//\ \ \ \ \ InnerStrideAtCompileTime\ =\ traits<XprType>::HasSameStorageOrderAsXprType}}
+\DoxyCodeLine{00283\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ?\ int(inner\_stride\_at\_compile\_time<ArgType>::ret)}}
+\DoxyCodeLine{00284\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ Dynamic,}}
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ \ \ \ \ OuterStrideAtCompileTime\ =\ Dynamic,}}
+\DoxyCodeLine{00286\ }
+\DoxyCodeLine{00287\ \ \ \ \ FlagsLinearAccessBit\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::RowsAtCompileTime}}\ ==\ 1\ ||\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::ColsAtCompileTime}}\ ==\ 1\ ||\ HasDirectAccess)\ ?\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00288\ \ \ \ \ FlagsRowMajorBit\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::ReshapedStorageOrder}}==int(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}))\ ?\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ :\ 0,}
+\DoxyCodeLine{00289\ \ \ \ \ FlagsDirectAccessBit\ =\ \ HasDirectAccess\ ?\ \mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00290\ \ \ \ \ Flags0\ =\ evaluator<ArgType>::Flags\ \&\ (HereditaryBits\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{\string~RowMajorBit}}),}
+\DoxyCodeLine{00291\ \ \ \ \ Flags\ =\ Flags0\ |\ FlagsLinearAccessBit\ |\ FlagsRowMajorBit\ |\ FlagsDirectAccessBit,}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ PacketAlignment\ =\ unpacket\_traits<PacketScalar>::alignment,}
+\DoxyCodeLine{00294\ \ \ \ \ Alignment\ =\ evaluator<ArgType>::Alignment}
+\DoxyCodeLine{00295\ \ \ \};}
+\DoxyCodeLine{00296\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1reshaped__evaluator}{reshaped\_evaluator<ArgType,\ Rows,\ Cols,\ Order,\ HasDirectAccess>}}\ reshaped\_evaluator\_type;}
+\DoxyCodeLine{00297\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{explicit}\ evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)\ :\ reshaped\_evaluator\_type(xpr)}
+\DoxyCodeLine{00298\ \ \ \{}
+\DoxyCodeLine{00299\ \ \ \ \ EIGEN\_INTERNAL\_CHECK\_COST\_VALUE(CoeffReadCost);}
+\DoxyCodeLine{00300\ \ \ \}}
+\DoxyCodeLine{00301\ \};}
+\DoxyCodeLine{00302\ }
+\DoxyCodeLine{00303\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ArgType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00304\ \textcolor{keyword}{struct\ }reshaped\_evaluator<ArgType,\ Rows,\ Cols,\ Order,\ \textcolor{comment}{/*\ HasDirectAccess\ */}\ false>}
+\DoxyCodeLine{00305\ \ \ :\ evaluator\_base<Reshaped<ArgType,\ Rows,\ Cols,\ Order>\ >}
+\DoxyCodeLine{00306\ \{}
+\DoxyCodeLine{00307\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped<ArgType,\ Rows,\ Cols,\ Order>}}\ XprType;}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ CoeffReadCost\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<ArgType>::CoeffReadCost}}\ \textcolor{comment}{/*\ TODO\ +\ cost\ of\ index\ computations\ */},}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \ \ Flags\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<ArgType>::Flags}}\ \&\ (HereditaryBits\ \textcolor{comment}{/*|\ LinearAccessBit\ |\ DirectAccessBit*/})),}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ Alignment\ =\ 0}
+\DoxyCodeLine{00315\ \ \ \};}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{explicit}\ reshaped\_evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)\ :\ m\_argImpl(xpr.nestedExpression()),\ m\_xpr(xpr)}
+\DoxyCodeLine{00318\ \ \ \{}
+\DoxyCodeLine{00319\ \ \ \ \ EIGEN\_INTERNAL\_CHECK\_COST\_VALUE(CoeffReadCost);}
+\DoxyCodeLine{00320\ \ \ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ Scalar;}
+\DoxyCodeLine{00323\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::CoeffReturnType\ CoeffReturnType;}
+\DoxyCodeLine{00324\ }
+\DoxyCodeLine{00325\ \ \ \textcolor{keyword}{typedef}\ std::pair<Index,\ Index>\ RowCol;}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \textcolor{keyword}{inline}\ RowCol\ index\_remap(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00328\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keywordflow}{if}(Order==\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}})}
+\DoxyCodeLine{00330\ \ \ \ \ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nth\_elem\_idx\ =\ colId\ *\ m\_xpr.rows()\ +\ rowId;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ RowCol(nth\_elem\_idx\ \%\ m\_xpr.nestedExpression().rows(),}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nth\_elem\_idx\ /\ m\_xpr.nestedExpression().rows());}
+\DoxyCodeLine{00334\ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00336\ \ \ \ \ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nth\_elem\_idx\ =\ colId\ +\ rowId\ *\ m\_xpr.cols();}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ RowCol(nth\_elem\_idx\ /\ m\_xpr.nestedExpression().cols(),}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ nth\_elem\_idx\ \%\ m\_xpr.nestedExpression().cols());}
+\DoxyCodeLine{00340\ \ \ \ \ \}}
+\DoxyCodeLine{00341\ \ \ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00344\ \ \ \textcolor{keyword}{inline}\ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId)}
+\DoxyCodeLine{00345\ \ \ \{}
+\DoxyCodeLine{00346\ \ \ \ \ EIGEN\_STATIC\_ASSERT\_LVALUE(XprType)}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(rowId,\ colId);}
+\DoxyCodeLine{00348\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00349\ \ \ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00352\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00353\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(rowId,\ colId);}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00356\ \ \ \}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00359\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{const}\ CoeffReturnType\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00360\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00361\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(rowId,\ colId);}
+\DoxyCodeLine{00362\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeff(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00363\ \ \ \}}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00366\ \ \ \textcolor{keyword}{inline}\ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)}
+\DoxyCodeLine{00367\ \ \ \{}
+\DoxyCodeLine{00368\ \ \ \ \ EIGEN\_STATIC\_ASSERT\_LVALUE(XprType)}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(Rows\ ==\ 1\ ?\ 0\ :\ index,}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rows\ ==\ 1\ ?\ index\ :\ 0);}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \}}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00376\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00377\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(Rows\ ==\ 1\ ?\ 0\ :\ index,}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rows\ ==\ 1\ ?\ index\ :\ 0);}
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00381\ \ \ \}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00384\ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ CoeffReturnType\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00385\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(Rows\ ==\ 1\ ?\ 0\ :\ index,}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rows\ ==\ 1\ ?\ index\ :\ 0);}
+\DoxyCodeLine{00388\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeff(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00389\ \ \ \}}
+\DoxyCodeLine{00390\ \textcolor{preprocessor}{\#if\ 0}}
+\DoxyCodeLine{00391\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00392\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LoadMode>}
+\DoxyCodeLine{00393\ \ \ \textcolor{keyword}{inline}\ PacketScalar\ packet(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00394\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(rowId,\ colId);}
+\DoxyCodeLine{00396\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.template\ packet<Unaligned>(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \ \ \}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LoadMode>}
+\DoxyCodeLine{00401\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00402\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ writePacket(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId,\ \textcolor{keyword}{const}\ PacketScalar\&\ val)}
+\DoxyCodeLine{00403\ \ \ \{}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(rowId,\ colId);}
+\DoxyCodeLine{00405\ \ \ \ \ m\_argImpl.const\_cast\_derived().template\ writePacket<Unaligned>}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ (row\_col.first,\ row\_col.second,\ val);}
+\DoxyCodeLine{00407\ \ \ \}}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LoadMode>}
+\DoxyCodeLine{00410\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00411\ \ \ \textcolor{keyword}{inline}\ PacketScalar\ packet(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00412\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00413\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(RowsAtCompileTime\ ==\ 1\ ?\ 0\ :\ index,}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RowsAtCompileTime\ ==\ 1\ ?\ index\ :\ 0);}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.template\ packet<Unaligned>(row\_col.first,\ row\_col.second);}
+\DoxyCodeLine{00416\ \ \ \}}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LoadMode>}
+\DoxyCodeLine{00419\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00420\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ writePacket(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index,\ \textcolor{keyword}{const}\ PacketScalar\&\ val)}
+\DoxyCodeLine{00421\ \ \ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keyword}{const}\ RowCol\ row\_col\ =\ index\_remap(RowsAtCompileTime\ ==\ 1\ ?\ 0\ :\ index,}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RowsAtCompileTime\ ==\ 1\ ?\ index\ :\ 0);}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.template\ packet<Unaligned>(row\_col.first,\ row\_col.second,\ val);}
+\DoxyCodeLine{00425\ \ \ \}}
+\DoxyCodeLine{00426\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00427\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<ArgType>}}\ m\_argImpl;}
+\DoxyCodeLine{00430\ \ \ \textcolor{keyword}{const}\ XprType\&\ m\_xpr;}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \};}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ArgType,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Order>}
+\DoxyCodeLine{00435\ \textcolor{keyword}{struct\ }reshaped\_evaluator<ArgType,\ Rows,\ Cols,\ Order,\ \textcolor{comment}{/*\ HasDirectAccess\ */}\ true>}
+\DoxyCodeLine{00436\ :\ mapbase\_evaluator<Reshaped<ArgType,\ Rows,\ Cols,\ Order>,}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ typename\ Reshaped<ArgType,\ Rows,\ Cols,\ Order>::PlainObject>}
+\DoxyCodeLine{00438\ \{}
+\DoxyCodeLine{00439\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Reshaped}{Reshaped<ArgType,\ Rows,\ Cols,\ Order>}}\ XprType;}
+\DoxyCodeLine{00440\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ Scalar;}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{explicit}\ reshaped\_evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)}
+\DoxyCodeLine{00443\ \ \ \ \ :\ mapbase\_evaluator<XprType,\ typename\ XprType::PlainObject>(xpr)}
+\DoxyCodeLine{00444\ \ \ \{}
+\DoxyCodeLine{00445\ \ \ \ \ \textcolor{comment}{//\ TODO:\ for\ the\ 3.4\ release,\ this\ should\ be\ turned\ to\ an\ internal\ assertion,\ but\ let's\ keep\ it\ as\ is\ for\ the\ beta\ lifetime}}
+\DoxyCodeLine{00446\ \ \ \ \ eigen\_assert(((internal::UIntPtr(xpr.data())\ \%\ EIGEN\_PLAIN\_ENUM\_MAX(1,\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<XprType>::Alignment}}))\ ==\ 0)\ \&\&\ \textcolor{stringliteral}{"{}data\ is\ not\ aligned"{}});}
+\DoxyCodeLine{00447\ \ \ \}}
+\DoxyCodeLine{00448\ \};}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_RESHAPED\_H}}
+
+\end{DoxyCode}

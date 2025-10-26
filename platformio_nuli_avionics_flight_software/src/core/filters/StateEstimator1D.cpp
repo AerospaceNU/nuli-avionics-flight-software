@@ -122,7 +122,7 @@ void StateEstimator1D::updateGroundElevationReference(const float unfilteredAlti
 
 void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timestamp) {
     if (m_hardware->getNumAccelerometers() < 1) return;
-    Vector3D_s accelerations = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
+    Vector3D_s accelerations = m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor();
     m_lowPassAX.update(accelerations.x);
     m_lowPassAY.update(accelerations.y);
     m_lowPassAZ.update(accelerations.z);

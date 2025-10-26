@@ -1,0 +1,819 @@
+\doxysection{Jacobi\+SVD.\+h}
+\hypertarget{JacobiSVD_8h_source}{}\label{JacobiSVD_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SVD/JacobiSVD.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SVD/JacobiSVD.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009-\/2010\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2013-\/2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_JACOBISVD\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_JACOBISVD\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ forward\ declaration\ (needed\ by\ ICC)}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ the\ empty\ body\ is\ required\ by\ MSVC}}
+\DoxyCodeLine{00019\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \textcolor{keywordtype}{int}\ QRPreconditioner,}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ IsComplex\ =\ NumTraits<typename\ MatrixType::Scalar>::IsComplex>}
+\DoxyCodeLine{00021\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1svd__precondition__2x2__block__to__be__real}{svd\_precondition\_2x2\_block\_to\_be\_real}}\ \{\};}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{comment}{/***\ QR\ preconditioners\ (R-\/SVD)}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ ***}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ ***\ Their\ role\ is\ to\ reduce\ the\ problem\ of\ computing\ the\ SVD\ to\ the\ case\ of\ a\ square\ matrix.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ ***\ This\ approach,\ known\ as\ R-\/SVD,\ is\ an\ optimization\ for\ rectangular-\/enough\ matrices,\ and\ is\ a\ requirement\ for}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ ***\ JacobiSVD\ which\ by\ itself\ is\ only\ able\ to\ work\ on\ square\ matrices.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ ***/}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{enum}\ \{\ PreconditionIfMoreColsThanRows,\ PreconditionIfMoreRowsThanCols\ \};}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner,\ \textcolor{keywordtype}{int}\ Case>}
+\DoxyCodeLine{00033\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__should__do__anything}{qr\_preconditioner\_should\_do\_anything}}}
+\DoxyCodeLine{00034\ \{}
+\DoxyCodeLine{00035\ \ \ \textcolor{keyword}{enum}\ \{\ a\ =\ MatrixType::RowsAtCompileTime\ !=\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ \&\&}
+\DoxyCodeLine{00036\ \ \ \ \ \ \ \ \ \ \ \ \ \ MatrixType::ColsAtCompileTime\ !=\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ \&\&}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ \ \ \ \ \ \ \ MatrixType::ColsAtCompileTime\ <=\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ b\ =\ MatrixType::RowsAtCompileTime\ !=\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ \&\&}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ MatrixType::ColsAtCompileTime\ !=\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ \&\&}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ MatrixType::RowsAtCompileTime\ <=\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ ret\ =\ !(\ (QRPreconditioner\ ==\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56ea2e95bc818f975b19def01e93d240dece}{NoQRPreconditioner}})\ ||}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (Case\ ==\ PreconditionIfMoreColsThanRows\ \&\&\ bool(a))\ ||}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (Case\ ==\ PreconditionIfMoreRowsThanCols\ \&\&\ bool(b))\ )}
+\DoxyCodeLine{00044\ \ \ \};}
+\DoxyCodeLine{00045\ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \textcolor{keywordtype}{int}\ QRPreconditioner,\ \textcolor{keywordtype}{int}\ Case,}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ DoAnything\ =\ qr\_preconditioner\_should\_do\_anything<MatrixType,\ QRPreconditioner,\ Case>::ret}
+\DoxyCodeLine{00049\ >\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}\ \{\};}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner,\ \textcolor{keywordtype}{int}\ Case>}
+\DoxyCodeLine{00052\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ QRPreconditioner,\ Case,\ false>}
+\DoxyCodeLine{00053\ \{}
+\DoxyCodeLine{00054\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00055\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ QRPreconditioner>}}\&)\ \{\}}
+\DoxyCodeLine{00056\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ QRPreconditioner>}}\&,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&)}
+\DoxyCodeLine{00057\ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00059\ \ \ \}}
+\DoxyCodeLine{00060\ \};}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{comment}{/***\ preconditioner\ using\ FullPivHouseholderQR\ ***/}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00065\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56eabd745dcaff7019c5f918c68809e5ea50}{FullPivHouseholderQRPreconditioner}},\ PreconditionIfMoreRowsThanCols,\ true>}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00068\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00070\ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00072\ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime}
+\DoxyCodeLine{00073\ \ \ \};}
+\DoxyCodeLine{00074\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ 1,\ RowsAtCompileTime,\ RowMajor,\ 1,\ MaxRowsAtCompileTime>}}\ WorkspaceType;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ FullPivHouseholderQRPreconditioner>}}\&\ svd)}
+\DoxyCodeLine{00077\ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.rows()\ !=\ m\_qr.rows()\ ||\ svd.cols()\ !=\ m\_qr.cols())}
+\DoxyCodeLine{00079\ \ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ m\_qr.\string~QRType();}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ ::new\ (\&m\_qr)\ QRType(svd.rows(),\ svd.cols());}
+\DoxyCodeLine{00082\ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.m\_computeFullU)\ m\_workspace.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_a99d9054ee2d5a40c6e00ded0265e9cea}{resize}}(svd.rows());}
+\DoxyCodeLine{00084\ \ \ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ FullPivHouseholderQRPreconditioner>}}\&\ svd,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matrix)}
+\DoxyCodeLine{00087\ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keywordflow}{if}(matrix.rows()\ >\ matrix.cols())}
+\DoxyCodeLine{00089\ \ \ \ \ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ m\_qr.compute(matrix);}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ svd.m\_workMatrix\ =\ m\_qr.matrixQR().block(0,0,matrix.cols(),matrix.cols()).template\ triangularView<Upper>();}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.m\_computeFullU)\ m\_qr.matrixQ().evalTo(svd.m\_matrixU,\ m\_workspace);}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.\mbox{\hyperlink{classEigen_1_1JacobiSVD_a468809f18ea083ff6e2581af5d6c99dc}{computeV}}())\ svd.m\_matrixV\ =\ m\_qr.colsPermutation();}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00095\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00097\ \ \ \}}
+\DoxyCodeLine{00098\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00099\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1FullPivHouseholderQR}{FullPivHouseholderQR<MatrixType>}}\ QRType;}
+\DoxyCodeLine{00100\ \ \ QRType\ m\_qr;}
+\DoxyCodeLine{00101\ \ \ WorkspaceType\ m\_workspace;}
+\DoxyCodeLine{00102\ \};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00105\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56eabd745dcaff7019c5f918c68809e5ea50}{FullPivHouseholderQRPreconditioner}},\ PreconditionIfMoreColsThanRows,\ true>}
+\DoxyCodeLine{00106\ \{}
+\DoxyCodeLine{00107\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00110\ \ \ \{}
+\DoxyCodeLine{00111\ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00112\ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00113\ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00114\ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime,}
+\DoxyCodeLine{00115\ \ \ \ \ Options\ =\ MatrixType::Options}
+\DoxyCodeLine{00116\ \ \ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1internal_1_1make__proper__matrix__type}{internal::make\_proper\_matrix\_type}}<}
+\DoxyCodeLine{00119\ \ \ \ \ Scalar,\ ColsAtCompileTime,\ RowsAtCompileTime,\ Options,\ MaxColsAtCompileTime,\ MaxRowsAtCompileTime}
+\DoxyCodeLine{00120\ \ \ >\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ TransposeTypeWithSameStorageOrder;}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ FullPivHouseholderQRPreconditioner>}}\&\ svd)}
+\DoxyCodeLine{00123\ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.cols()\ !=\ m\_qr.rows()\ ||\ svd.rows()\ !=\ m\_qr.cols())}
+\DoxyCodeLine{00125\ \ \ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ m\_qr.\string~QRType();}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ ::new\ (\&m\_qr)\ QRType(svd.cols(),\ svd.rows());}
+\DoxyCodeLine{00128\ \ \ \ \ \}}
+\DoxyCodeLine{00129\ \ \ \ \ m\_adjoint.resize(svd.cols(),\ svd.rows());}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.m\_computeFullV)\ m\_workspace.resize(svd.cols());}
+\DoxyCodeLine{00131\ \ \ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ FullPivHouseholderQRPreconditioner>}}\&\ svd,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matrix)}
+\DoxyCodeLine{00134\ \ \ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keywordflow}{if}(matrix.cols()\ >\ matrix.rows())}
+\DoxyCodeLine{00136\ \ \ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ m\_adjoint\ =\ matrix.adjoint();}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ m\_qr.compute(m\_adjoint);}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ svd.m\_workMatrix\ =\ m\_qr.matrixQR().block(0,0,matrix.rows(),matrix.rows()).template\ triangularView<Upper>().adjoint();}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.m\_computeFullV)\ m\_qr.matrixQ().evalTo(svd.m\_matrixV,\ m\_workspace);}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}())\ svd.m\_matrixU\ =\ m\_qr.colsPermutation();}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00143\ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00145\ \ \ \}}
+\DoxyCodeLine{00146\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00147\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1FullPivHouseholderQR}{FullPivHouseholderQR<TransposeTypeWithSameStorageOrder>}}\ QRType;}
+\DoxyCodeLine{00148\ \ \ QRType\ m\_qr;}
+\DoxyCodeLine{00149\ \ \ TransposeTypeWithSameStorageOrder\ m\_adjoint;}
+\DoxyCodeLine{00150\ \ \ \textcolor{keyword}{typename}\ internal::plain\_row\_type<MatrixType>::type\ m\_workspace;}
+\DoxyCodeLine{00151\ \};}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \textcolor{comment}{/***\ preconditioner\ using\ ColPivHouseholderQR\ ***/}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00156\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56eabd2e2f4875c5b4b6e602a433d90c4e5e}{ColPivHouseholderQRPreconditioner}},\ PreconditionIfMoreRowsThanCols,\ true>}
+\DoxyCodeLine{00157\ \{}
+\DoxyCodeLine{00158\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00159\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ ColPivHouseholderQRPreconditioner>}}\&\ svd)}
+\DoxyCodeLine{00160\ \ \ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.rows()\ !=\ m\_qr.rows()\ ||\ svd.cols()\ !=\ m\_qr.cols())}
+\DoxyCodeLine{00162\ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ m\_qr.\string~QRType();}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ ::new\ (\&m\_qr)\ QRType(svd.rows(),\ svd.cols());}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.m\_computeFullU)\ m\_workspace.resize(svd.rows());}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (svd.m\_computeThinU)\ m\_workspace.resize(svd.cols());}
+\DoxyCodeLine{00168\ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ ColPivHouseholderQRPreconditioner>}}\&\ svd,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matrix)}
+\DoxyCodeLine{00171\ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordflow}{if}(matrix.rows()\ >\ matrix.cols())}
+\DoxyCodeLine{00173\ \ \ \ \ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ m\_qr.compute(matrix);}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ svd.m\_workMatrix\ =\ m\_qr.matrixQR().block(0,0,matrix.cols(),matrix.cols()).template\ triangularView<Upper>();}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.m\_computeFullU)\ m\_qr.householderQ().evalTo(svd.m\_matrixU,\ m\_workspace);}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(svd.m\_computeThinU)}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ svd.m\_matrixU.setIdentity(matrix.rows(),\ matrix.cols());}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ m\_qr.householderQ().applyThisOnTheLeft(svd.m\_matrixU,\ m\_workspace);}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.\mbox{\hyperlink{classEigen_1_1JacobiSVD_a468809f18ea083ff6e2581af5d6c99dc}{computeV}}())\ svd.m\_matrixV\ =\ m\_qr.colsPermutation();}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00184\ \ \ \ \ \}}
+\DoxyCodeLine{00185\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00186\ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00189\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1ColPivHouseholderQR}{ColPivHouseholderQR<MatrixType>}}\ QRType;}
+\DoxyCodeLine{00190\ \ \ QRType\ m\_qr;}
+\DoxyCodeLine{00191\ \ \ \textcolor{keyword}{typename}\ internal::plain\_col\_type<MatrixType>::type\ m\_workspace;}
+\DoxyCodeLine{00192\ \};}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00195\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56eabd2e2f4875c5b4b6e602a433d90c4e5e}{ColPivHouseholderQRPreconditioner}},\ PreconditionIfMoreColsThanRows,\ true>}
+\DoxyCodeLine{00196\ \{}
+\DoxyCodeLine{00197\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00198\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00199\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00200\ \ \ \{}
+\DoxyCodeLine{00201\ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00202\ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00203\ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00204\ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime,}
+\DoxyCodeLine{00205\ \ \ \ \ Options\ =\ MatrixType::Options}
+\DoxyCodeLine{00206\ \ \ \};}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1internal_1_1make__proper__matrix__type}{internal::make\_proper\_matrix\_type}}<}
+\DoxyCodeLine{00209\ \ \ \ \ Scalar,\ ColsAtCompileTime,\ RowsAtCompileTime,\ Options,\ MaxColsAtCompileTime,\ MaxRowsAtCompileTime}
+\DoxyCodeLine{00210\ \ \ >\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ TransposeTypeWithSameStorageOrder;}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ ColPivHouseholderQRPreconditioner>}}\&\ svd)}
+\DoxyCodeLine{00213\ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.cols()\ !=\ m\_qr.rows()\ ||\ svd.rows()\ !=\ m\_qr.cols())}
+\DoxyCodeLine{00215\ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ m\_qr.\string~QRType();}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ ::new\ (\&m\_qr)\ QRType(svd.cols(),\ svd.rows());}
+\DoxyCodeLine{00218\ \ \ \ \ \}}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.m\_computeFullV)\ m\_workspace.resize(svd.cols());}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (svd.m\_computeThinV)\ m\_workspace.resize(svd.rows());}
+\DoxyCodeLine{00221\ \ \ \ \ m\_adjoint.resize(svd.cols(),\ svd.rows());}
+\DoxyCodeLine{00222\ \ \ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ ColPivHouseholderQRPreconditioner>}}\&\ svd,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matrix)}
+\DoxyCodeLine{00225\ \ \ \{}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keywordflow}{if}(matrix.cols()\ >\ matrix.rows())}
+\DoxyCodeLine{00227\ \ \ \ \ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ m\_adjoint\ =\ matrix.adjoint();}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ m\_qr.compute(m\_adjoint);}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \ \ \ \ svd.m\_workMatrix\ =\ m\_qr.matrixQR().block(0,0,matrix.rows(),matrix.rows()).template\ triangularView<Upper>().adjoint();}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.m\_computeFullV)\ m\_qr.householderQ().evalTo(svd.m\_matrixV,\ m\_workspace);}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(svd.m\_computeThinV)}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ svd.m\_matrixV.setIdentity(matrix.cols(),\ matrix.rows());}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ m\_qr.householderQ().applyThisOnTheLeft(svd.m\_matrixV,\ m\_workspace);}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}())\ svd.m\_matrixU\ =\ m\_qr.colsPermutation();}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00240\ \ \ \ \ \}}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00242\ \ \ \}}
+\DoxyCodeLine{00243\ }
+\DoxyCodeLine{00244\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00245\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1ColPivHouseholderQR}{ColPivHouseholderQR<TransposeTypeWithSameStorageOrder>}}\ QRType;}
+\DoxyCodeLine{00246\ \ \ QRType\ m\_qr;}
+\DoxyCodeLine{00247\ \ \ TransposeTypeWithSameStorageOrder\ m\_adjoint;}
+\DoxyCodeLine{00248\ \ \ \textcolor{keyword}{typename}\ internal::plain\_row\_type<MatrixType>::type\ m\_workspace;}
+\DoxyCodeLine{00249\ \};}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{comment}{/***\ preconditioner\ using\ HouseholderQR\ ***/}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00254\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56ea9c660eb3336bf8c77ce9d081ca07cbdd}{HouseholderQRPreconditioner}},\ PreconditionIfMoreRowsThanCols,\ true>}
+\DoxyCodeLine{00255\ \{}
+\DoxyCodeLine{00256\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00257\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ HouseholderQRPreconditioner>}}\&\ svd)}
+\DoxyCodeLine{00258\ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.rows()\ !=\ m\_qr.rows()\ ||\ svd.cols()\ !=\ m\_qr.cols())}
+\DoxyCodeLine{00260\ \ \ \ \ \{}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ m\_qr.\string~QRType();}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ ::new\ (\&m\_qr)\ QRType(svd.rows(),\ svd.cols());}
+\DoxyCodeLine{00263\ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.m\_computeFullU)\ m\_workspace.resize(svd.rows());}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (svd.m\_computeThinU)\ m\_workspace.resize(svd.cols());}
+\DoxyCodeLine{00266\ \ \ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ HouseholderQRPreconditioner>}}\&\ svd,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matrix)}
+\DoxyCodeLine{00269\ \ \ \{}
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{keywordflow}{if}(matrix.rows()\ >\ matrix.cols())}
+\DoxyCodeLine{00271\ \ \ \ \ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ m\_qr.compute(matrix);}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ svd.m\_workMatrix\ =\ m\_qr.matrixQR().block(0,0,matrix.cols(),matrix.cols()).template\ triangularView<Upper>();}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.m\_computeFullU)\ m\_qr.householderQ().evalTo(svd.m\_matrixU,\ m\_workspace);}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(svd.m\_computeThinU)}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ svd.m\_matrixU.setIdentity(matrix.rows(),\ matrix.cols());}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ m\_qr.householderQ().applyThisOnTheLeft(svd.m\_matrixU,\ m\_workspace);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.\mbox{\hyperlink{classEigen_1_1JacobiSVD_a468809f18ea083ff6e2581af5d6c99dc}{computeV}}())\ svd.m\_matrixV.setIdentity(matrix.cols(),\ matrix.cols());}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00282\ \ \ \ \ \}}
+\DoxyCodeLine{00283\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00284\ \ \ \}}
+\DoxyCodeLine{00285\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00286\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1HouseholderQR}{HouseholderQR<MatrixType>}}\ QRType;}
+\DoxyCodeLine{00287\ \ \ QRType\ m\_qr;}
+\DoxyCodeLine{00288\ \ \ \textcolor{keyword}{typename}\ internal::plain\_col\_type<MatrixType>::type\ m\_workspace;}
+\DoxyCodeLine{00289\ \};}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00292\ \textcolor{keyword}{class\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{qr\_preconditioner\_impl}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56ea9c660eb3336bf8c77ce9d081ca07cbdd}{HouseholderQRPreconditioner}},\ PreconditionIfMoreColsThanRows,\ true>}
+\DoxyCodeLine{00293\ \{}
+\DoxyCodeLine{00294\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00295\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00296\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00297\ \ \ \{}
+\DoxyCodeLine{00298\ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00299\ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00300\ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00301\ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime,}
+\DoxyCodeLine{00302\ \ \ \ \ Options\ =\ MatrixType::Options}
+\DoxyCodeLine{00303\ \ \ \};}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1internal_1_1make__proper__matrix__type}{internal::make\_proper\_matrix\_type}}<}
+\DoxyCodeLine{00306\ \ \ \ \ Scalar,\ ColsAtCompileTime,\ RowsAtCompileTime,\ Options,\ MaxColsAtCompileTime,\ MaxRowsAtCompileTime}
+\DoxyCodeLine{00307\ \ \ >\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ TransposeTypeWithSameStorageOrder;}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordtype}{void}\ allocate(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ HouseholderQRPreconditioner>}}\&\ svd)}
+\DoxyCodeLine{00310\ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.cols()\ !=\ m\_qr.rows()\ ||\ svd.rows()\ !=\ m\_qr.cols())}
+\DoxyCodeLine{00312\ \ \ \ \ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ m\_qr.\string~QRType();}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ ::new\ (\&m\_qr)\ QRType(svd.cols(),\ svd.rows());}
+\DoxyCodeLine{00315\ \ \ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{if}\ (svd.m\_computeFullV)\ m\_workspace.resize(svd.cols());}
+\DoxyCodeLine{00317\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (svd.m\_computeThinV)\ m\_workspace.resize(svd.rows());}
+\DoxyCodeLine{00318\ \ \ \ \ m\_adjoint.resize(svd.cols(),\ svd.rows());}
+\DoxyCodeLine{00319\ \ \ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \ \ \textcolor{keywordtype}{bool}\ run(\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ HouseholderQRPreconditioner>}}\&\ svd,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matrix)}
+\DoxyCodeLine{00322\ \ \ \{}
+\DoxyCodeLine{00323\ \ \ \ \ \textcolor{keywordflow}{if}(matrix.cols()\ >\ matrix.rows())}
+\DoxyCodeLine{00324\ \ \ \ \ \{}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ m\_adjoint\ =\ matrix.adjoint();}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ m\_qr.compute(m\_adjoint);}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \ \ \ \ svd.m\_workMatrix\ =\ m\_qr.matrixQR().block(0,0,matrix.rows(),matrix.rows()).template\ triangularView<Upper>().adjoint();}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.m\_computeFullV)\ m\_qr.householderQ().evalTo(svd.m\_matrixV,\ m\_workspace);}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(svd.m\_computeThinV)}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ svd.m\_matrixV.setIdentity(matrix.cols(),\ matrix.rows());}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ m\_qr.householderQ().applyThisOnTheLeft(svd.m\_matrixV,\ m\_workspace);}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}())\ svd.m\_matrixU.setIdentity(matrix.rows(),\ matrix.rows());}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00337\ \ \ \ \ \}}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00339\ \ \ \}}
+\DoxyCodeLine{00340\ }
+\DoxyCodeLine{00341\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00342\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1HouseholderQR}{HouseholderQR<TransposeTypeWithSameStorageOrder>}}\ QRType;}
+\DoxyCodeLine{00343\ \ \ QRType\ m\_qr;}
+\DoxyCodeLine{00344\ \ \ TransposeTypeWithSameStorageOrder\ m\_adjoint;}
+\DoxyCodeLine{00345\ \ \ \textcolor{keyword}{typename}\ internal::plain\_row\_type<MatrixType>::type\ m\_workspace;}
+\DoxyCodeLine{00346\ \};}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \textcolor{comment}{/***\ 2x2\ SVD\ implementation}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ ***}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ ***\ JacobiSVD\ consists\ in\ performing\ a\ series\ of\ 2x2\ SVD\ subproblems}}
+\DoxyCodeLine{00351\ \textcolor{comment}{\ ***/}}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner>}
+\DoxyCodeLine{00354\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1svd__precondition__2x2__block__to__be__real}{svd\_precondition\_2x2\_block\_to\_be\_real}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ QRPreconditioner,\ false>}
+\DoxyCodeLine{00355\ \{}
+\DoxyCodeLine{00356\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ QRPreconditioner>}}\ SVD;}
+\DoxyCodeLine{00357\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00358\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ run(\textcolor{keyword}{typename}\ SVD::WorkMatrixType\&,\ SVD\&,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}},\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}},\ RealScalar\&)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ \}}
+\DoxyCodeLine{00359\ \};}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner>}
+\DoxyCodeLine{00362\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1svd__precondition__2x2__block__to__be__real}{svd\_precondition\_2x2\_block\_to\_be\_real}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ QRPreconditioner,\ true>}
+\DoxyCodeLine{00363\ \{}
+\DoxyCodeLine{00364\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ QRPreconditioner>}}\ SVD;}
+\DoxyCodeLine{00365\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00366\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00367\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ run(\textcolor{keyword}{typename}\ SVD::WorkMatrixType\&\ work\_matrix,\ SVD\&\ svd,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ q,\ RealScalar\&\ maxDiagEntry)}
+\DoxyCodeLine{00368\ \ \ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00371\ \ \ \ \ Scalar\ z;}
+\DoxyCodeLine{00372\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiRotation}{JacobiRotation<Scalar>}}\ rot;}
+\DoxyCodeLine{00373\ \ \ \ \ RealScalar\ n\ =\ sqrt(numext::abs2(work\_matrix.coeff(p,p))\ +\ numext::abs2(work\_matrix.coeff(q,p)));}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keyword}{const}\ RealScalar\ considerAsZero\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00376\ \ \ \ \ \textcolor{keyword}{const}\ RealScalar\ precision\ =\ NumTraits<Scalar>::epsilon();}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{if}(n==0)}
+\DoxyCodeLine{00379\ \ \ \ \ \{}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \textcolor{comment}{//\ make\ sure\ first\ column\ is\ zero}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ work\_matrix.coeffRef(p,p)\ =\ work\_matrix.coeffRef(q,p)\ =\ Scalar(0);}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(numext::imag(work\_matrix.coeff(p,q)))>considerAsZero)}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ work\_matrix.coeff(p,q)\ can\ be\ zero\ if\ work\_matrix.coeff(q,p)\ is\ not\ zero\ but\ small\ enough\ to\ underflow\ when\ computing\ n}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ z\ =\ abs(work\_matrix.coeff(p,q))\ /\ work\_matrix.coeff(p,q);}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ work\_matrix.row(p)\ *=\ z;}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.computeU())\ svd.m\_matrixU.col(p)\ *=\ conj(z);}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(numext::imag(work\_matrix.coeff(q,q)))>considerAsZero)}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ z\ =\ abs(work\_matrix.coeff(q,q))\ /\ work\_matrix.coeff(q,q);}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ work\_matrix.row(q)\ *=\ z;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.computeU())\ svd.m\_matrixU.col(q)\ *=\ conj(z);}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{comment}{//\ otherwise\ the\ second\ row\ is\ already\ zero,\ so\ we\ have\ nothing\ to\ do.}}
+\DoxyCodeLine{00397\ \ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00399\ \ \ \ \ \{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ rot.c()\ =\ conj(work\_matrix.coeff(p,p))\ /\ n;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ rot.s()\ =\ work\_matrix.coeff(q,p)\ /\ n;}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ work\_matrix.applyOnTheLeft(p,q,rot);}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.computeU())\ svd.m\_matrixU.applyOnTheRight(p,q,rot.\mbox{\hyperlink{classEigen_1_1JacobiRotation_aaca0173b23a021238ab2a5f0d0003dfd}{adjoint}}());}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(numext::imag(work\_matrix.coeff(p,q)))>considerAsZero)}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ z\ =\ abs(work\_matrix.coeff(p,q))\ /\ work\_matrix.coeff(p,q);}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ work\_matrix.col(q)\ *=\ z;}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.computeV())\ svd.m\_matrixV.col(q)\ *=\ z;}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(numext::imag(work\_matrix.coeff(q,q)))>considerAsZero)}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ z\ =\ abs(work\_matrix.coeff(q,q))\ /\ work\_matrix.coeff(q,q);}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ work\_matrix.row(q)\ *=\ z;}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(svd.computeU())\ svd.m\_matrixU.col(q)\ *=\ conj(z);}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00416\ \ \ \ \ \}}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{comment}{//\ update\ largest\ diagonal\ entry}}
+\DoxyCodeLine{00419\ \ \ \ \ maxDiagEntry\ =\ numext::maxi<RealScalar>(maxDiagEntry,numext::maxi<RealScalar>(abs(work\_matrix.coeff(p,p)),\ abs(work\_matrix.coeff(q,q))));}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{comment}{//\ and\ check\ whether\ the\ 2x2\ block\ is\ already\ diagonal}}
+\DoxyCodeLine{00421\ \ \ \ \ RealScalar\ threshold\ =\ numext::maxi<RealScalar>(considerAsZero,\ precision\ *\ maxDiagEntry);}
+\DoxyCodeLine{00422\ \ \ \ \ \textcolor{keywordflow}{return}\ abs(work\_matrix.coeff(p,q))>threshold\ ||\ abs(work\_matrix.coeff(q,p))\ >\ threshold;}
+\DoxyCodeLine{00423\ \ \ \}}
+\DoxyCodeLine{00424\ \};}
+\DoxyCodeLine{00425\ }
+\DoxyCodeLine{00426\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner>\ }
+\DoxyCodeLine{00427\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD}}<\_MatrixType,QRPreconditioner>\ >}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\_MatrixType>}
+\DoxyCodeLine{00429\ \{}
+\DoxyCodeLine{00430\ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00431\ \};}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00434\ \textcolor{comment}{}}
+\DoxyCodeLine{00435\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ SVD\_Module}}
+\DoxyCodeLine{00436\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00437\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00438\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ JacobiSVD}}
+\DoxyCodeLine{00439\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00440\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Two-\/sided\ Jacobi\ SVD\ decomposition\ of\ a\ rectangular\ matrix}}
+\DoxyCodeLine{00441\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00442\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ matrix\ of\ which\ we\ are\ computing\ the\ SVD\ decomposition}}
+\DoxyCodeLine{00443\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ QRPreconditioner\ this\ optional\ parameter\ allows\ to\ specify\ the\ type\ of\ QR\ decomposition\ that\ will\ be\ used\ internally}}
+\DoxyCodeLine{00444\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ for\ the\ R-\/SVD\ step\ for\ non-\/square\ matrices.\ See\ discussion\ of\ possible\ values\ below.}}
+\DoxyCodeLine{00445\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00446\ \textcolor{comment}{\ \ *\ SVD\ decomposition\ consists\ in\ decomposing\ any\ n-\/by-\/p\ matrix\ \(\backslash\)a\ A\ as\ a\ product}}
+\DoxyCodeLine{00447\ \textcolor{comment}{\ \ *\ \ \ \(\backslash\)f[\ A\ =\ U\ S\ V\string^*\ \(\backslash\)f]}}
+\DoxyCodeLine{00448\ \textcolor{comment}{\ \ *\ where\ \(\backslash\)a\ U\ is\ a\ n-\/by-\/n\ unitary,\ \(\backslash\)a\ V\ is\ a\ p-\/by-\/p\ unitary,\ and\ \(\backslash\)a\ S\ is\ a\ n-\/by-\/p\ real\ positive\ matrix\ which\ is\ zero\ outside\ of\ its\ main\ diagonal;}}
+\DoxyCodeLine{00449\ \textcolor{comment}{\ \ *\ the\ diagonal\ entries\ of\ S\ are\ known\ as\ the\ \(\backslash\)em\ singular\ \(\backslash\)em\ values\ of\ \(\backslash\)a\ A\ and\ the\ columns\ of\ \(\backslash\)a\ U\ and\ \(\backslash\)a\ V\ are\ known\ as\ the\ left}}
+\DoxyCodeLine{00450\ \textcolor{comment}{\ \ *\ and\ right\ \(\backslash\)em\ singular\ \(\backslash\)em\ vectors\ of\ \(\backslash\)a\ A\ respectively.}}
+\DoxyCodeLine{00451\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00452\ \textcolor{comment}{\ \ *\ Singular\ values\ are\ always\ sorted\ in\ decreasing\ order.}}
+\DoxyCodeLine{00453\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00454\ \textcolor{comment}{\ \ *\ This\ JacobiSVD\ decomposition\ computes\ only\ the\ singular\ values\ by\ default.\ If\ you\ want\ \(\backslash\)a\ U\ or\ \(\backslash\)a\ V,\ you\ need\ to\ ask\ for\ them\ explicitly.}}
+\DoxyCodeLine{00455\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00456\ \textcolor{comment}{\ \ *\ You\ can\ ask\ for\ only\ \(\backslash\)em\ thin\ \(\backslash\)a\ U\ or\ \(\backslash\)a\ V\ to\ be\ computed,\ meaning\ the\ following.\ In\ case\ of\ a\ rectangular\ n-\/by-\/p\ matrix,\ letting\ \(\backslash\)a\ m\ be\ the}}
+\DoxyCodeLine{00457\ \textcolor{comment}{\ \ *\ smaller\ value\ among\ \(\backslash\)a\ n\ and\ \(\backslash\)a\ p,\ there\ are\ only\ \(\backslash\)a\ m\ singular\ vectors;\ the\ remaining\ columns\ of\ \(\backslash\)a\ U\ and\ \(\backslash\)a\ V\ do\ not\ correspond\ to\ actual}}
+\DoxyCodeLine{00458\ \textcolor{comment}{\ \ *\ singular\ vectors.\ Asking\ for\ \(\backslash\)em\ thin\ \(\backslash\)a\ U\ or\ \(\backslash\)a\ V\ means\ asking\ for\ only\ their\ \(\backslash\)a\ m\ first\ columns\ to\ be\ formed.\ So\ \(\backslash\)a\ U\ is\ then\ a\ n-\/by-\/m\ matrix,}}
+\DoxyCodeLine{00459\ \textcolor{comment}{\ \ *\ and\ \(\backslash\)a\ V\ is\ then\ a\ p-\/by-\/m\ matrix.\ Notice\ that\ thin\ \(\backslash\)a\ U\ and\ \(\backslash\)a\ V\ are\ all\ you\ need\ for\ (least\ squares)\ solving.}}
+\DoxyCodeLine{00460\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ \ *\ Here's\ an\ example\ demonstrating\ basic\ usage:}}
+\DoxyCodeLine{00462\ \textcolor{comment}{\ \ *\ \(\backslash\)include\ JacobiSVD\_basic.cpp}}
+\DoxyCodeLine{00463\ \textcolor{comment}{\ \ *\ Output:\ \(\backslash\)verbinclude\ JacobiSVD\_basic.out}}
+\DoxyCodeLine{00464\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00465\ \textcolor{comment}{\ \ *\ This\ JacobiSVD\ class\ is\ a\ two-\/sided\ Jacobi\ R-\/SVD\ decomposition,\ ensuring\ optimal\ reliability\ and\ accuracy.\ The\ downside\ is\ that\ it's\ slower\ than}}
+\DoxyCodeLine{00466\ \textcolor{comment}{\ \ *\ bidiagonalizing\ SVD\ algorithms\ for\ large\ square\ matrices;\ however\ its\ complexity\ is\ still\ \(\backslash\)f\$\ O(n\string^2p)\ \(\backslash\)f\$\ where\ \(\backslash\)a\ n\ is\ the\ smaller\ dimension\ and}}
+\DoxyCodeLine{00467\ \textcolor{comment}{\ \ *\ \(\backslash\)a\ p\ is\ the\ greater\ dimension,\ meaning\ that\ it\ is\ still\ of\ the\ same\ order\ of\ complexity\ as\ the\ faster\ bidiagonalizing\ R-\/SVD\ algorithms.}}
+\DoxyCodeLine{00468\ \textcolor{comment}{\ \ *\ In\ particular,\ like\ any\ R-\/SVD,\ it\ takes\ advantage\ of\ non-\/squareness\ in\ that\ its\ complexity\ is\ only\ linear\ in\ the\ greater\ dimension.}}
+\DoxyCodeLine{00469\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00470\ \textcolor{comment}{\ \ *\ If\ the\ input\ matrix\ has\ inf\ or\ nan\ coefficients,\ the\ result\ of\ the\ computation\ is\ undefined,\ but\ the\ computation\ is\ guaranteed\ to}}
+\DoxyCodeLine{00471\ \textcolor{comment}{\ \ *\ terminate\ in\ finite\ (and\ reasonable)\ time.}}
+\DoxyCodeLine{00472\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00473\ \textcolor{comment}{\ \ *\ The\ possible\ values\ for\ QRPreconditioner\ are:}}
+\DoxyCodeLine{00474\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ ColPivHouseholderQRPreconditioner\ is\ the\ default.\ In\ practice\ it's\ very\ safe.\ It\ uses\ column-\/pivoting\ QR.}}
+\DoxyCodeLine{00475\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ FullPivHouseholderQRPreconditioner,\ is\ the\ safest\ and\ slowest.\ It\ uses\ full-\/pivoting\ QR.}}
+\DoxyCodeLine{00476\ \textcolor{comment}{\ \ *\ \ \ \ \ Contrary\ to\ other\ QRs,\ it\ doesn't\ allow\ computing\ thin\ unitaries.}}
+\DoxyCodeLine{00477\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ HouseholderQRPreconditioner\ is\ the\ fastest,\ and\ less\ safe\ and\ accurate\ than\ the\ pivoting\ variants.\ It\ uses\ non-\/pivoting\ QR.}}
+\DoxyCodeLine{00478\ \textcolor{comment}{\ \ *\ \ \ \ \ This\ is\ very\ similar\ in\ safety\ and\ accuracy\ to\ the\ bidiagonalization\ process\ used\ by\ bidiagonalizing\ SVD\ algorithms\ (since\ bidiagonalization}}
+\DoxyCodeLine{00479\ \textcolor{comment}{\ \ *\ \ \ \ \ is\ inherently\ non-\/pivoting).\ However\ the\ resulting\ SVD\ is\ still\ more\ reliable\ than\ bidiagonalizing\ SVDs\ because\ the\ Jacobi-\/based\ iterarive}}
+\DoxyCodeLine{00480\ \textcolor{comment}{\ \ *\ \ \ \ \ process\ is\ more\ reliable\ than\ the\ optimized\ bidiagonal\ SVD\ iterations.}}
+\DoxyCodeLine{00481\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ NoQRPreconditioner\ allows\ not\ to\ use\ a\ QR\ preconditioner\ at\ all.\ This\ is\ useful\ if\ you\ know\ that\ you\ will\ only\ be\ computing}}
+\DoxyCodeLine{00482\ \textcolor{comment}{\ \ *\ \ \ \ \ JacobiSVD\ decompositions\ of\ square\ matrices.\ Non-\/square\ matrices\ require\ a\ QR\ preconditioner.\ Using\ this\ option\ will\ result\ in}}
+\DoxyCodeLine{00483\ \textcolor{comment}{\ \ *\ \ \ \ \ faster\ compilation\ and\ smaller\ executable\ code.\ It\ won't\ significantly\ speed\ up\ computation,\ since\ JacobiSVD\ is\ always\ checking}}
+\DoxyCodeLine{00484\ \textcolor{comment}{\ \ *\ \ \ \ \ if\ QR\ preconditioning\ is\ needed\ before\ applying\ it\ anyway.}}
+\DoxyCodeLine{00485\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00486\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ MatrixBase::jacobiSvd()}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00488\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1JacobiSVD_a55315ab9cd060019a5ad07be798ff3b9}{JacobiSVD}}}
+\DoxyCodeLine{00489\ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SVDBase_abed06fc6f4b743e1f76a7b317539da87}{SVDBase}}<JacobiSVD<\_MatrixType,QRPreconditioner>\ >}
+\DoxyCodeLine{00490\ \{}
+\DoxyCodeLine{00491\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SVDBase_abed06fc6f4b743e1f76a7b317539da87}{SVDBase<JacobiSVD>}}\ Base;}
+\DoxyCodeLine{00492\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00495\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<typename\ MatrixType::Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00497\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ DiagSizeAtCompileTime\ =\ EIGEN\_SIZE\_MIN\_PREFER\_DYNAMIC(RowsAtCompileTime,ColsAtCompileTime),}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime,}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ MaxDiagSizeAtCompileTime\ =\ EIGEN\_SIZE\_MIN\_PREFER\_FIXED(MaxRowsAtCompileTime,MaxColsAtCompileTime),}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ MatrixOptions\ =\ MatrixType::Options}
+\DoxyCodeLine{00505\ \ \ \ \ \};}
+\DoxyCodeLine{00506\ }
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::MatrixUType\ MatrixUType;}
+\DoxyCodeLine{00508\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::MatrixVType\ MatrixVType;}
+\DoxyCodeLine{00509\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::SingularValuesType\ SingularValuesType;}
+\DoxyCodeLine{00510\ \ \ \ \ }
+\DoxyCodeLine{00511\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::plain\_row\_type<MatrixType>::type\ RowType;}
+\DoxyCodeLine{00512\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::plain\_col\_type<MatrixType>::type\ ColType;}
+\DoxyCodeLine{00513\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<Scalar,\ DiagSizeAtCompileTime,\ DiagSizeAtCompileTime,}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MatrixOptions,\ MaxDiagSizeAtCompileTime,\ MaxDiagSizeAtCompileTime>}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ WorkMatrixType;}
+\DoxyCodeLine{00516\ \textcolor{comment}{}}
+\DoxyCodeLine{00517\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Default\ Constructor.}}
+\DoxyCodeLine{00518\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00519\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ default\ constructor\ is\ useful\ in\ cases\ in\ which\ the\ user\ intends\ to}}
+\DoxyCodeLine{00520\ \textcolor{comment}{\ \ \ \ \ \ *\ perform\ decompositions\ via\ JacobiSVD::compute(const\ MatrixType\&).}}
+\DoxyCodeLine{00521\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00522\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a55315ab9cd060019a5ad07be798ff3b9}{JacobiSVD}}()}
+\DoxyCodeLine{00523\ \ \ \ \ \{\}}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \textcolor{comment}{}}
+\DoxyCodeLine{00526\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Default\ Constructor\ with\ memory\ preallocation}}
+\DoxyCodeLine{00527\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00528\ \textcolor{comment}{\ \ \ \ \ \ *\ Like\ the\ default\ constructor\ but\ with\ preallocation\ of\ the\ internal\ data}}
+\DoxyCodeLine{00529\ \textcolor{comment}{\ \ \ \ \ \ *\ according\ to\ the\ specified\ problem\ size.}}
+\DoxyCodeLine{00530\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ JacobiSVD()}}
+\DoxyCodeLine{00531\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00532\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a5d9ea7c8f361337727260efd77ee03ac}{JacobiSVD}}(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ rows,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ cols,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions\ =\ 0)}
+\DoxyCodeLine{00533\ \ \ \ \ \{}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ allocate(rows,\ cols,\ computationOptions);}
+\DoxyCodeLine{00535\ \ \ \ \ \}}
+\DoxyCodeLine{00536\ \textcolor{comment}{}}
+\DoxyCodeLine{00537\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor\ performing\ the\ decomposition\ of\ given\ matrix.}}
+\DoxyCodeLine{00538\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00539\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)param\ matrix\ the\ matrix\ to\ decompose}}
+\DoxyCodeLine{00540\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)param\ computationOptions\ optional\ parameter\ allowing\ to\ specify\ if\ you\ want\ full\ or\ thin\ U\ or\ V\ unitaries\ to\ be\ computed.}}
+\DoxyCodeLine{00541\ \textcolor{comment}{\ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ By\ default,\ none\ is\ computed.\ This\ is\ a\ bit-\/field,\ the\ possible\ bits\ are\ \#ComputeFullU,\ \#ComputeThinU,}}
+\DoxyCodeLine{00542\ \textcolor{comment}{\ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ComputeFullV,\ \#ComputeThinV.}}
+\DoxyCodeLine{00543\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00544\ \textcolor{comment}{\ \ \ \ \ *\ Thin\ unitaries\ are\ only\ available\ if\ your\ matrix\ type\ has\ a\ Dynamic\ number\ of\ columns\ (for\ example\ MatrixXf).\ They\ also\ are\ not}}
+\DoxyCodeLine{00545\ \textcolor{comment}{\ \ \ \ \ *\ available\ with\ the\ (non-\/default)\ FullPivHouseholderQR\ preconditioner.}}
+\DoxyCodeLine{00546\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00547\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD_abfd1dd454a6e3edec7feecd97c818a78}{JacobiSVD}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions\ =\ 0)}
+\DoxyCodeLine{00548\ \ \ \ \ \{}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a5dab376cc86cf0d36674bcdad4af3f5a}{compute}}(matrix,\ computationOptions);}
+\DoxyCodeLine{00550\ \ \ \ \ \}}
+\DoxyCodeLine{00551\ \textcolor{comment}{}}
+\DoxyCodeLine{00552\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Method\ performing\ the\ decomposition\ of\ given\ matrix\ using\ custom\ options.}}
+\DoxyCodeLine{00553\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00554\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)param\ matrix\ the\ matrix\ to\ decompose}}
+\DoxyCodeLine{00555\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)param\ computationOptions\ optional\ parameter\ allowing\ to\ specify\ if\ you\ want\ full\ or\ thin\ U\ or\ V\ unitaries\ to\ be\ computed.}}
+\DoxyCodeLine{00556\ \textcolor{comment}{\ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ By\ default,\ none\ is\ computed.\ This\ is\ a\ bit-\/field,\ the\ possible\ bits\ are\ \#ComputeFullU,\ \#ComputeThinU,}}
+\DoxyCodeLine{00557\ \textcolor{comment}{\ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ComputeFullV,\ \#ComputeThinV.}}
+\DoxyCodeLine{00558\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00559\ \textcolor{comment}{\ \ \ \ \ *\ Thin\ unitaries\ are\ only\ available\ if\ your\ matrix\ type\ has\ a\ Dynamic\ number\ of\ columns\ (for\ example\ MatrixXf).\ They\ also\ are\ not}}
+\DoxyCodeLine{00560\ \textcolor{comment}{\ \ \ \ \ *\ available\ with\ the\ (non-\/default)\ FullPivHouseholderQR\ preconditioner.}}
+\DoxyCodeLine{00561\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00562\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a55315ab9cd060019a5ad07be798ff3b9}{JacobiSVD}}\&\ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a5dab376cc86cf0d36674bcdad4af3f5a}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions);}
+\DoxyCodeLine{00563\ \textcolor{comment}{}}
+\DoxyCodeLine{00564\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Method\ performing\ the\ decomposition\ of\ given\ matrix\ using\ current\ options.}}
+\DoxyCodeLine{00565\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00566\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)param\ matrix\ the\ matrix\ to\ decompose}}
+\DoxyCodeLine{00567\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00568\ \textcolor{comment}{\ \ \ \ \ *\ This\ method\ uses\ the\ current\ \(\backslash\)a\ computationOptions,\ as\ already\ passed\ to\ the\ constructor\ or\ to\ compute(const\ MatrixType\&,\ unsigned\ int).}}
+\DoxyCodeLine{00569\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00570\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a55315ab9cd060019a5ad07be798ff3b9}{JacobiSVD}}\&\ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a408ef2580962859ff292eca69aa4b976}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00571\ \ \ \ \ \{}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a5dab376cc86cf0d36674bcdad4af3f5a}{compute}}(matrix,\ m\_computationOptions);}
+\DoxyCodeLine{00573\ \ \ \ \ \}}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classEigen_1_1SVDBase_a705a7c2709e1624ccc19aa748a78d473}{Base::computeU}};}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classEigen_1_1SVDBase_a5f12efcb791eb007d4a4890ac5255ac4}{Base::computeV}};}
+\DoxyCodeLine{00577\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{Base::rows}};}
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{structEigen_1_1EigenBase_a50c19c45f15acdfe1cb66ab5e879b8e3}{Base::cols}};}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classEigen_1_1SVDBase_a30b89e24f42f1692079eea31b361d26a}{Base::rank}};}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00582\ \ \ \ \ \textcolor{keywordtype}{void}\ allocate(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}},\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_a50c19c45f15acdfe1cb66ab5e879b8e3}{cols}},\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions);}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00585\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_matrixU;}
+\DoxyCodeLine{00586\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_matrixV;}
+\DoxyCodeLine{00587\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_singularValues;}
+\DoxyCodeLine{00588\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_info;}
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_isInitialized;}
+\DoxyCodeLine{00590\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_isAllocated;}
+\DoxyCodeLine{00591\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_usePrescribedThreshold;}
+\DoxyCodeLine{00592\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_computeFullU;}
+\DoxyCodeLine{00593\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_computeThinU;}
+\DoxyCodeLine{00594\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_computeFullV;}
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_computeThinV;}
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_computationOptions;}
+\DoxyCodeLine{00597\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_nonzeroSingularValues;}
+\DoxyCodeLine{00598\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_rows;}
+\DoxyCodeLine{00599\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_cols;}
+\DoxyCodeLine{00600\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_diagSize;}
+\DoxyCodeLine{00601\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_prescribedThreshold;}
+\DoxyCodeLine{00602\ \ \ \ \ WorkMatrixType\ m\_workMatrix;}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_\_MatrixType,\ \textcolor{keywordtype}{int}\ \_QRPreconditioner,\ \textcolor{keywordtype}{bool}\ \_IsComplex>}
+\DoxyCodeLine{00605\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1svd__precondition__2x2__block__to__be__real}{internal::svd\_precondition\_2x2\_block\_to\_be\_real}};}
+\DoxyCodeLine{00606\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_\_MatrixType,\ \textcolor{keywordtype}{int}\ \_QRPreconditioner,\ \textcolor{keywordtype}{int}\ \_Case,\ \textcolor{keywordtype}{bool}\ \_DoAnything>}
+\DoxyCodeLine{00607\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{internal::qr\_preconditioner\_impl}};}
+\DoxyCodeLine{00608\ }
+\DoxyCodeLine{00609\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{internal::qr\_preconditioner\_impl<MatrixType,\ QRPreconditioner,\ internal::PreconditionIfMoreColsThanRows>}}\ m\_qr\_precond\_morecols;}
+\DoxyCodeLine{00610\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1qr__preconditioner__impl}{internal::qr\_preconditioner\_impl<MatrixType,\ QRPreconditioner,\ internal::PreconditionIfMoreRowsThanCols>}}\ m\_qr\_precond\_morerows;}
+\DoxyCodeLine{00611\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\ m\_scaledMatrix;}
+\DoxyCodeLine{00612\ \};}
+\DoxyCodeLine{00613\ }
+\DoxyCodeLine{00614\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner>}
+\DoxyCodeLine{00615\ \textcolor{keywordtype}{void}\ JacobiSVD<MatrixType,\ QRPreconditioner>::allocate(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ cols,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions)}
+\DoxyCodeLine{00616\ \{}
+\DoxyCodeLine{00617\ \ \ eigen\_assert(rows\ >=\ 0\ \&\&\ cols\ >=\ 0);}
+\DoxyCodeLine{00618\ }
+\DoxyCodeLine{00619\ \ \ \textcolor{keywordflow}{if}\ (m\_isAllocated\ \&\&}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ rows\ ==\ m\_rows\ \&\&}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ cols\ ==\ m\_cols\ \&\&}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ computationOptions\ ==\ m\_computationOptions)}
+\DoxyCodeLine{00623\ \ \ \{}
+\DoxyCodeLine{00624\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00625\ \ \ \}}
+\DoxyCodeLine{00626\ }
+\DoxyCodeLine{00627\ \ \ m\_rows\ =\ rows;}
+\DoxyCodeLine{00628\ \ \ m\_cols\ =\ cols;}
+\DoxyCodeLine{00629\ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00630\ \ \ m\_isInitialized\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00631\ \ \ m\_isAllocated\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00632\ \ \ m\_computationOptions\ =\ computationOptions;}
+\DoxyCodeLine{00633\ \ \ m\_computeFullU\ =\ (computationOptions\ \&\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a9fa9302d510cee20c26311154937e23f}{ComputeFullU}})\ !=\ 0;}
+\DoxyCodeLine{00634\ \ \ m\_computeThinU\ =\ (computationOptions\ \&\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9aa7fb4e98834788d0b1b0f2b8467d2527}{ComputeThinU}})\ !=\ 0;}
+\DoxyCodeLine{00635\ \ \ m\_computeFullV\ =\ (computationOptions\ \&\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a36581f7c662f7def31efd500c284f930}{ComputeFullV}})\ !=\ 0;}
+\DoxyCodeLine{00636\ \ \ m\_computeThinV\ =\ (computationOptions\ \&\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a540036417bfecf2e791a70948c227f47}{ComputeThinV}})\ !=\ 0;}
+\DoxyCodeLine{00637\ \ \ eigen\_assert(!(m\_computeFullU\ \&\&\ m\_computeThinU)\ \&\&\ \textcolor{stringliteral}{"{}JacobiSVD:\ you\ can't\ ask\ for\ both\ full\ and\ thin\ U"{}});}
+\DoxyCodeLine{00638\ \ \ eigen\_assert(!(m\_computeFullV\ \&\&\ m\_computeThinV)\ \&\&\ \textcolor{stringliteral}{"{}JacobiSVD:\ you\ can't\ ask\ for\ both\ full\ and\ thin\ V"{}});}
+\DoxyCodeLine{00639\ \ \ eigen\_assert(EIGEN\_IMPLIES(m\_computeThinU\ ||\ m\_computeThinV,\ MatrixType::ColsAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}})\ \&\&}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}JacobiSVD:\ thin\ U\ and\ V\ are\ only\ available\ when\ your\ matrix\ has\ a\ dynamic\ number\ of\ columns."{}});}
+\DoxyCodeLine{00641\ \ \ \textcolor{keywordflow}{if}\ (QRPreconditioner\ ==\ \mbox{\hyperlink{group__enums_gga46eba0d5c621f590b8cf1b53af31d56eabd745dcaff7019c5f918c68809e5ea50}{FullPivHouseholderQRPreconditioner}})}
+\DoxyCodeLine{00642\ \ \ \{}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ eigen\_assert(!(m\_computeThinU\ ||\ m\_computeThinV)\ \&\&}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}JacobiSVD:\ can't\ compute\ thin\ U\ or\ thin\ V\ with\ the\ FullPivHouseholderQR\ preconditioner.\ "{}}}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}Use\ the\ ColPivHouseholderQR\ preconditioner\ instead."{}});}
+\DoxyCodeLine{00646\ \ \ \}}
+\DoxyCodeLine{00647\ \ \ m\_diagSize\ =\ (std::min)(m\_rows,\ m\_cols);}
+\DoxyCodeLine{00648\ \ \ m\_singularValues.resize(m\_diagSize);}
+\DoxyCodeLine{00649\ \ \ \textcolor{keywordflow}{if}(RowsAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}})}
+\DoxyCodeLine{00650\ \ \ \ \ m\_matrixU.resize(m\_rows,\ m\_computeFullU\ ?\ m\_rows}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_computeThinU\ ?\ m\_diagSize}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ 0);}
+\DoxyCodeLine{00653\ \ \ \textcolor{keywordflow}{if}(ColsAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}})}
+\DoxyCodeLine{00654\ \ \ \ \ m\_matrixV.resize(m\_cols,\ m\_computeFullV\ ?\ m\_cols}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ m\_computeThinV\ ?\ m\_diagSize}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ 0);}
+\DoxyCodeLine{00657\ \ \ m\_workMatrix.resize(m\_diagSize,\ m\_diagSize);}
+\DoxyCodeLine{00658\ \ \ }
+\DoxyCodeLine{00659\ \ \ \textcolor{keywordflow}{if}(m\_cols>m\_rows)\ \ \ m\_qr\_precond\_morecols.allocate(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00660\ \ \ \textcolor{keywordflow}{if}(m\_rows>m\_cols)\ \ \ m\_qr\_precond\_morerows.allocate(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00661\ \ \ \textcolor{keywordflow}{if}(m\_rows!=m\_cols)\ \ m\_scaledMatrix.resize(rows,cols);}
+\DoxyCodeLine{00662\ \}}
+\DoxyCodeLine{00663\ }
+\DoxyCodeLine{00664\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ QRPreconditioner>}
+\DoxyCodeLine{00665\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType,\ QRPreconditioner>}}\&}
+\DoxyCodeLine{00666\ \mbox{\hyperlink{classEigen_1_1JacobiSVD_a5dab376cc86cf0d36674bcdad4af3f5a}{JacobiSVD<MatrixType,\ QRPreconditioner>::compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions)}
+\DoxyCodeLine{00667\ \{}
+\DoxyCodeLine{00668\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00669\ \ \ allocate(matrix.rows(),\ matrix.cols(),\ computationOptions);}
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \ \ \textcolor{comment}{//\ currently\ we\ stop\ when\ we\ reach\ precision\ 2*epsilon\ as\ the\ last\ bit\ of\ precision\ can\ require\ an\ unreasonable\ number\ of\ iterations,}}
+\DoxyCodeLine{00672\ \ \ \textcolor{comment}{//\ only\ worsening\ the\ precision\ of\ U\ and\ V\ as\ we\ accumulate\ more\ rotations}}
+\DoxyCodeLine{00673\ \ \ \textcolor{keyword}{const}\ RealScalar\ precision\ =\ RealScalar(2)\ *\ NumTraits<Scalar>::epsilon();}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \ \ \textcolor{comment}{//\ limit\ for\ denormal\ numbers\ to\ be\ considered\ zero\ in\ order\ to\ avoid\ infinite\ loops\ (see\ bug\ 286)}}
+\DoxyCodeLine{00676\ \ \ \textcolor{keyword}{const}\ RealScalar\ considerAsZero\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \ \textcolor{comment}{//\ Scaling\ factor\ to\ reduce\ over/under-\/flows}}
+\DoxyCodeLine{00679\ \ \ RealScalar\ scale\ =\ matrix.cwiseAbs().template\ maxCoeff<PropagateNaN>();}
+\DoxyCodeLine{00680\ \ \ \textcolor{keywordflow}{if}\ (!(numext::isfinite)(scale))\ \{}
+\DoxyCodeLine{00681\ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00682\ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea580b2a3cafe585691e789f768fb729bf}{InvalidInput}};}
+\DoxyCodeLine{00683\ \ \ \ \ m\_nonzeroSingularValues\ =\ 0;}
+\DoxyCodeLine{00684\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00685\ \ \ \}}
+\DoxyCodeLine{00686\ \ \ \textcolor{keywordflow}{if}(scale==RealScalar(0))\ scale\ =\ RealScalar(1);}
+\DoxyCodeLine{00687\ \ \ }
+\DoxyCodeLine{00688\ \textcolor{comment}{\ \ /***\ step\ 1.\ The\ R-\/SVD\ step:\ we\ use\ a\ QR\ decomposition\ to\ reduce\ to\ the\ case\ of\ a\ square\ matrix\ */}}
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ \ \ \textcolor{keywordflow}{if}(m\_rows!=m\_cols)}
+\DoxyCodeLine{00691\ \ \ \{}
+\DoxyCodeLine{00692\ \ \ \ \ m\_scaledMatrix\ =\ matrix\ /\ scale;}
+\DoxyCodeLine{00693\ \ \ \ \ m\_qr\_precond\_morecols.run(*\textcolor{keyword}{this},\ m\_scaledMatrix);}
+\DoxyCodeLine{00694\ \ \ \ \ m\_qr\_precond\_morerows.run(*\textcolor{keyword}{this},\ m\_scaledMatrix);}
+\DoxyCodeLine{00695\ \ \ \}}
+\DoxyCodeLine{00696\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00697\ \ \ \{}
+\DoxyCodeLine{00698\ \ \ \ \ m\_workMatrix\ =\ matrix.block(0,0,m\_diagSize,m\_diagSize)\ /\ scale;}
+\DoxyCodeLine{00699\ \ \ \ \ \textcolor{keywordflow}{if}(m\_computeFullU)\ m\_matrixU.setIdentity(m\_rows,m\_rows);}
+\DoxyCodeLine{00700\ \ \ \ \ \textcolor{keywordflow}{if}(m\_computeThinU)\ m\_matrixU.setIdentity(m\_rows,m\_diagSize);}
+\DoxyCodeLine{00701\ \ \ \ \ \textcolor{keywordflow}{if}(m\_computeFullV)\ m\_matrixV.setIdentity(m\_cols,m\_cols);}
+\DoxyCodeLine{00702\ \ \ \ \ \textcolor{keywordflow}{if}(m\_computeThinV)\ m\_matrixV.setIdentity(m\_cols,\ m\_diagSize);}
+\DoxyCodeLine{00703\ \ \ \}}
+\DoxyCodeLine{00704\ }
+\DoxyCodeLine{00705\ \textcolor{comment}{\ \ /***\ step\ 2.\ The\ main\ Jacobi\ SVD\ iteration.\ ***/}}
+\DoxyCodeLine{00706\ \ \ RealScalar\ maxDiagEntry\ =\ m\_workMatrix.cwiseAbs().diagonal().maxCoeff();}
+\DoxyCodeLine{00707\ }
+\DoxyCodeLine{00708\ \ \ \textcolor{keywordtype}{bool}\ finished\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00709\ \ \ \textcolor{keywordflow}{while}(!finished)}
+\DoxyCodeLine{00710\ \ \ \{}
+\DoxyCodeLine{00711\ \ \ \ \ finished\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{comment}{//\ do\ a\ sweep:\ for\ all\ index\ pairs\ (p,q),\ perform\ SVD\ of\ the\ corresponding\ 2x2\ sub-\/matrix}}
+\DoxyCodeLine{00714\ }
+\DoxyCodeLine{00715\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ p\ =\ 1;\ p\ <\ m\_diagSize;\ ++p)}
+\DoxyCodeLine{00716\ \ \ \ \ \{}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ q\ =\ 0;\ q\ <\ p;\ ++q)}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ this\ 2x2\ sub-\/matrix\ is\ not\ diagonal\ already...}}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ notice\ that\ this\ comparison\ will\ evaluate\ to\ false\ if\ any\ NaN\ is\ involved,\ ensuring\ that\ NaN's\ don't}}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ keep\ us\ iterating\ forever.\ Similarly,\ small\ denormal\ numbers\ are\ considered\ zero.}}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ RealScalar\ \mbox{\hyperlink{classEigen_1_1SVDBase_a98b2ee98690358951807353812a05c69}{threshold}}\ =\ numext::maxi<RealScalar>(considerAsZero,\ precision\ *\ maxDiagEntry);}
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(m\_workMatrix.coeff(p,q))>\mbox{\hyperlink{classEigen_1_1SVDBase_a98b2ee98690358951807353812a05c69}{threshold}}\ ||\ abs(m\_workMatrix.coeff(q,p))\ >\ \mbox{\hyperlink{classEigen_1_1SVDBase_a98b2ee98690358951807353812a05c69}{threshold}})}
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ \ \ finished\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ perform\ SVD\ decomposition\ of\ 2x2\ sub-\/matrix\ corresponding\ to\ indices\ p,q\ to\ make\ it\ diagonal}}
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ complex\ to\ real\ operation\ returns\ true\ if\ the\ updated\ 2x2\ block\ is\ not\ already\ diagonal}}
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{structEigen_1_1internal_1_1svd__precondition__2x2__block__to__be__real}{internal::svd\_precondition\_2x2\_block\_to\_be\_real<MatrixType,\ QRPreconditioner>::run}}(m\_workMatrix,\ *\textcolor{keyword}{this},\ p,\ q,\ maxDiagEntry))}
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiRotation}{JacobiRotation<RealScalar>}}\ j\_left,\ j\_right;}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \ \ \ \ \ \ internal::real\_2x2\_jacobi\_svd(m\_workMatrix,\ p,\ q,\ \&j\_left,\ \&j\_right);}
+\DoxyCodeLine{00732\ }
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ accumulate\ resulting\ Jacobi\ rotations}}
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \ \ \ \ \ \ m\_workMatrix.applyOnTheLeft(p,q,j\_left);}
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}())\ m\_matrixU.applyOnTheRight(p,q,j\_left.\mbox{\hyperlink{classEigen_1_1JacobiRotation_a3ad513485f7426761ab80fc845f9946e}{transpose}}());}
+\DoxyCodeLine{00736\ }
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \ \ \ \ m\_workMatrix.applyOnTheRight(p,q,j\_right);}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1JacobiSVD_a468809f18ea083ff6e2581af5d6c99dc}{computeV}}())\ m\_matrixV.applyOnTheRight(p,q,j\_right);}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ keep\ track\ of\ the\ largest\ diagonal\ coefficient}}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ \ \ \ \ \ \ maxDiagEntry\ =\ numext::maxi<RealScalar>(maxDiagEntry,numext::maxi<RealScalar>(abs(m\_workMatrix.coeff(p,p)),\ abs(m\_workMatrix.coeff(q,q))));}
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00745\ \ \ \ \ \}}
+\DoxyCodeLine{00746\ \ \ \}}
+\DoxyCodeLine{00747\ }
+\DoxyCodeLine{00748\ \textcolor{comment}{\ \ /***\ step\ 3.\ The\ work\ matrix\ is\ now\ diagonal,\ so\ ensure\ it's\ positive\ so\ its\ diagonal\ entries\ are\ the\ singular\ values\ ***/}}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ i\ =\ 0;\ i\ <\ m\_diagSize;\ ++i)}
+\DoxyCodeLine{00751\ \ \ \{}
+\DoxyCodeLine{00752\ \ \ \ \ \textcolor{comment}{//\ For\ a\ complex\ matrix,\ some\ diagonal\ coefficients\ might\ note\ have\ been}}
+\DoxyCodeLine{00753\ \ \ \ \ \textcolor{comment}{//\ treated\ by\ svd\_precondition\_2x2\_block\_to\_be\_real,\ and\ the\ imaginary\ part}}
+\DoxyCodeLine{00754\ \ \ \ \ \textcolor{comment}{//\ of\ some\ diagonal\ entry\ might\ not\ be\ null.}}
+\DoxyCodeLine{00755\ \ \ \ \ \textcolor{keywordflow}{if}(NumTraits<Scalar>::IsComplex\ \&\&\ abs(numext::imag(m\_workMatrix.coeff(i,i)))>considerAsZero)}
+\DoxyCodeLine{00756\ \ \ \ \ \{}
+\DoxyCodeLine{00757\ \ \ \ \ \ \ RealScalar\ a\ =\ abs(m\_workMatrix.coeff(i,i));}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ m\_singularValues.coeffRef(i)\ =\ abs(a);}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}())\ m\_matrixU.col(i)\ *=\ m\_workMatrix.coeff(i,i)/a;}
+\DoxyCodeLine{00760\ \ \ \ \ \}}
+\DoxyCodeLine{00761\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00762\ \ \ \ \ \{}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \textcolor{comment}{//\ m\_workMatrix.coeff(i,i)\ is\ already\ real,\ no\ difficulty:}}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ RealScalar\ a\ =\ numext::real(m\_workMatrix.coeff(i,i));}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ m\_singularValues.coeffRef(i)\ =\ abs(a);}
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}()\ \&\&\ (a<RealScalar(0)))\ m\_matrixU.col(i)\ =\ -\/m\_matrixU.col(i);}
+\DoxyCodeLine{00767\ \ \ \ \ \}}
+\DoxyCodeLine{00768\ \ \ \}}
+\DoxyCodeLine{00769\ \ \ }
+\DoxyCodeLine{00770\ \ \ m\_singularValues\ *=\ scale;}
+\DoxyCodeLine{00771\ }
+\DoxyCodeLine{00772\ \textcolor{comment}{\ \ /***\ step\ 4.\ Sort\ singular\ values\ in\ descending\ order\ and\ compute\ the\ number\ of\ nonzero\ singular\ values\ ***/}}
+\DoxyCodeLine{00773\ }
+\DoxyCodeLine{00774\ \ \ m\_nonzeroSingularValues\ =\ m\_diagSize;}
+\DoxyCodeLine{00775\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ i\ =\ 0;\ i\ <\ m\_diagSize;\ i++)}
+\DoxyCodeLine{00776\ \ \ \{}
+\DoxyCodeLine{00777\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ pos;}
+\DoxyCodeLine{00778\ \ \ \ \ RealScalar\ maxRemainingSingularValue\ =\ m\_singularValues.tail(m\_diagSize-\/i).maxCoeff(\&pos);}
+\DoxyCodeLine{00779\ \ \ \ \ \textcolor{keywordflow}{if}(maxRemainingSingularValue\ ==\ RealScalar(0))}
+\DoxyCodeLine{00780\ \ \ \ \ \{}
+\DoxyCodeLine{00781\ \ \ \ \ \ \ m\_nonzeroSingularValues\ =\ i;}
+\DoxyCodeLine{00782\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00783\ \ \ \ \ \}}
+\DoxyCodeLine{00784\ \ \ \ \ \textcolor{keywordflow}{if}(pos)}
+\DoxyCodeLine{00785\ \ \ \ \ \{}
+\DoxyCodeLine{00786\ \ \ \ \ \ \ pos\ +=\ i;}
+\DoxyCodeLine{00787\ \ \ \ \ \ \ std::swap(m\_singularValues.coeffRef(i),\ m\_singularValues.coeffRef(pos));}
+\DoxyCodeLine{00788\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1JacobiSVD_a85661f1d7707070f204d18a1fe857c93}{computeU}}())\ m\_matrixU.col(pos).swap(m\_matrixU.col(i));}
+\DoxyCodeLine{00789\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1JacobiSVD_a468809f18ea083ff6e2581af5d6c99dc}{computeV}}())\ m\_matrixV.col(pos).swap(m\_matrixV.col(i));}
+\DoxyCodeLine{00790\ \ \ \ \ \}}
+\DoxyCodeLine{00791\ \ \ \}}
+\DoxyCodeLine{00792\ }
+\DoxyCodeLine{00793\ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00794\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00795\ \}}
+\DoxyCodeLine{00796\ \textcolor{comment}{}}
+\DoxyCodeLine{00797\ \textcolor{comment}{/**\ \(\backslash\)svd\_module}}
+\DoxyCodeLine{00798\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00799\ \textcolor{comment}{\ \ *\ \(\backslash\)return\ the\ singular\ value\ decomposition\ of\ \(\backslash\)c\ *this\ computed\ by\ two-\/sided}}
+\DoxyCodeLine{00800\ \textcolor{comment}{\ \ *\ Jacobi\ transformations.}}
+\DoxyCodeLine{00801\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00802\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ JacobiSVD}}
+\DoxyCodeLine{00803\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00804\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00805\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<typename\ MatrixBase<Derived>::PlainObject}}>}
+\DoxyCodeLine{00806\ \mbox{\hyperlink{classEigen_1_1MatrixBase_a5745dca9c54390633b434e54a1d1eedd}{MatrixBase<Derived>::jacobiSvd}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00807\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00808\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<PlainObject>}}(*\textcolor{keyword}{this},\ computationOptions);}
+\DoxyCodeLine{00809\ \}}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00812\ }
+\DoxyCodeLine{00813\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_JACOBISVD\_H}}
+
+\end{DoxyCode}

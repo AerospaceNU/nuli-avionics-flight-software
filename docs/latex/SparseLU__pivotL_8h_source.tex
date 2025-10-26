@@ -1,0 +1,143 @@
+\doxysection{Sparse\+LU\+\_\+pivot\+L.\+h}
+\hypertarget{SparseLU__pivotL_8h_source}{}\label{SparseLU__pivotL_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_pivotL.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_pivotL.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Désiré\ Nuentsa-\/Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{/*\ }}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ }}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ NOTE:\ This\ file\ is\ the\ modified\ version\ of\ xpivotL.c\ file\ in\ SuperLU\ }}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ }}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ -\/-\/\ SuperLU\ routine\ (version\ 3.0)\ -\/-\/}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ Univ.\ of\ California\ Berkeley,\ Xerox\ Palo\ Alto\ Research\ Center,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ and\ Lawrence\ Berkeley\ National\ Lab.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ October\ 15,\ 2003}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ Copyright\ (c)\ 1994\ by\ Xerox\ Corporation.\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ MATERIAL\ IS\ PROVIDED\ AS\ IS,\ WITH\ ABSOLUTELY\ NO\ WARRANTY}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ EXPRESSED\ OR\ IMPLIED.\ \ ANY\ USE\ IS\ AT\ YOUR\ OWN\ RISK.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ Permission\ is\ hereby\ granted\ to\ use\ or\ copy\ this\ program\ for\ any}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ purpose,\ provided\ the\ above\ notices\ are\ retained\ on\ all\ copies.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ Permission\ to\ modify\ the\ code\ and\ to\ distribute\ modified\ code\ is}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ granted,\ provided\ the\ above\ notices\ are\ retained,\ and\ a\ notice\ that}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ the\ code\ was\ modified\ is\ included\ with\ the\ above\ copyright\ notice.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifndef\ SPARSELU\_PIVOTL\_H}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ SPARSELU\_PIVOTL\_H}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00035\ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00036\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ \(\backslash\)brief\ Performs\ the\ numerical\ pivotin\ on\ the\ current\ column\ of\ L,\ and\ the\ CDIV\ operation.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ Pivot\ policy\ :}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *\ (1)\ Compute\ thresh\ =\ u\ *\ max\_(i>=j)\ abs(A\_ij);}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ (2)\ IF\ user\ specifies\ pivot\ row\ k\ and\ abs(A\_kj)\ >=\ thresh\ THEN}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ pivot\ row\ =\ k;}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ \ \ \ \ \ \ ELSE\ IF\ abs(A\_jj)\ >=\ thresh\ THEN}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ pivot\ row\ =\ j;}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ *\ \ \ \ \ \ \ ELSE}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ pivot\ row\ =\ m;}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ *\ \ \ Note:\ If\ you\ absolutely\ want\ to\ use\ a\ given\ pivot\ order,\ then\ set\ u=0.0.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ *\ \(\backslash\)param\ jcol\ The\ current\ column\ of\ L}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ *\ \(\backslash\)param\ diagpivotthresh\ diagonal\ pivoting\ threshold}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ *\ \(\backslash\)param[in,out]\ perm\_r\ Row\ permutation\ (threshold\ pivoting)}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ *\ \(\backslash\)param[in]\ iperm\_c\ column\ permutation\ -\/\ used\ to\ finf\ diagonal\ of\ Pc*A*Pc'}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ *\ \(\backslash\)param[out]\ pivrow\ \ The\ pivot\ row}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *\ \(\backslash\)param\ glu\ Global\ LU\ data}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ *\ \(\backslash\)return\ 0\ if\ success,\ i\ >\ 0\ if\ U(i,i)\ is\ exactly\ zero\ }}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00060\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_ab5f56947465b829f8d523575724c3ac6}{SparseLUImpl<Scalar,StorageIndex>::pivotL}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol,\ \textcolor{keyword}{const}\ RealScalar\&\ diagpivotthresh,\ IndexVector\&\ perm\_r,\ IndexVector\&\ iperm\_c,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ pivrow,\ GlobalLU\_t\&\ glu)}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ }
+\DoxyCodeLine{00063\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ fsupc\ =\ (glu.xsup)((glu.supno)(jcol));\ \textcolor{comment}{//\ First\ column\ in\ the\ supernode\ containing\ the\ column\ jcol}}
+\DoxyCodeLine{00064\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nsupc\ =\ jcol\ -\/\ fsupc;\ \textcolor{comment}{//\ Number\ of\ columns\ in\ the\ supernode\ portion,\ excluding\ jcol;\ nsupc\ >=0}}
+\DoxyCodeLine{00065\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lptr\ =\ glu.xlsub(fsupc);\ \textcolor{comment}{//\ pointer\ to\ the\ starting\ location\ of\ the\ row\ subscripts\ for\ this\ supernode\ portion}}
+\DoxyCodeLine{00066\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nsupr\ =\ glu.xlsub(fsupc+1)\ -\/\ lptr;\ \textcolor{comment}{//\ Number\ of\ rows\ in\ the\ supernode}}
+\DoxyCodeLine{00067\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lda\ =\ glu.xlusup(fsupc+1)\ -\/\ glu.xlusup(fsupc);\ \textcolor{comment}{//\ leading\ dimension}}
+\DoxyCodeLine{00068\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lu\_sup\_ptr\ =\ \&(glu.lusup.data()[glu.xlusup(fsupc)]);\ \textcolor{comment}{//\ Start\ of\ the\ current\ supernode}}
+\DoxyCodeLine{00069\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lu\_col\_ptr\ =\ \&(glu.lusup.data()[glu.xlusup(jcol)]);\ \textcolor{comment}{//\ Start\ of\ jcol\ in\ the\ supernode}}
+\DoxyCodeLine{00070\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ lsub\_ptr\ =\ \&(glu.lsub.data()[lptr]);\ \textcolor{comment}{//\ Start\ of\ row\ indices\ of\ the\ supernode}}
+\DoxyCodeLine{00071\ \ \ }
+\DoxyCodeLine{00072\ \ \ \textcolor{comment}{//\ Determine\ the\ largest\ abs\ numerical\ value\ for\ partial\ pivoting\ }}
+\DoxyCodeLine{00073\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ diagind\ =\ iperm\_c(jcol);\ \textcolor{comment}{//\ diagonal\ index\ }}
+\DoxyCodeLine{00074\ \ \ RealScalar\ pivmax(-\/1.0);}
+\DoxyCodeLine{00075\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ pivptr\ =\ nsupc;\ }
+\DoxyCodeLine{00076\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ diag\ =\ emptyIdxLU;\ }
+\DoxyCodeLine{00077\ \ \ RealScalar\ rtemp;}
+\DoxyCodeLine{00078\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ isub,\ icol,\ itemp,\ k;\ }
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordflow}{for}\ (isub\ =\ nsupc;\ isub\ <\ nsupr;\ ++isub)\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00081\ \ \ \ \ rtemp\ =\ abs(lu\_col\_ptr[isub]);}
+\DoxyCodeLine{00082\ \ \ \ \ \textcolor{keywordflow}{if}\ (rtemp\ >\ pivmax)\ \{}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ pivmax\ =\ rtemp;\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ pivptr\ =\ isub;}
+\DoxyCodeLine{00085\ \ \ \ \ \}\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{if}\ (lsub\_ptr[isub]\ ==\ diagind)\ diag\ =\ isub;}
+\DoxyCodeLine{00087\ \ \ \}}
+\DoxyCodeLine{00088\ \ \ }
+\DoxyCodeLine{00089\ \ \ \textcolor{comment}{//\ Test\ for\ singularity}}
+\DoxyCodeLine{00090\ \ \ \textcolor{keywordflow}{if}\ (\ pivmax\ <=\ RealScalar(0.0)\ )\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \textcolor{comment}{//\ if\ pivmax\ ==\ -\/1,\ the\ column\ is\ structurally\ empty,\ otherwise\ it\ is\ only\ numerically\ zero}}
+\DoxyCodeLine{00092\ \ \ \ \ pivrow\ =\ pivmax\ <\ RealScalar(0.0)\ ?\ diagind\ :\ lsub\_ptr[pivptr];}
+\DoxyCodeLine{00093\ \ \ \ \ perm\_r(pivrow)\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(jcol);}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keywordflow}{return}\ (jcol+1);}
+\DoxyCodeLine{00095\ \ \ \}}
+\DoxyCodeLine{00096\ \ \ }
+\DoxyCodeLine{00097\ \ \ RealScalar\ thresh\ =\ diagpivotthresh\ *\ pivmax;\ }
+\DoxyCodeLine{00098\ \ \ }
+\DoxyCodeLine{00099\ \ \ \textcolor{comment}{//\ Choose\ appropriate\ pivotal\ element\ }}
+\DoxyCodeLine{00100\ \ \ }
+\DoxyCodeLine{00101\ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ Test\ if\ the\ diagonal\ element\ can\ be\ used\ as\ a\ pivot\ (given\ the\ threshold\ value)}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keywordflow}{if}\ (diag\ >=\ 0\ )\ }
+\DoxyCodeLine{00104\ \ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{comment}{//\ Diagonal\ element\ exists}}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ rtemp\ =\ abs(lu\_col\_ptr[diag]);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (rtemp\ !=\ RealScalar(0.0)\ \&\&\ rtemp\ >=\ thresh)\ pivptr\ =\ diag;}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ pivrow\ =\ lsub\_ptr[pivptr];}
+\DoxyCodeLine{00111\ \ \ \}}
+\DoxyCodeLine{00112\ \ \ }
+\DoxyCodeLine{00113\ \ \ \textcolor{comment}{//\ Record\ pivot\ row}}
+\DoxyCodeLine{00114\ \ \ perm\_r(pivrow)\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(jcol);}
+\DoxyCodeLine{00115\ \ \ \textcolor{comment}{//\ Interchange\ row\ subscripts}}
+\DoxyCodeLine{00116\ \ \ \textcolor{keywordflow}{if}\ (pivptr\ !=\ nsupc\ )}
+\DoxyCodeLine{00117\ \ \ \{}
+\DoxyCodeLine{00118\ \ \ \ \ std::swap(\ lsub\_ptr[pivptr],\ lsub\_ptr[nsupc]\ );}
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{comment}{//\ Interchange\ numerical\ values\ as\ well,\ for\ the\ two\ rows\ in\ the\ whole\ snode}}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{comment}{//\ such\ that\ L\ is\ indexed\ the\ same\ way\ as\ A}}
+\DoxyCodeLine{00121\ \ \ \ \ \textcolor{keywordflow}{for}\ (icol\ =\ 0;\ icol\ <=\ nsupc;\ icol++)}
+\DoxyCodeLine{00122\ \ \ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ itemp\ =\ pivptr\ +\ icol\ *\ lda;\ }
+\DoxyCodeLine{00124\ \ \ \ \ \ \ std::swap(lu\_sup\_ptr[itemp],\ lu\_sup\_ptr[nsupc\ +\ icol\ *\ lda]);}
+\DoxyCodeLine{00125\ \ \ \ \ \}}
+\DoxyCodeLine{00126\ \ \ \}}
+\DoxyCodeLine{00127\ \ \ \textcolor{comment}{//\ cdiv\ operations}}
+\DoxyCodeLine{00128\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ temp\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1.0)\ /\ lu\_col\_ptr[nsupc];}
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordflow}{for}\ (k\ =\ nsupc+1;\ k\ <\ nsupr;\ k++)}
+\DoxyCodeLine{00130\ \ \ \ \ lu\_col\_ptr[k]\ *=\ temp;\ }
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00132\ \}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00135\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ SPARSELU\_PIVOTL\_H}}
+
+\end{DoxyCode}

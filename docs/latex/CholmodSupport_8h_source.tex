@@ -1,0 +1,688 @@
+\doxysection{Cholmod\+Support.\+h}
+\hypertarget{CholmodSupport_8h_source}{}\label{CholmodSupport_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/CholmodSupport/CholmodSupport.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/CholmodSupport/CholmodSupport.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_CHOLMODSUPPORT\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_CHOLMODSUPPORT\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cholmod__configure__matrix}{cholmod\_configure\_matrix}};}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cholmod__configure__matrix}{cholmod\_configure\_matrix}}<double>\ \{}
+\DoxyCodeLine{00020\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ CholmodType>}
+\DoxyCodeLine{00021\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(CholmodType\&\ mat)\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ mat.xtype\ =\ CHOLMOD\_REAL;}
+\DoxyCodeLine{00023\ \ \ \ \ mat.dtype\ =\ CHOLMOD\_DOUBLE;}
+\DoxyCodeLine{00024\ \ \ \}}
+\DoxyCodeLine{00025\ \};}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cholmod__configure__matrix}{cholmod\_configure\_matrix}}<std::complex<double>\ >\ \{}
+\DoxyCodeLine{00028\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ CholmodType>}
+\DoxyCodeLine{00029\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(CholmodType\&\ mat)\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ mat.xtype\ =\ CHOLMOD\_COMPLEX;}
+\DoxyCodeLine{00031\ \ \ \ \ mat.dtype\ =\ CHOLMOD\_DOUBLE;}
+\DoxyCodeLine{00032\ \ \ \}}
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ Other\ scalar\ types\ are\ not\ yet\ supported\ by\ Cholmod}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ template<>\ struct\ cholmod\_configure\_matrix<float>\ \{}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ template<typename\ CholmodType>}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ static\ void\ run(CholmodType\&\ mat)\ \{}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \ \ \ \ mat.xtype\ =\ CHOLMOD\_REAL;}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ \ mat.dtype\ =\ CHOLMOD\_SINGLE;}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ template<>\ struct\ cholmod\_configure\_matrix<std::complex<float>\ >\ \{}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ template<typename\ CholmodType>}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \ \ static\ void\ run(CholmodType\&\ mat)\ \{}}
+\DoxyCodeLine{00047\ \textcolor{comment}{//\ \ \ \ \ mat.xtype\ =\ CHOLMOD\_COMPLEX;}}
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ \ \ \ \ mat.dtype\ =\ CHOLMOD\_SINGLE;}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00050\ \textcolor{comment}{//\ \};}}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00053\ \textcolor{comment}{}}
+\DoxyCodeLine{00054\ \textcolor{comment}{/**\ Wraps\ the\ Eigen\ sparse\ matrix\ \(\backslash\)a\ mat\ into\ a\ Cholmod\ sparse\ matrix\ object.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ *\ Note\ that\ the\ data\ are\ shared.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_StorageIndex>}
+\DoxyCodeLine{00058\ cholmod\_sparse\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\mbox{\hyperlink{classEigen_1_1Ref}{Ref}}<\mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<\_Scalar,\_Options,\_StorageIndex>}}\ >\ mat)}
+\DoxyCodeLine{00059\ \{}
+\DoxyCodeLine{00060\ \ \ cholmod\_sparse\ res;}
+\DoxyCodeLine{00061\ \ \ res.nzmax\ \ \ =\ mat.nonZeros();}
+\DoxyCodeLine{00062\ \ \ res.nrow\ \ \ \ =\ mat.rows();}
+\DoxyCodeLine{00063\ \ \ res.ncol\ \ \ \ =\ mat.cols();}
+\DoxyCodeLine{00064\ \ \ res.p\ \ \ \ \ \ \ =\ mat.outerIndexPtr();}
+\DoxyCodeLine{00065\ \ \ res.i\ \ \ \ \ \ \ =\ mat.innerIndexPtr();}
+\DoxyCodeLine{00066\ \ \ res.x\ \ \ \ \ \ \ =\ mat.valuePtr();}
+\DoxyCodeLine{00067\ \ \ res.z\ \ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00068\ \ \ res.sorted\ \ =\ 1;}
+\DoxyCodeLine{00069\ \ \ \textcolor{keywordflow}{if}(mat.isCompressed())}
+\DoxyCodeLine{00070\ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ res.packed\ \ =\ 1;}
+\DoxyCodeLine{00072\ \ \ \ \ res.nz\ =\ 0;}
+\DoxyCodeLine{00073\ \ \ \}}
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00075\ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ res.packed\ \ =\ 0;}
+\DoxyCodeLine{00077\ \ \ \ \ res.nz\ =\ mat.innerNonZeroPtr();}
+\DoxyCodeLine{00078\ \ \ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ res.dtype\ \ \ =\ 0;}
+\DoxyCodeLine{00081\ \ \ res.stype\ \ \ =\ -\/1;}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \textcolor{keywordflow}{if}\ (internal::is\_same<\_StorageIndex,int>::value)}
+\DoxyCodeLine{00084\ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ res.itype\ =\ CHOLMOD\_INT;}
+\DoxyCodeLine{00086\ \ \ \}}
+\DoxyCodeLine{00087\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (internal::is\_same<\_StorageIndex,SuiteSparse\_long>::value)}
+\DoxyCodeLine{00088\ \ \ \{}
+\DoxyCodeLine{00089\ \ \ \ \ res.itype\ =\ CHOLMOD\_LONG;}
+\DoxyCodeLine{00090\ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00092\ \ \ \{}
+\DoxyCodeLine{00093\ \ \ \ \ eigen\_assert(\textcolor{keyword}{false}\ \&\&\ \textcolor{stringliteral}{"{}Index\ type\ not\ supported\ yet"{}});}
+\DoxyCodeLine{00094\ \ \ \}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \textcolor{comment}{//\ setup\ res.xtype}}
+\DoxyCodeLine{00097\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1cholmod__configure__matrix}{internal::cholmod\_configure\_matrix<\_Scalar>::run}}(res);}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ res.stype\ =\ 0;}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00102\ \}}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_Index>}
+\DoxyCodeLine{00105\ \textcolor{keyword}{const}\ cholmod\_sparse\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\textcolor{keyword}{const}\ SparseMatrix<\_Scalar,\_Options,\_Index>\&\ mat)}
+\DoxyCodeLine{00106\ \{}
+\DoxyCodeLine{00107\ \ \ cholmod\_sparse\ res\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(Ref<SparseMatrix<\_Scalar,\_Options,\_Index>\ >(mat.const\_cast\_derived()));}
+\DoxyCodeLine{00108\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_Index>}
+\DoxyCodeLine{00112\ \textcolor{keyword}{const}\ cholmod\_sparse\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseVector}{SparseVector<\_Scalar,\_Options,\_Index>}}\&\ mat)}
+\DoxyCodeLine{00113\ \{}
+\DoxyCodeLine{00114\ \ \ cholmod\_sparse\ res\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\mbox{\hyperlink{classEigen_1_1Ref}{Ref}}<\mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<\_Scalar,\_Options,\_Index>}}\ >(mat.const\_cast\_derived()));}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ \textcolor{comment}{}}
+\DoxyCodeLine{00118\ \textcolor{comment}{/**\ Returns\ a\ view\ of\ the\ Eigen\ sparse\ matrix\ \(\backslash\)a\ mat\ as\ Cholmod\ sparse\ matrix.}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ *\ The\ data\ are\ not\ copied\ but\ shared.\ */}}
+\DoxyCodeLine{00120\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_Index,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ UpLo>}
+\DoxyCodeLine{00121\ cholmod\_sparse\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseSelfAdjointView}{SparseSelfAdjointView}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<\_Scalar,\_Options,\_Index>}},\ UpLo>\&\ mat)}
+\DoxyCodeLine{00122\ \{}
+\DoxyCodeLine{00123\ \ \ cholmod\_sparse\ res\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\mbox{\hyperlink{classEigen_1_1Ref}{Ref}}<\mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<\_Scalar,\_Options,\_Index>}}\ >(mat.matrix().const\_cast\_derived()));}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordflow}{if}(UpLo==\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdafca2ccebb604f171656deb53e8c083c1}{Upper}})\ res.stype\ =\ \ 1;}
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordflow}{if}(UpLo==\mbox{\hyperlink{group__enums_gga39e3366ff5554d731e7dc8bb642f83cdaf581029282d421eee5aae14238c6f749}{Lower}})\ res.stype\ =\ -\/1;}
+\DoxyCodeLine{00127\ \ \ \textcolor{comment}{//\ swap\ stype\ for\ rowmajor\ matrices\ (only\ works\ for\ real\ matrices)}}
+\DoxyCodeLine{00128\ \ \ EIGEN\_STATIC\_ASSERT((\_Options\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ==\ 0\ ||\ NumTraits<\_Scalar>::IsComplex\ ==\ 0,\ THIS\_METHOD\_IS\_ONLY\_FOR\_COLUMN\_MAJOR\_MATRICES);}
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordflow}{if}(\_Options\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ res.stype\ *=-\/1;}
+\DoxyCodeLine{00130\ }
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00132\ \}}
+\DoxyCodeLine{00133\ \textcolor{comment}{}}
+\DoxyCodeLine{00134\ \textcolor{comment}{/**\ Returns\ a\ view\ of\ the\ Eigen\ \(\backslash\)b\ dense\ matrix\ \(\backslash\)a\ mat\ as\ Cholmod\ dense\ matrix.}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ *\ The\ data\ are\ not\ copied\ but\ shared.\ */}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00137\ cholmod\_dense\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(\mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ mat)}
+\DoxyCodeLine{00138\ \{}
+\DoxyCodeLine{00139\ \ \ EIGEN\_STATIC\_ASSERT((\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<Derived>::Flags}}\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})==0,THIS\_METHOD\_IS\_ONLY\_FOR\_COLUMN\_MAJOR\_MATRICES);}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Derived::Scalar\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ cholmod\_dense\ res;}
+\DoxyCodeLine{00143\ \ \ res.nrow\ \ \ =\ mat.rows();}
+\DoxyCodeLine{00144\ \ \ res.ncol\ \ \ =\ mat.cols();}
+\DoxyCodeLine{00145\ \ \ res.nzmax\ \ =\ res.nrow\ *\ res.ncol;}
+\DoxyCodeLine{00146\ \ \ res.d\ \ \ \ \ \ =\ Derived::IsVectorAtCompileTime\ ?\ mat.derived().size()\ :\ mat.derived().outerStride();}
+\DoxyCodeLine{00147\ \ \ res.x\ \ \ \ \ \ =\ (\textcolor{keywordtype}{void}*)(mat.derived().data());}
+\DoxyCodeLine{00148\ \ \ res.z\ \ \ \ \ \ =\ 0;}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1cholmod__configure__matrix}{internal::cholmod\_configure\_matrix<Scalar>::run}}(res);}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ \textcolor{comment}{}}
+\DoxyCodeLine{00155\ \textcolor{comment}{/**\ Returns\ a\ view\ of\ the\ Cholmod\ sparse\ matrix\ \(\backslash\)a\ cm\ as\ an\ Eigen\ sparse\ matrix.}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ *\ The\ data\ are\ not\ copied\ but\ shared.\ */}}
+\DoxyCodeLine{00157\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ Flags,\ \textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00158\ \mbox{\hyperlink{classEigen_1_1MappedSparseMatrix}{MappedSparseMatrix<Scalar,Flags,StorageIndex>}}\ \mbox{\hyperlink{namespaceEigen_af13cf1742b9a7a03703e8e5393bb6f86}{viewAsEigen}}(cholmod\_sparse\&\ cm)}
+\DoxyCodeLine{00159\ \{}
+\DoxyCodeLine{00160\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1MappedSparseMatrix}{MappedSparseMatrix<Scalar,Flags,StorageIndex>}}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ (cm.nrow,\ cm.ncol,\ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(cm.p)[cm.ncol],}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(cm.p),\ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(cm.i),\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}*\textcolor{keyword}{>}(cm.x)\ );}
+\DoxyCodeLine{00163\ \}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ template\ specializations\ for\ int\ and\ long\ that\ call\ the\ correct\ cholmod\ method}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#define\ EIGEN\_CHOLMOD\_SPECIALIZE0(ret,\ name)\ \(\backslash\)}}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\ \ \ \ template<typename\ \_StorageIndex>\ inline\ ret\ cm\_\ \#\#\ name\ \ \ \ \ \ \ (cholmod\_common\ \&Common)\ \{\ return\ cholmod\_\ \#\#\ name\ \ \ (\&Common);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \ \ template<>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inline\ ret\ cm\_\ \#\#\ name<SuiteSparse\_long>\ (cholmod\_common\ \&Common)\ \{\ return\ cholmod\_l\_\ \#\#\ name\ (\&Common);\ \}}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#define\ EIGEN\_CHOLMOD\_SPECIALIZE1(ret,\ name,\ t1,\ a1)\ \(\backslash\)}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\ \ \ \ template<typename\ \_StorageIndex>\ inline\ ret\ cm\_\ \#\#\ name\ \ \ \ \ \ \ (t1\&\ a1,\ cholmod\_common\ \&Common)\ \{\ return\ cholmod\_\ \#\#\ name\ \ \ (\&a1,\ \&Common);\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\ \ \ \ template<>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inline\ ret\ cm\_\ \#\#\ name<SuiteSparse\_long>\ (t1\&\ a1,\ cholmod\_common\ \&Common)\ \{\ return\ cholmod\_l\_\ \#\#\ name\ (\&a1,\ \&Common);\ \}}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ EIGEN\_CHOLMOD\_SPECIALIZE0(\textcolor{keywordtype}{int},\ start)}
+\DoxyCodeLine{00178\ EIGEN\_CHOLMOD\_SPECIALIZE0(\textcolor{keywordtype}{int},\ finish)}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ EIGEN\_CHOLMOD\_SPECIALIZE1(\textcolor{keywordtype}{int},\ free\_factor,\ cholmod\_factor*,\ L)}
+\DoxyCodeLine{00181\ EIGEN\_CHOLMOD\_SPECIALIZE1(\textcolor{keywordtype}{int},\ free\_dense,\ \ cholmod\_dense*,\ \ X)}
+\DoxyCodeLine{00182\ EIGEN\_CHOLMOD\_SPECIALIZE1(\textcolor{keywordtype}{int},\ free\_sparse,\ cholmod\_sparse*,\ A)}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ EIGEN\_CHOLMOD\_SPECIALIZE1(cholmod\_factor*,\ analyze,\ cholmod\_sparse,\ A)}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_StorageIndex>\ \textcolor{keyword}{inline}\ cholmod\_dense*\ \ cm\_solve\ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{int}\ sys,\ cholmod\_factor\&\ L,\ cholmod\_dense\&\ \ B,\ cholmod\_common\ \&Common)\ \{\ \textcolor{keywordflow}{return}\ cholmod\_solve\ \ \ \ \ (sys,\ \&L,\ \&B,\ \&Common);\ \}}
+\DoxyCodeLine{00187\ \textcolor{keyword}{template}<>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ cholmod\_dense*\ \ cm\_solve<SuiteSparse\_long>\ \ \ (\textcolor{keywordtype}{int}\ sys,\ cholmod\_factor\&\ L,\ cholmod\_dense\&\ \ B,\ cholmod\_common\ \&Common)\ \{\ \textcolor{keywordflow}{return}\ cholmod\_l\_solve\ \ \ (sys,\ \&L,\ \&B,\ \&Common);\ \}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_StorageIndex>\ \textcolor{keyword}{inline}\ cholmod\_sparse*\ cm\_spsolve\ \ \ \ \ \ \ (\textcolor{keywordtype}{int}\ sys,\ cholmod\_factor\&\ L,\ cholmod\_sparse\&\ B,\ cholmod\_common\ \&Common)\ \{\ \textcolor{keywordflow}{return}\ cholmod\_spsolve\ \ \ (sys,\ \&L,\ \&B,\ \&Common);\ \}}
+\DoxyCodeLine{00190\ \textcolor{keyword}{template}<>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{inline}\ cholmod\_sparse*\ cm\_spsolve<SuiteSparse\_long>\ (\textcolor{keywordtype}{int}\ sys,\ cholmod\_factor\&\ L,\ cholmod\_sparse\&\ B,\ cholmod\_common\ \&Common)\ \{\ \textcolor{keywordflow}{return}\ cholmod\_l\_spsolve\ (sys,\ \&L,\ \&B,\ \&Common);\ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_StorageIndex>}
+\DoxyCodeLine{00193\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \ cm\_factorize\_p\ \ \ \ \ \ \ (cholmod\_sparse*\ \ A,\ \textcolor{keywordtype}{double}\ beta[2],\ \_StorageIndex*\ fset,\ std::size\_t\ fsize,\ cholmod\_factor*\ L,\ cholmod\_common\ \&Common)\ \{\ \textcolor{keywordflow}{return}\ cholmod\_factorize\_p\ \ \ (A,\ beta,\ fset,\ fsize,\ L,\ \&Common);\ \}}
+\DoxyCodeLine{00194\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00195\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \ cm\_factorize\_p<SuiteSparse\_long>\ (cholmod\_sparse*\ \ A,\ \textcolor{keywordtype}{double}\ beta[2],\ SuiteSparse\_long*\ fset,\ \ \ \ \ \ \ \ \ \ std::size\_t\ fsize,\ cholmod\_factor*\ L,\ cholmod\_common\ \&Common)\ \{\ \textcolor{keywordflow}{return}\ cholmod\_l\_factorize\_p\ (A,\ beta,\ fset,\ fsize,\ L,\ \&Common);\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\#undef\ EIGEN\_CHOLMOD\_SPECIALIZE0}}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\#undef\ EIGEN\_CHOLMOD\_SPECIALIZE1}}
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \}\ \ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{keyword}{enum}\ CholmodMode\ \{}
+\DoxyCodeLine{00204\ \ \ CholmodAuto,\ CholmodSimplicialLLt,\ CholmodSupernodalLLt,\ CholmodLDLt}
+\DoxyCodeLine{00205\ \};}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{comment}{}}
+\DoxyCodeLine{00208\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ CholmodSupport\_Module}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ CholmodBase}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ The\ base\ class\ for\ the\ direct\ Cholesky\ factorization\ of\ Cholmod}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ CholmodSupernodalLLT,\ class\ CholmodSimplicialLDLT,\ class\ CholmodSimplicialLLT}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00213\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ \_UpLo,\ \textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00214\ \textcolor{keyword}{class\ }CholmodBase\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}<Derived>}
+\DoxyCodeLine{00215\ \{}
+\DoxyCodeLine{00216\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase<Derived>}}\ Base;}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keyword}{using\ }Base::derived;}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_isInitialized;}
+\DoxyCodeLine{00220\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ UpLo\ =\ \_UpLo\ \};}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00224\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keyword}{typedef}\ MatrixType\ CholMatrixType;}
+\DoxyCodeLine{00226\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime}
+\DoxyCodeLine{00230\ \ \ \ \ \};}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ CholmodBase()}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ :\ m\_cholmodFactor(0),\ m\_info(\mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}),\ m\_factorizationIsOk(\textcolor{keyword}{false}),\ m\_analysisIsOk(\textcolor{keyword}{false})}
+\DoxyCodeLine{00236\ \ \ \ \ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT((internal::is\_same<double,RealScalar>::value),\ CHOLMOD\_SUPPORTS\_DOUBLE\_PRECISION\_ONLY);}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ m\_shiftOffset[0]\ =\ m\_shiftOffset[1]\ =\ 0.0;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ internal::cm\_start<StorageIndex>(m\_cholmod);}
+\DoxyCodeLine{00240\ \ \ \ \ \}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{keyword}{explicit}\ CholmodBase(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ :\ m\_cholmodFactor(0),\ m\_info(\mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}),\ m\_factorizationIsOk(\textcolor{keyword}{false}),\ m\_analysisIsOk(\textcolor{keyword}{false})}
+\DoxyCodeLine{00244\ \ \ \ \ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT((internal::is\_same<double,RealScalar>::value),\ CHOLMOD\_SUPPORTS\_DOUBLE\_PRECISION\_ONLY);}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ m\_shiftOffset[0]\ =\ m\_shiftOffset[1]\ =\ 0.0;}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ internal::cm\_start<StorageIndex>(m\_cholmod);}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1CholmodBase_a0f1dd31e16031ca91285db13202ab1eb}{compute}}(matrix);}
+\DoxyCodeLine{00249\ \ \ \ \ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \ \ \ \ \string~CholmodBase()}
+\DoxyCodeLine{00252\ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cholmodFactor)}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ internal::cm\_free\_factor<StorageIndex>(m\_cholmodFactor,\ m\_cholmod);}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ internal::cm\_finish<StorageIndex>(m\_cholmod);}
+\DoxyCodeLine{00256\ \ \ \ \ \}}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keyword}{inline}\ StorageIndex\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ internal::convert\_index<StorageIndex,\ Index>(m\_cholmodFactor-\/>n);\ \}}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keyword}{inline}\ StorageIndex\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ internal::convert\_index<StorageIndex,\ Index>(m\_cholmodFactor-\/>n);\ \}}
+\DoxyCodeLine{00260\ \textcolor{comment}{}}
+\DoxyCodeLine{00261\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Reports\ whether\ previous\ computation\ was\ successful.}}
+\DoxyCodeLine{00262\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00263\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \(\backslash\)c\ Success\ if\ computation\ was\ successful,}}
+\DoxyCodeLine{00264\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \(\backslash\)c\ NumericalIssue\ if\ the\ matrix.appears\ to\ be\ negative.}}
+\DoxyCodeLine{00265\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00266\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ \mbox{\hyperlink{classEigen_1_1CholmodBase_ada4cc43c64767d186fcb8997440cc753}{info}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00267\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Decomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_info;}
+\DoxyCodeLine{00270\ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \textcolor{comment}{}}
+\DoxyCodeLine{00272\ \textcolor{comment}{\ \ \ \ /**\ Computes\ the\ sparse\ Cholesky\ decomposition\ of\ \(\backslash\)a\ matrix\ */}}
+\DoxyCodeLine{00273\ \ \ \ \ Derived\&\ \mbox{\hyperlink{classEigen_1_1CholmodBase_a0f1dd31e16031ca91285db13202ab1eb}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00274\ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1CholmodBase_a5ac967e9f4ccfc43ca9e610b89232c24}{analyzePattern}}(matrix);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1CholmodBase_a5bd9c9ec4d1c15f202a6c66b5e9ef37b}{factorize}}(matrix);}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ derived();}
+\DoxyCodeLine{00278\ \ \ \ \ \}}
+\DoxyCodeLine{00279\ \textcolor{comment}{}}
+\DoxyCodeLine{00280\ \textcolor{comment}{\ \ \ \ /**\ Performs\ a\ symbolic\ decomposition\ on\ the\ sparsity\ pattern\ of\ \(\backslash\)a\ matrix.}}
+\DoxyCodeLine{00281\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00282\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ function\ is\ particularly\ useful\ when\ solving\ for\ several\ problems\ having\ the\ same\ structure.}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ factorize()}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00286\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1CholmodBase_a5ac967e9f4ccfc43ca9e610b89232c24}{analyzePattern}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00287\ \ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_cholmodFactor)}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ internal::cm\_free\_factor<StorageIndex>(m\_cholmodFactor,\ m\_cholmod);}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ m\_cholmodFactor\ =\ 0;}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ cholmod\_sparse\ A\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(matrix.template\ selfadjointView<UpLo>());}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ m\_cholmodFactor\ =\ internal::cm\_analyze<StorageIndex>(A,\ m\_cholmod);}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ this-\/>m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ this-\/>m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ m\_analysisIsOk\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00300\ \ \ \ \ \}}
+\DoxyCodeLine{00301\ \textcolor{comment}{}}
+\DoxyCodeLine{00302\ \textcolor{comment}{\ \ \ \ /**\ Performs\ a\ numeric\ decomposition\ of\ \(\backslash\)a\ matrix}}
+\DoxyCodeLine{00303\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00304\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ given\ matrix\ must\ have\ the\ same\ sparsity\ pattern\ as\ the\ matrix\ on\ which\ the\ symbolic\ decomposition\ has\ been\ performed.}}
+\DoxyCodeLine{00305\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00306\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ analyzePattern()}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00308\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1CholmodBase_a5bd9c9ec4d1c15f202a6c66b5e9ef37b}{factorize}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00309\ \ \ \ \ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ eigen\_assert(m\_analysisIsOk\ \&\&\ \textcolor{stringliteral}{"{}You\ must\ first\ call\ analyzePattern()"{}});}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ cholmod\_sparse\ A\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(matrix.template\ selfadjointView<UpLo>());}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ internal::cm\_factorize\_p<StorageIndex>(\&A,\ m\_shiftOffset,\ 0,\ 0,\ m\_cholmodFactor,\ m\_cholmod);}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ factorization\ failed,\ minor\ is\ the\ column\ at\ which\ it\ did.\ On\ success\ minor\ ==\ n.}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ this-\/>m\_info\ =\ (m\_cholmodFactor-\/>minor\ ==\ m\_cholmodFactor-\/>n\ ?\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ :\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}});}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00317\ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \textcolor{comment}{}}
+\DoxyCodeLine{00319\ \textcolor{comment}{\ \ \ \ /**\ Returns\ a\ reference\ to\ the\ Cholmod's\ configuration\ structure\ to\ get\ a\ full\ control\ over\ the\ performed\ operations.}}
+\DoxyCodeLine{00320\ \textcolor{comment}{\ \ \ \ \ *\ \ See\ the\ Cholmod\ user\ guide\ for\ details.\ */}}
+\DoxyCodeLine{00321\ \ \ \ \ cholmod\_common\&\ \mbox{\hyperlink{classEigen_1_1CholmodBase_a0621678c5b47923edaa436b0ce2db196}{cholmod}}()\ \{\ \textcolor{keywordflow}{return}\ m\_cholmod;\ \}}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\ \ \ \ \#ifndef\ EIGEN\_PARSED\_BY\_DOXYGEN}\textcolor{comment}{}}
+\DoxyCodeLine{00324\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordtype}{void}\ \_solve\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\ \&b,\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00327\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ decomposition\ is\ not\ in\ a\ valid\ state\ for\ solving,\ you\ must\ first\ call\ either\ compute()\ or\ symbolic()/numeric()"{}});}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ m\_cholmodFactor-\/>n;}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(size);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ eigen\_assert(size==b.rows());}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \textcolor{comment}{//\ Cholmod\ needs\ column-\/major\ storage\ without\ inner-\/stride,\ which\ corresponds\ to\ the\ default\ behavior\ of\ Ref.}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<const\ Matrix<typename\ Rhs::Scalar,Dynamic,Dynamic,ColMajor>}}\ >\ b\_ref(b.derived());}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ \ \ cholmod\_dense\ b\_cd\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(b\_ref);}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ cholmod\_dense*\ x\_cd\ =\ internal::cm\_solve<StorageIndex>(CHOLMOD\_A,\ *m\_cholmodFactor,\ b\_cd,\ m\_cholmod);}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!x\_cd)}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ this-\/>m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ optimize\ this\ copy\ by\ swapping\ when\ possible\ (be\ careful\ with\ alignment,\ etc.)}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ Actually,\ the\ copy\ can\ be\ avoided\ by\ calling\ cholmod\_solve2\ instead\ of\ cholmod\_solve}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ dest\ =\ Matrix<Scalar,Dest::RowsAtCompileTime,Dest::ColsAtCompileTime>::Map(\textcolor{keyword}{reinterpret\_cast<}Scalar*\textcolor{keyword}{>}(x\_cd-\/>x),b.rows(),b.cols());}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ internal::cm\_free\_dense<StorageIndex>(x\_cd,\ m\_cholmod);}
+\DoxyCodeLine{00347\ \ \ \ \ \}}
+\DoxyCodeLine{00348\ \textcolor{comment}{}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ RhsDerived,\ \textcolor{keyword}{typename}\ DestDerived>}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keywordtype}{void}\ \_solve\_impl(\textcolor{keyword}{const}\ SparseMatrixBase<RhsDerived>\ \&b,\ SparseMatrixBase<DestDerived>\ \&dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00352\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ decomposition\ is\ not\ in\ a\ valid\ state\ for\ solving,\ you\ must\ first\ call\ either\ compute()\ or\ symbolic()/numeric()"{}});}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ m\_cholmodFactor-\/>n;}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(size);}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ eigen\_assert(size==b.rows());}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \textcolor{comment}{//\ note:\ cs\ stands\ for\ Cholmod\ Sparse}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ Ref<SparseMatrix<typename\ RhsDerived::Scalar,ColMajor,typename\ RhsDerived::StorageIndex>\ >\ b\_ref(b.const\_cast\_derived());}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ cholmod\_sparse\ b\_cs\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(b\_ref);}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ cholmod\_sparse*\ x\_cs\ =\ internal::cm\_spsolve<StorageIndex>(CHOLMOD\_A,\ *m\_cholmodFactor,\ b\_cs,\ m\_cholmod);}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!x\_cs)}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ this-\/>m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ optimize\ this\ copy\ by\ swapping\ when\ possible\ (be\ careful\ with\ alignment,\ etc.)}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ cholmod\_spsolve\ in\ fact\ just\ calls\ the\ dense\ solver\ for\ blocks\ of\ 4\ columns\ at\ a\ time\ (similar\ to\ Eigen's\ sparse\ solver)}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ dest.derived()\ =\ \mbox{\hyperlink{namespaceEigen_af13cf1742b9a7a03703e8e5393bb6f86}{viewAsEigen<typename\ DestDerived::Scalar,ColMajor,typename\ DestDerived::StorageIndex>}}(*x\_cs);}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ internal::cm\_free\_sparse<StorageIndex>(x\_cs,\ m\_cholmod);}
+\DoxyCodeLine{00371\ \ \ \ \ \}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\ \ \ \ \#endif\ }\textcolor{comment}{//\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \textcolor{comment}{}}
+\DoxyCodeLine{00375\ \textcolor{comment}{\ \ \ \ /**\ Sets\ the\ shift\ parameter\ that\ will\ be\ used\ to\ adjust\ the\ diagonal\ coefficients\ during\ the\ numerical\ factorization.}}
+\DoxyCodeLine{00376\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00377\ \textcolor{comment}{\ \ \ \ \ \ *\ During\ the\ numerical\ factorization,\ an\ offset\ term\ is\ added\ to\ the\ diagonal\ coefficients:\(\backslash\)n}}
+\DoxyCodeLine{00378\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)c\ d\_ii\ =\ \(\backslash\)a\ offset\ +\ \(\backslash\)c\ d\_ii}}
+\DoxyCodeLine{00379\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00380\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ default\ is\ \(\backslash\)a\ offset=0.}}
+\DoxyCodeLine{00381\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00382\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ reference\ to\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00383\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00384\ \ \ \ \ Derived\&\ \mbox{\hyperlink{classEigen_1_1CholmodBase_ae569a9640cda50c5282885afceb271bd}{setShift}}(\textcolor{keyword}{const}\ RealScalar\&\ offset)}
+\DoxyCodeLine{00385\ \ \ \ \ \{}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ m\_shiftOffset[0]\ =\ double(offset);}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ derived();}
+\DoxyCodeLine{00388\ \ \ \ \ \}}
+\DoxyCodeLine{00389\ \textcolor{comment}{}}
+\DoxyCodeLine{00390\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ determinant\ of\ the\ underlying\ matrix\ from\ the\ current\ factorization\ */}}
+\DoxyCodeLine{00391\ \ \ \ \ Scalar\ \mbox{\hyperlink{classEigen_1_1CholmodBase_ab4ffb4a9735ad7e81a01d5789ce96547}{determinant}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00392\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::exp;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ exp(\mbox{\hyperlink{classEigen_1_1CholmodBase_a597f7839a39604af18a8741a0d8c46bf}{logDeterminant}}());}
+\DoxyCodeLine{00395\ \ \ \ \ \}}
+\DoxyCodeLine{00396\ \textcolor{comment}{}}
+\DoxyCodeLine{00397\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ log\ determinant\ of\ the\ underlying\ matrix\ from\ the\ current\ factorization\ */}}
+\DoxyCodeLine{00398\ \ \ \ \ Scalar\ \mbox{\hyperlink{classEigen_1_1CholmodBase_a597f7839a39604af18a8741a0d8c46bf}{logDeterminant}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00399\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::log;}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \textcolor{keyword}{using\ }numext::real;}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ decomposition\ is\ not\ in\ a\ valid\ state\ for\ solving,\ you\ must\ first\ call\ either\ compute()\ or\ symbolic()/numeric()"{}});}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \ \ \ \ \ \ RealScalar\ logDet\ =\ 0;}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ Scalar\ *x\ =\ \textcolor{keyword}{static\_cast<}Scalar*\textcolor{keyword}{>}(m\_cholmodFactor-\/>x);}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cholmodFactor-\/>is\_super)}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Supernodal\ factorization\ stored\ as\ a\ packed\ list\ of\ dense\ column-\/major\ blocs,}}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ as\ described\ by\ the\ following\ structure:}}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ super[k]\ ==\ index\ of\ the\ first\ column\ of\ the\ j-\/th\ super\ node}}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ StorageIndex\ *super\ =\ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(m\_cholmodFactor-\/>super);}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ pi[k]\ ==\ offset\ to\ the\ description\ of\ row\ indices}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ StorageIndex\ *pi\ =\ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(m\_cholmodFactor-\/>pi);}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ px[k]\ ==\ offset\ to\ the\ respective\ dense\ block}}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ StorageIndex\ *px\ =\ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(m\_cholmodFactor-\/>px);}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nb\_super\_nodes\ =\ m\_cholmodFactor-\/>nsuper;}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k=0;\ k\ <\ nb\_super\_nodes;\ ++k)}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ StorageIndex\ ncols\ =\ super[k\ +\ 1]\ -\/\ super[k];}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ StorageIndex\ nrows\ =\ pi[k\ +\ 1]\ -\/\ pi[k];}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<const\ Array<Scalar,1,Dynamic>}},\ 0,\ \mbox{\hyperlink{classEigen_1_1InnerStride}{InnerStride<>}}\ >\ sk(x\ +\ px[k],\ ncols,\ \mbox{\hyperlink{classEigen_1_1InnerStride}{InnerStride<>}}(nrows+1));}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ logDet\ +=\ sk.real().log().sum();}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Simplicial\ factorization\ stored\ as\ standard\ CSC\ matrix.}}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ StorageIndex\ *p\ =\ \textcolor{keyword}{static\_cast<}StorageIndex*\textcolor{keyword}{>}(m\_cholmodFactor-\/>p);}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ m\_cholmodFactor-\/>n;}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k=0;\ k<size;\ ++k)}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \ \ logDet\ +=\ log(real(\ x[p[k]]\ ));}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_cholmodFactor-\/>is\_ll)}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ logDet\ *=\ 2.0;}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ logDet;}
+\DoxyCodeLine{00439\ \ \ \ \ \};}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Stream>}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keywordtype}{void}\ dumpMemory(Stream\&\ \textcolor{comment}{/*s*/})}
+\DoxyCodeLine{00443\ \ \ \ \ \{\}}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keyword}{mutable}\ cholmod\_common\ m\_cholmod;}
+\DoxyCodeLine{00447\ \ \ \ \ cholmod\_factor*\ m\_cholmodFactor;}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keywordtype}{double}\ m\_shiftOffset[2];}
+\DoxyCodeLine{00449\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ m\_info;}
+\DoxyCodeLine{00450\ \ \ \ \ \textcolor{keywordtype}{int}\ m\_factorizationIsOk;}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordtype}{int}\ m\_analysisIsOk;}
+\DoxyCodeLine{00452\ \};}
+\DoxyCodeLine{00453\ \textcolor{comment}{}}
+\DoxyCodeLine{00454\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ CholmodSupport\_Module}}
+\DoxyCodeLine{00455\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ CholmodSimplicialLLT}}
+\DoxyCodeLine{00456\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ simplicial\ direct\ Cholesky\ (LLT)\ factorization\ and\ solver\ based\ on\ Cholmod}}
+\DoxyCodeLine{00457\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00458\ \textcolor{comment}{\ \ *\ This\ class\ allows\ to\ solve\ for\ A.X\ =\ B\ sparse\ linear\ problems\ via\ a\ simplicial\ LL\string^T\ Cholesky\ factorization}}
+\DoxyCodeLine{00459\ \textcolor{comment}{\ \ *\ using\ the\ Cholmod\ library.}}
+\DoxyCodeLine{00460\ \textcolor{comment}{\ \ *\ This\ simplicial\ variant\ is\ equivalent\ to\ Eigen's\ built-\/in\ SimplicialLLT\ class.\ Therefore,\ it\ has\ little\ practical\ interest.}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ \ *\ The\ sparse\ matrix\ A\ must\ be\ selfadjoint\ and\ positive\ definite.\ The\ vectors\ or\ matrices}}
+\DoxyCodeLine{00462\ \textcolor{comment}{\ \ *\ X\ and\ B\ can\ be\ either\ dense\ or\ sparse.}}
+\DoxyCodeLine{00463\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00464\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ sparse\ matrix\ A,\ it\ must\ be\ a\ SparseMatrix<>}}
+\DoxyCodeLine{00465\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_UpLo\ the\ triangular\ part\ that\ will\ be\ used\ for\ the\ computations.\ It\ can\ be\ Lower}}
+\DoxyCodeLine{00466\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ or\ Upper.\ Default\ is\ Lower.}}
+\DoxyCodeLine{00467\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00468\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00469\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00470\ \textcolor{comment}{\ \ *\ This\ class\ supports\ all\ kind\ of\ SparseMatrix<>:\ row\ or\ column\ major;\ upper,\ lower,\ or\ both;\ compressed\ or\ non\ compressed.}}
+\DoxyCodeLine{00471\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00472\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ Only\ double\ precision\ real\ and\ complex\ scalar\ types\ are\ supported\ by\ Cholmod.}}
+\DoxyCodeLine{00473\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00474\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ \(\backslash\)ref\ TutorialSparseSolverConcept,\ class\ CholmodSupernodalLLT,\ class\ SimplicialLLT}}
+\DoxyCodeLine{00475\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00476\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ \_UpLo\ =\ Lower>}
+\DoxyCodeLine{00477\ \textcolor{keyword}{class\ }CholmodSimplicialLLT\ :\ \textcolor{keyword}{public}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodSimplicialLLT<\_MatrixType,\ \_UpLo>\ >}
+\DoxyCodeLine{00478\ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \textcolor{keyword}{typedef}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodSimplicialLLT>\ Base;}
+\DoxyCodeLine{00480\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_cholmod;}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \ \ CholmodSimplicialLLT()\ :\ Base()\ \{\ init();\ \}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \ \ \ \ CholmodSimplicialLLT(\textcolor{keyword}{const}\ MatrixType\&\ matrix)\ :\ Base()}
+\DoxyCodeLine{00489\ \ \ \ \ \{}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ init();}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1CholmodBase_a0f1dd31e16031ca91285db13202ab1eb}{compute}}(matrix);}
+\DoxyCodeLine{00492\ \ \ \ \ \}}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \ \ \string~CholmodSimplicialLLT()\ \{\}}
+\DoxyCodeLine{00495\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{keywordtype}{void}\ init()}
+\DoxyCodeLine{00497\ \ \ \ \ \{}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 0;}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_SIMPLICIAL;}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ m\_cholmod.final\_ll\ =\ 1;}
+\DoxyCodeLine{00501\ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \};}
+\DoxyCodeLine{00503\ }
+\DoxyCodeLine{00504\ \textcolor{comment}{}}
+\DoxyCodeLine{00505\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ CholmodSupport\_Module}}
+\DoxyCodeLine{00506\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ CholmodSimplicialLDLT}}
+\DoxyCodeLine{00507\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ simplicial\ direct\ Cholesky\ (LDLT)\ factorization\ and\ solver\ based\ on\ Cholmod}}
+\DoxyCodeLine{00508\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00509\ \textcolor{comment}{\ \ *\ This\ class\ allows\ to\ solve\ for\ A.X\ =\ B\ sparse\ linear\ problems\ via\ a\ simplicial\ LDL\string^T\ Cholesky\ factorization}}
+\DoxyCodeLine{00510\ \textcolor{comment}{\ \ *\ using\ the\ Cholmod\ library.}}
+\DoxyCodeLine{00511\ \textcolor{comment}{\ \ *\ This\ simplicial\ variant\ is\ equivalent\ to\ Eigen's\ built-\/in\ SimplicialLDLT\ class.\ Therefore,\ it\ has\ little\ practical\ interest.}}
+\DoxyCodeLine{00512\ \textcolor{comment}{\ \ *\ The\ sparse\ matrix\ A\ must\ be\ selfadjoint\ and\ positive\ definite.\ The\ vectors\ or\ matrices}}
+\DoxyCodeLine{00513\ \textcolor{comment}{\ \ *\ X\ and\ B\ can\ be\ either\ dense\ or\ sparse.}}
+\DoxyCodeLine{00514\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00515\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ sparse\ matrix\ A,\ it\ must\ be\ a\ SparseMatrix<>}}
+\DoxyCodeLine{00516\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_UpLo\ the\ triangular\ part\ that\ will\ be\ used\ for\ the\ computations.\ It\ can\ be\ Lower}}
+\DoxyCodeLine{00517\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ or\ Upper.\ Default\ is\ Lower.}}
+\DoxyCodeLine{00518\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00519\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00520\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00521\ \textcolor{comment}{\ \ *\ This\ class\ supports\ all\ kind\ of\ SparseMatrix<>:\ row\ or\ column\ major;\ upper,\ lower,\ or\ both;\ compressed\ or\ non\ compressed.}}
+\DoxyCodeLine{00522\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00523\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ Only\ double\ precision\ real\ and\ complex\ scalar\ types\ are\ supported\ by\ Cholmod.}}
+\DoxyCodeLine{00524\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00525\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ \(\backslash\)ref\ TutorialSparseSolverConcept,\ class\ CholmodSupernodalLLT,\ class\ SimplicialLDLT}}
+\DoxyCodeLine{00526\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00527\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ \_UpLo\ =\ Lower>}
+\DoxyCodeLine{00528\ \textcolor{keyword}{class\ }CholmodSimplicialLDLT\ :\ \textcolor{keyword}{public}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodSimplicialLDLT<\_MatrixType,\ \_UpLo>\ >}
+\DoxyCodeLine{00529\ \{}
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{keyword}{typedef}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodSimplicialLDLT>\ Base;}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_cholmod;}
+\DoxyCodeLine{00532\ }
+\DoxyCodeLine{00533\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00536\ }
+\DoxyCodeLine{00537\ \ \ \ \ CholmodSimplicialLDLT()\ :\ Base()\ \{\ init();\ \}}
+\DoxyCodeLine{00538\ }
+\DoxyCodeLine{00539\ \ \ \ \ CholmodSimplicialLDLT(\textcolor{keyword}{const}\ MatrixType\&\ matrix)\ :\ Base()}
+\DoxyCodeLine{00540\ \ \ \ \ \{}
+\DoxyCodeLine{00541\ \ \ \ \ \ \ init();}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1CholmodBase_a0f1dd31e16031ca91285db13202ab1eb}{compute}}(matrix);}
+\DoxyCodeLine{00543\ \ \ \ \ \}}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \ \ \ \ \string~CholmodSimplicialLDLT()\ \{\}}
+\DoxyCodeLine{00546\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00547\ \ \ \ \ \textcolor{keywordtype}{void}\ init()}
+\DoxyCodeLine{00548\ \ \ \ \ \{}
+\DoxyCodeLine{00549\ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 1;}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_SIMPLICIAL;}
+\DoxyCodeLine{00551\ \ \ \ \ \}}
+\DoxyCodeLine{00552\ \};}
+\DoxyCodeLine{00553\ \textcolor{comment}{}}
+\DoxyCodeLine{00554\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ CholmodSupport\_Module}}
+\DoxyCodeLine{00555\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ CholmodSupernodalLLT}}
+\DoxyCodeLine{00556\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ supernodal\ Cholesky\ (LLT)\ factorization\ and\ solver\ based\ on\ Cholmod}}
+\DoxyCodeLine{00557\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00558\ \textcolor{comment}{\ \ *\ This\ class\ allows\ to\ solve\ for\ A.X\ =\ B\ sparse\ linear\ problems\ via\ a\ supernodal\ LL\string^T\ Cholesky\ factorization}}
+\DoxyCodeLine{00559\ \textcolor{comment}{\ \ *\ using\ the\ Cholmod\ library.}}
+\DoxyCodeLine{00560\ \textcolor{comment}{\ \ *\ This\ supernodal\ variant\ performs\ best\ on\ dense\ enough\ problems,\ e.g.,\ 3D\ FEM,\ or\ very\ high\ order\ 2D\ FEM.}}
+\DoxyCodeLine{00561\ \textcolor{comment}{\ \ *\ The\ sparse\ matrix\ A\ must\ be\ selfadjoint\ and\ positive\ definite.\ The\ vectors\ or\ matrices}}
+\DoxyCodeLine{00562\ \textcolor{comment}{\ \ *\ X\ and\ B\ can\ be\ either\ dense\ or\ sparse.}}
+\DoxyCodeLine{00563\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00564\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ sparse\ matrix\ A,\ it\ must\ be\ a\ SparseMatrix<>}}
+\DoxyCodeLine{00565\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_UpLo\ the\ triangular\ part\ that\ will\ be\ used\ for\ the\ computations.\ It\ can\ be\ Lower}}
+\DoxyCodeLine{00566\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ or\ Upper.\ Default\ is\ Lower.}}
+\DoxyCodeLine{00567\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00568\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00569\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00570\ \textcolor{comment}{\ \ *\ This\ class\ supports\ all\ kind\ of\ SparseMatrix<>:\ row\ or\ column\ major;\ upper,\ lower,\ or\ both;\ compressed\ or\ non\ compressed.}}
+\DoxyCodeLine{00571\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00572\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ Only\ double\ precision\ real\ and\ complex\ scalar\ types\ are\ supported\ by\ Cholmod.}}
+\DoxyCodeLine{00573\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00574\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ \(\backslash\)ref\ TutorialSparseSolverConcept}}
+\DoxyCodeLine{00575\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00576\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ \_UpLo\ =\ Lower>}
+\DoxyCodeLine{00577\ \textcolor{keyword}{class\ }CholmodSupernodalLLT\ :\ \textcolor{keyword}{public}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodSupernodalLLT<\_MatrixType,\ \_UpLo>\ >}
+\DoxyCodeLine{00578\ \{}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keyword}{typedef}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodSupernodalLLT>\ Base;}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_cholmod;}
+\DoxyCodeLine{00581\ }
+\DoxyCodeLine{00582\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00585\ }
+\DoxyCodeLine{00586\ \ \ \ \ CholmodSupernodalLLT()\ :\ Base()\ \{\ init();\ \}}
+\DoxyCodeLine{00587\ }
+\DoxyCodeLine{00588\ \ \ \ \ CholmodSupernodalLLT(\textcolor{keyword}{const}\ MatrixType\&\ matrix)\ :\ Base()}
+\DoxyCodeLine{00589\ \ \ \ \ \{}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ init();}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1CholmodBase_a0f1dd31e16031ca91285db13202ab1eb}{compute}}(matrix);}
+\DoxyCodeLine{00592\ \ \ \ \ \}}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ \ \ \string~CholmodSupernodalLLT()\ \{\}}
+\DoxyCodeLine{00595\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00596\ \ \ \ \ \textcolor{keywordtype}{void}\ init()}
+\DoxyCodeLine{00597\ \ \ \ \ \{}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 1;}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_SUPERNODAL;}
+\DoxyCodeLine{00600\ \ \ \ \ \}}
+\DoxyCodeLine{00601\ \};}
+\DoxyCodeLine{00602\ \textcolor{comment}{}}
+\DoxyCodeLine{00603\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ CholmodSupport\_Module}}
+\DoxyCodeLine{00604\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ CholmodDecomposition}}
+\DoxyCodeLine{00605\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ general\ Cholesky\ factorization\ and\ solver\ based\ on\ Cholmod}}
+\DoxyCodeLine{00606\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00607\ \textcolor{comment}{\ \ *\ This\ class\ allows\ to\ solve\ for\ A.X\ =\ B\ sparse\ linear\ problems\ via\ a\ LL\string^T\ or\ LDL\string^T\ Cholesky\ factorization}}
+\DoxyCodeLine{00608\ \textcolor{comment}{\ \ *\ using\ the\ Cholmod\ library.\ The\ sparse\ matrix\ A\ must\ be\ selfadjoint\ and\ positive\ definite.\ The\ vectors\ or\ matrices}}
+\DoxyCodeLine{00609\ \textcolor{comment}{\ \ *\ X\ and\ B\ can\ be\ either\ dense\ or\ sparse.}}
+\DoxyCodeLine{00610\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00611\ \textcolor{comment}{\ \ *\ This\ variant\ permits\ to\ change\ the\ underlying\ Cholesky\ method\ at\ runtime.}}
+\DoxyCodeLine{00612\ \textcolor{comment}{\ \ *\ On\ the\ other\ hand,\ it\ does\ not\ provide\ access\ to\ the\ result\ of\ the\ factorization.}}
+\DoxyCodeLine{00613\ \textcolor{comment}{\ \ *\ The\ default\ is\ to\ let\ Cholmod\ automatically\ choose\ between\ a\ simplicial\ and\ supernodal\ factorization.}}
+\DoxyCodeLine{00614\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00615\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ sparse\ matrix\ A,\ it\ must\ be\ a\ SparseMatrix<>}}
+\DoxyCodeLine{00616\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_UpLo\ the\ triangular\ part\ that\ will\ be\ used\ for\ the\ computations.\ It\ can\ be\ Lower}}
+\DoxyCodeLine{00617\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ or\ Upper.\ Default\ is\ Lower.}}
+\DoxyCodeLine{00618\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00619\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00620\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00621\ \textcolor{comment}{\ \ *\ This\ class\ supports\ all\ kind\ of\ SparseMatrix<>:\ row\ or\ column\ major;\ upper,\ lower,\ or\ both;\ compressed\ or\ non\ compressed.}}
+\DoxyCodeLine{00622\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00623\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ Only\ double\ precision\ real\ and\ complex\ scalar\ types\ are\ supported\ by\ Cholmod.}}
+\DoxyCodeLine{00624\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00625\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ \(\backslash\)ref\ TutorialSparseSolverConcept}}
+\DoxyCodeLine{00626\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00627\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keywordtype}{int}\ \_UpLo\ =\ Lower>}
+\DoxyCodeLine{00628\ \textcolor{keyword}{class\ }CholmodDecomposition\ :\ \textcolor{keyword}{public}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodDecomposition<\_MatrixType,\ \_UpLo>\ >}
+\DoxyCodeLine{00629\ \{}
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{keyword}{typedef}\ CholmodBase<\_MatrixType,\ \_UpLo,\ CholmodDecomposition>\ Base;}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_cholmod;}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00633\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ \ \ CholmodDecomposition()\ :\ Base()\ \{\ init();\ \}}
+\DoxyCodeLine{00638\ }
+\DoxyCodeLine{00639\ \ \ \ \ CholmodDecomposition(\textcolor{keyword}{const}\ MatrixType\&\ matrix)\ :\ Base()}
+\DoxyCodeLine{00640\ \ \ \ \ \{}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ init();}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1CholmodBase_a0f1dd31e16031ca91285db13202ab1eb}{compute}}(matrix);}
+\DoxyCodeLine{00643\ \ \ \ \ \}}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ \ \ \ \ \string~CholmodDecomposition()\ \{\}}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \ \ \ \ \textcolor{keywordtype}{void}\ setMode(CholmodMode\ mode)}
+\DoxyCodeLine{00648\ \ \ \ \ \{}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \textcolor{keywordflow}{switch}(mode)}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CholmodAuto:}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 1;}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_AUTO;}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00655\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CholmodSimplicialLLt:}
+\DoxyCodeLine{00656\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 0;}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_SIMPLICIAL;}
+\DoxyCodeLine{00658\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.final\_ll\ =\ 1;}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CholmodSupernodalLLt:}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 1;}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_SUPERNODAL;}
+\DoxyCodeLine{00663\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00664\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{case}\ CholmodLDLt:}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 1;}
+\DoxyCodeLine{00666\ \ \ \ \ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_SIMPLICIAL;}
+\DoxyCodeLine{00667\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00668\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00669\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00670\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00671\ \ \ \ \ \}}
+\DoxyCodeLine{00672\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{keywordtype}{void}\ init()}
+\DoxyCodeLine{00674\ \ \ \ \ \{}
+\DoxyCodeLine{00675\ \ \ \ \ \ \ m\_cholmod.final\_asis\ =\ 1;}
+\DoxyCodeLine{00676\ \ \ \ \ \ \ m\_cholmod.supernodal\ =\ CHOLMOD\_AUTO;}
+\DoxyCodeLine{00677\ \ \ \ \ \}}
+\DoxyCodeLine{00678\ \};}
+\DoxyCodeLine{00679\ }
+\DoxyCodeLine{00680\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00681\ }
+\DoxyCodeLine{00682\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_CHOLMODSUPPORT\_H}}
+
+\end{DoxyCode}

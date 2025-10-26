@@ -1,0 +1,1383 @@
+\doxysection{BDCSVD.\+h}
+\hypertarget{BDCSVD_8h_source}{}\label{BDCSVD_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SVD/BDCSVD.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SVD/BDCSVD.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ We\ used\ the\ "{}A\ Divide-\/And-\/Conquer\ Algorithm\ for\ the\ Bidiagonal\ SVD"{}}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ research\ report\ written\ by\ Ming\ Gu\ and\ Stanley\ C.Eisenstat}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ The\ code\ variable\ names\ correspond\ to\ the\ names\ they\ used\ in\ their\ }}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ report}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Gauthier\ Brun\ <brun.gauthier@gmail.com>}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Nicolas\ Carre\ <nicolas.carre@ensimag.fr>}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Jean\ Ceccato\ <jean.ceccato@ensimag.fr>}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Pierre\ Zoppitelli\ <pierre.zoppitelli@ensimag.fr>}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Copyright\ (C)\ 2013\ Jitse\ Niesen\ <jitse@maths.leeds.ac.uk>}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ Copyright\ (C)\ 2014-\/2017\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_BDCSVD\_H}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#define\ EIGEN\_BDCSVD\_H}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \#define\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \#define\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#undef\ eigen\_internal\_assert}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ eigen\_internal\_assert(X)\ assert(X);}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <iostream>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00037\ \mbox{\hyperlink{structEigen_1_1IOFormat}{IOFormat}}\ bdcsvdfmt(8,\ 0,\ \textcolor{stringliteral}{"{},\ "{}},\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}},\ \textcolor{stringliteral}{"{}\ \ ["{}},\ \textcolor{stringliteral}{"{}]"{}});}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00039\ \ \ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1BDCSVD}{BDCSVD}};}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1BDCSVD}{BDCSVD}}<\_MatrixType>\ >}
+\DoxyCodeLine{00046\ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\_MatrixType>}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00049\ \};\ \ }
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00052\ \ \ }
+\DoxyCodeLine{00053\ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00054\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ SVD\_Module}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ *\ \(\backslash\)class\ BDCSVD}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ *\ \(\backslash\)brief\ class\ Bidiagonal\ Divide\ and\ Conquer\ SVD}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ matrix\ of\ which\ we\ are\ computing\ the\ SVD\ decomposition}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ *\ This\ class\ first\ reduces\ the\ input\ matrix\ to\ bi-\/diagonal\ form\ using\ class\ UpperBidiagonalization,}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ *\ and\ then\ performs\ a\ divide-\/and-\/conquer\ diagonalization.\ Small\ blocks\ are\ diagonalized\ using\ class\ JacobiSVD.}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ *\ You\ can\ control\ the\ switching\ size\ with\ the\ setSwitchSize()\ method,\ default\ is\ 16.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ *\ For\ small\ matrice\ (<16),\ it\ is\ thus\ preferable\ to\ directly\ use\ JacobiSVD.\ For\ larger\ ones,\ BDCSVD\ is\ highly}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ *\ recommended\ and\ can\ several\ order\ of\ magnitude\ faster.}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ *\ \(\backslash\)warning\ this\ algorithm\ is\ unlikely\ to\ provide\ accurate\ result\ when\ compiled\ with\ unsafe\ math\ optimizations.}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ *\ For\ instance,\ this\ concerns\ Intel's\ compiler\ (ICC),\ which\ performs\ such\ optimization\ by\ default\ unless}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ *\ you\ compile\ with\ the\ \(\backslash\)c\ -\/fp-\/model\ \(\backslash\)c\ precise\ option.\ Likewise,\ the\ \(\backslash\)c\ -\/ffast-\/math\ option\ of\ GCC\ or\ clang\ will}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ *\ significantly\ degrade\ the\ accuracy.}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ *\ \(\backslash\)sa\ class\ JacobiSVD}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00076\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>\ }
+\DoxyCodeLine{00077\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1BDCSVD_a39514816d38f9c418cf3f3514b511c2c}{BDCSVD}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SVDBase_abed06fc6f4b743e1f76a7b317539da87}{SVDBase}}<BDCSVD<\_MatrixType>\ >}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SVDBase_abed06fc6f4b743e1f76a7b317539da87}{SVDBase<BDCSVD>}}\ Base;}
+\DoxyCodeLine{00080\ \ \ \ \ }
+\DoxyCodeLine{00081\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00082\ \ \ \textcolor{keyword}{using\ }Base::rows;}
+\DoxyCodeLine{00083\ \ \ \textcolor{keyword}{using\ }Base::cols;}
+\DoxyCodeLine{00084\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classEigen_1_1SVDBase_a705a7c2709e1624ccc19aa748a78d473}{Base::computeU}};}
+\DoxyCodeLine{00085\ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classEigen_1_1SVDBase_a5f12efcb791eb007d4a4890ac5255ac4}{Base::computeV}};}
+\DoxyCodeLine{00086\ \ \ }
+\DoxyCodeLine{00087\ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00088\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00089\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<typename\ MatrixType::Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00090\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<RealScalar>::Literal\ Literal;}
+\DoxyCodeLine{00091\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00092\ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,\ }
+\DoxyCodeLine{00093\ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,\ }
+\DoxyCodeLine{00094\ \ \ \ \ DiagSizeAtCompileTime\ =\ EIGEN\_SIZE\_MIN\_PREFER\_DYNAMIC(RowsAtCompileTime,\ ColsAtCompileTime),\ }
+\DoxyCodeLine{00095\ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,\ }
+\DoxyCodeLine{00096\ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime,\ }
+\DoxyCodeLine{00097\ \ \ \ \ MaxDiagSizeAtCompileTime\ =\ EIGEN\_SIZE\_MIN\_PREFER\_FIXED(MaxRowsAtCompileTime,\ MaxColsAtCompileTime),\ }
+\DoxyCodeLine{00098\ \ \ \ \ MatrixOptions\ =\ MatrixType::Options}
+\DoxyCodeLine{00099\ \ \ \};}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::MatrixUType\ MatrixUType;}
+\DoxyCodeLine{00102\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::MatrixVType\ MatrixVType;}
+\DoxyCodeLine{00103\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::SingularValuesType\ SingularValuesType;}
+\DoxyCodeLine{00104\ \ \ }
+\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ Dynamic,\ Dynamic,\ ColMajor>}}\ MatrixX;}
+\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<RealScalar,\ Dynamic,\ Dynamic,\ ColMajor>}}\ MatrixXr;}
+\DoxyCodeLine{00107\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<RealScalar,\ Dynamic,\ 1>}}\ VectorType;}
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array<RealScalar,\ Dynamic,\ 1>}}\ ArrayXr;}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array<Index,1,Dynamic>}}\ ArrayXi;}
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<ArrayXr>}}\ ArrayRef;}
+\DoxyCodeLine{00111\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<ArrayXi>}}\ IndicesRef;}
+\DoxyCodeLine{00112\ \textcolor{comment}{}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ /**\ \(\backslash\)brief\ Default\ Constructor.}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ *\ The\ default\ constructor\ is\ useful\ in\ cases\ in\ which\ the\ user\ intends\ to}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ *\ perform\ decompositions\ via\ BDCSVD::compute(const\ MatrixType\&).}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00118\ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD_a39514816d38f9c418cf3f3514b511c2c}{BDCSVD}}()\ :\ m\_algoswap(16),\ m\_isTranspose(false),\ m\_compU(false),\ m\_compV(false),\ m\_numIters(0)}
+\DoxyCodeLine{00119\ \ \ \{\}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{comment}{}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ /**\ \(\backslash\)brief\ Default\ Constructor\ with\ memory\ preallocation}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ *\ Like\ the\ default\ constructor\ but\ with\ preallocation\ of\ the\ internal\ data}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ \ *\ according\ to\ the\ specified\ problem\ size.}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ BDCSVD()}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00128\ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD_a3e1fa48b3d042b7daf7392724a68bb60}{BDCSVD}}(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ rows,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ cols,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions\ =\ 0)}
+\DoxyCodeLine{00129\ \ \ \ \ :\ m\_algoswap(16),\ m\_numIters(0)}
+\DoxyCodeLine{00130\ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ allocate(rows,\ cols,\ computationOptions);}
+\DoxyCodeLine{00132\ \ \ \}}
+\DoxyCodeLine{00133\ \textcolor{comment}{}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ /**\ \(\backslash\)brief\ Constructor\ performing\ the\ decomposition\ of\ given\ matrix.}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ matrix\ the\ matrix\ to\ decompose}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ computationOptions\ optional\ parameter\ allowing\ to\ specify\ if\ you\ want\ full\ or\ thin\ U\ or\ V\ unitaries\ to\ be\ computed.}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ By\ default,\ none\ is\ computed.\ This\ is\ a\ bit\ -\/\ field,\ the\ possible\ bits\ are\ \#ComputeFullU,\ \#ComputeThinU,\ }}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ComputeFullV,\ \#ComputeThinV.}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ *\ Thin\ unitaries\ are\ only\ available\ if\ your\ matrix\ type\ has\ a\ Dynamic\ number\ of\ columns\ (for\ example\ MatrixXf).\ They\ also\ are\ not}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ \ *\ available\ with\ the\ (non\ -\/\ default)\ FullPivHouseholderQR\ preconditioner.}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00144\ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD_a302746d9c534cd513c1df87c7ae4850d}{BDCSVD}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions\ =\ 0)}
+\DoxyCodeLine{00145\ \ \ \ \ :\ m\_algoswap(16),\ m\_numIters(0)}
+\DoxyCodeLine{00146\ \ \ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD_a52e3c627775010775c64d16a00cdb770}{compute}}(matrix,\ computationOptions);}
+\DoxyCodeLine{00148\ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD}{\string~BDCSVD}}()\ }
+\DoxyCodeLine{00151\ \ \ \{}
+\DoxyCodeLine{00152\ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00154\ \textcolor{comment}{\ \ /**\ \(\backslash\)brief\ Method\ performing\ the\ decomposition\ of\ given\ matrix\ using\ custom\ options.}}
+\DoxyCodeLine{00155\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ matrix\ the\ matrix\ to\ decompose}}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ computationOptions\ optional\ parameter\ allowing\ to\ specify\ if\ you\ want\ full\ or\ thin\ U\ or\ V\ unitaries\ to\ be\ computed.}}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ By\ default,\ none\ is\ computed.\ This\ is\ a\ bit\ -\/\ field,\ the\ possible\ bits\ are\ \#ComputeFullU,\ \#ComputeThinU,\ }}
+\DoxyCodeLine{00159\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \#ComputeFullV,\ \#ComputeThinV.}}
+\DoxyCodeLine{00160\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ \ *\ Thin\ unitaries\ are\ only\ available\ if\ your\ matrix\ type\ has\ a\ Dynamic\ number\ of\ columns\ (for\ example\ MatrixXf).\ They\ also\ are\ not}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ *\ available\ with\ the\ (non\ -\/\ default)\ FullPivHouseholderQR\ preconditioner.}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00164\ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD_a39514816d38f9c418cf3f3514b511c2c}{BDCSVD}}\&\ \mbox{\hyperlink{classEigen_1_1BDCSVD_a52e3c627775010775c64d16a00cdb770}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions);}
+\DoxyCodeLine{00165\ \textcolor{comment}{}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ /**\ \(\backslash\)brief\ Method\ performing\ the\ decomposition\ of\ given\ matrix\ using\ current\ options.}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ matrix\ the\ matrix\ to\ decompose}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ \ *\ This\ method\ uses\ the\ current\ \(\backslash\)a\ computationOptions,\ as\ already\ passed\ to\ the\ constructor\ or\ to\ compute(const\ MatrixType\&,\ unsigned\ int).}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00172\ \ \ \mbox{\hyperlink{classEigen_1_1BDCSVD_a39514816d38f9c418cf3f3514b511c2c}{BDCSVD}}\&\ \mbox{\hyperlink{classEigen_1_1BDCSVD_a61880a5f6dbf7a14f91be80eaa3a22bc}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00173\ \ \ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1BDCSVD_a52e3c627775010775c64d16a00cdb770}{compute}}(matrix,\ this-\/>m\_computationOptions);}
+\DoxyCodeLine{00175\ \ \ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \textcolor{keywordtype}{void}\ setSwitchSize(\textcolor{keywordtype}{int}\ s)\ }
+\DoxyCodeLine{00178\ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ eigen\_assert(s>=3\ \&\&\ \textcolor{stringliteral}{"{}BDCSVD\ the\ size\ of\ the\ algo\ switch\ has\ to\ be\ at\ least\ 3."{}});}
+\DoxyCodeLine{00180\ \ \ \ \ m\_algoswap\ =\ s;}
+\DoxyCodeLine{00181\ \ \ \}}
+\DoxyCodeLine{00182\ \ }
+\DoxyCodeLine{00183\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00184\ \ \ \textcolor{keywordtype}{void}\ allocate(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}},\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_a50c19c45f15acdfe1cb66ab5e879b8e3}{cols}},\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions);}
+\DoxyCodeLine{00185\ \ \ \textcolor{keywordtype}{void}\ divide(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstCol,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ lastCol,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstRowW,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstColW,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ shift);}
+\DoxyCodeLine{00186\ \ \ \textcolor{keywordtype}{void}\ computeSVDofM(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstCol,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ n,\ MatrixXr\&\ U,\ VectorType\&\ singVals,\ MatrixXr\&\ V);}
+\DoxyCodeLine{00187\ \ \ \textcolor{keywordtype}{void}\ computeSingVals(\textcolor{keyword}{const}\ ArrayRef\&\ col0,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\&\ perm,\ VectorType\&\ singVals,\ ArrayRef\ shifts,\ ArrayRef\ mus);}
+\DoxyCodeLine{00188\ \ \ \textcolor{keywordtype}{void}\ perturbCol0(\textcolor{keyword}{const}\ ArrayRef\&\ col0,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\&\ perm,\ \textcolor{keyword}{const}\ VectorType\&\ singVals,\ \textcolor{keyword}{const}\ ArrayRef\&\ shifts,\ \textcolor{keyword}{const}\ ArrayRef\&\ mus,\ ArrayRef\ zhat);}
+\DoxyCodeLine{00189\ \ \ \textcolor{keywordtype}{void}\ computeSingVecs(\textcolor{keyword}{const}\ ArrayRef\&\ zhat,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\&\ perm,\ \textcolor{keyword}{const}\ VectorType\&\ singVals,\ \textcolor{keyword}{const}\ ArrayRef\&\ shifts,\ \textcolor{keyword}{const}\ ArrayRef\&\ mus,\ MatrixXr\&\ U,\ MatrixXr\&\ V);}
+\DoxyCodeLine{00190\ \ \ \textcolor{keywordtype}{void}\ deflation43(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstCol,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ shift,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ i,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_a9f40726259520d7e9c5ce58d19d62e79}{size}});}
+\DoxyCodeLine{00191\ \ \ \textcolor{keywordtype}{void}\ deflation44(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstColu\ ,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstColm,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstRowW,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstColW,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ i,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ j,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_a9f40726259520d7e9c5ce58d19d62e79}{size}});}
+\DoxyCodeLine{00192\ \ \ \textcolor{keywordtype}{void}\ deflation(\mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstCol,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ lastCol,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ k,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstRowW,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ firstColW,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ shift);}
+\DoxyCodeLine{00193\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ HouseholderU,\ \textcolor{keyword}{typename}\ HouseholderV,\ \textcolor{keyword}{typename}\ NaiveU,\ \textcolor{keyword}{typename}\ NaiveV>}
+\DoxyCodeLine{00194\ \ \ \textcolor{keywordtype}{void}\ copyUV(\textcolor{keyword}{const}\ HouseholderU\ \&householderU,\ \textcolor{keyword}{const}\ HouseholderV\ \&householderV,\ \textcolor{keyword}{const}\ NaiveU\ \&naiveU,\ \textcolor{keyword}{const}\ NaiveV\ \&naivev);}
+\DoxyCodeLine{00195\ \ \ \textcolor{keywordtype}{void}\ structured\_update(Block<MatrixXr,Dynamic,Dynamic>\ A,\ \textcolor{keyword}{const}\ MatrixXr\ \&B,\ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ n1);}
+\DoxyCodeLine{00196\ \ \ \textcolor{keyword}{static}\ RealScalar\ secularEq(RealScalar\ x,\ \textcolor{keyword}{const}\ ArrayRef\&\ col0,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\ \&perm,\ \textcolor{keyword}{const}\ ArrayRef\&\ diagShifted,\ RealScalar\ shift);}
+\DoxyCodeLine{00197\ }
+\DoxyCodeLine{00198\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00199\ \ \ MatrixXr\ m\_naiveU,\ m\_naiveV;}
+\DoxyCodeLine{00200\ \ \ MatrixXr\ m\_computed;}
+\DoxyCodeLine{00201\ \ \ \mbox{\hyperlink{classEigen_1_1SVDBase_a6229a37997eca1072b52cca5ee7a2bec}{Index}}\ m\_nRec;}
+\DoxyCodeLine{00202\ \ \ ArrayXr\ m\_workspace;}
+\DoxyCodeLine{00203\ \ \ ArrayXi\ m\_workspaceI;}
+\DoxyCodeLine{00204\ \ \ \textcolor{keywordtype}{int}\ m\_algoswap;}
+\DoxyCodeLine{00205\ \ \ \textcolor{keywordtype}{bool}\ m\_isTranspose,\ m\_compU,\ m\_compV;}
+\DoxyCodeLine{00206\ \ \ }
+\DoxyCodeLine{00207\ \ \ \textcolor{keyword}{using\ }Base::m\_singularValues;}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{using\ }Base::m\_diagSize;}
+\DoxyCodeLine{00209\ \ \ \textcolor{keyword}{using\ }Base::m\_computeFullU;}
+\DoxyCodeLine{00210\ \ \ \textcolor{keyword}{using\ }Base::m\_computeFullV;}
+\DoxyCodeLine{00211\ \ \ \textcolor{keyword}{using\ }Base::m\_computeThinU;}
+\DoxyCodeLine{00212\ \ \ \textcolor{keyword}{using\ }Base::m\_computeThinV;}
+\DoxyCodeLine{00213\ \ \ \textcolor{keyword}{using\ }Base::m\_matrixU;}
+\DoxyCodeLine{00214\ \ \ \textcolor{keyword}{using\ }Base::m\_matrixV;}
+\DoxyCodeLine{00215\ \ \ \textcolor{keyword}{using\ }Base::m\_info;}
+\DoxyCodeLine{00216\ \ \ \textcolor{keyword}{using\ }Base::m\_isInitialized;}
+\DoxyCodeLine{00217\ \ \ \textcolor{keyword}{using\ }Base::m\_nonzeroSingularValues;}
+\DoxyCodeLine{00218\ }
+\DoxyCodeLine{00219\ \textcolor{keyword}{public}:\ \ }
+\DoxyCodeLine{00220\ \ \ \textcolor{keywordtype}{int}\ m\_numIters;}
+\DoxyCodeLine{00221\ \};\ \textcolor{comment}{//end\ class\ BDCSVD}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{comment}{//\ Method\ to\ allocate\ and\ initialize\ matrix\ and\ attributes}}
+\DoxyCodeLine{00225\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00226\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::allocate(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ cols,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions)}
+\DoxyCodeLine{00227\ \{}
+\DoxyCodeLine{00228\ \ \ m\_isTranspose\ =\ (cols\ >\ rows);}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \ \ \textcolor{keywordflow}{if}\ (Base::allocate(rows,\ cols,\ computationOptions))}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00232\ \ \ }
+\DoxyCodeLine{00233\ \ \ m\_computed\ =\ MatrixXr::Zero(m\_diagSize\ +\ 1,\ m\_diagSize\ );}
+\DoxyCodeLine{00234\ \ \ m\_compU\ =\ computeV();}
+\DoxyCodeLine{00235\ \ \ m\_compV\ =\ computeU();}
+\DoxyCodeLine{00236\ \ \ \textcolor{keywordflow}{if}\ (m\_isTranspose)}
+\DoxyCodeLine{00237\ \ \ \ \ std::swap(m\_compU,\ m\_compV);}
+\DoxyCodeLine{00238\ \ \ }
+\DoxyCodeLine{00239\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)\ m\_naiveU\ =\ MatrixXr::Zero(m\_diagSize\ +\ 1,\ m\_diagSize\ +\ 1\ );}
+\DoxyCodeLine{00240\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ m\_naiveU\ =\ MatrixXr::Zero(2,\ m\_diagSize\ +\ 1\ );}
+\DoxyCodeLine{00241\ \ \ }
+\DoxyCodeLine{00242\ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ m\_naiveV\ =\ MatrixXr::Zero(m\_diagSize,\ m\_diagSize);}
+\DoxyCodeLine{00243\ \ \ }
+\DoxyCodeLine{00244\ \ \ m\_workspace.resize((m\_diagSize+1)*(m\_diagSize+1)*3);}
+\DoxyCodeLine{00245\ \ \ m\_workspaceI.resize(3*m\_diagSize);}
+\DoxyCodeLine{00246\ \}\textcolor{comment}{//\ end\ allocate}}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00249\ \mbox{\hyperlink{classEigen_1_1BDCSVD_a39514816d38f9c418cf3f3514b511c2c}{BDCSVD<MatrixType>}}\&\ \mbox{\hyperlink{classEigen_1_1BDCSVD_a52e3c627775010775c64d16a00cdb770}{BDCSVD<MatrixType>::compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix,\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions)\ }
+\DoxyCodeLine{00250\ \{}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00252\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n\(\backslash\)n======================================================================================================================\(\backslash\)n\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00254\ \ \ allocate(matrix.rows(),\ matrix.cols(),\ computationOptions);}
+\DoxyCodeLine{00255\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \textcolor{keyword}{const}\ RealScalar\ considerZero\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00258\ \ \ }
+\DoxyCodeLine{00259\ \ \ \textcolor{comment}{//****\ step\ -\/1\ -\/\ If\ the\ problem\ is\ too\ small,\ directly\ falls\ back\ to\ JacobiSVD\ and\ return}}
+\DoxyCodeLine{00260\ \ \ \textcolor{keywordflow}{if}(matrix.cols()\ <\ m\_algoswap)}
+\DoxyCodeLine{00261\ \ \ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{comment}{//\ FIXME\ this\ line\ involves\ temporaries}}
+\DoxyCodeLine{00263\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixType>}}\ jsvd(matrix,computationOptions);}
+\DoxyCodeLine{00264\ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00265\ \ \ \ \ m\_info\ =\ jsvd.\mbox{\hyperlink{classEigen_1_1SVDBase_a569913a15fa2f327121f155682368602}{info}}();}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_info\ ==\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ ||\ m\_info\ ==\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea6a68dfb88a8336108a30588bdf356c57}{NoConvergence}})\ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1BDCSVD_a51fcc2fbadec89148a5e4222c77e35ec}{computeU}}())\ m\_matrixU\ =\ jsvd.\mbox{\hyperlink{classEigen_1_1SVDBase_accbc8e3f9baab3a57a6eba8e4cc3ea27}{matrixU}}();}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1BDCSVD_aea45b7e486d3333446b274f484b0c587}{computeV}}())\ m\_matrixV\ =\ jsvd.\mbox{\hyperlink{classEigen_1_1SVDBase_af09f06357d7d7442f7ca7343713756fe}{matrixV}}();}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ m\_singularValues\ =\ jsvd.\mbox{\hyperlink{classEigen_1_1SVDBase_ac44c307a70731003003faf3a9bdf14f6}{singularValues}}();}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ m\_nonzeroSingularValues\ =\ jsvd.\mbox{\hyperlink{classEigen_1_1SVDBase_afe8a555f38393a319a71ec0f0331c9ef}{nonzeroSingularValues}}();}
+\DoxyCodeLine{00271\ \ \ \ \ \}}
+\DoxyCodeLine{00272\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00273\ \ \ \}}
+\DoxyCodeLine{00274\ \ \ }
+\DoxyCodeLine{00275\ \ \ \textcolor{comment}{//****\ step\ 0\ -\/\ Copy\ the\ input\ matrix\ and\ apply\ scaling\ to\ reduce\ over/under-\/flows}}
+\DoxyCodeLine{00276\ \ \ RealScalar\ scale\ =\ matrix.cwiseAbs().template\ maxCoeff<PropagateNaN>();}
+\DoxyCodeLine{00277\ \ \ \textcolor{keywordflow}{if}\ (!(numext::isfinite)(scale))\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00279\ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea580b2a3cafe585691e789f768fb729bf}{InvalidInput}};}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00281\ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \textcolor{keywordflow}{if}(scale==Literal(0))\ scale\ =\ Literal(1);}
+\DoxyCodeLine{00284\ \ \ MatrixX\ copy;}
+\DoxyCodeLine{00285\ \ \ \textcolor{keywordflow}{if}\ (m\_isTranspose)\ copy\ =\ matrix.adjoint()/scale;}
+\DoxyCodeLine{00286\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ copy\ =\ matrix/scale;}
+\DoxyCodeLine{00287\ \ \ }
+\DoxyCodeLine{00288\ \ \ \textcolor{comment}{//****\ step\ 1\ -\/\ Bidiagonalization}}
+\DoxyCodeLine{00289\ \ \ \textcolor{comment}{//\ FIXME\ this\ line\ involves\ temporaries}}
+\DoxyCodeLine{00290\ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1UpperBidiagonalization}{internal::UpperBidiagonalization<MatrixX>}}\ bid(copy);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \textcolor{comment}{//****\ step\ 2\ -\/\ Divide\ \&\ Conquer}}
+\DoxyCodeLine{00293\ \ \ m\_naiveU.setZero();}
+\DoxyCodeLine{00294\ \ \ m\_naiveV.setZero();}
+\DoxyCodeLine{00295\ \ \ \textcolor{comment}{//\ FIXME\ this\ line\ involves\ a\ temporary\ matrix}}
+\DoxyCodeLine{00296\ \ \ m\_computed.topRows(m\_diagSize)\ =\ bid.bidiagonal().toDenseMatrix().transpose();}
+\DoxyCodeLine{00297\ \ \ m\_computed.template\ bottomRows<1>().\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00298\ \ \ divide(0,\ m\_diagSize\ -\/\ 1,\ 0,\ 0,\ 0);}
+\DoxyCodeLine{00299\ \ \ \textcolor{keywordflow}{if}\ (m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ \&\&\ m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea6a68dfb88a8336108a30588bdf356c57}{NoConvergence}})\ \{}
+\DoxyCodeLine{00300\ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00302\ \ \ \}}
+\DoxyCodeLine{00303\ \ \ \ \ }
+\DoxyCodeLine{00304\ \ \ \textcolor{comment}{//****\ step\ 3\ -\/\ Copy\ singular\ values\ and\ vectors}}
+\DoxyCodeLine{00305\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i=0;\ i<m\_diagSize;\ i++)}
+\DoxyCodeLine{00306\ \ \ \{}
+\DoxyCodeLine{00307\ \ \ \ \ RealScalar\ a\ =\ abs(m\_computed.coeff(i,\ i));}
+\DoxyCodeLine{00308\ \ \ \ \ m\_singularValues.coeffRef(i)\ =\ a\ *\ scale;}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{if}\ (a<considerZero)}
+\DoxyCodeLine{00310\ \ \ \ \ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ m\_nonzeroSingularValues\ =\ i;}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ m\_singularValues.tail(m\_diagSize\ -\/\ i\ -\/\ 1).setZero();}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00314\ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (i\ ==\ m\_diagSize\ -\/\ 1)}
+\DoxyCodeLine{00316\ \ \ \ \ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ m\_nonzeroSingularValues\ =\ i\ +\ 1;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00319\ \ \ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00323\ \textcolor{comment}{//\ \ \ std::cout\ <<\ "{}m\_naiveU\(\backslash\)n"{}\ <<\ m\_naiveU\ <<\ "{}\(\backslash\)n\(\backslash\)n"{};}}
+\DoxyCodeLine{00324\ \textcolor{comment}{//\ \ \ std::cout\ <<\ "{}m\_naiveV\(\backslash\)n"{}\ <<\ m\_naiveV\ <<\ "{}\(\backslash\)n\(\backslash\)n"{};}}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00326\ \ \ \textcolor{keywordflow}{if}(m\_isTranspose)\ copyUV(bid.householderV(),\ bid.householderU(),\ m\_naiveV,\ m\_naiveU);}
+\DoxyCodeLine{00327\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ copyUV(bid.householderU(),\ bid.householderV(),\ m\_naiveU,\ m\_naiveV);}
+\DoxyCodeLine{00328\ }
+\DoxyCodeLine{00329\ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00330\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00331\ \}\textcolor{comment}{//\ end\ compute}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00335\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ HouseholderU,\ \textcolor{keyword}{typename}\ HouseholderV,\ \textcolor{keyword}{typename}\ NaiveU,\ \textcolor{keyword}{typename}\ NaiveV>}
+\DoxyCodeLine{00336\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::copyUV(\textcolor{keyword}{const}\ HouseholderU\ \&householderU,\ \textcolor{keyword}{const}\ HouseholderV\ \&householderV,\ \textcolor{keyword}{const}\ NaiveU\ \&naiveU,\ \textcolor{keyword}{const}\ NaiveV\ \&naiveV)}
+\DoxyCodeLine{00337\ \{}
+\DoxyCodeLine{00338\ \ \ \textcolor{comment}{//\ Note\ exchange\ of\ U\ and\ V:\ m\_matrixU\ is\ set\ from\ m\_naiveV\ and\ vice\ versa}}
+\DoxyCodeLine{00339\ \ \ \textcolor{keywordflow}{if}\ (computeU())}
+\DoxyCodeLine{00340\ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ Ucols\ =\ m\_computeThinU\ ?\ m\_diagSize\ :\ householderU.cols();}
+\DoxyCodeLine{00342\ \ \ \ \ m\_matrixU\ =\ MatrixX::Identity(householderU.cols(),\ Ucols);}
+\DoxyCodeLine{00343\ \ \ \ \ m\_matrixU.topLeftCorner(m\_diagSize,\ m\_diagSize)\ =\ naiveV.template\ cast<Scalar>().topLeftCorner(m\_diagSize,\ m\_diagSize);}
+\DoxyCodeLine{00344\ \ \ \ \ householderU.applyThisOnTheLeft(m\_matrixU);\ \textcolor{comment}{//\ FIXME\ this\ line\ involves\ a\ temporary\ buffer}}
+\DoxyCodeLine{00345\ \ \ \}}
+\DoxyCodeLine{00346\ \ \ \textcolor{keywordflow}{if}\ (computeV())}
+\DoxyCodeLine{00347\ \ \ \{}
+\DoxyCodeLine{00348\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ Vcols\ =\ m\_computeThinV\ ?\ m\_diagSize\ :\ householderV.cols();}
+\DoxyCodeLine{00349\ \ \ \ \ m\_matrixV\ =\ MatrixX::Identity(householderV.cols(),\ Vcols);}
+\DoxyCodeLine{00350\ \ \ \ \ m\_matrixV.topLeftCorner(m\_diagSize,\ m\_diagSize)\ =\ naiveU.template\ cast<Scalar>().topLeftCorner(m\_diagSize,\ m\_diagSize);}
+\DoxyCodeLine{00351\ \ \ \ \ householderV.applyThisOnTheLeft(m\_matrixV);\ \textcolor{comment}{//\ FIXME\ this\ line\ involves\ a\ temporary\ buffer}}
+\DoxyCodeLine{00352\ \ \ \}}
+\DoxyCodeLine{00353\ \}}
+\DoxyCodeLine{00354\ \textcolor{comment}{}}
+\DoxyCodeLine{00355\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00356\ \textcolor{comment}{\ \ *\ Performs\ A\ =\ A\ *\ B\ exploiting\ the\ special\ structure\ of\ the\ matrix\ A.\ Splitting\ A\ as:}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ *\ \ A\ =\ [A1]}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ *\ \ \ \ \ \ [A2]}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ *\ such\ that\ A1.rows()==n1,\ then\ we\ assume\ that\ at\ least\ half\ of\ the\ columns\ of\ A1\ and\ A2\ are\ zeros.}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ *\ We\ can\ thus\ pack\ them\ prior\ to\ the\ the\ matrix\ product.\ However,\ this\ is\ only\ worth\ the\ effort\ if\ the\ matrix\ is\ large}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ *\ enough.}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00363\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00364\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::structured\_update(\mbox{\hyperlink{classEigen_1_1Block}{Block<MatrixXr,Dynamic,Dynamic>}}\ A,\ \textcolor{keyword}{const}\ MatrixXr\ \&B,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n1)}
+\DoxyCodeLine{00365\ \{}
+\DoxyCodeLine{00366\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ A.rows();}
+\DoxyCodeLine{00367\ \ \ \textcolor{keywordflow}{if}(n>100)}
+\DoxyCodeLine{00368\ \ \ \{}
+\DoxyCodeLine{00369\ \ \ \ \ \textcolor{comment}{//\ If\ the\ matrices\ are\ large\ enough,\ let's\ exploit\ the\ sparse\ structure\ of\ A\ by}}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{comment}{//\ splitting\ it\ in\ half\ (wrt\ n1),\ and\ packing\ the\ non-\/zero\ columns.}}
+\DoxyCodeLine{00371\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n2\ =\ n\ -\/\ n1;}
+\DoxyCodeLine{00372\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<MatrixXr>}}\ A1(m\_workspace.data()\ \ \ \ \ \ ,\ n1,\ n);}
+\DoxyCodeLine{00373\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<MatrixXr>}}\ A2(m\_workspace.data()+\ n1*n,\ n2,\ n);}
+\DoxyCodeLine{00374\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<MatrixXr>}}\ B1(m\_workspace.data()+\ \ n*n,\ n,\ \ n);}
+\DoxyCodeLine{00375\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<MatrixXr>}}\ B2(m\_workspace.data()+2*n*n,\ n,\ \ n);}
+\DoxyCodeLine{00376\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k1=0,\ k2=0;}
+\DoxyCodeLine{00377\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<n;\ ++j)}
+\DoxyCodeLine{00378\ \ \ \ \ \{}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (A.col(j).head(n1).array()!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)).\mbox{\hyperlink{classEigen_1_1DenseBase_ae2fd88cfd0f2bf9cc493d0a29cbc8695}{any}}()\ )}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ A1.col(k1)\ =\ A.col(j).head(n1);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ B1.row(k1)\ =\ B.row(j);}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ ++k1;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (A.col(j).tail(n2).array()!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)).\mbox{\hyperlink{classEigen_1_1DenseBase_ae2fd88cfd0f2bf9cc493d0a29cbc8695}{any}}()\ )}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ A2.col(k2)\ =\ A.col(j).tail(n2);}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ B2.row(k2)\ =\ B.row(j);}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ ++k2;}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \}}
+\DoxyCodeLine{00392\ \ \ }
+\DoxyCodeLine{00393\ \ \ \ \ A.topRows(n1).noalias()\ \ \ \ =\ A1.leftCols(k1)\ *\ B1.topRows(k1);}
+\DoxyCodeLine{00394\ \ \ \ \ A.bottomRows(n2).noalias()\ =\ A2.leftCols(k2)\ *\ B2.topRows(k2);}
+\DoxyCodeLine{00395\ \ \ \}}
+\DoxyCodeLine{00396\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00397\ \ \ \{}
+\DoxyCodeLine{00398\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<MatrixXr,Aligned>}}\ tmp(m\_workspace.data(),n,n);}
+\DoxyCodeLine{00399\ \ \ \ \ tmp.noalias()\ =\ A*B;}
+\DoxyCodeLine{00400\ \ \ \ \ A\ =\ tmp;}
+\DoxyCodeLine{00401\ \ \ \}}
+\DoxyCodeLine{00402\ \}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \textcolor{comment}{//\ The\ divide\ algorithm\ is\ done\ "{}in\ place"{},\ we\ are\ always\ working\ on\ subsets\ of\ the\ same\ matrix.\ The\ divide\ methods\ takes\ as\ argument\ the\ }}
+\DoxyCodeLine{00405\ \textcolor{comment}{//\ place\ of\ the\ submatrix\ we\ are\ currently\ working\ on.}}
+\DoxyCodeLine{00406\ }
+\DoxyCodeLine{00407\ \textcolor{comment}{//@param\ firstCol\ :\ The\ Index\ of\ the\ first\ column\ of\ the\ submatrix\ of\ m\_computed\ and\ for\ m\_naiveU;}}
+\DoxyCodeLine{00408\ \textcolor{comment}{//@param\ lastCol\ :\ The\ Index\ of\ the\ last\ column\ of\ the\ submatrix\ of\ m\_computed\ and\ for\ m\_naiveU;\ }}
+\DoxyCodeLine{00409\ \textcolor{comment}{//\ lastCol\ +\ 1\ -\/\ firstCol\ is\ the\ size\ of\ the\ submatrix.}}
+\DoxyCodeLine{00410\ \textcolor{comment}{//@param\ firstRowW\ :\ The\ Index\ of\ the\ first\ row\ of\ the\ matrix\ W\ that\ we\ are\ to\ change.\ (see\ the\ reference\ paper\ section\ 1\ for\ more\ information\ on\ W)}}
+\DoxyCodeLine{00411\ \textcolor{comment}{//@param\ firstColW\ :\ Same\ as\ firstRowW\ with\ the\ column.}}
+\DoxyCodeLine{00412\ \textcolor{comment}{//@param\ shift\ :\ Each\ time\ one\ takes\ the\ left\ submatrix,\ one\ must\ add\ 1\ to\ the\ shift.\ Why?\ Because!\ We\ actually\ want\ the\ last\ column\ of\ the\ U\ submatrix\ }}
+\DoxyCodeLine{00413\ \textcolor{comment}{//\ to\ become\ the\ first\ column\ (*coeff)\ and\ to\ shift\ all\ the\ other\ columns\ to\ the\ right.\ There\ are\ more\ details\ on\ the\ reference\ paper.}}
+\DoxyCodeLine{00414\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00415\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::divide(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstCol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ lastCol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstRowW,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstColW,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ shift)}
+\DoxyCodeLine{00416\ \{}
+\DoxyCodeLine{00417\ \ \ \textcolor{comment}{//\ requires\ rows\ =\ cols\ +\ 1;}}
+\DoxyCodeLine{00418\ \ \ \textcolor{keyword}{using\ }std::pow;}
+\DoxyCodeLine{00419\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00420\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00421\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ lastCol\ -\/\ firstCol\ +\ 1;}
+\DoxyCodeLine{00422\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ n/2;}
+\DoxyCodeLine{00423\ \ \ \textcolor{keyword}{const}\ RealScalar\ considerZero\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00424\ \ \ RealScalar\ alphaK;}
+\DoxyCodeLine{00425\ \ \ RealScalar\ betaK;\ }
+\DoxyCodeLine{00426\ \ \ RealScalar\ r0;\ }
+\DoxyCodeLine{00427\ \ \ RealScalar\ lambda,\ phi,\ c0,\ s0;}
+\DoxyCodeLine{00428\ \ \ VectorType\ l,\ f;}
+\DoxyCodeLine{00429\ \ \ \textcolor{comment}{//\ We\ use\ the\ other\ algorithm\ which\ is\ more\ efficient\ for\ small\ }}
+\DoxyCodeLine{00430\ \ \ \textcolor{comment}{//\ matrices.}}
+\DoxyCodeLine{00431\ \ \ \textcolor{keywordflow}{if}\ (n\ <\ m\_algoswap)}
+\DoxyCodeLine{00432\ \ \ \{}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{comment}{//\ FIXME\ this\ line\ involves\ temporaries}}
+\DoxyCodeLine{00434\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixXr>}}\ b(m\_computed.block(firstCol,\ firstCol,\ n\ +\ 1,\ n),\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a9fa9302d510cee20c26311154937e23f}{ComputeFullU}}\ |\ (m\_compV\ ?\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a36581f7c662f7def31efd500c284f930}{ComputeFullV}}\ :\ 0));}
+\DoxyCodeLine{00435\ \ \ \ \ m\_info\ =\ b.info();}
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ \&\&\ m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea6a68dfb88a8336108a30588bdf356c57}{NoConvergence}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_compU)}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ m\_naiveU.block(firstCol,\ firstCol,\ n\ +\ 1,\ n\ +\ 1).real()\ =\ b.matrixU();}
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00440\ \ \ \ \ \{}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ m\_naiveU.row(0).segment(firstCol,\ n\ +\ 1).real()\ =\ b.matrixU().row(0);}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ m\_naiveU.row(1).segment(firstCol,\ n\ +\ 1).real()\ =\ b.matrixU().row(n);}
+\DoxyCodeLine{00443\ \ \ \ \ \}}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ m\_naiveV.block(firstRowW,\ firstColW,\ n,\ n).real()\ =\ b.matrixV();}
+\DoxyCodeLine{00445\ \ \ \ \ m\_computed.block(firstCol\ +\ shift,\ firstCol\ +\ shift,\ n\ +\ 1,\ n).setZero();}
+\DoxyCodeLine{00446\ \ \ \ \ m\_computed.diagonal().segment(firstCol\ +\ shift,\ n)\ =\ b.singularValues().head(n);}
+\DoxyCodeLine{00447\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00448\ \ \ \}}
+\DoxyCodeLine{00449\ \ \ \textcolor{comment}{//\ We\ use\ the\ divide\ and\ conquer\ algorithm}}
+\DoxyCodeLine{00450\ \ \ alphaK\ =\ \ m\_computed(firstCol\ +\ k,\ firstCol\ +\ k);}
+\DoxyCodeLine{00451\ \ \ betaK\ =\ m\_computed(firstCol\ +\ k\ +\ 1,\ firstCol\ +\ k);}
+\DoxyCodeLine{00452\ \ \ \textcolor{comment}{//\ The\ divide\ must\ be\ done\ in\ that\ order\ in\ order\ to\ have\ good\ results.\ Divide\ change\ the\ data\ inside\ the\ submatrices}}
+\DoxyCodeLine{00453\ \ \ \textcolor{comment}{//\ and\ the\ divide\ of\ the\ right\ submatrice\ reads\ one\ column\ of\ the\ left\ submatrice.\ That's\ why\ we\ need\ to\ treat\ the\ }}
+\DoxyCodeLine{00454\ \ \ \textcolor{comment}{//\ right\ submatrix\ before\ the\ left\ one.\ }}
+\DoxyCodeLine{00455\ \ \ divide(k\ +\ 1\ +\ firstCol,\ lastCol,\ k\ +\ 1\ +\ firstRowW,\ k\ +\ 1\ +\ firstColW,\ shift);}
+\DoxyCodeLine{00456\ \ \ \textcolor{keywordflow}{if}\ (m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ \&\&\ m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea6a68dfb88a8336108a30588bdf356c57}{NoConvergence}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00457\ \ \ divide(firstCol,\ k\ -\/\ 1\ +\ firstCol,\ firstRowW,\ firstColW\ +\ 1,\ shift\ +\ 1);}
+\DoxyCodeLine{00458\ \ \ \textcolor{keywordflow}{if}\ (m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ \&\&\ m\_info\ !=\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea6a68dfb88a8336108a30588bdf356c57}{NoConvergence}})\ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)}
+\DoxyCodeLine{00461\ \ \ \{}
+\DoxyCodeLine{00462\ \ \ \ \ lambda\ =\ m\_naiveU(firstCol\ +\ k,\ firstCol\ +\ k);}
+\DoxyCodeLine{00463\ \ \ \ \ phi\ =\ m\_naiveU(firstCol\ +\ k\ +\ 1,\ lastCol\ +\ 1);}
+\DoxyCodeLine{00464\ \ \ \}\ }
+\DoxyCodeLine{00465\ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00466\ \ \ \{}
+\DoxyCodeLine{00467\ \ \ \ \ lambda\ =\ m\_naiveU(1,\ firstCol\ +\ k);}
+\DoxyCodeLine{00468\ \ \ \ \ phi\ =\ m\_naiveU(0,\ lastCol\ +\ 1);}
+\DoxyCodeLine{00469\ \ \ \}}
+\DoxyCodeLine{00470\ \ \ r0\ =\ sqrt((abs(alphaK\ *\ lambda)\ *\ abs(alphaK\ *\ lambda))\ +\ abs(betaK\ *\ phi)\ *\ abs(betaK\ *\ phi));}
+\DoxyCodeLine{00471\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)}
+\DoxyCodeLine{00472\ \ \ \{}
+\DoxyCodeLine{00473\ \ \ \ \ l\ =\ m\_naiveU.row(firstCol\ +\ k).segment(firstCol,\ k);}
+\DoxyCodeLine{00474\ \ \ \ \ f\ =\ m\_naiveU.row(firstCol\ +\ k\ +\ 1).segment(firstCol\ +\ k\ +\ 1,\ n\ -\/\ k\ -\/\ 1);}
+\DoxyCodeLine{00475\ \ \ \}\ }
+\DoxyCodeLine{00476\ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00477\ \ \ \{}
+\DoxyCodeLine{00478\ \ \ \ \ l\ =\ m\_naiveU.row(1).segment(firstCol,\ k);}
+\DoxyCodeLine{00479\ \ \ \ \ f\ =\ m\_naiveU.row(0).segment(firstCol\ +\ k\ +\ 1,\ n\ -\/\ k\ -\/\ 1);}
+\DoxyCodeLine{00480\ \ \ \}}
+\DoxyCodeLine{00481\ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ m\_naiveV(firstRowW+k,\ firstColW)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(1);}
+\DoxyCodeLine{00482\ \ \ \textcolor{keywordflow}{if}\ (r0<considerZero)}
+\DoxyCodeLine{00483\ \ \ \{}
+\DoxyCodeLine{00484\ \ \ \ \ c0\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(1);}
+\DoxyCodeLine{00485\ \ \ \ \ s0\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{00486\ \ \ \}}
+\DoxyCodeLine{00487\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00488\ \ \ \{}
+\DoxyCodeLine{00489\ \ \ \ \ c0\ =\ alphaK\ *\ lambda\ /\ r0;}
+\DoxyCodeLine{00490\ \ \ \ \ s0\ =\ betaK\ *\ phi\ /\ r0;}
+\DoxyCodeLine{00491\ \ \ \}}
+\DoxyCodeLine{00492\ \ \ }
+\DoxyCodeLine{00493\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00494\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{00495\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{00496\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{00497\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00498\ \ \ }
+\DoxyCodeLine{00499\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)}
+\DoxyCodeLine{00500\ \ \ \{}
+\DoxyCodeLine{00501\ \ \ \ \ MatrixXr\ q1\ (m\_naiveU.col(firstCol\ +\ k).segment(firstCol,\ k\ +\ 1));\ \ \ \ \ }
+\DoxyCodeLine{00502\ \ \ \ \ \textcolor{comment}{//\ we\ shiftW\ Q1\ to\ the\ right}}
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ firstCol\ +\ k\ -\/\ 1;\ i\ >=\ firstCol;\ i-\/-\/)\ }
+\DoxyCodeLine{00504\ \ \ \ \ \ \ m\_naiveU.col(i\ +\ 1).segment(firstCol,\ k\ +\ 1)\ =\ m\_naiveU.col(i).segment(firstCol,\ k\ +\ 1);}
+\DoxyCodeLine{00505\ \ \ \ \ \textcolor{comment}{//\ we\ shift\ q1\ at\ the\ left\ with\ a\ factor\ c0}}
+\DoxyCodeLine{00506\ \ \ \ \ m\_naiveU.col(firstCol).segment(\ firstCol,\ k\ +\ 1)\ =\ (q1\ *\ c0);}
+\DoxyCodeLine{00507\ \ \ \ \ \textcolor{comment}{//\ last\ column\ =\ q1\ *\ -\/\ s0}}
+\DoxyCodeLine{00508\ \ \ \ \ m\_naiveU.col(lastCol\ +\ 1).segment(firstCol,\ k\ +\ 1)\ =\ (q1\ *\ (\ -\/\ s0));}
+\DoxyCodeLine{00509\ \ \ \ \ \textcolor{comment}{//\ first\ column\ =\ q2\ *\ s0}}
+\DoxyCodeLine{00510\ \ \ \ \ m\_naiveU.col(firstCol).segment(firstCol\ +\ k\ +\ 1,\ n\ -\/\ k)\ =\ m\_naiveU.col(lastCol\ +\ 1).segment(firstCol\ +\ k\ +\ 1,\ n\ -\/\ k)\ *\ s0;\ }
+\DoxyCodeLine{00511\ \ \ \ \ \textcolor{comment}{//\ q2\ *=\ c0}}
+\DoxyCodeLine{00512\ \ \ \ \ m\_naiveU.col(lastCol\ +\ 1).segment(firstCol\ +\ k\ +\ 1,\ n\ -\/\ k)\ *=\ c0;}
+\DoxyCodeLine{00513\ \ \ \}\ }
+\DoxyCodeLine{00514\ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00515\ \ \ \{}
+\DoxyCodeLine{00516\ \ \ \ \ RealScalar\ q1\ =\ m\_naiveU(0,\ firstCol\ +\ k);}
+\DoxyCodeLine{00517\ \ \ \ \ \textcolor{comment}{//\ we\ shift\ Q1\ to\ the\ right}}
+\DoxyCodeLine{00518\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ firstCol\ +\ k\ -\/\ 1;\ i\ >=\ firstCol;\ i-\/-\/)\ }
+\DoxyCodeLine{00519\ \ \ \ \ \ \ m\_naiveU(0,\ i\ +\ 1)\ =\ m\_naiveU(0,\ i);}
+\DoxyCodeLine{00520\ \ \ \ \ \textcolor{comment}{//\ we\ shift\ q1\ at\ the\ left\ with\ a\ factor\ c0}}
+\DoxyCodeLine{00521\ \ \ \ \ m\_naiveU(0,\ firstCol)\ =\ (q1\ *\ c0);}
+\DoxyCodeLine{00522\ \ \ \ \ \textcolor{comment}{//\ last\ column\ =\ q1\ *\ -\/\ s0}}
+\DoxyCodeLine{00523\ \ \ \ \ m\_naiveU(0,\ lastCol\ +\ 1)\ =\ (q1\ *\ (\ -\/\ s0));}
+\DoxyCodeLine{00524\ \ \ \ \ \textcolor{comment}{//\ first\ column\ =\ q2\ *\ s0}}
+\DoxyCodeLine{00525\ \ \ \ \ m\_naiveU(1,\ firstCol)\ =\ m\_naiveU(1,\ lastCol\ +\ 1)\ *s0;\ }
+\DoxyCodeLine{00526\ \ \ \ \ \textcolor{comment}{//\ q2\ *=\ c0}}
+\DoxyCodeLine{00527\ \ \ \ \ m\_naiveU(1,\ lastCol\ +\ 1)\ *=\ c0;}
+\DoxyCodeLine{00528\ \ \ \ \ m\_naiveU.row(1).segment(firstCol\ +\ 1,\ k).setZero();}
+\DoxyCodeLine{00529\ \ \ \ \ m\_naiveU.row(0).segment(firstCol\ +\ k\ +\ 1,\ n\ -\/\ k\ -\/\ 1).setZero();}
+\DoxyCodeLine{00530\ \ \ \}}
+\DoxyCodeLine{00531\ \ \ }
+\DoxyCodeLine{00532\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00533\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{00534\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{00535\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{00536\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00537\ \ \ }
+\DoxyCodeLine{00538\ \ \ m\_computed(firstCol\ +\ shift,\ firstCol\ +\ shift)\ =\ r0;}
+\DoxyCodeLine{00539\ \ \ m\_computed.col(firstCol\ +\ shift).segment(firstCol\ +\ shift\ +\ 1,\ k)\ =\ alphaK\ *\ l.transpose().real();}
+\DoxyCodeLine{00540\ \ \ m\_computed.col(firstCol\ +\ shift).segment(firstCol\ +\ shift\ +\ k\ +\ 1,\ n\ -\/\ k\ -\/\ 1)\ =\ betaK\ *\ f.transpose().real();}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00543\ \ \ ArrayXr\ tmp1\ =\ (m\_computed.block(firstCol+shift,\ firstCol+shift,\ n,\ n)).jacobiSvd().singularValues();}
+\DoxyCodeLine{00544\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00545\ \ \ \textcolor{comment}{//\ Second\ part:\ try\ to\ deflate\ singular\ values\ in\ combined\ matrix}}
+\DoxyCodeLine{00546\ \ \ deflation(firstCol,\ lastCol,\ k,\ firstRowW,\ firstColW,\ shift);}
+\DoxyCodeLine{00547\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00548\ \ \ ArrayXr\ tmp2\ =\ (m\_computed.block(firstCol+shift,\ firstCol+shift,\ n,\ n)).jacobiSvd().singularValues();}
+\DoxyCodeLine{00549\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nj1\ =\ "{}}\ <<\ tmp1.transpose().format(bdcsvdfmt)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00550\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}j2\ =\ "{}}\ <<\ tmp2.transpose().format(bdcsvdfmt)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00551\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}err:\ \ \ \ \ \ "{}}\ <<\ ((tmp1-\/tmp2).abs()>1e-\/12*tmp2.abs()).transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00552\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ count\ =\ 0;}
+\DoxyCodeLine{00553\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\#\ "{}}\ <<\ ++count\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00554\ \ \ assert((tmp1-\/tmp2).matrix().norm()\ <\ 1e-\/14*tmp2.matrix().norm());}
+\DoxyCodeLine{00555\ \textcolor{comment}{//\ \ \ assert(count<681);}}
+\DoxyCodeLine{00556\ \textcolor{comment}{//\ \ \ assert(((tmp1-\/tmp2).abs()<1e-\/13*tmp2.abs()).all());}}
+\DoxyCodeLine{00557\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00558\ \ \ }
+\DoxyCodeLine{00559\ \ \ \textcolor{comment}{//\ Third\ part:\ compute\ SVD\ of\ combined\ matrix}}
+\DoxyCodeLine{00560\ \ \ MatrixXr\ UofSVD,\ VofSVD;}
+\DoxyCodeLine{00561\ \ \ VectorType\ singVals;}
+\DoxyCodeLine{00562\ \ \ computeSVDofM(firstCol\ +\ shift,\ n,\ UofSVD,\ singVals,\ VofSVD);}
+\DoxyCodeLine{00563\ \ \ }
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00565\ \ \ assert(UofSVD.allFinite());}
+\DoxyCodeLine{00566\ \ \ assert(VofSVD.allFinite());}
+\DoxyCodeLine{00567\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00568\ \ \ }
+\DoxyCodeLine{00569\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)}
+\DoxyCodeLine{00570\ \ \ \ \ structured\_update(m\_naiveU.block(firstCol,\ firstCol,\ n\ +\ 1,\ n\ +\ 1),\ UofSVD,\ (n+2)/2);}
+\DoxyCodeLine{00571\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00572\ \ \ \{}
+\DoxyCodeLine{00573\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<Matrix<RealScalar,2,Dynamic>}},\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ae12d0f8f869c40c76128260af2242bc8}{Aligned}}>\ tmp(m\_workspace.data(),2,n+1);}
+\DoxyCodeLine{00574\ \ \ \ \ tmp.noalias()\ =\ m\_naiveU.middleCols(firstCol,\ n+1)\ *\ UofSVD;}
+\DoxyCodeLine{00575\ \ \ \ \ m\_naiveU.middleCols(firstCol,\ n\ +\ 1)\ =\ tmp;}
+\DoxyCodeLine{00576\ \ \ \}}
+\DoxyCodeLine{00577\ \ \ }
+\DoxyCodeLine{00578\ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ \ structured\_update(m\_naiveV.block(firstRowW,\ firstColW,\ n,\ n),\ VofSVD,\ (n+1)/2);}
+\DoxyCodeLine{00579\ \ \ }
+\DoxyCodeLine{00580\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00581\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{00582\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{00583\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{00584\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00585\ \ \ }
+\DoxyCodeLine{00586\ \ \ m\_computed.block(firstCol\ +\ shift,\ firstCol\ +\ shift,\ n,\ n).setZero();}
+\DoxyCodeLine{00587\ \ \ m\_computed.block(firstCol\ +\ shift,\ firstCol\ +\ shift,\ n,\ n).diagonal()\ =\ singVals;}
+\DoxyCodeLine{00588\ \}\textcolor{comment}{//\ end\ divide}}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \textcolor{comment}{//\ Compute\ SVD\ of\ m\_computed.block(firstCol,\ firstCol,\ n\ +\ 1,\ n);\ this\ block\ only\ has\ non-\/zeros\ in}}
+\DoxyCodeLine{00591\ \textcolor{comment}{//\ the\ first\ column\ and\ on\ the\ diagonal\ and\ has\ undergone\ deflation,\ so\ diagonal\ is\ in\ increasing}}
+\DoxyCodeLine{00592\ \textcolor{comment}{//\ order\ except\ for\ possibly\ the\ (0,0)\ entry.\ The\ computed\ SVD\ is\ stored\ U,\ singVals\ and\ V,\ except}}
+\DoxyCodeLine{00593\ \textcolor{comment}{//\ that\ if\ m\_compV\ is\ false,\ then\ V\ is\ not\ computed.\ Singular\ values\ are\ sorted\ in\ decreasing\ order.}}
+\DoxyCodeLine{00594\ \textcolor{comment}{//}}
+\DoxyCodeLine{00595\ \textcolor{comment}{//\ TODO\ Opportunities\ for\ optimization:\ better\ root\ finding\ algo,\ better\ stopping\ criterion,\ better}}
+\DoxyCodeLine{00596\ \textcolor{comment}{//\ handling\ of\ round-\/off\ errors,\ be\ consistent\ in\ ordering}}
+\DoxyCodeLine{00597\ \textcolor{comment}{//\ For\ instance,\ to\ solve\ the\ secular\ equation\ using\ FMM,\ see\ http://www.stat.uchicago.edu/\string~lekheng/courses/302/classics/greengard-\/rokhlin.pdf}}
+\DoxyCodeLine{00598\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00599\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::computeSVDofM(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstCol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ n,\ MatrixXr\&\ U,\ VectorType\&\ singVals,\ MatrixXr\&\ V)}
+\DoxyCodeLine{00600\ \{}
+\DoxyCodeLine{00601\ \ \ \textcolor{keyword}{const}\ RealScalar\ considerZero\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00602\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00603\ \ \ ArrayRef\ col0\ =\ m\_computed.col(firstCol).segment(firstCol,\ n);}
+\DoxyCodeLine{00604\ \ \ m\_workspace.head(n)\ =\ \ m\_computed.block(firstCol,\ firstCol,\ n,\ n).diagonal();}
+\DoxyCodeLine{00605\ \ \ ArrayRef\ diag\ =\ m\_workspace.head(n);}
+\DoxyCodeLine{00606\ \ \ diag(0)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \textcolor{comment}{//\ Allocate\ space\ for\ singular\ values\ and\ vectors}}
+\DoxyCodeLine{00609\ \ \ singVals.resize(n);}
+\DoxyCodeLine{00610\ \ \ U.resize(n+1,\ n+1);}
+\DoxyCodeLine{00611\ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ V.resize(n,\ n);}
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00614\ \ \ \textcolor{keywordflow}{if}\ (col0.hasNaN()\ ||\ diag.hasNaN())}
+\DoxyCodeLine{00615\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)nHAS\ NAN\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00616\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00617\ \ \ }
+\DoxyCodeLine{00618\ \ \ \textcolor{comment}{//\ Many\ singular\ values\ might\ have\ been\ deflated,\ the\ zero\ ones\ have\ been\ moved\ to\ the\ end,}}
+\DoxyCodeLine{00619\ \ \ \textcolor{comment}{//\ but\ others\ are\ interleaved\ and\ we\ must\ ignore\ them\ at\ this\ stage.}}
+\DoxyCodeLine{00620\ \ \ \textcolor{comment}{//\ To\ this\ end,\ let's\ compute\ a\ permutation\ skipping\ them:}}
+\DoxyCodeLine{00621\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ actual\_n\ =\ n;}
+\DoxyCodeLine{00622\ \ \ \textcolor{keywordflow}{while}(actual\_n>1\ \&\&\ diag(actual\_n-\/1)==\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))\ \{-\/-\/actual\_n;\ eigen\_internal\_assert(col0(actual\_n)==\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0));\ \}}
+\DoxyCodeLine{00623\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\ =\ 0;\ \textcolor{comment}{//\ size\ of\ the\ deflated\ problem}}
+\DoxyCodeLine{00624\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k=0;k<actual\_n;++k)}
+\DoxyCodeLine{00625\ \ \ \ \ \textcolor{keywordflow}{if}(abs(col0(k))>considerZero)}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ m\_workspaceI(m++)\ =\ k;}
+\DoxyCodeLine{00627\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<ArrayXi>}}\ perm(m\_workspaceI.data(),m);}
+\DoxyCodeLine{00628\ \ \ }
+\DoxyCodeLine{00629\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<ArrayXr>}}\ shifts(m\_workspace.data()+1*n,\ n);}
+\DoxyCodeLine{00630\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<ArrayXr>}}\ mus(m\_workspace.data()+2*n,\ n);}
+\DoxyCodeLine{00631\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<ArrayXr>}}\ zhat(m\_workspace.data()+3*n,\ n);}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00633\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00634\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}computeSVDofM\ using:\(\backslash\)n"{}};}
+\DoxyCodeLine{00635\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ z:\ "{}}\ <<\ col0.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00636\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ d:\ "{}}\ <<\ diag.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00637\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00638\ \ \ }
+\DoxyCodeLine{00639\ \ \ \textcolor{comment}{//\ Compute\ singVals,\ shifts,\ and\ mus}}
+\DoxyCodeLine{00640\ \ \ computeSingVals(col0,\ diag,\ perm,\ singVals,\ shifts,\ mus);}
+\DoxyCodeLine{00641\ \ \ }
+\DoxyCodeLine{00642\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00643\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ j:\ \ \ \ \ \ \ \ "{}}\ <<\ (m\_computed.block(firstCol,\ firstCol,\ n,\ n)).jacobiSvd().singularValues().transpose().reverse()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00644\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ sing-\/val:\ "{}}\ <<\ singVals.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00645\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ mu:\ \ \ \ \ \ \ "{}}\ <<\ mus.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00646\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ shift:\ \ \ \ "{}}\ <<\ shifts.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00647\ \ \ }
+\DoxyCodeLine{00648\ \ \ \{}
+\DoxyCodeLine{00649\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n\ \ \ \ mus:\ \ \ \ "{}}\ <<\ mus.head(actual\_n).transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00650\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ check1\ (expect0)\ :\ "{}}\ <<\ ((singVals.array()-\/(shifts+mus))\ /\ singVals.array()).head(actual\_n).transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00651\ \ \ \ \ assert((((singVals.array()-\/(shifts+mus))\ /\ singVals.array()).head(actual\_n)\ >=\ 0).all());}
+\DoxyCodeLine{00652\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ check2\ (>0)\ \ \ \ \ \ :\ "{}}\ <<\ ((singVals.array()-\/diag)\ /\ singVals.array()).head(actual\_n).transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00653\ \ \ \ \ assert((((singVals.array()-\/diag)\ /\ singVals.array()).head(actual\_n)\ >=\ 0).all());}
+\DoxyCodeLine{00654\ \ \ \}}
+\DoxyCodeLine{00655\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00656\ \ \ }
+\DoxyCodeLine{00657\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00658\ \ \ assert(singVals.allFinite());}
+\DoxyCodeLine{00659\ \ \ assert(mus.allFinite());}
+\DoxyCodeLine{00660\ \ \ assert(shifts.allFinite());}
+\DoxyCodeLine{00661\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00662\ \ \ }
+\DoxyCodeLine{00663\ \ \ \textcolor{comment}{//\ Compute\ zhat}}
+\DoxyCodeLine{00664\ \ \ perturbCol0(col0,\ diag,\ perm,\ singVals,\ shifts,\ mus,\ zhat);}
+\DoxyCodeLine{00665\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00666\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ zhat:\ "{}}\ <<\ zhat.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00667\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00668\ \ \ }
+\DoxyCodeLine{00669\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00670\ \ \ assert(zhat.allFinite());}
+\DoxyCodeLine{00671\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00672\ \ \ }
+\DoxyCodeLine{00673\ \ \ computeSingVecs(zhat,\ diag,\ perm,\ singVals,\ shifts,\ mus,\ U,\ V);}
+\DoxyCodeLine{00674\ \ \ }
+\DoxyCodeLine{00675\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00676\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}U\string^T\ U:\ "{}}\ <<\ (U.transpose()\ *\ U\ -\/\ MatrixXr(MatrixXr::Identity(U.cols(),U.cols()))).norm()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00677\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}V\string^T\ V:\ "{}}\ <<\ (V.transpose()\ *\ V\ -\/\ MatrixXr(MatrixXr::Identity(V.cols(),V.cols()))).norm()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00678\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00679\ \ \ }
+\DoxyCodeLine{00680\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00681\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{00682\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{00683\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{00684\ \ \ assert(U.allFinite());}
+\DoxyCodeLine{00685\ \ \ assert(V.allFinite());}
+\DoxyCodeLine{00686\ \textcolor{comment}{//\ \ \ assert((U.transpose()\ *\ U\ -\/\ MatrixXr(MatrixXr::Identity(U.cols(),U.cols()))).norm()\ <\ 100*NumTraits<RealScalar>::epsilon()\ *\ n);}}
+\DoxyCodeLine{00687\ \textcolor{comment}{//\ \ \ assert((V.transpose()\ *\ V\ -\/\ MatrixXr(MatrixXr::Identity(V.cols(),V.cols()))).norm()\ <\ 100*NumTraits<RealScalar>::epsilon()\ *\ n);}}
+\DoxyCodeLine{00688\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00689\ \ \ }
+\DoxyCodeLine{00690\ \ \ \textcolor{comment}{//\ Because\ of\ deflation,\ the\ singular\ values\ might\ not\ be\ completely\ sorted.}}
+\DoxyCodeLine{00691\ \ \ \textcolor{comment}{//\ Fortunately,\ reordering\ them\ is\ a\ O(n)\ problem}}
+\DoxyCodeLine{00692\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<actual\_n-\/1;\ ++i)}
+\DoxyCodeLine{00693\ \ \ \{}
+\DoxyCodeLine{00694\ \ \ \ \ \textcolor{keywordflow}{if}(singVals(i)>singVals(i+1))}
+\DoxyCodeLine{00695\ \ \ \ \ \{}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::swap;}
+\DoxyCodeLine{00697\ \ \ \ \ \ \ swap(singVals(i),singVals(i+1));}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ U.col(i).swap(U.col(i+1));}
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_compV)\ V.col(i).swap(V.col(i+1));}
+\DoxyCodeLine{00700\ \ \ \ \ \}}
+\DoxyCodeLine{00701\ \ \ \}}
+\DoxyCodeLine{00702\ }
+\DoxyCodeLine{00703\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00704\ \ \ \{}
+\DoxyCodeLine{00705\ \ \ \ \ \textcolor{keywordtype}{bool}\ singular\_values\_sorted\ =\ (((singVals.segment(1,actual\_n-\/1)-\/singVals.head(actual\_n-\/1))).array()\ >=\ 0).all();}
+\DoxyCodeLine{00706\ \ \ \ \ \textcolor{keywordflow}{if}(!singular\_values\_sorted)}
+\DoxyCodeLine{00707\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Singular\ values\ are\ not\ sorted:\ "{}}\ <<\ singVals.segment(1,actual\_n).transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00708\ \ \ \ \ assert(singular\_values\_sorted);}
+\DoxyCodeLine{00709\ \ \ \}}
+\DoxyCodeLine{00710\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00711\ \ \ }
+\DoxyCodeLine{00712\ \ \ \textcolor{comment}{//\ Reverse\ order\ so\ that\ singular\ values\ in\ increased\ order}}
+\DoxyCodeLine{00713\ \ \ \textcolor{comment}{//\ Because\ of\ deflation,\ the\ zeros\ singular-\/values\ are\ already\ at\ the\ end}}
+\DoxyCodeLine{00714\ \ \ singVals.head(actual\_n).reverseInPlace();}
+\DoxyCodeLine{00715\ \ \ U.leftCols(actual\_n).rowwise().reverseInPlace();}
+\DoxyCodeLine{00716\ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ V.leftCols(actual\_n).rowwise().reverseInPlace();}
+\DoxyCodeLine{00717\ \ \ }
+\DoxyCodeLine{00718\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00719\ \ \ \mbox{\hyperlink{classEigen_1_1JacobiSVD}{JacobiSVD<MatrixXr>}}\ jsvd(m\_computed.block(firstCol,\ firstCol,\ n,\ n)\ );}
+\DoxyCodeLine{00720\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ *\ j:\ \ \ \ \ \ \ \ "{}}\ <<\ jsvd.singularValues().transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{00721\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ *\ sing-\/val:\ "{}}\ <<\ singVals.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00722\ \textcolor{comment}{//\ \ \ std::cout\ <<\ "{}\ \ *\ err:\ \ \ \ \ \ "{}\ <<\ ((jsvd.singularValues()-\/singVals)>1e-\/13*singVals.norm()).transpose()\ <<\ "{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00723\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00724\ \}}
+\DoxyCodeLine{00725\ }
+\DoxyCodeLine{00726\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00727\ \textcolor{keyword}{typename}\ BDCSVD<MatrixType>::RealScalar\ BDCSVD<MatrixType>::secularEq(RealScalar\ mu,\ \textcolor{keyword}{const}\ ArrayRef\&\ col0,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\ \&perm,\ \textcolor{keyword}{const}\ ArrayRef\&\ diagShifted,\ RealScalar\ shift)}
+\DoxyCodeLine{00728\ \{}
+\DoxyCodeLine{00729\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\ =\ perm.size();}
+\DoxyCodeLine{00730\ \ \ RealScalar\ res\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(1);}
+\DoxyCodeLine{00731\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<m;\ ++i)}
+\DoxyCodeLine{00732\ \ \ \{}
+\DoxyCodeLine{00733\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ perm(i);}
+\DoxyCodeLine{00734\ \ \ \ \ \textcolor{comment}{//\ The\ following\ expression\ could\ be\ rewritten\ to\ involve\ only\ a\ single\ division,}}
+\DoxyCodeLine{00735\ \ \ \ \ \textcolor{comment}{//\ but\ this\ would\ make\ the\ expression\ more\ sensitive\ to\ overflow.}}
+\DoxyCodeLine{00736\ \ \ \ \ res\ +=\ (col0(j)\ /\ (diagShifted(j)\ -\/\ mu))\ *\ (col0(j)\ /\ (diag(j)\ +\ shift\ +\ mu));}
+\DoxyCodeLine{00737\ \ \ \}}
+\DoxyCodeLine{00738\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \}}
+\DoxyCodeLine{00741\ }
+\DoxyCodeLine{00742\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00743\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::computeSingVals(\textcolor{keyword}{const}\ ArrayRef\&\ col0,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\ \&perm,}
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ VectorType\&\ singVals,\ ArrayRef\ shifts,\ ArrayRef\ mus)}
+\DoxyCodeLine{00745\ \{}
+\DoxyCodeLine{00746\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00747\ \ \ \textcolor{keyword}{using\ }std::swap;}
+\DoxyCodeLine{00748\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00749\ }
+\DoxyCodeLine{00750\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ col0.size();}
+\DoxyCodeLine{00751\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ actual\_n\ =\ n;}
+\DoxyCodeLine{00752\ \ \ \textcolor{comment}{//\ Note\ that\ here\ actual\_n\ is\ computed\ based\ on\ col0(i)==0\ instead\ of\ diag(i)==0\ as\ above}}
+\DoxyCodeLine{00753\ \ \ \textcolor{comment}{//\ because\ 1)\ we\ have\ diag(i)==0\ =>\ col0(i)==0\ and\ 2)\ if\ col0(i)==0,\ then\ diag(i)\ is\ already\ a\ singular\ value.}}
+\DoxyCodeLine{00754\ \ \ \textcolor{keywordflow}{while}(actual\_n>1\ \&\&\ col0(actual\_n-\/1)==\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))\ -\/-\/actual\_n;}
+\DoxyCodeLine{00755\ }
+\DoxyCodeLine{00756\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;\ k\ <\ n;\ ++k)}
+\DoxyCodeLine{00757\ \ \ \{}
+\DoxyCodeLine{00758\ \ \ \ \ \textcolor{keywordflow}{if}\ (col0(k)\ ==\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ ||\ actual\_n==1)}
+\DoxyCodeLine{00759\ \ \ \ \ \{}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ col0(k)\ ==\ 0,\ then\ entry\ is\ deflated,\ so\ singular\ value\ is\ on\ diagonal}}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ actual\_n==1,\ then\ the\ deflated\ problem\ is\ already\ diagonalized}}
+\DoxyCodeLine{00762\ \ \ \ \ \ \ singVals(k)\ =\ k==0\ ?\ col0(0)\ :\ diag(k);}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ mus(k)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ shifts(k)\ =\ k==0\ ?\ col0(0)\ :\ diag(k);}
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00766\ \ \ \ \ \}\ }
+\DoxyCodeLine{00767\ }
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{comment}{//\ otherwise,\ use\ secular\ equation\ to\ find\ singular\ value}}
+\DoxyCodeLine{00769\ \ \ \ \ RealScalar\ left\ =\ diag(k);}
+\DoxyCodeLine{00770\ \ \ \ \ RealScalar\ right;\ \textcolor{comment}{//\ was:\ =\ (k\ !=\ actual\_n-\/1)\ ?\ diag(k+1)\ :\ (diag(actual\_n-\/1)\ +\ col0.matrix().norm());}}
+\DoxyCodeLine{00771\ \ \ \ \ \textcolor{keywordflow}{if}(k==actual\_n-\/1)}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ right\ =\ (diag(actual\_n-\/1)\ +\ col0.matrix().norm());}
+\DoxyCodeLine{00773\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00774\ \ \ \ \ \{}
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \textcolor{comment}{//\ Skip\ deflated\ singular\ values,}}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \textcolor{comment}{//\ recall\ that\ at\ this\ stage\ we\ assume\ that\ z[j]!=0\ and\ all\ entries\ for\ which\ z[j]==0\ have\ been\ put\ aside.}}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ should\ be\ equivalent\ to\ using\ perm[]}}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l\ =\ k+1;}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \textcolor{keywordflow}{while}(col0(l)==\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))\ \{\ ++l;\ eigen\_internal\_assert(l<actual\_n);\ \}}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ right\ =\ diag(l);}
+\DoxyCodeLine{00781\ \ \ \ \ \}}
+\DoxyCodeLine{00782\ }
+\DoxyCodeLine{00783\ \ \ \ \ \textcolor{comment}{//\ first\ decide\ whether\ it's\ closer\ to\ the\ left\ end\ or\ the\ right\ end}}
+\DoxyCodeLine{00784\ \ \ \ \ RealScalar\ mid\ =\ left\ +\ (right-\/left)\ /\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(2);}
+\DoxyCodeLine{00785\ \ \ \ \ RealScalar\ fMid\ =\ secularEq(mid,\ col0,\ diag,\ perm,\ diag,\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0));}
+\DoxyCodeLine{00786\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00787\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}right-\/left\ =\ "{}}\ <<\ right-\/left\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00788\ \textcolor{comment}{//\ \ \ \ \ std::cout\ <<\ "{}fMid\ =\ "{}\ <<\ fMid\ <<\ "{}\ "{}\ <<\ secularEq(mid-\/left,\ col0,\ diag,\ perm,\ ArrayXr(diag-\/left),\ left)}}
+\DoxyCodeLine{00789\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ "{}\ "{}\ <<\ secularEq(mid-\/right,\ col0,\ diag,\ perm,\ ArrayXr(diag-\/right),\ right)\ \ \ <<\ "{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00790\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ \ =\ "{}}\ <<\ secularEq(left+RealScalar(0.000001)*(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.1)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.2)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.3)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.4)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.49)\ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.5)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00797\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.51)\ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.6)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.7)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00800\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.8)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00801\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.9)\ \ \ \ \ *(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)}
+\DoxyCodeLine{00802\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ \ \ \ \ \ <<\ secularEq(left+RealScalar(0.999999)*(right-\/left),\ col0,\ diag,\ perm,\ diag,\ 0)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00803\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00804\ \ \ \ \ RealScalar\ shift\ =\ (k\ ==\ actual\_n-\/1\ ||\ fMid\ >\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))\ ?\ left\ :\ right;}
+\DoxyCodeLine{00805\ \ \ \ \ }
+\DoxyCodeLine{00806\ \ \ \ \ \textcolor{comment}{//\ measure\ everything\ relative\ to\ shift}}
+\DoxyCodeLine{00807\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<ArrayXr>}}\ diagShifted(m\_workspace.data()+4*n,\ n);}
+\DoxyCodeLine{00808\ \ \ \ \ diagShifted\ =\ diag\ -\/\ shift;}
+\DoxyCodeLine{00809\ }
+\DoxyCodeLine{00810\ \ \ \ \ \textcolor{keywordflow}{if}(k!=actual\_n-\/1)}
+\DoxyCodeLine{00811\ \ \ \ \ \{}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \textcolor{comment}{//\ check\ that\ after\ the\ shift,\ f(mid)\ is\ still\ negative:}}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ RealScalar\ midShifted\ =\ (right\ -\/\ left)\ /\ RealScalar(2);}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(shift==right)}
+\DoxyCodeLine{00815\ \ \ \ \ \ \ \ \ midShifted\ =\ -\/midShifted;}
+\DoxyCodeLine{00816\ \ \ \ \ \ \ RealScalar\ fMidShifted\ =\ secularEq(midShifted,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00817\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(fMidShifted>0)}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ fMid\ was\ erroneous,\ fix\ it:}}
+\DoxyCodeLine{00820\ \ \ \ \ \ \ \ \ shift\ =\ \ fMidShifted\ >\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ ?\ left\ :\ right;}
+\DoxyCodeLine{00821\ \ \ \ \ \ \ \ \ diagShifted\ =\ diag\ -\/\ shift;}
+\DoxyCodeLine{00822\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00823\ \ \ \ \ \}}
+\DoxyCodeLine{00824\ \ \ \ \ }
+\DoxyCodeLine{00825\ \ \ \ \ \textcolor{comment}{//\ initial\ guess}}
+\DoxyCodeLine{00826\ \ \ \ \ RealScalar\ muPrev,\ muCur;}
+\DoxyCodeLine{00827\ \ \ \ \ \textcolor{keywordflow}{if}\ (shift\ ==\ left)}
+\DoxyCodeLine{00828\ \ \ \ \ \{}
+\DoxyCodeLine{00829\ \ \ \ \ \ \ muPrev\ =\ (right\ -\/\ left)\ *\ RealScalar(0.1);}
+\DoxyCodeLine{00830\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (k\ ==\ actual\_n-\/1)\ muCur\ =\ right\ -\/\ left;}
+\DoxyCodeLine{00831\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ muCur\ =\ (right\ -\/\ left)\ *\ RealScalar(0.5);}
+\DoxyCodeLine{00832\ \ \ \ \ \}}
+\DoxyCodeLine{00833\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00834\ \ \ \ \ \{}
+\DoxyCodeLine{00835\ \ \ \ \ \ \ muPrev\ =\ -\/(right\ -\/\ left)\ *\ RealScalar(0.1);}
+\DoxyCodeLine{00836\ \ \ \ \ \ \ muCur\ =\ -\/(right\ -\/\ left)\ *\ RealScalar(0.5);}
+\DoxyCodeLine{00837\ \ \ \ \ \}}
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ \ \ \ \ RealScalar\ fPrev\ =\ secularEq(muPrev,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00840\ \ \ \ \ RealScalar\ fCur\ =\ secularEq(muCur,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00841\ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(fPrev)\ <\ abs(fCur))}
+\DoxyCodeLine{00842\ \ \ \ \ \{}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ swap(fPrev,\ fCur);}
+\DoxyCodeLine{00844\ \ \ \ \ \ \ swap(muPrev,\ muCur);}
+\DoxyCodeLine{00845\ \ \ \ \ \}}
+\DoxyCodeLine{00846\ }
+\DoxyCodeLine{00847\ \ \ \ \ \textcolor{comment}{//\ rational\ interpolation:\ fit\ a\ function\ of\ the\ form\ a\ /\ mu\ +\ b\ through\ the\ two\ previous}}
+\DoxyCodeLine{00848\ \ \ \ \ \textcolor{comment}{//\ iterates\ and\ use\ its\ zero\ to\ compute\ the\ next\ iterate}}
+\DoxyCodeLine{00849\ \ \ \ \ \textcolor{keywordtype}{bool}\ useBisection\ =\ fPrev*fCur>\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{00850\ \ \ \ \ \textcolor{keywordflow}{while}\ (fCur!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ \&\&\ abs(muCur\ -\/\ muPrev)\ >\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(8)\ *\ NumTraits<RealScalar>::epsilon()\ *\ numext::maxi<RealScalar>(abs(muCur),\ abs(muPrev))\ \&\&\ abs(fCur\ -\/\ fPrev)>NumTraits<RealScalar>::epsilon()\ \&\&\ !useBisection)}
+\DoxyCodeLine{00851\ \ \ \ \ \{}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ ++m\_numIters;}
+\DoxyCodeLine{00853\ }
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \textcolor{comment}{//\ Find\ a\ and\ b\ such\ that\ the\ function\ f(mu)\ =\ a\ /\ mu\ +\ b\ matches\ the\ current\ and\ previous\ samples.}}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ RealScalar\ a\ =\ (fCur\ -\/\ fPrev)\ /\ (\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(1)/muCur\ -\/\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(1)/muPrev);}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ RealScalar\ b\ =\ fCur\ -\/\ a\ /\ muCur;}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \textcolor{comment}{//\ And\ find\ mu\ such\ that\ f(mu)==0:}}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ RealScalar\ muZero\ =\ -\/a/b;}
+\DoxyCodeLine{00859\ \ \ \ \ \ \ RealScalar\ fZero\ =\ secularEq(muZero,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00860\ }
+\DoxyCodeLine{00861\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ assert((numext::isfinite)(fZero));}
+\DoxyCodeLine{00863\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ }
+\DoxyCodeLine{00865\ \ \ \ \ \ \ muPrev\ =\ muCur;}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ fPrev\ =\ fCur;}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ muCur\ =\ muZero;}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ fCur\ =\ fZero;}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ }
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shift\ ==\ left\ \ \&\&\ (muCur\ <\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ ||\ muCur\ >\ right\ -\/\ left))\ useBisection\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shift\ ==\ right\ \&\&\ (muCur\ <\ -\/(right\ -\/\ left)\ ||\ muCur\ >\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)))\ useBisection\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(fCur)>abs(fPrev))\ useBisection\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00873\ \ \ \ \ \}}
+\DoxyCodeLine{00874\ }
+\DoxyCodeLine{00875\ \ \ \ \ \textcolor{comment}{//\ fall\ back\ on\ bisection\ method\ if\ rational\ interpolation\ did\ not\ work}}
+\DoxyCodeLine{00876\ \ \ \ \ \textcolor{keywordflow}{if}\ (useBisection)}
+\DoxyCodeLine{00877\ \ \ \ \ \{}
+\DoxyCodeLine{00878\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}useBisection\ for\ k\ =\ "{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{},\ actual\_n\ =\ "{}}\ <<\ actual\_n\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00880\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00881\ \ \ \ \ \ \ RealScalar\ leftShifted,\ rightShifted;}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (shift\ ==\ left)}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ to\ avoid\ overflow,\ we\ must\ have\ mu\ >\ max(real\_min,\ |z(k)|/sqrt(real\_max)),}}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ the\ factor\ 2\ is\ to\ be\ more\ conservative}}
+\DoxyCodeLine{00886\ \ \ \ \ \ \ \ \ leftShifted\ =\ numext::maxi<RealScalar>(\ (std::numeric\_limits<RealScalar>::min)(),\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(2)\ *\ abs(col0(k))\ /\ sqrt((std::numeric\_limits<RealScalar>::max)())\ );}
+\DoxyCodeLine{00887\ }
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ check\ that\ we\ did\ it\ right:}}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ eigen\_internal\_assert(\ (numext::isfinite)(\ (col0(k)/leftShifted)*(col0(k)/(diag(k)+shift+leftShifted))\ )\ );}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ I\ don't\ understand\ why\ the\ case\ k==0\ would\ be\ special\ there:}}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ (k\ ==\ 0)\ rightShifted\ =\ right\ -\/\ left;\ else}}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ rightShifted\ =\ (k==actual\_n-\/1)\ ?\ right\ :\ ((right\ -\/\ left)\ *\ RealScalar(0.51));\ \textcolor{comment}{//\ theoretically\ we\ can\ take\ 0.5,\ but\ let's\ be\ safe}}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ leftShifted\ =\ -\/(right\ -\/\ left)\ *\ RealScalar(0.51);}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(k+1<n)}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \ \ \ \ rightShifted\ =\ -\/numext::maxi<RealScalar>(\ (std::numeric\_limits<RealScalar>::min)(),\ abs(col0(k+1))\ /\ sqrt((std::numeric\_limits<RealScalar>::max)())\ );}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \ \ \ \ rightShifted\ =\ -\/(std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00902\ }
+\DoxyCodeLine{00903\ \ \ \ \ \ \ RealScalar\ fLeft\ =\ secularEq(leftShifted,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ eigen\_internal\_assert(fLeft<\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0));}
+\DoxyCodeLine{00905\ }
+\DoxyCodeLine{00906\ \textcolor{preprocessor}{\#if\ defined\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE\ ||\ defined\ EIGEN\_BDCSVD\_SANITY\_CHECKS\ ||\ defined\ EIGEN\_INTERNAL\_DEBUGGING}}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ RealScalar\ fRight\ =\ secularEq(rightShifted,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00908\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00909\ }
+\DoxyCodeLine{00910\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!(numext::isfinite)(fLeft))}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}f("{}}\ <<\ leftShifted\ <<\ \textcolor{stringliteral}{"{})\ ="{}}\ <<\ fLeft\ <<\ \textcolor{stringliteral}{"{}\ ;\ "{}}\ <<\ left\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ shift\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ right\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ assert((numext::isfinite)(fLeft));}
+\DoxyCodeLine{00914\ }
+\DoxyCodeLine{00915\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!(numext::isfinite)(fRight))}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}f("{}}\ <<\ rightShifted\ <<\ \textcolor{stringliteral}{"{})\ ="{}}\ <<\ fRight\ <<\ \textcolor{stringliteral}{"{}\ ;\ "{}}\ <<\ left\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ shift\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ right\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ \textcolor{comment}{//\ assert((numext::isfinite)(fRight));}}
+\DoxyCodeLine{00918\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00919\ \ \ \ \ }
+\DoxyCodeLine{00920\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!(fLeft\ *\ fRight<0))}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}f(leftShifted)\ using\ \ leftShifted="{}}\ <<\ leftShifted\ <<\ \textcolor{stringliteral}{"{}\ ;\ \ diagShifted(1:10):"{}}\ <<\ diagShifted.head(10).transpose()\ \ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\ ;\ "{}}}
+\DoxyCodeLine{00924\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}left==shift="{}}\ <<\ bool(left==shift)\ <<\ \textcolor{stringliteral}{"{}\ ;\ left-\/shift\ =\ "{}}\ <<\ (left-\/shift)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}k="{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{},\ "{}}\ <<\ \ fLeft\ <<\ \textcolor{stringliteral}{"{}\ *\ "{}}\ <<\ fRight\ <<\ \textcolor{stringliteral}{"{}\ ==\ "{}}\ <<\ fLeft\ *\ fRight\ <<\ \textcolor{stringliteral}{"{}\ \ ;\ \ "{}}}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}["{}}\ <<\ left\ <<\ \textcolor{stringliteral}{"{}\ ..\ "{}}\ <<\ right\ <<\ \textcolor{stringliteral}{"{}]\ -\/>\ ["{}}\ <<\ leftShifted\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ rightShifted\ <<\ \textcolor{stringliteral}{"{}],\ shift="{}}\ <<\ shift}
+\DoxyCodeLine{00927\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ ,\ \ f(right)="{}}\ <<\ secularEq(0,\ \ \ \ \ col0,\ diag,\ perm,\ diagShifted,\ shift)}
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{}\ ==\ "{}}\ <<\ secularEq(right,\ col0,\ diag,\ perm,\ diag,\ 0)\ <<\ \textcolor{stringliteral}{"{}\ ==\ "{}}\ <<\ fRight\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00929\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00930\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00931\ \ \ \ \ \ \ eigen\_internal\_assert(fLeft\ *\ fRight\ <\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0));}
+\DoxyCodeLine{00932\ }
+\DoxyCodeLine{00933\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(fLeft<\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))}
+\DoxyCodeLine{00934\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00935\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (rightShifted\ -\/\ leftShifted\ >\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(2)\ *\ NumTraits<RealScalar>::epsilon()\ *\ numext::maxi<RealScalar>(abs(leftShifted),\ abs(rightShifted)))}
+\DoxyCodeLine{00936\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00937\ \ \ \ \ \ \ \ \ \ \ RealScalar\ midShifted\ =\ (leftShifted\ +\ rightShifted)\ /\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(2);}
+\DoxyCodeLine{00938\ \ \ \ \ \ \ \ \ \ \ fMid\ =\ secularEq(midShifted,\ col0,\ diag,\ perm,\ diagShifted,\ shift);}
+\DoxyCodeLine{00939\ \ \ \ \ \ \ \ \ \ \ eigen\_internal\_assert((numext::isfinite)(fMid));}
+\DoxyCodeLine{00940\ }
+\DoxyCodeLine{00941\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (fLeft\ *\ fMid\ <\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))}
+\DoxyCodeLine{00942\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00943\ \ \ \ \ \ \ \ \ \ \ \ \ rightShifted\ =\ midShifted;}
+\DoxyCodeLine{00944\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00945\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00946\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00947\ \ \ \ \ \ \ \ \ \ \ \ \ leftShifted\ =\ midShifted;}
+\DoxyCodeLine{00948\ \ \ \ \ \ \ \ \ \ \ \ \ fLeft\ =\ fMid;}
+\DoxyCodeLine{00949\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00950\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00951\ \ \ \ \ \ \ \ \ muCur\ =\ (leftShifted\ +\ rightShifted)\ /\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(2);}
+\DoxyCodeLine{00952\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00953\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00954\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00955\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ have\ a\ problem\ as\ shifting\ on\ the\ left\ or\ right\ give\ either\ a\ positive\ or\ negative\ value}}
+\DoxyCodeLine{00956\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ at\ the\ middle\ of\ [left,right]...}}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Instead\ fo\ abbording\ or\ entering\ an\ infinite\ loop,}}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ let's\ just\ use\ the\ middle\ as\ the\ estimated\ zero-\/crossing:}}
+\DoxyCodeLine{00959\ \ \ \ \ \ \ \ \ muCur\ =\ (right\ -\/\ left)\ *\ RealScalar(0.5);}
+\DoxyCodeLine{00960\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(shift\ ==\ right)}
+\DoxyCodeLine{00961\ \ \ \ \ \ \ \ \ \ \ muCur\ =\ -\/muCur;}
+\DoxyCodeLine{00962\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00963\ \ \ \ \ \}}
+\DoxyCodeLine{00964\ \ \ \ \ \ \ }
+\DoxyCodeLine{00965\ \ \ \ \ singVals[k]\ =\ shift\ +\ muCur;}
+\DoxyCodeLine{00966\ \ \ \ \ shifts[k]\ =\ shift;}
+\DoxyCodeLine{00967\ \ \ \ \ mus[k]\ =\ muCur;}
+\DoxyCodeLine{00968\ }
+\DoxyCodeLine{00969\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{00970\ \ \ \ \ \textcolor{keywordflow}{if}(k+1<n)}
+\DoxyCodeLine{00971\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}found\ "{}}\ <<\ singVals[k]\ <<\ \textcolor{stringliteral}{"{}\ ==\ "{}}\ <<\ shift\ <<\ \textcolor{stringliteral}{"{}\ +\ "{}}\ <<\ muCur\ <<\ \textcolor{stringliteral}{"{}\ from\ "{}}\ <<\ diag(k)\ <<\ \textcolor{stringliteral}{"{}\ ..\ "{}}\ \ <<\ diag(k+1)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{00972\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00973\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{00974\ \ \ \ \ assert(k==0\ ||\ singVals[k]>=singVals[k-\/1]);}
+\DoxyCodeLine{00975\ \ \ \ \ assert(singVals[k]>=diag(k));}
+\DoxyCodeLine{00976\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00977\ }
+\DoxyCodeLine{00978\ \ \ \ \ \textcolor{comment}{//\ perturb\ singular\ value\ slightly\ if\ it\ equals\ diagonal\ entry\ to\ avoid\ division\ by\ zero\ later}}
+\DoxyCodeLine{00979\ \ \ \ \ \textcolor{comment}{//\ (deflation\ is\ supposed\ to\ avoid\ this\ from\ happening)}}
+\DoxyCodeLine{00980\ \ \ \ \ \textcolor{comment}{//\ -\/\ this\ does\ no\ seem\ to\ be\ necessary\ anymore\ -\/}}
+\DoxyCodeLine{00981\ \ \ \ \ \textcolor{comment}{//\ if\ (singVals[k]\ ==\ left)\ singVals[k]\ *=\ 1\ +\ NumTraits<RealScalar>::epsilon();}}
+\DoxyCodeLine{00982\ \ \ \ \ \textcolor{comment}{//\ if\ (singVals[k]\ ==\ right)\ singVals[k]\ *=\ 1\ -\/\ NumTraits<RealScalar>::epsilon();}}
+\DoxyCodeLine{00983\ \ \ \}}
+\DoxyCodeLine{00984\ \}}
+\DoxyCodeLine{00985\ }
+\DoxyCodeLine{00986\ }
+\DoxyCodeLine{00987\ \textcolor{comment}{//\ zhat\ is\ perturbation\ of\ col0\ for\ which\ singular\ vectors\ can\ be\ computed\ stably\ (see\ Section\ 3.1)}}
+\DoxyCodeLine{00988\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00989\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::perturbCol0}
+\DoxyCodeLine{00990\ \ \ \ (\textcolor{keyword}{const}\ ArrayRef\&\ col0,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\ \&perm,\ \textcolor{keyword}{const}\ VectorType\&\ singVals,}
+\DoxyCodeLine{00991\ \ \ \ \ \textcolor{keyword}{const}\ ArrayRef\&\ shifts,\ \textcolor{keyword}{const}\ ArrayRef\&\ mus,\ ArrayRef\ zhat)}
+\DoxyCodeLine{00992\ \{}
+\DoxyCodeLine{00993\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00994\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ col0.size();}
+\DoxyCodeLine{00995\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\ =\ perm.size();}
+\DoxyCodeLine{00996\ \ \ \textcolor{keywordflow}{if}(m==0)}
+\DoxyCodeLine{00997\ \ \ \{}
+\DoxyCodeLine{00998\ \ \ \ \ zhat.setZero();}
+\DoxyCodeLine{00999\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01000\ \ \ \}}
+\DoxyCodeLine{01001\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lastIdx\ =\ perm(m-\/1);}
+\DoxyCodeLine{01002\ \ \ \textcolor{comment}{//\ The\ offset\ permits\ to\ skip\ deflated\ entries\ while\ computing\ zhat}}
+\DoxyCodeLine{01003\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;\ k\ <\ n;\ ++k)}
+\DoxyCodeLine{01004\ \ \ \{}
+\DoxyCodeLine{01005\ \ \ \ \ \textcolor{keywordflow}{if}\ (col0(k)\ ==\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))\ \textcolor{comment}{//\ deflated}}
+\DoxyCodeLine{01006\ \ \ \ \ \ \ zhat(k)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01007\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01008\ \ \ \ \ \{}
+\DoxyCodeLine{01009\ \ \ \ \ \ \ \textcolor{comment}{//\ see\ equation\ (3.6)}}
+\DoxyCodeLine{01010\ \ \ \ \ \ \ RealScalar\ dk\ =\ diag(k);}
+\DoxyCodeLine{01011\ \ \ \ \ \ \ RealScalar\ prod\ =\ (singVals(lastIdx)\ +\ dk)\ *\ (mus(lastIdx)\ +\ (shifts(lastIdx)\ -\/\ dk));}
+\DoxyCodeLine{01012\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01013\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(prod<0)\ \{}
+\DoxyCodeLine{01014\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}k\ =\ "{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{}\ ;\ \ z(k)="{}}\ <<\ col0(k)\ <<\ \textcolor{stringliteral}{"{},\ diag(k)="{}}\ <<\ dk\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01015\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}prod\ =\ "{}}\ <<\ \textcolor{stringliteral}{"{}("{}}\ <<\ singVals(lastIdx)\ <<\ \textcolor{stringliteral}{"{}\ +\ "{}}\ <<\ dk\ <<\ \textcolor{stringliteral}{"{})\ *\ ("{}}\ <<\ mus(lastIdx)\ <<\ \textcolor{stringliteral}{"{}\ +\ ("{}}\ <<\ shifts(lastIdx)\ <<\ \textcolor{stringliteral}{"{}\ -\/\ "{}}\ <<\ dk\ <<\ \textcolor{stringliteral}{"{}))"{}}\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ \ =\ "{}}\ <<\ singVals(lastIdx)\ +\ dk\ <<\ \textcolor{stringliteral}{"{}\ *\ "{}}\ <<\ mus(lastIdx)\ +\ (shifts(lastIdx)\ -\/\ dk)\ <<\ \ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01018\ \ \ \ \ \ \ assert(prod>=0);}
+\DoxyCodeLine{01019\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01020\ }
+\DoxyCodeLine{01021\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l\ =\ 0;\ l<m;\ ++l)}
+\DoxyCodeLine{01022\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01023\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ perm(l);}
+\DoxyCodeLine{01024\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i!=k)}
+\DoxyCodeLine{01025\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01026\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01027\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i>=k\ \&\&\ (l==0\ ||\ l-\/1>=m))}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01029\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}Error\ in\ perturbCol0\(\backslash\)n"{}};}
+\DoxyCodeLine{01030\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ "{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{}/"{}}\ <<\ n\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ <<\ l\ <<\ \textcolor{stringliteral}{"{}/"{}}\ <<\ m\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}/"{}}\ <<\ n\ <<\ \textcolor{stringliteral}{"{}\ ;\ "{}}\ <<\ col0(k)\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ diag(k)\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ \ <<\ \ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01031\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ "{}}\ <<diag(i)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01032\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ (i<k\ \textcolor{comment}{/*||\ l==0*/})\ ?\ i\ :\ perm(l-\/1);}
+\DoxyCodeLine{01033\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ "{}}\ <<\ \textcolor{stringliteral}{"{}j="{}}\ <<\ j\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01034\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01035\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01036\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Avoid\ index\ out\ of\ bounds.}}
+\DoxyCodeLine{01037\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Will\ end\ up\ setting\ zhat(k)\ =\ 0.}}
+\DoxyCodeLine{01038\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ >=\ k\ \&\&\ l\ ==\ 0)\ \{}
+\DoxyCodeLine{01039\ \ \ \ \ \ \ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};}
+\DoxyCodeLine{01040\ \ \ \ \ \ \ \ \ \ \ \ \ prod\ =\ 0;}
+\DoxyCodeLine{01041\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01042\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01043\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ i<k\ ?\ i\ :\ l\ >\ 0\ ?\ perm(l-\/1)\ :\ i;}
+\DoxyCodeLine{01044\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01045\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!(dk!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ ||\ diag(i)!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)))}
+\DoxyCodeLine{01046\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01047\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}k="{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{},\ i="{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{},\ l="{}}\ <<\ l\ <<\ \textcolor{stringliteral}{"{},\ perm.size()="{}}\ <<\ perm.size()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01048\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01049\ \ \ \ \ \ \ \ \ \ \ assert(dk!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ ||\ diag(i)!=\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0));}
+\DoxyCodeLine{01050\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01051\ \ \ \ \ \ \ \ \ \ \ prod\ *=\ ((singVals(j)+dk)\ /\ ((diag(i)+dk)))\ *\ ((mus(j)+(shifts(j)-\/dk))\ /\ ((diag(i)-\/dk)));}
+\DoxyCodeLine{01052\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01053\ \ \ \ \ \ \ \ \ \ \ assert(prod>=0);}
+\DoxyCodeLine{01054\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01055\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01056\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i!=k\ \&\&\ numext::abs(((singVals(j)+dk)*(mus(j)+(shifts(j)-\/dk)))/((diag(i)+dk)*(diag(i)-\/dk))\ -\/\ 1)\ >\ 0.9\ )}
+\DoxyCodeLine{01057\ \ \ \ \ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ \ "{}}\ <<\ ((singVals(j)+dk)*(mus(j)+(shifts(j)-\/dk)))/((diag(i)+dk)*(diag(i)-\/dk))\ <<\ \textcolor{stringliteral}{"{}\ ==\ ("{}}\ <<\ (singVals(j)+dk)\ <<\ \textcolor{stringliteral}{"{}\ *\ "{}}\ <<\ (mus(j)+(shifts(j)-\/dk))}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <<\ \textcolor{stringliteral}{"{})\ /\ ("{}}\ <<\ (diag(i)+dk)\ <<\ \textcolor{stringliteral}{"{}\ *\ "{}}\ <<\ (diag(i)-\/dk)\ <<\ \textcolor{stringliteral}{"{})\(\backslash\)n"{}};}
+\DoxyCodeLine{01059\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01062\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01063\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}zhat("{}}\ <<\ k\ <<\ \textcolor{stringliteral}{"{})\ =\ \ sqrt(\ "{}}\ <<\ prod\ <<\ \textcolor{stringliteral}{"{})\ \ ;\ \ "{}}\ <<\ (singVals(lastIdx)\ +\ dk)\ <<\ \textcolor{stringliteral}{"{}\ *\ "{}}\ <<\ mus(lastIdx)\ +\ shifts(lastIdx)\ <<\ \textcolor{stringliteral}{"{}\ -\/\ "{}}\ <<\ dk\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01064\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01065\ \ \ \ \ \ \ RealScalar\ tmp\ =\ sqrt(prod);}
+\DoxyCodeLine{01066\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01067\ \ \ \ \ \ \ assert((numext::isfinite)(tmp));}
+\DoxyCodeLine{01068\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01069\ \ \ \ \ \ \ zhat(k)\ =\ col0(k)\ >\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0)\ ?\ RealScalar(tmp)\ :\ RealScalar(-\/tmp);}
+\DoxyCodeLine{01070\ \ \ \ \ \}}
+\DoxyCodeLine{01071\ \ \ \}}
+\DoxyCodeLine{01072\ \}}
+\DoxyCodeLine{01073\ }
+\DoxyCodeLine{01074\ \textcolor{comment}{//\ compute\ singular\ vectors}}
+\DoxyCodeLine{01075\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{01076\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::computeSingVecs}
+\DoxyCodeLine{01077\ \ \ \ (\textcolor{keyword}{const}\ ArrayRef\&\ zhat,\ \textcolor{keyword}{const}\ ArrayRef\&\ diag,\ \textcolor{keyword}{const}\ IndicesRef\ \&perm,\ \textcolor{keyword}{const}\ VectorType\&\ singVals,}
+\DoxyCodeLine{01078\ \ \ \ \ \textcolor{keyword}{const}\ ArrayRef\&\ shifts,\ \textcolor{keyword}{const}\ ArrayRef\&\ mus,\ MatrixXr\&\ U,\ MatrixXr\&\ V)}
+\DoxyCodeLine{01079\ \{}
+\DoxyCodeLine{01080\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ zhat.size();}
+\DoxyCodeLine{01081\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\ =\ perm.size();}
+\DoxyCodeLine{01082\ \ \ }
+\DoxyCodeLine{01083\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;\ k\ <\ n;\ ++k)}
+\DoxyCodeLine{01084\ \ \ \{}
+\DoxyCodeLine{01085\ \ \ \ \ \textcolor{keywordflow}{if}\ (zhat(k)\ ==\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))}
+\DoxyCodeLine{01086\ \ \ \ \ \{}
+\DoxyCodeLine{01087\ \ \ \ \ \ \ U.col(k)\ =\ VectorType::Unit(n+1,\ k);}
+\DoxyCodeLine{01088\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ V.col(k)\ =\ VectorType::Unit(n,\ k);}
+\DoxyCodeLine{01089\ \ \ \ \ \}}
+\DoxyCodeLine{01090\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01091\ \ \ \ \ \{}
+\DoxyCodeLine{01092\ \ \ \ \ \ \ U.col(k).setZero();}
+\DoxyCodeLine{01093\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l=0;l<m;++l)}
+\DoxyCodeLine{01094\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ perm(l);}
+\DoxyCodeLine{01096\ \ \ \ \ \ \ \ \ U(i,k)\ =\ zhat(i)/(((diag(i)\ -\/\ shifts(k))\ -\/\ mus(k))\ )/(\ (diag(i)\ +\ singVals[k]));}
+\DoxyCodeLine{01097\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01098\ \ \ \ \ \ \ U(n,k)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01099\ \ \ \ \ \ \ U.col(k).normalize();}
+\DoxyCodeLine{01100\ \ \ \ \ }
+\DoxyCodeLine{01101\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_compV)}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ \ \ V.col(k).setZero();}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l=1;l<m;++l)}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ perm(l);}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ \ \ \ \ V(i,k)\ =\ diag(i)\ *\ zhat(i)\ /\ (((diag(i)\ -\/\ shifts(k))\ -\/\ mus(k))\ )/(\ (diag(i)\ +\ singVals[k]));}
+\DoxyCodeLine{01108\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \ \ V(0,k)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(-\/1);}
+\DoxyCodeLine{01110\ \ \ \ \ \ \ \ \ V.col(k).normalize();}
+\DoxyCodeLine{01111\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01112\ \ \ \ \ \}}
+\DoxyCodeLine{01113\ \ \ \}}
+\DoxyCodeLine{01114\ \ \ U.col(n)\ =\ VectorType::Unit(n+1,\ n);}
+\DoxyCodeLine{01115\ \}}
+\DoxyCodeLine{01116\ }
+\DoxyCodeLine{01117\ }
+\DoxyCodeLine{01118\ \textcolor{comment}{//\ page\ 12\_13}}
+\DoxyCodeLine{01119\ \textcolor{comment}{//\ i\ >=\ 1,\ di\ almost\ null\ and\ zi\ non\ null.}}
+\DoxyCodeLine{01120\ \textcolor{comment}{//\ We\ use\ a\ rotation\ to\ zero\ out\ zi\ applied\ to\ the\ left\ of\ M}}
+\DoxyCodeLine{01121\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{01122\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::deflation43(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstCol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ shift,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ i,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ size)}
+\DoxyCodeLine{01123\ \{}
+\DoxyCodeLine{01124\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{01125\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{01126\ \ \ \textcolor{keyword}{using\ }std::pow;}
+\DoxyCodeLine{01127\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ start\ =\ firstCol\ +\ shift;}
+\DoxyCodeLine{01128\ \ \ RealScalar\ c\ =\ m\_computed(start,\ start);}
+\DoxyCodeLine{01129\ \ \ RealScalar\ s\ =\ m\_computed(start+i,\ start);}
+\DoxyCodeLine{01130\ \ \ RealScalar\ r\ =\ numext::hypot(c,s);}
+\DoxyCodeLine{01131\ \ \ \textcolor{keywordflow}{if}\ (r\ ==\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))}
+\DoxyCodeLine{01132\ \ \ \{}
+\DoxyCodeLine{01133\ \ \ \ \ m\_computed(start+i,\ start+i)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01134\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01135\ \ \ \}}
+\DoxyCodeLine{01136\ \ \ m\_computed(start,start)\ =\ r;\ \ }
+\DoxyCodeLine{01137\ \ \ m\_computed(start+i,\ start)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01138\ \ \ m\_computed(start+i,\ start+i)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01139\ \ \ }
+\DoxyCodeLine{01140\ \ \ \mbox{\hyperlink{classEigen_1_1JacobiRotation}{JacobiRotation<RealScalar>}}\ J(c/r,-\/s/r);}
+\DoxyCodeLine{01141\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)\ \ m\_naiveU.middleRows(firstCol,\ size+1).applyOnTheRight(firstCol,\ firstCol+i,\ J);}
+\DoxyCodeLine{01142\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ m\_naiveU.applyOnTheRight(firstCol,\ firstCol+i,\ J);}
+\DoxyCodeLine{01143\ \}\textcolor{comment}{//\ end\ deflation\ 43}}
+\DoxyCodeLine{01144\ }
+\DoxyCodeLine{01145\ }
+\DoxyCodeLine{01146\ \textcolor{comment}{//\ page\ 13}}
+\DoxyCodeLine{01147\ \textcolor{comment}{//\ i,j\ >=\ 1,\ i!=j\ and\ |di\ -\/\ dj|\ <\ epsilon\ *\ norm2(M)}}
+\DoxyCodeLine{01148\ \textcolor{comment}{//\ We\ apply\ two\ rotations\ to\ have\ zj\ =\ 0;}}
+\DoxyCodeLine{01149\ \textcolor{comment}{//\ TODO\ deflation44\ is\ still\ broken\ and\ not\ properly\ tested}}
+\DoxyCodeLine{01150\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{01151\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::deflation44(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstColu\ ,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstColm,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstRowW,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstColW,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ i,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ j,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ size)}
+\DoxyCodeLine{01152\ \{}
+\DoxyCodeLine{01153\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{01154\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{01155\ \ \ \textcolor{keyword}{using\ }std::conj;}
+\DoxyCodeLine{01156\ \ \ \textcolor{keyword}{using\ }std::pow;}
+\DoxyCodeLine{01157\ \ \ RealScalar\ c\ =\ m\_computed(firstColm+i,\ firstColm);}
+\DoxyCodeLine{01158\ \ \ RealScalar\ s\ =\ m\_computed(firstColm+j,\ firstColm);}
+\DoxyCodeLine{01159\ \ \ RealScalar\ r\ =\ sqrt(numext::abs2(c)\ +\ numext::abs2(s));}
+\DoxyCodeLine{01160\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01161\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}deflation\ 4.4:\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ j\ <<\ \textcolor{stringliteral}{"{}\ -\/>\ "{}}\ <<\ c\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ s\ <<\ \textcolor{stringliteral}{"{}\ "{}}\ <<\ r\ <<\ \textcolor{stringliteral}{"{}\ ;\ "{}}}
+\DoxyCodeLine{01162\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i-\/1,\ firstColm)\ \ <<\ \textcolor{stringliteral}{"{}\ "{}}}
+\DoxyCodeLine{01163\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i,\ firstColm)\ \ <<\ \textcolor{stringliteral}{"{}\ "{}}}
+\DoxyCodeLine{01164\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i+1,\ firstColm)\ <<\ \textcolor{stringliteral}{"{}\ "{}}}
+\DoxyCodeLine{01165\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i+2,\ firstColm)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01166\ \ \ std::cout\ <<\ m\_computed(firstColm\ +\ i-\/1,\ firstColm\ +\ i-\/1)\ \ <<\ \textcolor{stringliteral}{"{}\ "{}}}
+\DoxyCodeLine{01167\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i,\ firstColm+i)\ \ <<\ \textcolor{stringliteral}{"{}\ "{}}}
+\DoxyCodeLine{01168\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i+1,\ firstColm+i+1)\ <<\ \textcolor{stringliteral}{"{}\ "{}}}
+\DoxyCodeLine{01169\ \ \ \ \ <<\ m\_computed(firstColm\ +\ i+2,\ firstColm+i+2)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01170\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01171\ \ \ \textcolor{keywordflow}{if}\ (r==\mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0))}
+\DoxyCodeLine{01172\ \ \ \{}
+\DoxyCodeLine{01173\ \ \ \ \ m\_computed(firstColm\ +\ i,\ firstColm\ +\ i)\ =\ m\_computed(firstColm\ +\ j,\ firstColm\ +\ j);}
+\DoxyCodeLine{01174\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{01175\ \ \ \}}
+\DoxyCodeLine{01176\ \ \ c/=r;}
+\DoxyCodeLine{01177\ \ \ s/=r;}
+\DoxyCodeLine{01178\ \ \ m\_computed(firstColm\ +\ i,\ firstColm)\ =\ r;}
+\DoxyCodeLine{01179\ \ \ m\_computed(firstColm\ +\ j,\ firstColm\ +\ j)\ =\ m\_computed(firstColm\ +\ i,\ firstColm\ +\ i);}
+\DoxyCodeLine{01180\ \ \ m\_computed(firstColm\ +\ j,\ firstColm)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01181\ }
+\DoxyCodeLine{01182\ \ \ \mbox{\hyperlink{classEigen_1_1JacobiRotation}{JacobiRotation<RealScalar>}}\ J(c,-\/s);}
+\DoxyCodeLine{01183\ \ \ \textcolor{keywordflow}{if}\ (m\_compU)\ \ m\_naiveU.middleRows(firstColu,\ size+1).applyOnTheRight(firstColu\ +\ i,\ firstColu\ +\ j,\ J);}
+\DoxyCodeLine{01184\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ m\_naiveU.applyOnTheRight(firstColu+i,\ firstColu+j,\ J);}
+\DoxyCodeLine{01185\ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ \ m\_naiveV.middleRows(firstRowW,\ size).applyOnTheRight(firstColW\ +\ i,\ firstColW\ +\ j,\ J);}
+\DoxyCodeLine{01186\ \}\textcolor{comment}{//\ end\ deflation\ 44}}
+\DoxyCodeLine{01187\ }
+\DoxyCodeLine{01188\ }
+\DoxyCodeLine{01189\ \textcolor{comment}{//\ acts\ on\ block\ from\ (firstCol+shift,\ firstCol+shift)\ to\ (lastCol+shift,\ lastCol+shift)\ [inclusive]}}
+\DoxyCodeLine{01190\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{01191\ \textcolor{keywordtype}{void}\ BDCSVD<MatrixType>::deflation(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstCol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ lastCol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ k,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstRowW,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ firstColW,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ shift)}
+\DoxyCodeLine{01192\ \{}
+\DoxyCodeLine{01193\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{01194\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{01195\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ length\ =\ lastCol\ +\ 1\ -\/\ firstCol;}
+\DoxyCodeLine{01196\ \ \ }
+\DoxyCodeLine{01197\ \ \ \mbox{\hyperlink{classEigen_1_1Block}{Block<MatrixXr,Dynamic,1>}}\ col0(m\_computed,\ firstCol+shift,\ firstCol+shift,\ length,\ 1);}
+\DoxyCodeLine{01198\ \ \ \mbox{\hyperlink{classEigen_1_1Diagonal}{Diagonal<MatrixXr>}}\ fulldiag(m\_computed);}
+\DoxyCodeLine{01199\ \ \ \mbox{\hyperlink{classEigen_1_1VectorBlock}{VectorBlock<Diagonal<MatrixXr>}},\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}>\ diag(fulldiag,\ firstCol+shift,\ length);}
+\DoxyCodeLine{01200\ \ \ }
+\DoxyCodeLine{01201\ \ \ \textcolor{keyword}{const}\ RealScalar\ considerZero\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{01202\ \ \ RealScalar\ maxDiag\ =\ diag.tail((std::max)(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(1),length-\/1)).cwiseAbs().maxCoeff();}
+\DoxyCodeLine{01203\ \ \ RealScalar\ epsilon\_strict\ =\ numext::maxi<RealScalar>(considerZero,NumTraits<RealScalar>::epsilon()\ *\ maxDiag);}
+\DoxyCodeLine{01204\ \ \ RealScalar\ epsilon\_coarse\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(8)\ *\ NumTraits<RealScalar>::epsilon()\ *\ numext::maxi<RealScalar>(col0.cwiseAbs().maxCoeff(),\ maxDiag);}
+\DoxyCodeLine{01205\ \ \ }
+\DoxyCodeLine{01206\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01207\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{01208\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{01209\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{01210\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01211\ }
+\DoxyCodeLine{01212\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE\ \ }}
+\DoxyCodeLine{01213\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)ndeflate:"{}}\ <<\ diag.head(k+1).transpose()\ <<\ \textcolor{stringliteral}{"{}\ \ |\ \ "{}}\ <<\ diag.segment(k+1,length-\/k-\/1).transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01214\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01215\ \ \ }
+\DoxyCodeLine{01216\ \ \ \textcolor{comment}{//condition\ 4.1}}
+\DoxyCodeLine{01217\ \ \ \textcolor{keywordflow}{if}\ (diag(0)\ <\ epsilon\_coarse)}
+\DoxyCodeLine{01218\ \ \ \{\ }
+\DoxyCodeLine{01219\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01220\ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}deflation\ 4.1,\ because\ "{}}\ <<\ diag(0)\ <<\ \textcolor{stringliteral}{"{}\ <\ "{}}\ <<\ epsilon\_coarse\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01221\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01222\ \ \ \ \ diag(0)\ =\ epsilon\_coarse;}
+\DoxyCodeLine{01223\ \ \ \}}
+\DoxyCodeLine{01224\ }
+\DoxyCodeLine{01225\ \ \ \textcolor{comment}{//condition\ 4.2}}
+\DoxyCodeLine{01226\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=1;i<length;++i)}
+\DoxyCodeLine{01227\ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(col0(i))\ <\ epsilon\_strict)}
+\DoxyCodeLine{01228\ \ \ \ \ \{}
+\DoxyCodeLine{01229\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01230\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}deflation\ 4.2,\ set\ z("{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{})\ to\ zero\ because\ "{}}\ <<\ abs(col0(i))\ <<\ \textcolor{stringliteral}{"{}\ <\ "{}}\ <<\ epsilon\_strict\ <<\ \textcolor{stringliteral}{"{}\ \ (diag("{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{})="{}}\ <<\ diag(i)\ <<\ \textcolor{stringliteral}{"{})\(\backslash\)n"{}};}
+\DoxyCodeLine{01231\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01232\ \ \ \ \ \ \ col0(i)\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{Literal}}(0);}
+\DoxyCodeLine{01233\ \ \ \ \ \}}
+\DoxyCodeLine{01234\ }
+\DoxyCodeLine{01235\ \ \ \textcolor{comment}{//condition\ 4.3}}
+\DoxyCodeLine{01236\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=1;i<length;\ i++)}
+\DoxyCodeLine{01237\ \ \ \ \ \textcolor{keywordflow}{if}\ (diag(i)\ <\ epsilon\_coarse)}
+\DoxyCodeLine{01238\ \ \ \ \ \{}
+\DoxyCodeLine{01239\ \textcolor{preprocessor}{\#ifdef\ \ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01240\ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}deflation\ 4.3,\ cancel\ z("{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{})="{}}\ <<\ col0(i)\ <<\ \textcolor{stringliteral}{"{}\ because\ diag("{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{})="{}}\ <<\ diag(i)\ <<\ \textcolor{stringliteral}{"{}\ <\ "{}}\ <<\ epsilon\_coarse\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01241\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01242\ \ \ \ \ \ \ deflation43(firstCol,\ shift,\ i,\ length);}
+\DoxyCodeLine{01243\ \ \ \ \ \}}
+\DoxyCodeLine{01244\ }
+\DoxyCodeLine{01245\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01246\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{01247\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{01248\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{01249\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01250\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01251\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}to\ be\ sorted:\ "{}}\ <<\ diag.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{01252\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ \ \ \ \ \ \ :\ "{}}\ <<\ col0.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{01253\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01254\ \ \ \{}
+\DoxyCodeLine{01255\ \ \ \ \ \textcolor{comment}{//\ Check\ for\ total\ deflation}}
+\DoxyCodeLine{01256\ \ \ \ \ \textcolor{comment}{//\ If\ we\ have\ a\ total\ deflation,\ then\ we\ have\ to\ consider\ col0(0)==diag(0)\ as\ a\ singular\ value\ during\ sorting.}}
+\DoxyCodeLine{01257\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ total\_deflation\ =\ (col0.tail(length-\/1).array().abs()<considerZero).all();}
+\DoxyCodeLine{01258\ \ \ \ \ }
+\DoxyCodeLine{01259\ \ \ \ \ \textcolor{comment}{//\ Sort\ the\ diagonal\ entries,\ since\ diag(1:k-\/1)\ and\ diag(k:length)\ are\ already\ sorted,\ let's\ do\ a\ sorted\ merge.}}
+\DoxyCodeLine{01260\ \ \ \ \ \textcolor{comment}{//\ First,\ compute\ the\ respective\ permutation.}}
+\DoxyCodeLine{01261\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ *permutation\ =\ m\_workspaceI.data();}
+\DoxyCodeLine{01262\ \ \ \ \ \{}
+\DoxyCodeLine{01263\ \ \ \ \ \ \ permutation[0]\ =\ 0;}
+\DoxyCodeLine{01264\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p\ =\ 1;}
+\DoxyCodeLine{01265\ \ \ \ \ \ \ }
+\DoxyCodeLine{01266\ \ \ \ \ \ \ \textcolor{comment}{//\ Move\ deflated\ diagonal\ entries\ at\ the\ end.}}
+\DoxyCodeLine{01267\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=1;\ i<length;\ ++i)}
+\DoxyCodeLine{01268\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(diag(i))<considerZero)}
+\DoxyCodeLine{01269\ \ \ \ \ \ \ \ \ \ \ permutation[p++]\ =\ i;}
+\DoxyCodeLine{01270\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{01271\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=1,\ j=k+1;}
+\DoxyCodeLine{01272\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\ ;\ p\ <\ length;\ ++p)}
+\DoxyCodeLine{01273\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01274\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ >\ k)\ \ \ \ \ \ \ \ \ \ \ \ \ permutation[p]\ =\ j++;}
+\DoxyCodeLine{01275\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (j\ >=\ length)\ \ \ \ \ \ \ permutation[p]\ =\ i++;}
+\DoxyCodeLine{01276\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (diag(i)\ <\ diag(j))\ permutation[p]\ =\ j++;}
+\DoxyCodeLine{01277\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ permutation[p]\ =\ i++;}
+\DoxyCodeLine{01278\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01279\ \ \ \ \ \}}
+\DoxyCodeLine{01280\ \ \ \ \ }
+\DoxyCodeLine{01281\ \ \ \ \ \textcolor{comment}{//\ If\ we\ have\ a\ total\ deflation,\ then\ we\ have\ to\ insert\ diag(0)\ at\ the\ right\ place}}
+\DoxyCodeLine{01282\ \ \ \ \ \textcolor{keywordflow}{if}(total\_deflation)}
+\DoxyCodeLine{01283\ \ \ \ \ \{}
+\DoxyCodeLine{01284\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=1;\ i<length;\ ++i)}
+\DoxyCodeLine{01285\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01286\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ pi\ =\ permutation[i];}
+\DoxyCodeLine{01287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(abs(diag(pi))<considerZero\ ||\ diag(0)<diag(pi))}
+\DoxyCodeLine{01288\ \ \ \ \ \ \ \ \ \ \ permutation[i-\/1]\ =\ permutation[i];}
+\DoxyCodeLine{01289\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01290\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01291\ \ \ \ \ \ \ \ \ \ \ permutation[i-\/1]\ =\ 0;}
+\DoxyCodeLine{01292\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{01293\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01294\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01295\ \ \ \ \ \}}
+\DoxyCodeLine{01296\ \ \ \ \ }
+\DoxyCodeLine{01297\ \ \ \ \ \textcolor{comment}{//\ Current\ index\ of\ each\ col,\ and\ current\ column\ of\ each\ index}}
+\DoxyCodeLine{01298\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ *realInd\ =\ m\_workspaceI.data()+length;}
+\DoxyCodeLine{01299\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ *realCol\ =\ m\_workspaceI.data()+2*length;}
+\DoxyCodeLine{01300\ \ \ \ \ }
+\DoxyCodeLine{01301\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ pos\ =\ 0;\ pos<\ length;\ pos++)}
+\DoxyCodeLine{01302\ \ \ \ \ \{}
+\DoxyCodeLine{01303\ \ \ \ \ \ \ realCol[pos]\ =\ pos;}
+\DoxyCodeLine{01304\ \ \ \ \ \ \ realInd[pos]\ =\ pos;}
+\DoxyCodeLine{01305\ \ \ \ \ \}}
+\DoxyCodeLine{01306\ \ \ \ \ }
+\DoxyCodeLine{01307\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ total\_deflation?0:1;\ i\ <\ length;\ i++)}
+\DoxyCodeLine{01308\ \ \ \ \ \{}
+\DoxyCodeLine{01309\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ pi\ =\ permutation[length\ -\/\ (total\_deflation\ ?\ i+1\ :\ i)];}
+\DoxyCodeLine{01310\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ J\ =\ realCol[pi];}
+\DoxyCodeLine{01311\ \ \ \ \ \ \ }
+\DoxyCodeLine{01312\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::swap;}
+\DoxyCodeLine{01313\ \ \ \ \ \ \ \textcolor{comment}{//\ swap\ diagonal\ and\ first\ column\ entries:}}
+\DoxyCodeLine{01314\ \ \ \ \ \ \ swap(diag(i),\ diag(J));}
+\DoxyCodeLine{01315\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(i!=0\ \&\&\ J!=0)\ swap(col0(i),\ col0(J));}
+\DoxyCodeLine{01316\ }
+\DoxyCodeLine{01317\ \ \ \ \ \ \ \textcolor{comment}{//\ change\ columns}}
+\DoxyCodeLine{01318\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_compU)\ m\_naiveU.col(firstCol+i).segment(firstCol,\ length\ +\ 1).swap(m\_naiveU.col(firstCol+J).segment(firstCol,\ length\ +\ 1));}
+\DoxyCodeLine{01319\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ m\_naiveU.col(firstCol+i).segment(0,\ 2)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .swap(m\_naiveU.col(firstCol+J).segment(0,\ 2));}
+\DoxyCodeLine{01320\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_compV)\ m\_naiveV.col(firstColW\ +\ i).segment(firstRowW,\ length).swap(m\_naiveV.col(firstColW\ +\ J).segment(firstRowW,\ length));}
+\DoxyCodeLine{01321\ }
+\DoxyCodeLine{01322\ \ \ \ \ \ \ \textcolor{comment}{//update\ real\ pos}}
+\DoxyCodeLine{01323\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ realI\ =\ realInd[i];}
+\DoxyCodeLine{01324\ \ \ \ \ \ \ realCol[realI]\ =\ J;}
+\DoxyCodeLine{01325\ \ \ \ \ \ \ realCol[pi]\ =\ i;}
+\DoxyCodeLine{01326\ \ \ \ \ \ \ realInd[J]\ =\ realI;}
+\DoxyCodeLine{01327\ \ \ \ \ \ \ realInd[i]\ =\ pi;}
+\DoxyCodeLine{01328\ \ \ \ \ \}}
+\DoxyCodeLine{01329\ \ \ \}}
+\DoxyCodeLine{01330\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01331\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}sorted:\ "{}}\ <<\ diag.transpose().format(bdcsvdfmt)\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01332\ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}\ \ \ \ \ \ :\ "{}}\ <<\ col0.transpose()\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n\(\backslash\)n"{}};}
+\DoxyCodeLine{01333\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01334\ \ \ \ \ }
+\DoxyCodeLine{01335\ \ \ \textcolor{comment}{//condition\ 4.4}}
+\DoxyCodeLine{01336\ \ \ \{}
+\DoxyCodeLine{01337\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ length-\/1;}
+\DoxyCodeLine{01338\ \ \ \ \ \textcolor{keywordflow}{while}(i>0\ \&\&\ (abs(diag(i))<considerZero\ ||\ abs(col0(i))<considerZero))\ -\/-\/i;}
+\DoxyCodeLine{01339\ \ \ \ \ \textcolor{keywordflow}{for}(;\ i>1;-\/-\/i)}
+\DoxyCodeLine{01340\ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ (diag(i)\ -\/\ diag(i-\/1))\ <\ NumTraits<RealScalar>::epsilon()*maxDiag\ )}
+\DoxyCodeLine{01341\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01342\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_DEBUG\_VERBOSE}}
+\DoxyCodeLine{01343\ \ \ \ \ \ \ \ \ std::cout\ <<\ \textcolor{stringliteral}{"{}deflation\ 4.4\ with\ i\ =\ "{}}\ <<\ i\ <<\ \textcolor{stringliteral}{"{}\ because\ "{}}\ <<\ diag(i)\ <<\ \textcolor{stringliteral}{"{}\ -\/\ "{}}\ <<\ diag(i-\/1)\ <<\ \textcolor{stringliteral}{"{}\ ==\ "{}}\ <<\ (diag(i)\ -\/\ diag(i-\/1))\ <<\ \textcolor{stringliteral}{"{}\ <\ "{}}\ <<\ NumTraits<RealScalar>::epsilon()*\textcolor{comment}{/*diag(i)*/}maxDiag\ <<\ \textcolor{stringliteral}{"{}\(\backslash\)n"{}};}
+\DoxyCodeLine{01344\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01345\ \ \ \ \ \ \ \ \ eigen\_internal\_assert(abs(diag(i)\ -\/\ diag(i-\/1))<epsilon\_coarse\ \&\&\ \textcolor{stringliteral}{"{}\ diagonal\ entries\ are\ not\ properly\ sorted"{}});}
+\DoxyCodeLine{01346\ \ \ \ \ \ \ \ \ deflation44(firstCol,\ firstCol\ +\ shift,\ firstRowW,\ firstColW,\ i-\/1,\ i,\ length);}
+\DoxyCodeLine{01347\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01348\ \ \ \}}
+\DoxyCodeLine{01349\ \ \ }
+\DoxyCodeLine{01350\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01351\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=2;j<length;++j)}
+\DoxyCodeLine{01352\ \ \ \ \ assert(diag(j-\/1)<=diag(j)\ ||\ abs(diag(j))<considerZero);}
+\DoxyCodeLine{01353\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01354\ \ \ }
+\DoxyCodeLine{01355\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_BDCSVD\_SANITY\_CHECKS}}
+\DoxyCodeLine{01356\ \ \ assert(m\_naiveU.allFinite());}
+\DoxyCodeLine{01357\ \ \ assert(m\_naiveV.allFinite());}
+\DoxyCodeLine{01358\ \ \ assert(m\_computed.allFinite());}
+\DoxyCodeLine{01359\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01360\ \}\textcolor{comment}{//end\ deflation}}
+\DoxyCodeLine{01361\ \textcolor{comment}{}}
+\DoxyCodeLine{01362\ \textcolor{comment}{/**\ \(\backslash\)svd\_module}}
+\DoxyCodeLine{01363\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{01364\ \textcolor{comment}{\ \ *\ \(\backslash\)return\ the\ singular\ value\ decomposition\ of\ \(\backslash\)c\ *this\ computed\ by\ Divide\ \&\ Conquer\ algorithm}}
+\DoxyCodeLine{01365\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{01366\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ BDCSVD}}
+\DoxyCodeLine{01367\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{01368\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{01369\ \mbox{\hyperlink{classEigen_1_1BDCSVD}{BDCSVD<typename\ MatrixBase<Derived>::PlainObject}}>}
+\DoxyCodeLine{01370\ \mbox{\hyperlink{classEigen_1_1MatrixBase_ae171b74b5d530846ee0836135ffcf837}{MatrixBase<Derived>::bdcSvd}}(\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ computationOptions)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{01371\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{01372\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1BDCSVD}{BDCSVD<PlainObject>}}(*\textcolor{keyword}{this},\ computationOptions);}
+\DoxyCodeLine{01373\ \}}
+\DoxyCodeLine{01374\ }
+\DoxyCodeLine{01375\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{01376\ }
+\DoxyCodeLine{01377\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

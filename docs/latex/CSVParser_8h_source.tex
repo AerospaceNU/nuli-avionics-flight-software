@@ -1,0 +1,216 @@
+\doxysection{CSVParser.\+h}
+\hypertarget{CSVParser_8h_source}{}\label{CSVParser_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/drivers/desktop/CSVParser.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/drivers/desktop/CSVParser.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{preprocessor}{\#pragma\ once}}
+\DoxyCodeLine{00002\ \textcolor{preprocessor}{\#include\ <string>}}
+\DoxyCodeLine{00003\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ <fstream>}}
+\DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ <sstream>}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00008\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00009\ \textcolor{preprocessor}{\#include\ <algorithm>}}
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#include\ <limits>}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{keyword}{class\ }CSVReader\ \{}
+\DoxyCodeLine{00013\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00014\ \ \ \ \ CSVReader()\ =\ \textcolor{keywordflow}{default};}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{comment}{//\ Load\ CSV\ file}}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keywordtype}{void}\ setup(\textcolor{keyword}{const}\ std::string\ \&fileName)\ \{}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \ \ file\_.open(fileName);}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!file\_.is\_open())\ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}Cannot\ open\ CSV\ file"{}});}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ std::string\ headerLine;}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!std::getline(file\_,\ headerLine))\ \textcolor{keywordflow}{throw}\ std::runtime\_error(\textcolor{stringliteral}{"{}Empty\ CSV\ file"{}});}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \ \ \ \ \ \ \ \ parseHeader(headerLine);}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Load\ all\ remaining\ lines\ into\ memory}}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ lines\_.clear();}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ std::string\ line;}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (std::getline(file\_,\ line))\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!line.empty())\ lines\_.push\_back(parseLine(line));}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \ \ \ \ \ \ currentIndex\_\ =\ 0;}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ \ \ firstCsvTime\_\ =\ -\/1;\ \textcolor{comment}{//\ reset\ relative\ time\ tracking}}
+\DoxyCodeLine{00034\ \ \ \ \ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{comment}{//\ Read\ next\ row\ without\ interpolation}}
+\DoxyCodeLine{00037\ \ \ \ \ \textcolor{keywordtype}{bool}\ nextLine()\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (currentIndex\_\ >=\ lines\_.size())\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ std::exit(0);\ \textcolor{comment}{//\ exit\ program\ when\ CSV\ ends}}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ currentRow\_\ =\ lines\_[currentIndex\_++];}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00043\ \ \ \ \ \}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{comment}{//\ Interpolate\ row\ for\ relative\ time\ (t=0\ at\ first\ call)}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{keywordtype}{bool}\ interpolateNext(int64\_t\ relativeTimeMs)\ \{}
+\DoxyCodeLine{00047\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (currentIndex\_\ >=\ lines\_.size())\ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ \ \ \ std::exit(0);\ \textcolor{comment}{//\ exit\ program\ when\ CSV\ ends}}
+\DoxyCodeLine{00049\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (lines\_.empty())\ \{}
+\DoxyCodeLine{00051\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (firstCsvTime\_\ <\ 0)\ \{}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ firstCsvTime\_\ =\ convert<int64\_t>(lines\_[0].at(timeKey\_));}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ int64\_t\ csvTime\ =\ firstCsvTime\_\ +\ relativeTimeMs;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \ \ int64\_t\ firstTime\ =\ convert<int64\_t>(lines\_[0].at(timeKey\_));}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (csvTime\ <=\ firstTime)\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ \ \ \ \ currentRow\_\ =\ lines\_[0];}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ \ \ \ \ currentIndex\_\ =\ 1;}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (currentIndex\_\ <\ lines\_.size()\ \&\&}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ convert<int64\_t>(lines\_[currentIndex\_].at(timeKey\_))\ <\ csvTime)\ \{}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ ++currentIndex\_;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (currentIndex\_\ >=\ lines\_.size())\ \{}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ \ \ currentRow\_\ =\ lines\_.back();}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&prev\ =\ lines\_[currentIndex\_\ -\/\ 1];}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&next\ =\ lines\_[currentIndex\_];}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ int64\_t\ t0\ =\ convert<int64\_t>(prev.at(timeKey\_));}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ int64\_t\ t1\ =\ convert<int64\_t>(next.at(timeKey\_));}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ alpha\ =\ double(csvTime\ -\/\ t0)\ /\ double(t1\ -\/\ t0);}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ currentRow\_.clear();}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ \&key\ :\ headers\_)\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (key\ ==\ timeKey\_)\ \{}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentRow\_[key]\ =\ std::to\_string(csvTime);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{double}\ v0,\ v1;}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (tryGetDouble(prev,\ key,\ v0)\ \&\&\ tryGetDouble(next,\ key,\ v1))\ \{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentRow\_[key]\ =\ std::to\_string(v0\ +\ alpha\ *\ (v1\ -\/\ v0));}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ prev.find(key);}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ currentRow\_[key]\ =\ (it\ !=\ prev.end()\ \&\&\ !it-\/>second.empty())\ ?\ it-\/>second\ :\ \textcolor{stringliteral}{"{}nan"{}};}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00100\ \ \ \ \ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{comment}{//\ Type-\/safe\ access\ to\ current\ row}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00104\ \ \ \ \ T\ getKey(\textcolor{keyword}{const}\ std::string\ \&key)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ currentRow\_.find(key);}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ currentRow\_.end()\ ||\ it-\/>second.empty())\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_floating\_point<T>::value)}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ std::numeric\_limits<T>::quiet\_NaN();}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ T\{\};}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ convert<T>(it-\/>second);}
+\DoxyCodeLine{00113\ \ \ \ \ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00116\ \ \ \ \ std::ifstream\ file\_;}
+\DoxyCodeLine{00117\ \ \ \ \ std::vector<std::unordered\_map<std::string,\ std::string>>\ lines\_;}
+\DoxyCodeLine{00118\ \ \ \ \ std::unordered\_map<std::string,\ std::string>\ currentRow\_;}
+\DoxyCodeLine{00119\ \ \ \ \ std::vector<std::string>\ headers\_;}
+\DoxyCodeLine{00120\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ currentIndex\_\ =\ 0;}
+\DoxyCodeLine{00121\ \ \ \ \ int64\_t\ firstCsvTime\_\ =\ -\/1;}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{keyword}{const}\ std::string\ timeKey\_\ =\ \textcolor{stringliteral}{"{}timestamp\_ms"{}};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keywordtype}{void}\ parseHeader(\textcolor{keyword}{const}\ std::string\ \&line)\ \{}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ std::string\ trimmed\ =\ line;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ trimTrailingComma(trimmed);}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ headers\_\ =\ splitCsvLine(trimmed);}
+\DoxyCodeLine{00128\ \ \ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ std::unordered\_map<std::string,\ std::string>\ parseLine(\textcolor{keyword}{const}\ std::string\ \&line)\ \{}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \ \ std::string\ trimmed\ =\ line;}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ trimTrailingComma(trimmed);}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ std::unordered\_map<std::string,\ std::string>\ row;}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ tokens\ =\ splitCsvLine(trimmed);}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ headers\_.size();\ ++i)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ <\ tokens.size())\ row[headers\_[i]]\ =\ stripQuotes(tokens[i]);}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ row[headers\_[i]]\ =\ \textcolor{stringliteral}{"{}"{}};\ \textcolor{comment}{//\ missing\ values}}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ row;}
+\DoxyCodeLine{00141\ \ \ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ trimTrailingComma(std::string\ \&s)\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (!s.empty()\ \&\&\ s.back()\ ==\ \textcolor{charliteral}{','})\ s.pop\_back();}
+\DoxyCodeLine{00145\ \ \ \ \ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ Split\ CSV\ line\ respecting\ quotes}}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{static}\ std::vector<std::string>\ splitCsvLine(\textcolor{keyword}{const}\ std::string\ \&line)\ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ std::vector<std::string>\ result;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ std::string\ current;}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ inQuotes\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ line.size();\ ++i)\ \{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{char}\ c\ =\ line[i];}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (c\ ==\ \textcolor{charliteral}{'"{}'})\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inQuotes\ =\ !inQuotes;\ \textcolor{comment}{//\ toggle\ quote\ state}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (c\ ==\ \textcolor{charliteral}{','}\ \&\&\ !inQuotes)\ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ result.push\_back(current);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current.clear();}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ current\ +=\ c;}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ result.push\_back(current);}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00166\ \ \ \ \ \}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{comment}{//\ Remove\ surrounding\ quotes\ if\ present}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{static}\ std::string\ stripQuotes(\textcolor{keyword}{const}\ std::string\ \&s)\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (s.size()\ >=\ 2\ \&\&\ s.front()\ ==\ \textcolor{charliteral}{'"{}'}\ \&\&\ s.back()\ ==\ \textcolor{charliteral}{'"{}'})}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ s.substr(1,\ s.size()\ -\/\ 2);}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ s;}
+\DoxyCodeLine{00173\ \ \ \ \ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keyword}{static}\ T\ convert(\textcolor{keyword}{const}\ std::string\ \&s)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ std::string\ clean\ =\ s;}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ clean.erase(std::remove(clean.begin(),\ clean.end(),\ \textcolor{charliteral}{','}),\ clean.end());\ \textcolor{comment}{//\ remove\ commas}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_integral<T>::value)\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (clean.empty())\ \textcolor{keywordflow}{return}\ T\{\};}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}T\textcolor{keyword}{>}(std::stoll(clean));}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_floating\_point<T>::value)\ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (clean.empty()\ ||\ clean\ ==\ \textcolor{stringliteral}{"{}nan"{}})\ \textcolor{keywordflow}{return}\ std::numeric\_limits<T>::quiet\_NaN();}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}T\textcolor{keyword}{>}(std::stod(clean));}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ \textcolor{keyword}{constexpr}\ (std::is\_same<T,\ std::string>::value)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ clean;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_assert}(\textcolor{stringliteral}{"{}Unsupported\ type\ for\ CSVReader::getKey"{}});}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ \ \ \ \ \}}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ tryGetDouble(\textcolor{keyword}{const}\ std::unordered\_map<std::string,\ std::string>\ \&row,}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ std::string\ \&key,\ \textcolor{keywordtype}{double}\ \&out)\ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ it\ =\ row.find(key);}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (it\ ==\ row.end()\ ||\ it-\/>second.empty()\ ||\ it-\/>second\ ==\ \textcolor{stringliteral}{"{}nan"{}})\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{try}\ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \ \ std::string\ clean\ =\ it-\/>second;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ clean.erase(std::remove(clean.begin(),\ clean.end(),\ \textcolor{charliteral}{','}),\ clean.end());\ \textcolor{comment}{//\ remove\ commas}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ out\ =\ std::stod(clean);}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{catch}\ (...)\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00207\ \ \ \ \ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \};}
+\DoxyCodeLine{00210\ }
+
+\end{DoxyCode}

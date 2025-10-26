@@ -13,7 +13,8 @@ var searchData=
   ['following_3a_10',['FOLLOWING:',['../index.html#autotoc_md33',1,'AVOID THE FOLLOWING:'],['../index.html#autotoc_md32',1,'DO THE FOLLOWING:']]],
   ['for_20next_20run_11',['8. Reset flags for next run',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md13',1,'']]],
   ['for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_12',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['formating_20guide_13',['Formating Guide',['../index.html#autotoc_md31',1,'']]],
-  ['frammemory_14',['FramMemory',['../classFramMemory.html',1,'']]],
-  ['functions_15',['Structs, Enums, Typedefs and Functions',['../index.html#autotoc_md38',1,'']]]
+  ['forceset_13',['forceSet',['../classConfigurationData.html#a93469a0bacee5b130c33c8723cb7467a',1,'ConfigurationData']]],
+  ['formating_20guide_14',['Formating Guide',['../index.html#autotoc_md31',1,'']]],
+  ['frammemory_15',['FramMemory',['../classFramMemory.html',1,'']]],
+  ['functions_16',['Structs, Enums, Typedefs and Functions',['../index.html#autotoc_md38',1,'']]]
 ];

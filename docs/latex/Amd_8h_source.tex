@@ -1,0 +1,441 @@
+\doxysection{Amd.\+h}
+\hypertarget{Amd_8h_source}{}\label{Amd_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/OrderingMethods/Amd.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/OrderingMethods/Amd.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00011\ \textcolor{comment}{NOTE:\ this\ routine\ has\ been\ adapted\ from\ the\ CSparse\ library:}}
+\DoxyCodeLine{00012\ \textcolor{comment}{}}
+\DoxyCodeLine{00013\ \textcolor{comment}{Copyright\ (c)\ 2006,\ Timothy\ A.\ Davis.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{http://www.suitesparse.com}}
+\DoxyCodeLine{00015\ \textcolor{comment}{}}
+\DoxyCodeLine{00016\ \textcolor{comment}{The\ author\ of\ CSparse,\ Timothy\ A.\ Davis.,\ has\ executed\ a\ license\ with\ Google\ LLC}}
+\DoxyCodeLine{00017\ \textcolor{comment}{to\ permit\ distribution\ of\ this\ code\ and\ derivative\ works\ as\ part\ of\ Eigen\ under}}
+\DoxyCodeLine{00018\ \textcolor{comment}{the\ Mozilla\ Public\ License\ v.\ 2.0,\ as\ stated\ at\ the\ top\ of\ this\ file.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SPARSE\_AMD\_H}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ EIGEN\_SPARSE\_AMD\_H}}
+\DoxyCodeLine{00023\ }
+\DoxyCodeLine{00024\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00027\ \ \ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{inline}\ T\ amd\_flip(\textcolor{keyword}{const}\ T\&\ i)\ \{\ \textcolor{keywordflow}{return}\ -\/i-\/2;\ \}}
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{inline}\ T\ amd\_unflip(\textcolor{keyword}{const}\ T\&\ i)\ \{\ \textcolor{keywordflow}{return}\ i<0\ ?\ amd\_flip(i)\ :\ i;\ \}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T0,\ \textcolor{keyword}{typename}\ T1>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ amd\_marked(\textcolor{keyword}{const}\ T0*\ w,\ \textcolor{keyword}{const}\ T1\&\ j)\ \{\ \textcolor{keywordflow}{return}\ w[j]<0;\ \}}
+\DoxyCodeLine{00031\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T0,\ \textcolor{keyword}{typename}\ T1>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ amd\_mark(\textcolor{keyword}{const}\ T0*\ w,\ \textcolor{keyword}{const}\ T1\&\ j)\ \{\ \textcolor{keywordflow}{return}\ w[j]\ =\ amd\_flip(w[j]);\ \}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{comment}{/*\ clear\ w\ */}}
+\DoxyCodeLine{00034\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00035\ \textcolor{keyword}{static}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ cs\_wclear\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ mark,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ lemax,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ *w,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ n)}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ k;}
+\DoxyCodeLine{00038\ \ \ \textcolor{keywordflow}{if}(mark\ <\ 2\ ||\ (mark\ +\ lemax\ <\ 0))}
+\DoxyCodeLine{00039\ \ \ \{}
+\DoxyCodeLine{00040\ \ \ \ \ \textcolor{keywordflow}{for}(k\ =\ 0;\ k\ <\ n;\ k++)}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(w[k]\ !=\ 0)}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ w[k]\ =\ 1;}
+\DoxyCodeLine{00043\ \ \ \ \ mark\ =\ 2;}
+\DoxyCodeLine{00044\ \ \ \}}
+\DoxyCodeLine{00045\ \ \ \textcolor{keywordflow}{return}\ (mark);\ \ \ \ \ \textcolor{comment}{/*\ at\ this\ point,\ w[0..n-\/1]\ <\ mark\ holds\ */}}
+\DoxyCodeLine{00046\ \}}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{/*\ depth-\/first\ search\ and\ postorder\ of\ a\ tree\ rooted\ at\ node\ j\ */}}
+\DoxyCodeLine{00049\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00050\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ cs\_tdfs(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ j,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ k,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ *head,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ *next,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ *post,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ *stack)}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ i,\ p,\ top\ =\ 0;}
+\DoxyCodeLine{00053\ \ \ \textcolor{keywordflow}{if}(!head\ ||\ !next\ ||\ !post\ ||\ !stack)\ \textcolor{keywordflow}{return}\ (-\/1);\ \ \ \ \textcolor{comment}{/*\ check\ inputs\ */}}
+\DoxyCodeLine{00054\ \ \ stack[0]\ =\ j;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ j\ on\ the\ stack\ */}}
+\DoxyCodeLine{00055\ \ \ \textcolor{keywordflow}{while}\ (top\ >=\ 0)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ while\ (stack\ is\ not\ empty)\ */}}
+\DoxyCodeLine{00056\ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ p\ =\ stack[top];\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ p\ =\ top\ of\ stack\ */}}
+\DoxyCodeLine{00058\ \ \ \ \ i\ =\ head[p];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ i\ =\ youngest\ child\ of\ p\ */}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keywordflow}{if}(i\ ==\ -\/1)}
+\DoxyCodeLine{00060\ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ top-\/-\/;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ p\ has\ no\ unordered\ children\ left\ */}}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ post[k++]\ =\ p;\ \ \ \ \ \ \ \ \textcolor{comment}{/*\ node\ p\ is\ the\ kth\ postordered\ node\ */}}
+\DoxyCodeLine{00063\ \ \ \ \ \}}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00065\ \ \ \ \ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ head[p]\ =\ next[i];\ \ \ \textcolor{comment}{/*\ remove\ i\ from\ children\ of\ p\ */}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ stack[++top]\ =\ i;\ \ \ \ \ \textcolor{comment}{/*\ start\ dfs\ on\ child\ node\ i\ */}}
+\DoxyCodeLine{00068\ \ \ \ \ \}}
+\DoxyCodeLine{00069\ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \textcolor{keywordflow}{return}\ k;}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{comment}{}}
+\DoxyCodeLine{00074\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ OrderingMethods\_Module\ }}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ *\ Approximate\ minimum\ degree\ ordering\ algorithm.}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ *\ \(\backslash\)param[in]\ C\ the\ input\ selfadjoint\ matrix\ stored\ in\ compressed\ column\ major\ format.}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ *\ \(\backslash\)param[out]\ perm\ the\ permutation\ P\ reducing\ the\ fill-\/in\ of\ the\ input\ matrix\ \(\backslash\)a\ C}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ *\ Note\ that\ the\ input\ matrix\ \(\backslash\)a\ C\ must\ be\ complete,\ that\ is\ both\ the\ upper\ and\ lower\ parts\ have\ to\ be\ stored,\ as\ well\ as\ the\ diagonal\ entries.}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ *\ On\ exit\ the\ values\ of\ C\ are\ destroyed\ */}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00084\ \textcolor{keywordtype}{void}\ minimum\_degree\_ordering(SparseMatrix<Scalar,ColMajor,StorageIndex>\&\ C,\ PermutationMatrix<Dynamic,Dynamic,StorageIndex>\&\ perm)}
+\DoxyCodeLine{00085\ \{}
+\DoxyCodeLine{00086\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00087\ \ \ }
+\DoxyCodeLine{00088\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ d,\ dk,\ dext,\ lemax\ =\ 0,\ e,\ elenk,\ eln,\ i,\ j,\ k,\ k1,}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ k2,\ k3,\ jlast,\ ln,\ dense,\ nzmax,\ mindeg\ =\ 0,\ nvi,\ nvj,\ nvk,\ mark,\ wnvi,}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ok,\ nel\ =\ 0,\ p,\ p1,\ p2,\ p3,\ p4,\ pj,\ pk,\ pk1,\ pk2,\ pn,\ q,\ t,\ h;}
+\DoxyCodeLine{00091\ \ \ }
+\DoxyCodeLine{00092\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ n\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(C.cols());}
+\DoxyCodeLine{00093\ \ \ dense\ =\ std::max<StorageIndex>\ (16,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(10\ *\ sqrt(\textcolor{keywordtype}{double}(n))));\ \ \ \textcolor{comment}{/*\ find\ dense\ threshold\ */}}
+\DoxyCodeLine{00094\ \ \ dense\ =\ (std::min)(n-\/2,\ dense);}
+\DoxyCodeLine{00095\ \ \ }
+\DoxyCodeLine{00096\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ cnz\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(C.nonZeros());}
+\DoxyCodeLine{00097\ \ \ perm.resize(n+1);}
+\DoxyCodeLine{00098\ \ \ t\ =\ cnz\ +\ cnz/5\ +\ 2*n;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ add\ elbow\ room\ to\ C\ */}}
+\DoxyCodeLine{00099\ \ \ C.resizeNonZeros(t);}
+\DoxyCodeLine{00100\ \ \ }
+\DoxyCodeLine{00101\ \ \ \textcolor{comment}{//\ get\ workspace}}
+\DoxyCodeLine{00102\ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}},W,8*(n+1),0);}
+\DoxyCodeLine{00103\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ len\ \ \ \ \ =\ W;}
+\DoxyCodeLine{00104\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ nv\ \ \ \ \ \ =\ W\ +\ \ \ (n+1);}
+\DoxyCodeLine{00105\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ next\ \ \ \ =\ W\ +\ 2*(n+1);}
+\DoxyCodeLine{00106\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ head\ \ \ \ =\ W\ +\ 3*(n+1);}
+\DoxyCodeLine{00107\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ elen\ \ \ \ =\ W\ +\ 4*(n+1);}
+\DoxyCodeLine{00108\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ degree\ \ =\ W\ +\ 5*(n+1);}
+\DoxyCodeLine{00109\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ w\ \ \ \ \ \ \ =\ W\ +\ 6*(n+1);}
+\DoxyCodeLine{00110\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ hhead\ \ \ =\ W\ +\ 7*(n+1);}
+\DoxyCodeLine{00111\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ last\ \ \ \ =\ perm.indices().data();\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ use\ P\ as\ workspace\ for\ last\ */}}
+\DoxyCodeLine{00112\ \ \ }
+\DoxyCodeLine{00113\ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Initialize\ quotient\ graph\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00114\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ Cp\ =\ C.outerIndexPtr();}
+\DoxyCodeLine{00115\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}*\ Ci\ =\ C.innerIndexPtr();}
+\DoxyCodeLine{00116\ \ \ \textcolor{keywordflow}{for}(k\ =\ 0;\ k\ <\ n;\ k++)}
+\DoxyCodeLine{00117\ \ \ \ \ len[k]\ =\ Cp[k+1]\ -\/\ Cp[k];}
+\DoxyCodeLine{00118\ \ \ len[n]\ =\ 0;}
+\DoxyCodeLine{00119\ \ \ nzmax\ =\ t;}
+\DoxyCodeLine{00120\ \ \ }
+\DoxyCodeLine{00121\ \ \ \textcolor{keywordflow}{for}(i\ =\ 0;\ i\ <=\ n;\ i++)}
+\DoxyCodeLine{00122\ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ head[i]\ \ \ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ degree\ list\ i\ is\ empty}}
+\DoxyCodeLine{00124\ \ \ \ \ last[i]\ \ \ =\ -\/1;}
+\DoxyCodeLine{00125\ \ \ \ \ next[i]\ \ \ =\ -\/1;}
+\DoxyCodeLine{00126\ \ \ \ \ hhead[i]\ \ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ hash\ list\ i\ is\ empty\ }}
+\DoxyCodeLine{00127\ \ \ \ \ nv[i]\ \ \ \ \ =\ 1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ node\ i\ is\ just\ one\ node}}
+\DoxyCodeLine{00128\ \ \ \ \ w[i]\ \ \ \ \ \ =\ 1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ node\ i\ is\ alive}}
+\DoxyCodeLine{00129\ \ \ \ \ elen[i]\ \ \ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Ek\ of\ node\ i\ is\ empty}}
+\DoxyCodeLine{00130\ \ \ \ \ degree[i]\ =\ len[i];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ degree\ of\ node\ i}}
+\DoxyCodeLine{00131\ \ \ \}}
+\DoxyCodeLine{00132\ \ \ mark\ =\ internal::cs\_wclear<StorageIndex>(0,\ 0,\ w,\ n);\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ clear\ w\ */}}
+\DoxyCodeLine{00133\ \ \ }
+\DoxyCodeLine{00134\ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Initialize\ degree\ lists\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keywordflow}{for}(i\ =\ 0;\ i\ <\ n;\ i++)}
+\DoxyCodeLine{00136\ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordtype}{bool}\ has\_diag\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ Cp[i];\ p<Cp[i+1];\ ++p)}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(Ci[p]==i)}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ has\_diag\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ }
+\DoxyCodeLine{00145\ \ \ \ \ d\ =\ degree[i];}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{if}(d\ ==\ 1\ \&\&\ has\_diag)\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ node\ i\ is\ empty\ */}}
+\DoxyCodeLine{00147\ \ \ \ \ \{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ elen[i]\ =\ -\/2;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ element\ i\ is\ dead\ */}}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ nel++;}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ Cp[i]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ i\ is\ a\ root\ of\ assembly\ tree\ */}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ w[i]\ =\ 0;}
+\DoxyCodeLine{00152\ \ \ \ \ \}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(d\ >\ dense\ ||\ !has\_diag)\ \ \textcolor{comment}{/*\ node\ i\ is\ dense\ or\ has\ no\ structural\ diagonal\ element\ */}}
+\DoxyCodeLine{00154\ \ \ \ \ \{}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ nv[i]\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ absorb\ i\ into\ element\ n\ */}}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ elen[i]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ node\ i\ is\ dead\ */}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ nel++;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ Cp[i]\ =\ amd\_flip\ (n);}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ nv[n]++;}
+\DoxyCodeLine{00160\ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00162\ \ \ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(head[d]\ !=\ -\/1)\ last[head[d]]\ =\ i;}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ next[i]\ =\ head[d];\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ put\ node\ i\ in\ degree\ list\ d\ */}}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ head[d]\ =\ i;}
+\DoxyCodeLine{00166\ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \}}
+\DoxyCodeLine{00168\ \ \ }
+\DoxyCodeLine{00169\ \ \ elen[n]\ =\ -\/2;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ n\ is\ a\ dead\ element\ */}}
+\DoxyCodeLine{00170\ \ \ Cp[n]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ n\ is\ a\ root\ of\ assembly\ tree\ */}}
+\DoxyCodeLine{00171\ \ \ w[n]\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ n\ is\ a\ dead\ element\ */}}
+\DoxyCodeLine{00172\ \ \ }
+\DoxyCodeLine{00173\ \ \ \textcolor{keywordflow}{while}\ (nel\ <\ n)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ while\ (selecting\ pivots)\ do\ */}}
+\DoxyCodeLine{00174\ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Select\ node\ of\ minimum\ approximate\ degree\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{for}(k\ =\ -\/1;\ mindeg\ <\ n\ \&\&\ (k\ =\ head[mindeg])\ ==\ -\/1;\ mindeg++)\ \{\}}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{if}(next[k]\ !=\ -\/1)\ last[next[k]]\ =\ -\/1;}
+\DoxyCodeLine{00178\ \ \ \ \ head[mindeg]\ =\ next[k];\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ remove\ k\ from\ degree\ list\ */}}
+\DoxyCodeLine{00179\ \ \ \ \ elenk\ =\ elen[k];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ elenk\ =\ |Ek|\ */}}
+\DoxyCodeLine{00180\ \ \ \ \ nvk\ =\ nv[k];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \#\ of\ nodes\ k\ represents\ */}}
+\DoxyCodeLine{00181\ \ \ \ \ nel\ +=\ nvk;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ nv[k]\ nodes\ of\ A\ eliminated\ */}}
+\DoxyCodeLine{00182\ \ \ \ \ }
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Garbage\ collection\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00184\ \ \ \ \ \textcolor{keywordflow}{if}(elenk\ >\ 0\ \&\&\ cnz\ +\ mindeg\ >=\ nzmax)}
+\DoxyCodeLine{00185\ \ \ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j\ =\ 0;\ j\ <\ n;\ j++)}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((p\ =\ Cp[j])\ >=\ 0)\ \ \ \ \ \ \textcolor{comment}{/*\ j\ is\ a\ live\ node\ or\ element\ */}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ Cp[j]\ =\ Ci[p];\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ save\ first\ entry\ of\ object\ */}}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \ \ \ \ Ci[p]\ =\ amd\_flip\ (j);\ \ \ \ \textcolor{comment}{/*\ first\ entry\ is\ now\ amd\_flip(j)\ */}}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(q\ =\ 0,\ p\ =\ 0;\ p\ <\ cnz;\ )\ \textcolor{comment}{/*\ scan\ all\ of\ memory\ */}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((j\ =\ amd\_flip\ (Ci[p++]))\ >=\ 0)\ \ \textcolor{comment}{/*\ found\ object\ j\ */}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ Ci[q]\ =\ Cp[j];\ \ \ \ \ \ \ \textcolor{comment}{/*\ restore\ first\ entry\ of\ object\ */}}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \ \ \ \ Cp[j]\ =\ q++;\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ new\ pointer\ to\ object\ j\ */}}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(k3\ =\ 0;\ k3\ <\ len[j]-\/1;\ k3++)\ Ci[q++]\ =\ Ci[p++];}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ cnz\ =\ q;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Ci[cnz...nzmax-\/1]\ now\ free\ */}}
+\DoxyCodeLine{00204\ \ \ \ \ \}}
+\DoxyCodeLine{00205\ \ \ \ \ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Construct\ new\ element\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00207\ \ \ \ \ dk\ =\ 0;}
+\DoxyCodeLine{00208\ \ \ \ \ nv[k]\ =\ -\/nvk;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ flag\ k\ as\ in\ Lk\ */}}
+\DoxyCodeLine{00209\ \ \ \ \ p\ =\ Cp[k];}
+\DoxyCodeLine{00210\ \ \ \ \ pk1\ =\ (elenk\ ==\ 0)\ ?\ p\ :\ cnz;\ \ \ \ \ \ \textcolor{comment}{/*\ do\ in\ place\ if\ elen[k]\ ==\ 0\ */}}
+\DoxyCodeLine{00211\ \ \ \ \ pk2\ =\ pk1;}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keywordflow}{for}(k1\ =\ 1;\ k1\ <=\ elenk\ +\ 1;\ k1++)}
+\DoxyCodeLine{00213\ \ \ \ \ \{}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(k1\ >\ elenk)}
+\DoxyCodeLine{00215\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ \ \ e\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ search\ the\ nodes\ in\ k\ */}}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ \ \ pj\ =\ p;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ list\ of\ nodes\ starts\ at\ Ci[pj]*/}}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ \ \ ln\ =\ len[k]\ -\/\ elenk;\ \ \ \ \ \ \textcolor{comment}{/*\ length\ of\ list\ of\ nodes\ in\ k\ */}}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ e\ =\ Ci[p++];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ search\ the\ nodes\ in\ e\ */}}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ pj\ =\ Cp[e];}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \ \ ln\ =\ len[e];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ length\ of\ list\ of\ nodes\ in\ e\ */}}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(k2\ =\ 1;\ k2\ <=\ ln;\ k2++)}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \ \ i\ =\ Ci[pj++];}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((nvi\ =\ nv[i])\ <=\ 0)\ \textcolor{keywordflow}{continue};\ \textcolor{comment}{/*\ node\ i\ dead,\ or\ seen\ */}}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \ \ dk\ +=\ nvi;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ degree[Lk]\ +=\ size\ of\ node\ i\ */}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \ \ nv[i]\ =\ -\/nvi;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ negate\ nv[i]\ to\ denote\ i\ in\ Lk*/}}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ Ci[pk2++]\ =\ i;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ i\ in\ Lk\ */}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(next[i]\ !=\ -\/1)\ last[next[i]]\ =\ last[i];}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(last[i]\ !=\ -\/1)\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ remove\ i\ from\ degree\ list\ */}}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \ \ \ \ next[last[i]]\ =\ next[i];}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ head[degree[i]]\ =\ next[i];}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(e\ !=\ k)}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ Cp[e]\ =\ amd\_flip\ (k);\ \ \ \ \ \ \textcolor{comment}{/*\ absorb\ e\ into\ k\ */}}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ w[e]\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ e\ is\ now\ a\ dead\ element\ */}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00248\ \ \ \ \ \}}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{if}(elenk\ !=\ 0)\ cnz\ =\ pk2;\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ Ci[cnz...nzmax]\ is\ free\ */}}
+\DoxyCodeLine{00250\ \ \ \ \ degree[k]\ =\ dk;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ external\ degree\ of\ k\ -\/\ |Lk\(\backslash\)i|\ */}}
+\DoxyCodeLine{00251\ \ \ \ \ Cp[k]\ =\ pk1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ element\ k\ is\ in\ Ci[pk1..pk2-\/1]\ */}}
+\DoxyCodeLine{00252\ \ \ \ \ len[k]\ =\ pk2\ -\/\ pk1;}
+\DoxyCodeLine{00253\ \ \ \ \ elen[k]\ =\ -\/2;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ k\ is\ now\ an\ element\ */}}
+\DoxyCodeLine{00254\ \ \ \ \ }
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Find\ set\ differences\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00256\ \ \ \ \ mark\ =\ internal::cs\_wclear<StorageIndex>(mark,\ lemax,\ w,\ n);\ \ \textcolor{comment}{/*\ clear\ w\ if\ necessary\ */}}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordflow}{for}(pk\ =\ pk1;\ pk\ <\ pk2;\ pk++)\ \ \ \ \textcolor{comment}{/*\ scan\ 1:\ find\ |Le\(\backslash\)Lk|\ */}}
+\DoxyCodeLine{00258\ \ \ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ i\ =\ Ci[pk];}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \textcolor{keywordflow}{if}((eln\ =\ elen[i])\ <=\ 0)\ \textcolor{keywordflow}{continue};\textcolor{comment}{/*\ skip\ if\ elen[i]\ empty\ */}}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ nvi\ =\ -\/nv[i];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ nv[i]\ was\ negated\ */}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ wnvi\ =\ mark\ -\/\ nvi;}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ Cp[i];\ p\ <=\ Cp[i]\ +\ eln\ -\/\ 1;\ p++)\ \ \textcolor{comment}{/*\ scan\ Ei\ */}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \ \ e\ =\ Ci[p];}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(w[e]\ >=\ mark)}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ \ \ \ \ w[e]\ -\/=\ nvi;\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ decrement\ |Le\(\backslash\)Lk|\ */}}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(w[e]\ !=\ 0)\ \ \ \ \ \ \ \ \textcolor{comment}{/*\ ensure\ e\ is\ a\ live\ element\ */}}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ w[e]\ =\ degree[e]\ +\ wnvi;\ \textcolor{comment}{/*\ 1st\ time\ e\ seen\ in\ scan\ 1\ */}}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00275\ \ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \ }
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Degree\ update\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keywordflow}{for}(pk\ =\ pk1;\ pk\ <\ pk2;\ pk++)\ \ \ \ \textcolor{comment}{/*\ scan2:\ degree\ update\ */}}
+\DoxyCodeLine{00279\ \ \ \ \ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ i\ =\ Ci[pk];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ consider\ node\ i\ in\ Lk\ */}}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ p1\ =\ Cp[i];}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ p2\ =\ p1\ +\ elen[i]\ -\/\ 1;}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ pn\ =\ p1;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(h\ =\ 0,\ d\ =\ 0,\ p\ =\ p1;\ p\ <=\ p2;\ p++)\ \ \ \ \textcolor{comment}{/*\ scan\ Ei\ */}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ e\ =\ Ci[p];}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(w[e]\ !=\ 0)\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ e\ is\ an\ unabsorbed\ element\ */}}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ dext\ =\ w[e]\ -\/\ mark;\ \ \ \textcolor{comment}{/*\ dext\ =\ |Le\(\backslash\)Lk|\ */}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(dext\ >\ 0)}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \ \ d\ +=\ dext;\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ sum\ up\ the\ set\ differences\ */}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ \ \ Ci[pn++]\ =\ e;\ \ \ \ \ \textcolor{comment}{/*\ keep\ e\ in\ Ei\ */}}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \ \ h\ +=\ e;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ the\ hash\ of\ node\ i\ */}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \ \ Cp[e]\ =\ amd\_flip\ (k);\ \ \textcolor{comment}{/*\ aggressive\ absorb.\ e-\/>k\ */}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ w[e]\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ e\ is\ a\ dead\ element\ */}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ elen[i]\ =\ pn\ -\/\ p1\ +\ 1;\ \ \ \ \ \ \ \ \textcolor{comment}{/*\ elen[i]\ =\ |Ei|\ */}}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ p3\ =\ pn;}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ p4\ =\ p1\ +\ len[i];}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ p2\ +\ 1;\ p\ <\ p4;\ p++)\ \textcolor{comment}{/*\ prune\ edges\ in\ Ai\ */}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ j\ =\ Ci[p];}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}((nvj\ =\ nv[j])\ <=\ 0)\ \textcolor{keywordflow}{continue};\ \textcolor{comment}{/*\ node\ j\ dead\ or\ in\ Lk\ */}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ d\ +=\ nvj;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ degree(i)\ +=\ |j|\ */}}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ Ci[pn++]\ =\ j;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ j\ in\ node\ list\ of\ i\ */}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ h\ +=\ j;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ hash\ for\ node\ i\ */}}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(d\ ==\ 0)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ check\ for\ mass\ elimination\ */}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ Cp[i]\ =\ amd\_flip\ (k);\ \ \ \ \ \ \textcolor{comment}{/*\ absorb\ i\ into\ k\ */}}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ nvi\ =\ -\/nv[i];}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ dk\ -\/=\ nvi;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ |Lk|\ -\/=\ |i|\ */}}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \ \ nvk\ +=\ nvi;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ |k|\ +=\ nv[i]\ */}}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ nel\ +=\ nvi;}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ nv[i]\ =\ 0;}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ elen[i]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ node\ i\ is\ dead\ */}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ degree[i]\ =\ std::min<StorageIndex>\ (degree[i],\ d);\ \ \ \textcolor{comment}{/*\ update\ degree(i)\ */}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ Ci[pn]\ =\ Ci[p3];\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ move\ first\ node\ to\ end\ */}}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ Ci[p3]\ =\ Ci[p1];\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ move\ 1st\ el.\ to\ end\ of\ Ei\ */}}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ Ci[p1]\ =\ k;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ add\ k\ as\ 1st\ element\ in\ of\ Ei\ */}}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ len[i]\ =\ pn\ -\/\ p1\ +\ 1;\ \ \ \ \ \textcolor{comment}{/*\ new\ len\ of\ adj.\ list\ of\ node\ i\ */}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ h\ \%=\ n;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ finalize\ hash\ of\ i\ */}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ next[i]\ =\ hhead[h];\ \ \ \ \ \ \textcolor{comment}{/*\ place\ i\ in\ hash\ bucket\ */}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ hhead[h]\ =\ i;}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ last[i]\ =\ h;\ \ \ \ \ \ \textcolor{comment}{/*\ save\ hash\ of\ i\ in\ last[i]\ */}}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00336\ \ \ \ \ \}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ scan2\ is\ done\ */}}
+\DoxyCodeLine{00337\ \ \ \ \ degree[k]\ =\ dk;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ finalize\ |Lk|\ */}}
+\DoxyCodeLine{00338\ \ \ \ \ lemax\ =\ std::max<StorageIndex>(lemax,\ dk);}
+\DoxyCodeLine{00339\ \ \ \ \ mark\ =\ internal::cs\_wclear<StorageIndex>(mark+lemax,\ lemax,\ w,\ n);\ \ \ \ \textcolor{comment}{/*\ clear\ w\ */}}
+\DoxyCodeLine{00340\ \ \ \ \ }
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Supernode\ detection\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00342\ \ \ \ \ \textcolor{keywordflow}{for}(pk\ =\ pk1;\ pk\ <\ pk2;\ pk++)}
+\DoxyCodeLine{00343\ \ \ \ \ \{}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ i\ =\ Ci[pk];}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(nv[i]\ >=\ 0)\ \textcolor{keywordflow}{continue};\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ skip\ if\ i\ is\ dead\ */}}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ h\ =\ last[i];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ scan\ hash\ bucket\ of\ node\ i\ */}}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ i\ =\ hhead[h];}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ hhead[h]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ hash\ bucket\ will\ be\ empty\ */}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ i\ !=\ -\/1\ \&\&\ next[i]\ !=\ -\/1;\ i\ =\ next[i],\ mark++)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \ \ ln\ =\ len[i];}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ eln\ =\ elen[i];}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ Cp[i]+1;\ p\ <=\ Cp[i]\ +\ ln-\/1;\ p++)\ w[Ci[p]]\ =\ mark;}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ jlast\ =\ i;}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(j\ =\ next[i];\ j\ !=\ -\/1;\ )\ \textcolor{comment}{/*\ compare\ i\ with\ all\ j\ */}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ \ \ ok\ =\ (len[j]\ ==\ ln)\ \&\&\ (elen[j]\ ==\ eln);}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ Cp[j]\ +\ 1;\ ok\ \&\&\ p\ <=\ Cp[j]\ +\ ln\ -\/\ 1;\ p++)}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(w[Ci[p]]\ !=\ mark)\ ok\ =\ 0;\ \ \ \ \textcolor{comment}{/*\ compare\ i\ and\ j*/}}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(ok)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ i\ and\ j\ are\ identical\ */}}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \ \ Cp[j]\ =\ amd\_flip\ (i);\ \ \textcolor{comment}{/*\ absorb\ j\ into\ i\ */}}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ nv[i]\ +=\ nv[j];}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ nv[j]\ =\ 0;}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \ \ elen[j]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ node\ j\ is\ dead\ */}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \ \ \ \ j\ =\ next[j];\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ delete\ j\ from\ hash\ bucket\ */}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ next[jlast]\ =\ j;}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ \ \ \ \ jlast\ =\ j;\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ j\ and\ i\ are\ different\ */}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ \ \ \ \ j\ =\ next[j];}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \}}
+\DoxyCodeLine{00379\ \ \ \ \ }
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Finalize\ new\ element-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordflow}{for}(p\ =\ pk1,\ pk\ =\ pk1;\ pk\ <\ pk2;\ pk++)\ \ \ \textcolor{comment}{/*\ finalize\ Lk\ */}}
+\DoxyCodeLine{00382\ \ \ \ \ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ i\ =\ Ci[pk];}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \textcolor{keywordflow}{if}((nvi\ =\ -\/nv[i])\ <=\ 0)\ \textcolor{keywordflow}{continue};\textcolor{comment}{/*\ skip\ if\ i\ is\ dead\ */}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ nv[i]\ =\ nvi;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ restore\ nv[i]\ */}}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ d\ =\ degree[i]\ +\ dk\ -\/\ nvi;\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ compute\ external\ degree(i)\ */}}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ d\ =\ std::min<StorageIndex>\ (d,\ n\ -\/\ nel\ -\/\ nvi);}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(head[d]\ !=\ -\/1)\ last[head[d]]\ =\ i;}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ next[i]\ =\ head[d];\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ put\ i\ back\ in\ degree\ list\ */}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ last[i]\ =\ -\/1;}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ head[d]\ =\ i;}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ mindeg\ =\ std::min<StorageIndex>\ (mindeg,\ d);\ \ \ \ \ \ \ \textcolor{comment}{/*\ find\ new\ minimum\ degree\ */}}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ degree[i]\ =\ d;}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ Ci[p++]\ =\ i;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ i\ in\ Lk\ */}}
+\DoxyCodeLine{00395\ \ \ \ \ \}}
+\DoxyCodeLine{00396\ \ \ \ \ nv[k]\ =\ nvk;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ \#\ nodes\ absorbed\ into\ k\ */}}
+\DoxyCodeLine{00397\ \ \ \ \ \textcolor{keywordflow}{if}((len[k]\ =\ p-\/pk1)\ ==\ 0)\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ length\ of\ adj\ list\ of\ element\ k*/}}
+\DoxyCodeLine{00398\ \ \ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ Cp[k]\ =\ -\/1;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ k\ is\ a\ root\ of\ the\ tree\ */}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ w[k]\ =\ 0;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ k\ is\ now\ a\ dead\ element\ */}}
+\DoxyCodeLine{00401\ \ \ \ \ \}}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{if}(elenk\ !=\ 0)\ cnz\ =\ p;\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ free\ unused\ space\ in\ Lk\ */}}
+\DoxyCodeLine{00403\ \ \ \}}
+\DoxyCodeLine{00404\ \ \ }
+\DoxyCodeLine{00405\ \ \ \textcolor{comment}{/*\ -\/-\/-\/\ Postordering\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00406\ \ \ \textcolor{keywordflow}{for}(i\ =\ 0;\ i\ <\ n;\ i++)\ Cp[i]\ =\ amd\_flip\ (Cp[i]);\textcolor{comment}{/*\ fix\ assembly\ tree\ */}}
+\DoxyCodeLine{00407\ \ \ \textcolor{keywordflow}{for}(j\ =\ 0;\ j\ <=\ n;\ j++)\ head[j]\ =\ -\/1;}
+\DoxyCodeLine{00408\ \ \ \textcolor{keywordflow}{for}(j\ =\ n;\ j\ >=\ 0;\ j-\/-\/)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ unordered\ nodes\ in\ lists\ */}}
+\DoxyCodeLine{00409\ \ \ \{}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}(nv[j]\ >\ 0)\ \textcolor{keywordflow}{continue};\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ skip\ if\ j\ is\ an\ element\ */}}
+\DoxyCodeLine{00411\ \ \ \ \ next[j]\ =\ head[Cp[j]];\ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ j\ in\ list\ of\ its\ parent\ */}}
+\DoxyCodeLine{00412\ \ \ \ \ head[Cp[j]]\ =\ j;}
+\DoxyCodeLine{00413\ \ \ \}}
+\DoxyCodeLine{00414\ \ \ \textcolor{keywordflow}{for}(e\ =\ n;\ e\ >=\ 0;\ e-\/-\/)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ elements\ in\ lists\ */}}
+\DoxyCodeLine{00415\ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \textcolor{keywordflow}{if}(nv[e]\ <=\ 0)\ \textcolor{keywordflow}{continue};\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ skip\ unless\ e\ is\ an\ element\ */}}
+\DoxyCodeLine{00417\ \ \ \ \ \textcolor{keywordflow}{if}(Cp[e]\ !=\ -\/1)}
+\DoxyCodeLine{00418\ \ \ \ \ \{}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ next[e]\ =\ head[Cp[e]];\ \ \ \ \ \ \textcolor{comment}{/*\ place\ e\ in\ list\ of\ its\ parent\ */}}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ head[Cp[e]]\ =\ e;}
+\DoxyCodeLine{00421\ \ \ \ \ \}}
+\DoxyCodeLine{00422\ \ \ \}}
+\DoxyCodeLine{00423\ \ \ \textcolor{keywordflow}{for}(k\ =\ 0,\ i\ =\ 0;\ i\ <=\ n;\ i++)\ \ \ \ \ \ \ \textcolor{comment}{/*\ postorder\ the\ assembly\ tree\ */}}
+\DoxyCodeLine{00424\ \ \ \{}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keywordflow}{if}(Cp[i]\ ==\ -\/1)\ k\ =\ internal::cs\_tdfs<StorageIndex>(i,\ k,\ head,\ next,\ perm.indices().data(),\ w);}
+\DoxyCodeLine{00426\ \ \ \}}
+\DoxyCodeLine{00427\ \ \ }
+\DoxyCodeLine{00428\ \ \ perm.indices().conservativeResize(n);}
+\DoxyCodeLine{00429\ \}}
+\DoxyCodeLine{00430\ }
+\DoxyCodeLine{00431\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00434\ }
+\DoxyCodeLine{00435\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SPARSE\_AMD\_H}}
+
+\end{DoxyCode}

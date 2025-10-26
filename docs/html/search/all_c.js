@@ -6,7 +6,11 @@ var searchData=
   ['declare_20flags_3',['2. Declare Flags',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md6',1,'']]],
   ['dependencies_4',['2.5 Optional Dependencies',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md7',1,'']]],
   ['desktopdebug_5',['DesktopDebug',['../classDesktopDebug.html',1,'']]],
-  ['disable_6',['disable',['../classPyro.html#a45629dccafea40d1131d9cdc6ade2743',1,'Pyro::disable()'],['../classArduinoPyro.html#a575fb26d0c937a3de5ba030e7b82ccb0',1,'ArduinoPyro::disable()']]],
-  ['do_20the_20following_3a_7',['DO THE FOLLOWING:',['../index.html#autotoc_md32',1,'']]],
-  ['doxygen_8',['Doxygen',['../index.html#autotoc_md30',1,'4. Doxygen'],['../index.html#autotoc_md35',1,'Doxygen']]]
+  ['desktopserialreader_6',['DesktopSerialReader',['../classDesktopSerialReader.html',1,'']]],
+  ['desktopsystemclock_7',['DesktopSystemClock',['../classDesktopSystemClock.html',1,'']]],
+  ['disable_8',['disable',['../classPyro.html#a45629dccafea40d1131d9cdc6ade2743',1,'Pyro::disable()'],['../classArduinoPyro.html#a575fb26d0c937a3de5ba030e7b82ccb0',1,'ArduinoPyro::disable()']]],
+  ['discreterotation_9',['DiscreteRotation',['../classDiscreteRotation.html',1,'']]],
+  ['do_20the_20following_3a_10',['DO THE FOLLOWING:',['../index.html#autotoc_md32',1,'']]],
+  ['doxygen_11',['Doxygen',['../index.html#autotoc_md30',1,'4. Doxygen'],['../index.html#autotoc_md35',1,'Doxygen']]],
+  ['dummysystemclock_12',['DummySystemClock',['../classDummySystemClock.html',1,'']]]
 ];

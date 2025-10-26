@@ -1,0 +1,633 @@
+\doxysection{Matrix\+Product\+MMA.\+h}
+\hypertarget{MatrixProductMMA_8h_source}{}\label{MatrixProductMMA_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/AltiVec/MatrixProductMMA.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/AltiVec/MatrixProductMMA.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2020\ Everton\ Constantino\ (everton.constantino@ibm.com)}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2021\ Chip\ Kerchner\ (chip.kerchner@ibm.com)}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_MATRIX\_PRODUCT\_MMA\_ALTIVEC\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_MATRIX\_PRODUCT\_MMA\_ALTIVEC\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ If\ using\ dynamic\ dispatch,\ set\ the\ CPU\ target.}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_ALTIVEC\_MMA\_DYNAMIC\_DISPATCH)}}
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#pragma\ GCC\ push\_options}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#pragma\ GCC\ target("{}cpu=power10,htm"{})}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#ifdef\ \_\_has\_builtin}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#if\ !\_\_has\_builtin(\_\_builtin\_vsx\_assemble\_pair)}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ \_\_builtin\_vsx\_assemble\_pair\ \_\_builtin\_mma\_assemble\_pair}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00031\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ bsetzeroMMA(\_\_vector\_quad*\ acc)}
+\DoxyCodeLine{00032\ \{}
+\DoxyCodeLine{00033\ \ \ \_\_builtin\_mma\_xxsetaccz(acc);}
+\DoxyCodeLine{00034\ \}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DataMapper,\ \textcolor{keyword}{typename}\ Index,\ \textcolor{keyword}{typename}\ Packet,\ const\ Index\ accCols>}
+\DoxyCodeLine{00037\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ storeAccumulator(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i,\ \textcolor{keyword}{const}\ DataMapper\&\ data,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ alpha,\ \_\_vector\_quad*\ acc)}
+\DoxyCodeLine{00038\ \{}
+\DoxyCodeLine{00039\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet,\ 4>}}\ result;}
+\DoxyCodeLine{00040\ \ \ \_\_builtin\_mma\_disassemble\_acc(\&result.packet,\ acc);}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet,\ 4>}}\ tRes;}
+\DoxyCodeLine{00043\ \ \ bload<DataMapper,\ Packet,\ Index,\ accCols,\ ColMajor,\ false,\ 4>(tRes,\ data,\ i,\ 0);}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ bscale<Packet,\ 4>(tRes,\ result,\ alpha);}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ data.template\ storePacketBlock<Packet,\ 4>(i,\ 0,\ tRes);}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DataMapper,\ \textcolor{keyword}{typename}\ Index,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Packetc,\ const\ Index\ accColsC>}
+\DoxyCodeLine{00051\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ storeComplexAccumulator(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i,\ \textcolor{keyword}{const}\ DataMapper\&\ data,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ alphaReal,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ alphaImag,\ \_\_vector\_quad*\ accReal,\ \_\_vector\_quad*\ accImag)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet,\ 4>}}\ resultReal,\ resultImag;}
+\DoxyCodeLine{00054\ \ \ \_\_builtin\_mma\_disassemble\_acc(\&resultReal.packet,\ accReal);}
+\DoxyCodeLine{00055\ \ \ \_\_builtin\_mma\_disassemble\_acc(\&resultImag.packet,\ accImag);}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packetc,\ 8>}}\ tRes;}
+\DoxyCodeLine{00058\ \ \ bload<DataMapper,\ Packetc,\ Index,\ accColsC,\ ColMajor,\ true,\ 4>(tRes,\ data,\ i,\ 0);}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet,4>}}\ taccReal,\ taccImag;}
+\DoxyCodeLine{00061\ \ \ bscalec<Packet,4>(resultReal,\ resultImag,\ alphaReal,\ alphaImag,\ taccReal,\ taccImag);}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packetc,\ 4>}}\ acc1,\ acc2;}
+\DoxyCodeLine{00064\ \ \ bcouple<Packet,\ Packetc,\ 4>(taccReal,\ taccImag,\ tRes,\ acc1,\ acc2);}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ data.template\ storePacketBlock<Packetc,\ 4>(i,\ 0,\ acc1);}
+\DoxyCodeLine{00067\ \ \ data.template\ storePacketBlock<Packetc,\ 4>(i\ +\ accColsC,\ 0,\ acc2);}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{//\ Defaults\ to\ float32,\ since\ Eigen\ still\ supports\ C++03\ we\ can't\ use\ default\ template\ arguments}}
+\DoxyCodeLine{00071\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LhsPacket,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keywordtype}{bool}\ NegativeAccumulate>}
+\DoxyCodeLine{00072\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pgerMMA(\_\_vector\_quad*\ acc,\ \textcolor{keyword}{const}\ RhsPacket\&\ a,\ \textcolor{keyword}{const}\ LhsPacket\&\ b)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordflow}{if}(NegativeAccumulate)}
+\DoxyCodeLine{00075\ \ \ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \_\_builtin\_mma\_xvf32gernp(acc,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})a,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})b);}
+\DoxyCodeLine{00077\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \_\_builtin\_mma\_xvf32gerpp(acc,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})a,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})b);}
+\DoxyCodeLine{00079\ \ \ \}}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LhsPacket,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keywordtype}{bool}\ NegativeAccumulate>}
+\DoxyCodeLine{00083\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pgerMMA(\_\_vector\_quad*\ acc,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet2d,2>}}\&\ a,\ \textcolor{keyword}{const}\ Packet2d\&\ b)}
+\DoxyCodeLine{00084\ \{}
+\DoxyCodeLine{00085\ \ \ \_\_vector\_pair*\ a0\ =\ (\_\_vector\_pair\ *)(\&a.packet[0]);}
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordflow}{if}(NegativeAccumulate)}
+\DoxyCodeLine{00087\ \ \ \{}
+\DoxyCodeLine{00088\ \ \ \ \ \_\_builtin\_mma\_xvf64gernp(acc,\ *a0,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})b);}
+\DoxyCodeLine{00089\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00090\ \ \ \ \ \_\_builtin\_mma\_xvf64gerpp(acc,\ *a0,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})b);}
+\DoxyCodeLine{00091\ \ \ \}}
+\DoxyCodeLine{00092\ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LhsPacket,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keywordtype}{bool}\ NegativeAccumulate>}
+\DoxyCodeLine{00095\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pgerMMA(\_\_vector\_quad*\ acc,\ \textcolor{keyword}{const}\ \_\_vector\_pair\&\ a,\ \textcolor{keyword}{const}\ Packet2d\&\ b)}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \textcolor{keywordflow}{if}(NegativeAccumulate)}
+\DoxyCodeLine{00098\ \ \ \{}
+\DoxyCodeLine{00099\ \ \ \ \ \_\_builtin\_mma\_xvf64gernp(acc,\ (\_\_vector\_pair)a,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})b);}
+\DoxyCodeLine{00100\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \_\_builtin\_mma\_xvf64gerpp(acc,\ (\_\_vector\_pair)a,\ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})b);}
+\DoxyCodeLine{00102\ \ \ \}}
+\DoxyCodeLine{00103\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LhsPacket,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keywordtype}{bool}\ NegativeAccumulate>}
+\DoxyCodeLine{00106\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pgerMMA(\_\_vector\_quad*,\ \textcolor{keyword}{const}\ \_\_vector\_pair\&,\ \textcolor{keyword}{const}\ Packet4f\&)}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \textcolor{comment}{//\ Just\ for\ compilation}}
+\DoxyCodeLine{00109\ \}}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{bool}\ LhsIsReal,\ \textcolor{keywordtype}{bool}\ RhsIsReal>}
+\DoxyCodeLine{00112\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pgercMMA(\_\_vector\_quad*\ accReal,\ \_\_vector\_quad*\ accImag,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ lhsV,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ lhsVi,\ \textcolor{keyword}{const}\ RhsPacket\&\ rhsV,\ \textcolor{keyword}{const}\ RhsPacket\&\ rhsVi)}
+\DoxyCodeLine{00113\ \{}
+\DoxyCodeLine{00114\ \ \ pgerMMA<Packet,\ RhsPacket,\ false>(accReal,\ \ rhsV,\ \ lhsV);}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordflow}{if}(LhsIsReal)\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ pgerMMA<Packet,\ RhsPacket,\ ConjugateRhs>(accImag,\ rhsVi,\ \ lhsV);}
+\DoxyCodeLine{00117\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \textcolor{keywordflow}{if}(!RhsIsReal)\ \{}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ pgerMMA<Packet,\ RhsPacket,\ ConjugateLhs\ ==\ ConjugateRhs>(accReal,\ rhsVi,\ lhsVi);}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ pgerMMA<Packet,\ RhsPacket,\ ConjugateRhs>(accImag,\ rhsVi,\ \ lhsV);}
+\DoxyCodeLine{00121\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(rhsVi);}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ \ \ \ \ pgerMMA<Packet,\ RhsPacket,\ ConjugateLhs>(accImag,\ \ rhsV,\ lhsVi);}
+\DoxyCodeLine{00125\ \ \ \}}
+\DoxyCodeLine{00126\ \}}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \textcolor{comment}{//\ This\ is\ necessary\ because\ ploadRhs\ for\ double\ returns\ a\ pair\ of\ vectors\ when\ MMA\ is\ enabled.}}
+\DoxyCodeLine{00129\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00130\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ ploadRhsMMA(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ rhsV)}
+\DoxyCodeLine{00131\ \{}
+\DoxyCodeLine{00132\ \ \ rhsV\ =\ ploadRhs<Scalar,\ Packet>(rhs);}
+\DoxyCodeLine{00133\ \}\ }
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00136\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ ploadRhsMMA<double,\ PacketBlock<Packet2d,\ 2>\ >(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ rhs,\ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet2d,\ 2>}}\&\ rhsV)}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ rhsV.packet[0]\ =\ ploadRhs<double,\ Packet2d>((\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ *)((Packet2d\ *)rhs\ \ \ \ \ \ ));}
+\DoxyCodeLine{00139\ \ \ rhsV.packet[1]\ =\ ploadRhs<double,\ Packet2d>((\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ *)(((Packet2d\ *)rhs)\ +\ 1));}
+\DoxyCodeLine{00140\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00143\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ ploadRhsMMA<double,\ \_\_vector\_pair>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ rhs,\ \_\_vector\_pair\&\ rhsV)}
+\DoxyCodeLine{00144\ \{}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\#if\ EIGEN\_COMP\_LLVM}}
+\DoxyCodeLine{00146\ \ \ \_\_builtin\_vsx\_assemble\_pair(\&rhsV,}
+\DoxyCodeLine{00147\ \ \ \ \ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})(ploadRhs<double,\ Packet2d>((\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ *)(((Packet2d\ *)rhs)\ +\ 1))),}
+\DoxyCodeLine{00148\ \ \ \ \ (\_\_vector\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char})(ploadRhs<double,\ Packet2d>((\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ *)((Packet2d\ *)rhs\ \ \ \ \ \ ))));}
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00150\ \ \ \_\_asm\_\_\ (\textcolor{stringliteral}{"{}lxvp\ \%x0,\%1"{}}\ :\ \textcolor{stringliteral}{"{}=wa"{}}\ (rhsV)\ :\ \textcolor{stringliteral}{"{}Y"{}}\ (*rhs));}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00152\ \}}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00155\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ ploadRhsMMA(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*,\ \_\_vector\_pair\&)}
+\DoxyCodeLine{00156\ \{}
+\DoxyCodeLine{00157\ \ \ \textcolor{comment}{//\ Just\ for\ compilation}}
+\DoxyCodeLine{00158\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{comment}{//\ PEEL\_MMA\ loop\ factor.}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#define\ PEEL\_MMA\ 7}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_UNROLL(func)\ \(\backslash\)}}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\ \ func(0)\ func(1)\ func(2)\ func(3)\ func(4)\ func(5)\ func(6)\ func(7)}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_LOAD\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\ \ \ \ lhsV\#\#iter\ =\ ploadLhs<Scalar,\ Packet>(lhs\_ptr\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\ \ \ \ lhs\_ptr\#\#iter\ +=\ accCols;\ \(\backslash\)}}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(lhsV\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_WORK\_ONE(iter,\ type,\ peel)\ \(\backslash\)}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\ \ \ \ pgerMMA<Packet,\ type,\ false>(\&accZero\#\#iter,\ rhsV\#\#peel,\ lhsV\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00177\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_TYPE\_PEEL(func,\ func2,\ type,\ peel)\ \(\backslash\)}}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\ \ if\ (PEEL\_MMA\ >\ peel)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\ \ \ \ Packet\ lhsV0,\ lhsV1,\ lhsV2,\ lhsV3,\ lhsV4,\ lhsV5,\ lhsV6,\ lhsV7;\ \(\backslash\)}}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\ \ \ \ ploadRhsMMA<Scalar,\ type>(rhs\_ptr\ +\ (accRows\ *\ peel),\ rhsV\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00183\ \textcolor{preprocessor}{\ \ \ \ MICRO\_MMA\_UNROLL(func2);\ \(\backslash\)}}
+\DoxyCodeLine{00184\ \textcolor{preprocessor}{\ \ \ \ func(0,type,peel)\ func(1,type,peel)\ func(2,type,peel)\ func(3,type,peel)\ \(\backslash\)}}
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\ \ \ \ func(4,type,peel)\ func(5,type,peel)\ func(6,type,peel)\ func(7,type,peel)\ \(\backslash\)}}
+\DoxyCodeLine{00186\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(rhsV\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_UNROLL\_TYPE\_PEEL(func,\ func2,\ type)\ \(\backslash\)}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ type\ rhsV0,\ rhsV1,\ rhsV2,\ rhsV3,\ rhsV4,\ rhsV5,\ rhsV6,\ rhsV7;\ \(\backslash\)}}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\ \ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,0);\ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,1);\ \(\backslash\)}}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\ \ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,2);\ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,3);\ \(\backslash\)}}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\ \ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,4);\ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,5);\ \(\backslash\)}}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,6);\ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,7);}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_UNROLL\_TYPE\_ONE(func,\ func2,\ type)\ \(\backslash\)}}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\ \ type\ rhsV0;\ \(\backslash\)}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\ \ MICRO\_MMA\_TYPE\_PEEL(func,func2,type,0);}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_ONE\_PEEL\ \(\backslash\)}}
+\DoxyCodeLine{00202\ \textcolor{preprocessor}{\ \ if\ (sizeof(Scalar)\ ==\ sizeof(float))\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\ \ \ \ MICRO\_MMA\_UNROLL\_TYPE\_PEEL(MICRO\_MMA\_WORK\_ONE,\ MICRO\_MMA\_LOAD\_ONE,\ RhsPacket);\ \(\backslash\)}}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00205\ \textcolor{preprocessor}{\ \ \ \ MICRO\_MMA\_UNROLL\_TYPE\_PEEL(MICRO\_MMA\_WORK\_ONE,\ MICRO\_MMA\_LOAD\_ONE,\ \_\_vector\_pair);\ \(\backslash\)}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\ \ rhs\_ptr\ +=\ (accRows\ *\ PEEL\_MMA);}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_ONE\ \(\backslash\)}}
+\DoxyCodeLine{00210\ \textcolor{preprocessor}{\ \ if\ (sizeof(Scalar)\ ==\ sizeof(float))\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\ \ \ \ MICRO\_MMA\_UNROLL\_TYPE\_ONE(MICRO\_MMA\_WORK\_ONE,\ MICRO\_MMA\_LOAD\_ONE,\ RhsPacket);\ \(\backslash\)}}
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\ \ \ \ MICRO\_MMA\_UNROLL\_TYPE\_ONE(MICRO\_MMA\_WORK\_ONE,\ MICRO\_MMA\_LOAD\_ONE,\ \_\_vector\_pair);\ \(\backslash\)}}
+\DoxyCodeLine{00214\ \textcolor{preprocessor}{\ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00215\ \textcolor{preprocessor}{\ \ rhs\_ptr\ +=\ accRows;}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_DST\_PTR\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00218\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00219\ \textcolor{preprocessor}{\ \ \ \ bsetzeroMMA<Scalar,\ Packet>(\&accZero\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00221\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(accZero\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00222\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_DST\_PTR\ MICRO\_MMA\_UNROLL(MICRO\_MMA\_DST\_PTR\_ONE)}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_SRC\_PTR\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00227\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00228\ \textcolor{preprocessor}{\ \ \ \ lhs\_ptr\#\#iter\ =\ lhs\_base\ +\ (\ (row/accCols)\ +\ iter\ )*strideA*accCols;\ \(\backslash\)}}
+\DoxyCodeLine{00229\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00230\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(lhs\_ptr\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00231\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_SRC\_PTR\ MICRO\_MMA\_UNROLL(MICRO\_MMA\_SRC\_PTR\_ONE)}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_PREFETCH\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_POWER\_PREFETCH(lhs\_ptr\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_PREFETCH\ MICRO\_MMA\_UNROLL(MICRO\_MMA\_PREFETCH\_ONE)}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_STORE\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\ \ \ \ storeAccumulator<DataMapper,\ Index,\ Packet,\ accCols>(row\ +\ iter*accCols,\ res,\ pAlpha,\ \&accZero\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\#define\ MICRO\_MMA\_STORE\ MICRO\_MMA\_UNROLL(MICRO\_MMA\_STORE\_ONE)}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ unroll\_factor,\ \textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keyword}{typename}\ DataMapper,\ \textcolor{keyword}{typename}\ Index,\ const\ Index\ accRows,\ const\ Index\ accCols>}
+\DoxyCodeLine{00250\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ gemm\_unrolled\_MMA\_iteration(}
+\DoxyCodeLine{00251\ \ \ \textcolor{keyword}{const}\ DataMapper\&\ res,}
+\DoxyCodeLine{00252\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_base,}
+\DoxyCodeLine{00253\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_base,}
+\DoxyCodeLine{00254\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,}
+\DoxyCodeLine{00255\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideA,}
+\DoxyCodeLine{00256\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ row,}
+\DoxyCodeLine{00257\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pAlpha)}
+\DoxyCodeLine{00258\ \{}
+\DoxyCodeLine{00259\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_ptr\ =\ rhs\_base;}
+\DoxyCodeLine{00260\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_ptr0\ =\ NULL,\ *\ lhs\_ptr1\ =\ NULL,\ *\ lhs\_ptr2\ =\ NULL,\ *\ lhs\_ptr3\ =\ NULL,\ *\ lhs\_ptr4\ =\ NULL,\ *\ lhs\_ptr5\ =\ NULL,\ *\ lhs\_ptr6\ =\ NULL,\ *\ lhs\_ptr7\ =\ NULL;}
+\DoxyCodeLine{00261\ \ \ \_\_vector\_quad\ accZero0,\ accZero1,\ accZero2,\ accZero3,\ accZero4,\ accZero5,\ accZero6,\ accZero7;}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ MICRO\_MMA\_SRC\_PTR}
+\DoxyCodeLine{00264\ \ \ MICRO\_MMA\_DST\_PTR}
+\DoxyCodeLine{00265\ }
+\DoxyCodeLine{00266\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;}
+\DoxyCodeLine{00267\ \ \ \textcolor{keywordflow}{for}(;\ k\ +\ PEEL\_MMA\ <=\ depth;\ k+=\ PEEL\_MMA)}
+\DoxyCodeLine{00268\ \ \ \{}
+\DoxyCodeLine{00269\ \ \ \ \ EIGEN\_POWER\_PREFETCH(rhs\_ptr);}
+\DoxyCodeLine{00270\ \ \ \ \ MICRO\_MMA\_PREFETCH}
+\DoxyCodeLine{00271\ \ \ \ \ MICRO\_MMA\_ONE\_PEEL}
+\DoxyCodeLine{00272\ \ \ \}}
+\DoxyCodeLine{00273\ \ \ \textcolor{keywordflow}{for}(;\ k\ <\ depth;\ k++)}
+\DoxyCodeLine{00274\ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ MICRO\_MMA\_ONE}
+\DoxyCodeLine{00276\ \ \ \}}
+\DoxyCodeLine{00277\ \ \ MICRO\_MMA\_STORE}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \ \ row\ +=\ unroll\_factor*accCols;}
+\DoxyCodeLine{00280\ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keyword}{typename}\ DataMapper,\ \textcolor{keyword}{typename}\ Index,\ const\ Index\ accRows,\ const\ Index\ accCols>}
+\DoxyCodeLine{00283\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ gemmMMA\_cols(}
+\DoxyCodeLine{00284\ \ \ \textcolor{keyword}{const}\ DataMapper\&\ res,}
+\DoxyCodeLine{00285\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockA,}
+\DoxyCodeLine{00286\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockB,}
+\DoxyCodeLine{00287\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,}
+\DoxyCodeLine{00288\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideA,}
+\DoxyCodeLine{00289\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetA,}
+\DoxyCodeLine{00290\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideB,}
+\DoxyCodeLine{00291\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetB,}
+\DoxyCodeLine{00292\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col,}
+\DoxyCodeLine{00293\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,}
+\DoxyCodeLine{00294\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols,}
+\DoxyCodeLine{00295\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ remaining\_rows,}
+\DoxyCodeLine{00296\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pAlpha,}
+\DoxyCodeLine{00297\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pMask)}
+\DoxyCodeLine{00298\ \{}
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{const}\ DataMapper\ res3\ =\ res.getSubMapper(0,\ col);}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_base\ =\ blockB\ +\ col*strideB\ +\ accRows*offsetB;}
+\DoxyCodeLine{00302\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_base\ =\ blockA\ +\ accCols*offsetA;}
+\DoxyCodeLine{00303\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row\ =\ 0;}
+\DoxyCodeLine{00304\ }
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\#define\ MAX\_MMA\_UNROLL\ 7}}
+\DoxyCodeLine{00306\ \ \ \textcolor{keywordflow}{while}(row\ +\ MAX\_MMA\_UNROLL*accCols\ <=\ rows)\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ gemm\_unrolled\_MMA\_iteration<MAX\_MMA\_UNROLL,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00308\ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \textcolor{keywordflow}{switch}(\ (rows-\/row)/accCols\ )\ \{}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 7}}
+\DoxyCodeLine{00311\ \ \ \ \ \textcolor{keywordflow}{case}\ 7:}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<7,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00315\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 6}}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keywordflow}{case}\ 6:}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<6,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00319\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 5}}
+\DoxyCodeLine{00321\ \ \ \ \ \textcolor{keywordflow}{case}\ 5:}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<5,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 4}}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<4,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00329\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 3}}
+\DoxyCodeLine{00331\ \ \ \ \ \textcolor{keywordflow}{case}\ 3:}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<3,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00334\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 2}}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<2,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00339\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00340\ \textcolor{preprocessor}{\#if\ MAX\_MMA\_UNROLL\ >\ 1}}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ gemm\_unrolled\_MMA\_iteration<1,\ Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ row,\ pAlpha);}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00344\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00347\ \ \ \}}
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\#undef\ MAX\_MMA\_UNROLL}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \ \ \textcolor{keywordflow}{if}(remaining\_rows\ >\ 0)}
+\DoxyCodeLine{00351\ \ \ \{}
+\DoxyCodeLine{00352\ \ \ \ \ gemm\_extra\_row<Scalar,\ Packet,\ DataMapper,\ Index,\ accRows,\ accCols>(res3,\ blockA,\ rhs\_base,\ depth,\ strideA,\ offsetA,\ row,\ col,\ rows,\ cols,\ remaining\_rows,\ pAlpha,\ pMask);}
+\DoxyCodeLine{00353\ \ \ \}}
+\DoxyCodeLine{00354\ \}}
+\DoxyCodeLine{00355\ }
+\DoxyCodeLine{00356\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Index,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keyword}{typename}\ DataMapper,\ const\ Index\ accRows,\ const\ Index\ accCols>}
+\DoxyCodeLine{00357\ \textcolor{keywordtype}{void}\ gemmMMA(\textcolor{keyword}{const}\ DataMapper\&\ res,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockA,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockB,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ alpha,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideA,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideB,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetA,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetB)}
+\DoxyCodeLine{00358\ \{}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ remaining\_rows\ =\ rows\ \%\ accCols;}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ strideA\ ==\ -\/1\ )\ strideA\ =\ depth;}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ strideB\ ==\ -\/1\ )\ strideB\ =\ depth;}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pAlpha\ =\ pset1<Packet>(alpha);}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pMask\ \ =\ bmask<Packet>((\textcolor{keyword}{const}\ \textcolor{keywordtype}{int})(remaining\_rows));}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col\ =\ 0;}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ col\ +\ accRows\ <=\ cols;\ col\ +=\ accRows)}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ gemmMMA\_cols<Scalar,\ Packet,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols>(res,\ blockA,\ blockB,\ depth,\ strideA,\ offsetA,\ strideB,\ offsetB,\ col,\ rows,\ cols,\ remaining\_rows,\ pAlpha,\ pMask);}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00372\ }
+\DoxyCodeLine{00373\ \ \ \ \ \ \ gemm\_extra\_cols<Scalar,\ Packet,\ DataMapper,\ Index,\ accCols>(res,\ blockA,\ blockB,\ depth,\ strideA,\ offsetA,\ strideB,\ offsetB,\ col,\ rows,\ cols,\ remaining\_rows,\ pAlpha,\ pMask);}
+\DoxyCodeLine{00374\ \}}
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\#define\ accColsC\ (accCols\ /\ 2)}}
+\DoxyCodeLine{00377\ \textcolor{preprocessor}{\#define\ advanceRows\ ((LhsIsReal)\ ?\ 1\ :\ 2)}}
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\#define\ advanceCols\ ((RhsIsReal)\ ?\ 1\ :\ 2)}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \textcolor{comment}{//\ PEEL\_COMPLEX\_MMA\ loop\ factor.}}
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\#define\ PEEL\_COMPLEX\_MMA\ 3}}
+\DoxyCodeLine{00382\ }
+\DoxyCodeLine{00383\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_UNROLL(func)\ \(\backslash\)}}
+\DoxyCodeLine{00384\ \textcolor{preprocessor}{\ \ func(0)\ func(1)\ func(2)\ func(3)}}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_LOAD\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00388\ \textcolor{preprocessor}{\ \ \ \ lhsV\#\#iter\ =\ ploadLhs<Scalar,\ Packet>(lhs\_ptr\_real\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00389\ \textcolor{preprocessor}{\ \ \ \ if(!LhsIsReal)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00390\ \textcolor{preprocessor}{\ \ \ \ \ \ lhsVi\#\#iter\ =\ ploadLhs<Scalar,\ Packet>(lhs\_ptr\_real\#\#iter\ +\ imag\_delta);\ \(\backslash\)}}
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\ \ \ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(lhsVi\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\ \ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\ \ \ \ lhs\_ptr\_real\#\#iter\ +=\ accCols;\ \(\backslash\)}}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00396\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(lhsV\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00397\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(lhsVi\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00398\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_WORK\_ONE(iter,\ type,\ peel)\ \(\backslash\)}}
+\DoxyCodeLine{00401\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\ \ \ \ pgercMMA<Scalar,\ Packet,\ type,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(\&accReal\#\#iter,\ \&accImag\#\#iter,\ lhsV\#\#iter,\ lhsVi\#\#iter,\ rhsV\#\#peel,\ rhsVi\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00403\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_TYPE\_PEEL(func,\ func2,\ type,\ peel)\ \(\backslash\)}}
+\DoxyCodeLine{00406\ \textcolor{preprocessor}{\ \ if\ (PEEL\_COMPLEX\_MMA\ >\ peel)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00407\ \textcolor{preprocessor}{\ \ \ \ Packet\ lhsV0,\ lhsV1,\ lhsV2,\ lhsV3;\ \(\backslash\)}}
+\DoxyCodeLine{00408\ \textcolor{preprocessor}{\ \ \ \ Packet\ lhsVi0,\ lhsVi1,\ lhsVi2,\ lhsVi3;\ \(\backslash\)}}
+\DoxyCodeLine{00409\ \textcolor{preprocessor}{\ \ \ \ ploadRhsMMA<Scalar,\ type>(rhs\_ptr\_real\ +\ (accRows\ *\ peel),\ rhsV\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00410\ \textcolor{preprocessor}{\ \ \ \ if(!RhsIsReal)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00411\ \textcolor{preprocessor}{\ \ \ \ \ \ ploadRhsMMA<Scalar,\ type>(rhs\_ptr\_imag\ +\ (accRows\ *\ peel),\ rhsVi\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00412\ \textcolor{preprocessor}{\ \ \ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00413\ \textcolor{preprocessor}{\ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(rhsVi\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00414\ \textcolor{preprocessor}{\ \ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00415\ \textcolor{preprocessor}{\ \ \ \ MICRO\_COMPLEX\_MMA\_UNROLL(func2);\ \(\backslash\)}}
+\DoxyCodeLine{00416\ \textcolor{preprocessor}{\ \ \ \ func(0,type,peel)\ func(1,type,peel)\ func(2,type,peel)\ func(3,type,peel)\ \(\backslash\)}}
+\DoxyCodeLine{00417\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00418\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(rhsV\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00419\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(rhsVi\#\#peel);\ \(\backslash\)}}
+\DoxyCodeLine{00420\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_UNROLL\_TYPE\_PEEL(func,\ func2,\ type)\ \(\backslash\)}}
+\DoxyCodeLine{00423\ \textcolor{preprocessor}{\ \ type\ rhsV0,\ rhsV1,\ rhsV2,\ rhsV3;\ \(\backslash\)}}
+\DoxyCodeLine{00424\ \textcolor{preprocessor}{\ \ type\ rhsVi0,\ rhsVi1,\ rhsVi2,\ rhsVi3;\ \(\backslash\)}}
+\DoxyCodeLine{00425\ \textcolor{preprocessor}{\ \ MICRO\_COMPLEX\_MMA\_TYPE\_PEEL(func,func2,type,0);\ MICRO\_COMPLEX\_MMA\_TYPE\_PEEL(func,func2,type,1);\ \(\backslash\)}}
+\DoxyCodeLine{00426\ \textcolor{preprocessor}{\ \ MICRO\_COMPLEX\_MMA\_TYPE\_PEEL(func,func2,type,2);\ MICRO\_COMPLEX\_MMA\_TYPE\_PEEL(func,func2,type,3);}}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_UNROLL\_TYPE\_ONE(func,\ func2,\ type)\ \(\backslash\)}}
+\DoxyCodeLine{00429\ \textcolor{preprocessor}{\ \ type\ rhsV0,\ rhsVi0;\ \(\backslash\)}}
+\DoxyCodeLine{00430\ \textcolor{preprocessor}{\ \ MICRO\_COMPLEX\_MMA\_TYPE\_PEEL(func,func2,type,0);}}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_ONE\_PEEL\ \(\backslash\)}}
+\DoxyCodeLine{00433\ \textcolor{preprocessor}{\ \ if\ (sizeof(Scalar)\ ==\ sizeof(float))\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00434\ \textcolor{preprocessor}{\ \ \ \ MICRO\_COMPLEX\_MMA\_UNROLL\_TYPE\_PEEL(MICRO\_COMPLEX\_MMA\_WORK\_ONE,\ MICRO\_COMPLEX\_MMA\_LOAD\_ONE,\ RhsPacket);\ \(\backslash\)}}
+\DoxyCodeLine{00435\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00436\ \textcolor{preprocessor}{\ \ \ \ MICRO\_COMPLEX\_MMA\_UNROLL\_TYPE\_PEEL(MICRO\_COMPLEX\_MMA\_WORK\_ONE,\ MICRO\_COMPLEX\_MMA\_LOAD\_ONE,\ \_\_vector\_pair);\ \(\backslash\)}}
+\DoxyCodeLine{00437\ \textcolor{preprocessor}{\ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00438\ \textcolor{preprocessor}{\ \ rhs\_ptr\_real\ +=\ (accRows\ *\ PEEL\_COMPLEX\_MMA);\ \(\backslash\)}}
+\DoxyCodeLine{00439\ \textcolor{preprocessor}{\ \ if(!RhsIsReal)\ rhs\_ptr\_imag\ +=\ (accRows\ *\ PEEL\_COMPLEX\_MMA);}}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_ONE\ \(\backslash\)}}
+\DoxyCodeLine{00442\ \textcolor{preprocessor}{\ \ if\ (sizeof(Scalar)\ ==\ sizeof(float))\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00443\ \textcolor{preprocessor}{\ \ \ \ MICRO\_COMPLEX\_MMA\_UNROLL\_TYPE\_ONE(MICRO\_COMPLEX\_MMA\_WORK\_ONE,\ MICRO\_COMPLEX\_MMA\_LOAD\_ONE,\ RhsPacket);\ \(\backslash\)}}
+\DoxyCodeLine{00444\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00445\ \textcolor{preprocessor}{\ \ \ \ MICRO\_COMPLEX\_MMA\_UNROLL\_TYPE\_ONE(MICRO\_COMPLEX\_MMA\_WORK\_ONE,\ MICRO\_COMPLEX\_MMA\_LOAD\_ONE,\ \_\_vector\_pair);\ \(\backslash\)}}
+\DoxyCodeLine{00446\ \textcolor{preprocessor}{\ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00447\ \textcolor{preprocessor}{\ \ rhs\_ptr\_real\ +=\ accRows;\ \(\backslash\)}}
+\DoxyCodeLine{00448\ \textcolor{preprocessor}{\ \ if(!RhsIsReal)\ rhs\_ptr\_imag\ +=\ accRows;}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_DST\_PTR\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00451\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00452\ \textcolor{preprocessor}{\ \ \ \ bsetzeroMMA<Scalar,\ Packet>(\&accReal\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00453\ \textcolor{preprocessor}{\ \ \ \ bsetzeroMMA<Scalar,\ Packet>(\&accImag\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00454\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00455\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(accReal\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00456\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(accImag\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00457\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_DST\_PTR\ MICRO\_COMPLEX\_MMA\_UNROLL(MICRO\_COMPLEX\_MMA\_DST\_PTR\_ONE)}}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_SRC\_PTR\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00462\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00463\ \textcolor{preprocessor}{\ \ \ \ lhs\_ptr\_real\#\#iter\ =\ lhs\_base\ +\ (\ ((advanceRows*row)/accCols)\ +\ iter*advanceRows\ )*strideA*accCols;\ \(\backslash\)}}
+\DoxyCodeLine{00464\ \textcolor{preprocessor}{\ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00465\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_UNUSED\_VARIABLE(lhs\_ptr\_real\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00466\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_SRC\_PTR\ MICRO\_COMPLEX\_MMA\_UNROLL(MICRO\_COMPLEX\_MMA\_SRC\_PTR\_ONE)}}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_PREFETCH\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00472\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_POWER\_PREFETCH(lhs\_ptr\_real\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_PREFETCH\ MICRO\_COMPLEX\_MMA\_UNROLL(MICRO\_COMPLEX\_MMA\_PREFETCH\_ONE)}}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_STORE\_ONE(iter)\ \(\backslash\)}}
+\DoxyCodeLine{00478\ \textcolor{preprocessor}{\ \ if\ (unroll\_factor\ >\ iter)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00479\ \textcolor{preprocessor}{\ \ \ \ storeComplexAccumulator<DataMapper,\ Index,\ Packet,\ Packetc,\ accColsC>(row\ +\ iter*accCols,\ res,\ pAlphaReal,\ pAlphaImag,\ \&accReal\#\#iter,\ \&accImag\#\#iter);\ \(\backslash\)}}
+\DoxyCodeLine{00480\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \textcolor{preprocessor}{\#define\ MICRO\_COMPLEX\_MMA\_STORE\ MICRO\_COMPLEX\_MMA\_UNROLL(MICRO\_COMPLEX\_MMA\_STORE\_ONE)}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ unroll\_factor,\ \textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Packetc,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keyword}{typename}\ DataMapper,\ \textcolor{keyword}{typename}\ Index,\ const\ Index\ accRows,\ const\ Index\ accCols,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{bool}\ LhsIsReal,\ \textcolor{keywordtype}{bool}\ RhsIsReal>}
+\DoxyCodeLine{00485\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ gemm\_complex\_unrolled\_MMA\_iteration(}
+\DoxyCodeLine{00486\ \ \ \textcolor{keyword}{const}\ DataMapper\&\ res,}
+\DoxyCodeLine{00487\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_base,}
+\DoxyCodeLine{00488\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_base,}
+\DoxyCodeLine{00489\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,}
+\DoxyCodeLine{00490\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideA,}
+\DoxyCodeLine{00491\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideB,}
+\DoxyCodeLine{00492\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ row,}
+\DoxyCodeLine{00493\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pAlphaReal,}
+\DoxyCodeLine{00494\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pAlphaImag)}
+\DoxyCodeLine{00495\ \{}
+\DoxyCodeLine{00496\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_ptr\_real\ =\ rhs\_base;}
+\DoxyCodeLine{00497\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_ptr\_imag\ =\ NULL;}
+\DoxyCodeLine{00498\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ imag\_delta\ =\ accCols*strideA;}
+\DoxyCodeLine{00499\ \ \ \textcolor{keywordflow}{if}(!RhsIsReal)\ \{}
+\DoxyCodeLine{00500\ \ \ \ \ rhs\_ptr\_imag\ =\ rhs\_base\ +\ accRows*strideB;}
+\DoxyCodeLine{00501\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00502\ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(rhs\_ptr\_imag);}
+\DoxyCodeLine{00503\ \ \ \}}
+\DoxyCodeLine{00504\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_ptr\_real0\ =\ NULL,\ *\ lhs\_ptr\_real1\ =\ NULL;}
+\DoxyCodeLine{00505\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_ptr\_real2\ =\ NULL,\ *\ lhs\_ptr\_real3\ =\ NULL;}
+\DoxyCodeLine{00506\ \ \ \_\_vector\_quad\ accReal0,\ accImag0,\ accReal1,\ accImag1,\ accReal2,\ accImag2,\ accReal3,\ accImag3;}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \ \ MICRO\_COMPLEX\_MMA\_SRC\_PTR}
+\DoxyCodeLine{00509\ \ \ MICRO\_COMPLEX\_MMA\_DST\_PTR}
+\DoxyCodeLine{00510\ }
+\DoxyCodeLine{00511\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;}
+\DoxyCodeLine{00512\ \ \ \textcolor{keywordflow}{for}(;\ k\ +\ PEEL\_COMPLEX\_MMA\ <=\ depth;\ k+=\ PEEL\_COMPLEX\_MMA)}
+\DoxyCodeLine{00513\ \ \ \{}
+\DoxyCodeLine{00514\ \ \ \ \ EIGEN\_POWER\_PREFETCH(rhs\_ptr\_real);}
+\DoxyCodeLine{00515\ \ \ \ \ \textcolor{keywordflow}{if}(!RhsIsReal)\ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ EIGEN\_POWER\_PREFETCH(rhs\_ptr\_imag);}
+\DoxyCodeLine{00517\ \ \ \ \ \}}
+\DoxyCodeLine{00518\ \ \ \ \ MICRO\_COMPLEX\_MMA\_PREFETCH}
+\DoxyCodeLine{00519\ \ \ \ \ MICRO\_COMPLEX\_MMA\_ONE\_PEEL}
+\DoxyCodeLine{00520\ \ \ \}}
+\DoxyCodeLine{00521\ \ \ \textcolor{keywordflow}{for}(;\ k\ <\ depth;\ k++)}
+\DoxyCodeLine{00522\ \ \ \{}
+\DoxyCodeLine{00523\ \ \ \ \ MICRO\_COMPLEX\_MMA\_ONE}
+\DoxyCodeLine{00524\ \ \ \}}
+\DoxyCodeLine{00525\ \ \ MICRO\_COMPLEX\_MMA\_STORE}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \ \ row\ +=\ unroll\_factor*accCols;}
+\DoxyCodeLine{00528\ \}}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Packetc,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keyword}{typename}\ DataMapper,\ \textcolor{keyword}{typename}\ Index,\ const\ Index\ accRows,\ const\ Index\ accCols,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{bool}\ LhsIsReal,\ \textcolor{keywordtype}{bool}\ RhsIsReal>}
+\DoxyCodeLine{00531\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ gemmMMA\_complex\_cols(}
+\DoxyCodeLine{00532\ \ \ \textcolor{keyword}{const}\ DataMapper\&\ res,}
+\DoxyCodeLine{00533\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockA,}
+\DoxyCodeLine{00534\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockB,}
+\DoxyCodeLine{00535\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,}
+\DoxyCodeLine{00536\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideA,}
+\DoxyCodeLine{00537\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetA,}
+\DoxyCodeLine{00538\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideB,}
+\DoxyCodeLine{00539\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetB,}
+\DoxyCodeLine{00540\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col,}
+\DoxyCodeLine{00541\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,}
+\DoxyCodeLine{00542\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols,}
+\DoxyCodeLine{00543\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ remaining\_rows,}
+\DoxyCodeLine{00544\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pAlphaReal,}
+\DoxyCodeLine{00545\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pAlphaImag,}
+\DoxyCodeLine{00546\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ pMask)}
+\DoxyCodeLine{00547\ \{}
+\DoxyCodeLine{00548\ \ \ \textcolor{keyword}{const}\ DataMapper\ res3\ =\ res.getSubMapper(0,\ col);}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ rhs\_base\ =\ blockB\ +\ advanceCols*col*strideB\ +\ accRows*offsetB;}
+\DoxyCodeLine{00551\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ lhs\_base\ =\ blockA\ +\ accCols*offsetA;}
+\DoxyCodeLine{00552\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row\ =\ 0;}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ \textcolor{preprocessor}{\#define\ MAX\_COMPLEX\_MMA\_UNROLL\ 4}}
+\DoxyCodeLine{00555\ \ \ \textcolor{keywordflow}{while}(row\ +\ MAX\_COMPLEX\_MMA\_UNROLL*accCols\ <=\ rows)\ \{}
+\DoxyCodeLine{00556\ \ \ \ \ gemm\_complex\_unrolled\_MMA\_iteration<MAX\_COMPLEX\_MMA\_UNROLL,\ Scalar,\ Packet,\ Packetc,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ strideB,\ row,\ pAlphaReal,\ pAlphaImag);}
+\DoxyCodeLine{00557\ \ \ \}}
+\DoxyCodeLine{00558\ \ \ \textcolor{keywordflow}{switch}(\ (rows-\/row)/accCols\ )\ \{}
+\DoxyCodeLine{00559\ \textcolor{preprocessor}{\#if\ MAX\_COMPLEX\_MMA\_UNROLL\ >\ 4}}
+\DoxyCodeLine{00560\ \ \ \ \ \textcolor{keywordflow}{case}\ 4:}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ gemm\_complex\_unrolled\_MMA\_iteration<4,\ Scalar,\ Packet,\ Packetc,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ strideB,\ row,\ pAlphaReal,\ pAlphaImag);}
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\#if\ MAX\_COMPLEX\_MMA\_UNROLL\ >\ 3}}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{keywordflow}{case}\ 3:}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ gemm\_complex\_unrolled\_MMA\_iteration<3,\ Scalar,\ Packet,\ Packetc,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ strideB,\ row,\ pAlphaReal,\ pAlphaImag);}
+\DoxyCodeLine{00567\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00568\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00569\ \textcolor{preprocessor}{\#if\ MAX\_COMPLEX\_MMA\_UNROLL\ >\ 2}}
+\DoxyCodeLine{00570\ \ \ \ \ \textcolor{keywordflow}{case}\ 2:}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ gemm\_complex\_unrolled\_MMA\_iteration<2,\ Scalar,\ Packet,\ Packetc,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ strideB,\ row,\ pAlphaReal,\ pAlphaImag);}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00573\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00574\ \textcolor{preprocessor}{\#if\ MAX\_COMPLEX\_MMA\_UNROLL\ >\ 1}}
+\DoxyCodeLine{00575\ \ \ \ \ \textcolor{keywordflow}{case}\ 1:}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ gemm\_complex\_unrolled\_MMA\_iteration<1,\ Scalar,\ Packet,\ Packetc,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res3,\ lhs\_base,\ rhs\_base,\ depth,\ strideA,\ strideB,\ row,\ pAlphaReal,\ pAlphaImag);}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00578\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00579\ \ \ \ \ \textcolor{keywordflow}{default}:}
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00581\ \ \ \}}
+\DoxyCodeLine{00582\ \textcolor{preprocessor}{\#undef\ MAX\_COMPLEX\_MMA\_UNROLL}}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ \ \ \textcolor{keywordflow}{if}(remaining\_rows\ >\ 0)}
+\DoxyCodeLine{00585\ \ \ \{}
+\DoxyCodeLine{00586\ \ \ \ \ gemm\_complex\_extra\_row<Scalar,\ Packet,\ Packetc,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res3,\ blockA,\ rhs\_base,\ depth,\ strideA,\ offsetA,\ strideB,\ row,\ col,\ rows,\ cols,\ remaining\_rows,\ pAlphaReal,\ pAlphaImag,\ pMask);}
+\DoxyCodeLine{00587\ \ \ \}}
+\DoxyCodeLine{00588\ \}}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ LhsScalar,\ \textcolor{keyword}{typename}\ RhsScalar,\ \textcolor{keyword}{typename}\ Scalarc,\ \textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Index,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Packetc,\ \textcolor{keyword}{typename}\ RhsPacket,\ \textcolor{keyword}{typename}\ DataMapper,\ const\ Index\ accRows,\ const\ Index\ accCols,\ \textcolor{keywordtype}{bool}\ ConjugateLhs,\ \textcolor{keywordtype}{bool}\ ConjugateRhs,\ \textcolor{keywordtype}{bool}\ LhsIsReal,\ \textcolor{keywordtype}{bool}\ RhsIsReal>}
+\DoxyCodeLine{00591\ \textcolor{keywordtype}{void}\ gemm\_complexMMA(\textcolor{keyword}{const}\ DataMapper\&\ res,\ \textcolor{keyword}{const}\ LhsScalar*\ blockAc,\ \textcolor{keyword}{const}\ RhsScalar*\ blockBc,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols,\ Scalarc\ alpha,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideA,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ strideB,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetA,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ offsetB)}
+\DoxyCodeLine{00592\ \{}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ remaining\_rows\ =\ rows\ \%\ accCols;}
+\DoxyCodeLine{00594\ }
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ strideA\ ==\ -\/1\ )\ strideA\ =\ depth;}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ strideB\ ==\ -\/1\ )\ strideB\ =\ depth;}
+\DoxyCodeLine{00597\ }
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pAlphaReal\ =\ pset1<Packet>(alpha.real());}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pAlphaImag\ =\ pset1<Packet>(alpha.imag());}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pMask\ =\ bmask<Packet>((\textcolor{keyword}{const}\ \textcolor{keywordtype}{int})(remaining\_rows));}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockA\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ *)\ blockAc;}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ blockB\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ *)\ blockBc;}
+\DoxyCodeLine{00604\ }
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col\ =\ 0;}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(;\ col\ +\ accRows\ <=\ cols;\ col\ +=\ accRows)}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ gemmMMA\_complex\_cols<Scalar,\ Packet,\ Packetc,\ RhsPacket,\ DataMapper,\ Index,\ accRows,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res,\ blockA,\ blockB,\ depth,\ strideA,\ offsetA,\ strideB,\ offsetB,\ col,\ rows,\ cols,\ remaining\_rows,\ pAlphaReal,\ pAlphaImag,\ pMask);}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ \ \ \ \ \ \ gemm\_complex\_extra\_cols<Scalar,\ Packet,\ Packetc,\ DataMapper,\ Index,\ accCols,\ ConjugateLhs,\ ConjugateRhs,\ LhsIsReal,\ RhsIsReal>(res,\ blockA,\ blockB,\ depth,\ strideA,\ offsetA,\ strideB,\ offsetB,\ col,\ rows,\ cols,\ remaining\_rows,\ pAlphaReal,\ pAlphaImag,\ pMask);}
+\DoxyCodeLine{00612\ \}}
+\DoxyCodeLine{00613\ }
+\DoxyCodeLine{00614\ \textcolor{preprocessor}{\#undef\ accColsC}}
+\DoxyCodeLine{00615\ \textcolor{preprocessor}{\#undef\ advanceRows}}
+\DoxyCodeLine{00616\ \textcolor{preprocessor}{\#undef\ advanceCols}}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00619\ }
+\DoxyCodeLine{00620\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_ALTIVEC\_MMA\_DYNAMIC\_DISPATCH)}}
+\DoxyCodeLine{00623\ \textcolor{preprocessor}{\#pragma\ GCC\ pop\_options}}
+\DoxyCodeLine{00624\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_MATRIX\_PRODUCT\_MMA\_ALTIVEC\_H}}
+\DoxyCodeLine{00627\ }
+
+\end{DoxyCode}

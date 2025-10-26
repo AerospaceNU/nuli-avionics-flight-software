@@ -1,0 +1,127 @@
+\doxysection{Sparse\+LU\+\_\+heap\+\_\+relax\+\_\+snode.\+h}
+\hypertarget{SparseLU__heap__relax__snode_8h_source}{}\label{SparseLU__heap__relax__snode_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_heap\_relax\_snode.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_heap\_relax\_snode.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Désiré\ Nuentsa-\/Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{/*\ This\ file\ is\ a\ modified\ version\ of\ heap\_relax\_snode.c\ file\ in\ SuperLU}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ -\/-\/\ SuperLU\ routine\ (version\ 3.0)\ -\/-\/}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ Univ.\ of\ California\ Berkeley,\ Xerox\ Palo\ Alto\ Research\ Center,}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ and\ Lawrence\ Berkeley\ National\ Lab.}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ October\ 15,\ 2003}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ Copyright\ (c)\ 1994\ by\ Xerox\ Corporation.\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ THIS\ MATERIAL\ IS\ PROVIDED\ AS\ IS,\ WITH\ ABSOLUTELY\ NO\ WARRANTY}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ EXPRESSED\ OR\ IMPLIED.\ \ ANY\ USE\ IS\ AT\ YOUR\ OWN\ RISK.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ Permission\ is\ hereby\ granted\ to\ use\ or\ copy\ this\ program\ for\ any}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ purpose,\ provided\ the\ above\ notices\ are\ retained\ on\ all\ copies.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *\ Permission\ to\ modify\ the\ code\ and\ to\ distribute\ modified\ code\ is}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ granted,\ provided\ the\ above\ notices\ are\ retained,\ and\ a\ notice\ that}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ the\ code\ was\ modified\ is\ included\ with\ the\ above\ copyright\ notice.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#ifndef\ SPARSELU\_HEAP\_RELAX\_SNODE\_H}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ SPARSELU\_HEAP\_RELAX\_SNODE\_H}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00032\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00033\ \textcolor{comment}{}}
+\DoxyCodeLine{00034\ \textcolor{comment}{/**\ }}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ *\ \(\backslash\)brief\ Identify\ the\ initial\ relaxed\ supernodes}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ This\ routine\ applied\ to\ a\ symmetric\ elimination\ tree.\ }}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *\ It\ assumes\ that\ the\ matrix\ has\ been\ reordered\ according\ to\ the\ postorder\ of\ the\ etree}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ \(\backslash\)param\ n\ The\ number\ of\ columns}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *\ \(\backslash\)param\ et\ elimination\ tree\ }}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ \(\backslash\)param\ relax\_columns\ Maximum\ number\ of\ columns\ allowed\ in\ a\ relaxed\ snode\ }}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ \(\backslash\)param\ descendants\ Number\ of\ descendants\ of\ each\ node\ in\ the\ etree}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ \(\backslash\)param\ relax\_end\ last\ column\ in\ a\ supernode}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00046\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a88952ce33c968374b149e31d0539178d}{SparseLUImpl<Scalar,StorageIndex>::heap\_relax\_snode}}\ (\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n,\ IndexVector\&\ et,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ relax\_columns,\ IndexVector\&\ descendants,\ IndexVector\&\ relax\_end)}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ }
+\DoxyCodeLine{00049\ \ \ \textcolor{comment}{//\ The\ etree\ may\ not\ be\ postordered,\ but\ its\ heap\ ordered\ \ }}
+\DoxyCodeLine{00050\ \ \ IndexVector\ post;}
+\DoxyCodeLine{00051\ \ \ internal::treePostorder(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(n),\ et,\ post);\ \textcolor{comment}{//\ Post\ order\ etree}}
+\DoxyCodeLine{00052\ \ \ IndexVector\ inv\_post(n+1);\ }
+\DoxyCodeLine{00053\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ i\ =\ 0;\ i\ <\ n+1;\ ++i)\ inv\_post(post(i))\ =\ i;\ \textcolor{comment}{//\ inv\_post\ =\ post.inverse()???}}
+\DoxyCodeLine{00054\ \ \ }
+\DoxyCodeLine{00055\ \ \ \textcolor{comment}{//\ Renumber\ etree\ in\ postorder\ }}
+\DoxyCodeLine{00056\ \ \ IndexVector\ iwork(n);}
+\DoxyCodeLine{00057\ \ \ IndexVector\ et\_save(n+1);}
+\DoxyCodeLine{00058\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ n;\ ++i)}
+\DoxyCodeLine{00059\ \ \ \{}
+\DoxyCodeLine{00060\ \ \ \ \ iwork(post(i))\ =\ post(et(i));}
+\DoxyCodeLine{00061\ \ \ \}}
+\DoxyCodeLine{00062\ \ \ et\_save\ =\ et;\ \textcolor{comment}{//\ Save\ the\ original\ etree}}
+\DoxyCodeLine{00063\ \ \ et\ =\ iwork;\ }
+\DoxyCodeLine{00064\ \ \ }
+\DoxyCodeLine{00065\ \ \ \textcolor{comment}{//\ compute\ the\ number\ of\ descendants\ of\ each\ node\ in\ the\ etree}}
+\DoxyCodeLine{00066\ \ \ relax\_end.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac8dea1df3d92b752cc683ff42abf6f9b}{setConstant}}(emptyIdxLU);}
+\DoxyCodeLine{00067\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j,\ parent;\ }
+\DoxyCodeLine{00068\ \ \ descendants.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00069\ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ n;\ j++)\ }
+\DoxyCodeLine{00070\ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ parent\ =\ et(j);}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keywordflow}{if}\ (parent\ !=\ n)\ \textcolor{comment}{//\ not\ the\ dummy\ root}}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ descendants(parent)\ +=\ descendants(j)\ +\ 1;}
+\DoxyCodeLine{00074\ \ \ \}}
+\DoxyCodeLine{00075\ \ \ \textcolor{comment}{//\ Identify\ the\ relaxed\ supernodes\ by\ postorder\ traversal\ of\ the\ etree}}
+\DoxyCodeLine{00076\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ snode\_start;\ \textcolor{comment}{//\ beginning\ of\ a\ snode\ }}
+\DoxyCodeLine{00077\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ k;}
+\DoxyCodeLine{00078\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ l;\ }
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0;\ j\ <\ n;\ )}
+\DoxyCodeLine{00080\ \ \ \{}
+\DoxyCodeLine{00081\ \ \ \ \ parent\ =\ et(j);}
+\DoxyCodeLine{00082\ \ \ \ \ snode\_start\ =\ j;\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{while}\ (\ parent\ !=\ n\ \&\&\ descendants(parent)\ <\ relax\_columns\ )\ }
+\DoxyCodeLine{00084\ \ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ j\ =\ parent;\ }
+\DoxyCodeLine{00086\ \ \ \ \ \ \ parent\ =\ et(j);}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{comment}{//\ Found\ a\ supernode\ in\ postordered\ etree,\ j\ is\ the\ last\ column\ }}
+\DoxyCodeLine{00089\ \ \ \ \ k\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(n);}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ snode\_start;\ i\ <=\ j;\ ++i)}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ k\ =\ (std::min)(k,\ inv\_post(i));}
+\DoxyCodeLine{00092\ \ \ \ \ l\ =\ inv\_post(j);}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (l\ -\/\ k)\ ==\ (j\ -\/\ snode\_start)\ )\ \ \textcolor{comment}{//\ Same\ number\ of\ columns\ in\ the\ snode}}
+\DoxyCodeLine{00094\ \ \ \ \ \{}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ is\ also\ a\ supernode\ in\ the\ original\ etree}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ relax\_end(k)\ =\ l;\ \textcolor{comment}{//\ Record\ last\ column\ }}
+\DoxyCodeLine{00097\ \ \ \ \ \}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00099\ \ \ \ \ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ snode\_start;\ i\ <=\ j;\ ++i)\ }
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ l\ =\ inv\_post(i);}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (descendants(i)\ ==\ 0)\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ relax\_end(l)\ =\ l;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00108\ \ \ \ \ \}}
+\DoxyCodeLine{00109\ \ \ \ \ j++;}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Search\ for\ a\ new\ leaf}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordflow}{while}\ (descendants(j)\ !=\ 0\ \&\&\ j\ <\ n)\ j++;}
+\DoxyCodeLine{00112\ \ \ \}\ \textcolor{comment}{//\ End\ postorder\ traversal\ of\ the\ etree}}
+\DoxyCodeLine{00113\ \ \ }
+\DoxyCodeLine{00114\ \ \ \textcolor{comment}{//\ Recover\ the\ original\ etree}}
+\DoxyCodeLine{00115\ \ \ et\ =\ et\_save;\ }
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ SPARSELU\_HEAP\_RELAX\_SNODE\_H}}
+
+\end{DoxyCode}

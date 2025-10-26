@@ -1,0 +1,469 @@
+\doxysection{Stl\+Iterators.\+h}
+\hypertarget{StlIterators_8h_source}{}\label{StlIterators_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/StlIterators.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/StlIterators.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2018\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_STLITERATORS\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_STLITERATORS\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ IteratorType>}
+\DoxyCodeLine{00018\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1indexed__based__stl__iterator__traits}{indexed\_based\_stl\_iterator\_traits}};}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \ Derived>}
+\DoxyCodeLine{00021\ \textcolor{keyword}{class\ }indexed\_based\_stl\_iterator\_base}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00024\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1indexed__based__stl__iterator__traits}{indexed\_based\_stl\_iterator\_traits<Derived>}}\ traits;}
+\DoxyCodeLine{00025\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ traits::XprType\ XprType;}
+\DoxyCodeLine{00026\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_iterator\_base<typename\ traits::non\_const\_iterator>\ non\_const\_iterator;}
+\DoxyCodeLine{00027\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_iterator\_base<typename\ traits::const\_iterator>\ const\_iterator;}
+\DoxyCodeLine{00028\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<internal::is\_const<XprType>::value}},non\_const\_iterator,const\_iterator>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ other\_iterator;}
+\DoxyCodeLine{00029\ \ \ \textcolor{comment}{//\ NOTE:\ in\ C++03\ we\ cannot\ declare\ friend\ classes\ through\ typedefs\ because\ we\ need\ to\ write\ friend\ class:}}
+\DoxyCodeLine{00030\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }indexed\_based\_stl\_iterator\_base<typename\ traits::const\_iterator>;}
+\DoxyCodeLine{00031\ \ \ friend\ class\ indexed\_based\_stl\_iterator\_base<typename\ traits::non\_const\_iterator>;}
+\DoxyCodeLine{00032\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00033\ \ \ typedef\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ difference\_type;}
+\DoxyCodeLine{00034\ \ \ typedef\ std::random\_access\_iterator\_tag\ iterator\_category;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ indexed\_based\_stl\_iterator\_base()\ EIGEN\_NO\_THROW\ :\ mp\_xpr(0),\ m\_index(0)\ \{\}}
+\DoxyCodeLine{00037\ \ \ indexed\_based\_stl\_iterator\_base(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\ EIGEN\_NO\_THROW\ :\ mp\_xpr(\&xpr),\ m\_index(index)\ \{\}}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ indexed\_based\_stl\_iterator\_base(\textcolor{keyword}{const}\ non\_const\_iterator\&\ other)\ EIGEN\_NO\_THROW}
+\DoxyCodeLine{00040\ \ \ \ \ :\ mp\_xpr(other.mp\_xpr),\ m\_index(other.m\_index)}
+\DoxyCodeLine{00041\ \ \ \{\}}
+\DoxyCodeLine{00042\ }
+\DoxyCodeLine{00043\ \ \ indexed\_based\_stl\_iterator\_base\&\ operator=(\textcolor{keyword}{const}\ non\_const\_iterator\&\ other)}
+\DoxyCodeLine{00044\ \ \ \{}
+\DoxyCodeLine{00045\ \ \ \ \ mp\_xpr\ =\ other.mp\_xpr;}
+\DoxyCodeLine{00046\ \ \ \ \ m\_index\ =\ other.m\_index;}
+\DoxyCodeLine{00047\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00048\ \ \ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \ \ Derived\&\ operator++()\ \{\ ++m\_index;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00051\ \ \ Derived\&\ operator-\/-\/()\ \{\ -\/-\/m\_index;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ Derived\ operator++(\textcolor{keywordtype}{int})\ \{\ Derived\ prev(derived());\ operator++();\ \textcolor{keywordflow}{return}\ prev;\}}
+\DoxyCodeLine{00054\ \ \ Derived\ operator-\/-\/(\textcolor{keywordtype}{int})\ \{\ Derived\ prev(derived());\ operator-\/-\/();\ \textcolor{keywordflow}{return}\ prev;\}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \textcolor{keyword}{friend}\ Derived\ operator+(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ a,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(a.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ +=\ b;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{friend}\ Derived\ operator-\/(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ a,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(a.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ -\/=\ b;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{friend}\ Derived\ operator+(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ a,\ \textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(b.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ +=\ a;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{friend}\ Derived\ operator-\/(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ a,\ \textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(b.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ -\/=\ a;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00060\ \ \ }
+\DoxyCodeLine{00061\ \ \ Derived\&\ operator+=(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ m\_index\ +=\ b;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00062\ \ \ Derived\&\ operator-\/=(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ m\_index\ -\/=\ b;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ difference\_type\ operator-\/(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00065\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00066\ \ \ \ \ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_index\ -\/\ other.m\_index;}
+\DoxyCodeLine{00068\ \ \ \}}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ difference\_type\ operator-\/(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00071\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00072\ \ \ \ \ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_index\ -\/\ other.m\_index;}
+\DoxyCodeLine{00074\ \ \ \}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ ==\ other.m\_index;\ \}}
+\DoxyCodeLine{00077\ \ \ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ !=\ other.m\_index;\ \}}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <=\ other.m\_index;\ \}}
+\DoxyCodeLine{00080\ \ \ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00081\ \ \ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ indexed\_based\_stl\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >=\ other.m\_index;\ \}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ ==\ other.m\_index;\ \}}
+\DoxyCodeLine{00084\ \ \ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ !=\ other.m\_index;\ \}}
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00086\ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <=\ other.m\_index;\ \}}
+\DoxyCodeLine{00087\ \ \ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00088\ \ \ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >=\ other.m\_index;\ \}}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ Derived\&\ derived()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this);\ \}}
+\DoxyCodeLine{00093\ \ \ \textcolor{keyword}{const}\ Derived\&\ derived()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }Derived\&\textcolor{keyword}{>}(*this);\ \}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ XprType\ *mp\_xpr;}
+\DoxyCodeLine{00096\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_index;}
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \ Derived>}
+\DoxyCodeLine{00100\ \textcolor{keyword}{class\ }indexed\_based\_stl\_reverse\_iterator\_base}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00103\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1indexed__based__stl__iterator__traits}{indexed\_based\_stl\_iterator\_traits<Derived>}}\ traits;}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ traits::XprType\ XprType;}
+\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_reverse\_iterator\_base<typename\ traits::non\_const\_iterator>\ non\_const\_iterator;}
+\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_reverse\_iterator\_base<typename\ traits::const\_iterator>\ const\_iterator;}
+\DoxyCodeLine{00107\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<internal::is\_const<XprType>::value}},non\_const\_iterator,const\_iterator>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ other\_iterator;}
+\DoxyCodeLine{00108\ \ \ \textcolor{comment}{//\ NOTE:\ in\ C++03\ we\ cannot\ declare\ friend\ classes\ through\ typedefs\ because\ we\ need\ to\ write\ friend\ class:}}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }indexed\_based\_stl\_reverse\_iterator\_base<typename\ traits::const\_iterator>;}
+\DoxyCodeLine{00110\ \ \ friend\ class\ indexed\_based\_stl\_reverse\_iterator\_base<typename\ traits::non\_const\_iterator>;}
+\DoxyCodeLine{00111\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00112\ \ \ typedef\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ difference\_type;}
+\DoxyCodeLine{00113\ \ \ typedef\ std::random\_access\_iterator\_tag\ iterator\_category;}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ indexed\_based\_stl\_reverse\_iterator\_base()\ :\ mp\_xpr(0),\ m\_index(0)\ \{\}}
+\DoxyCodeLine{00116\ \ \ indexed\_based\_stl\_reverse\_iterator\_base(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\ :\ mp\_xpr(\&xpr),\ m\_index(index)\ \{\}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ indexed\_based\_stl\_reverse\_iterator\_base(\textcolor{keyword}{const}\ non\_const\_iterator\&\ other)}
+\DoxyCodeLine{00119\ \ \ \ \ :\ mp\_xpr(other.mp\_xpr),\ m\_index(other.m\_index)}
+\DoxyCodeLine{00120\ \ \ \{\}}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \ \ indexed\_based\_stl\_reverse\_iterator\_base\&\ operator=(\textcolor{keyword}{const}\ non\_const\_iterator\&\ other)}
+\DoxyCodeLine{00123\ \ \ \{}
+\DoxyCodeLine{00124\ \ \ \ \ mp\_xpr\ =\ other.mp\_xpr;}
+\DoxyCodeLine{00125\ \ \ \ \ m\_index\ =\ other.m\_index;}
+\DoxyCodeLine{00126\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00127\ \ \ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ Derived\&\ operator++()\ \{\ -\/-\/m\_index;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00130\ \ \ Derived\&\ operator-\/-\/()\ \{\ ++m\_index;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ Derived\ operator++(\textcolor{keywordtype}{int})\ \{\ Derived\ prev(derived());\ operator++();\ \textcolor{keywordflow}{return}\ prev;\}}
+\DoxyCodeLine{00133\ \ \ Derived\ operator-\/-\/(\textcolor{keywordtype}{int})\ \{\ Derived\ prev(derived());\ operator-\/-\/();\ \textcolor{keywordflow}{return}\ prev;\}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \textcolor{keyword}{friend}\ Derived\ operator+(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ a,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(a.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ +=\ b;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{friend}\ Derived\ operator-\/(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ a,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(a.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ -\/=\ b;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{friend}\ Derived\ operator+(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ a,\ \textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(b.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ +=\ a;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00138\ \ \ \textcolor{keyword}{friend}\ Derived\ operator-\/(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ a,\ \textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ b)\ \{\ Derived\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(b.derived());\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ -\/=\ a;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00139\ \ \ }
+\DoxyCodeLine{00140\ \ \ Derived\&\ operator+=(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ m\_index\ -\/=\ b;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00141\ \ \ Derived\&\ operator-\/=(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ m\_index\ +=\ b;\ \textcolor{keywordflow}{return}\ derived();\ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ difference\_type\ operator-\/(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00144\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00145\ \ \ \ \ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keywordflow}{return}\ other.m\_index\ -\/\ m\_index;}
+\DoxyCodeLine{00147\ \ \ \}}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ difference\_type\ operator-\/(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00150\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00151\ \ \ \ \ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordflow}{return}\ other.m\_index\ -\/\ m\_index;}
+\DoxyCodeLine{00153\ \ \ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ ==\ other.m\_index;\ \}}
+\DoxyCodeLine{00156\ \ \ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ !=\ other.m\_index;\ \}}
+\DoxyCodeLine{00157\ \ \ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00158\ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >=\ other.m\_index;\ \}}
+\DoxyCodeLine{00159\ \ \ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00160\ \ \ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ indexed\_based\_stl\_reverse\_iterator\_base\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <=\ other.m\_index;\ \}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ ==\ other.m\_index;\ \}}
+\DoxyCodeLine{00163\ \ \ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ !=\ other.m\_index;\ \}}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00165\ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ >=\ other.m\_index;\ \}}
+\DoxyCodeLine{00166\ \ \ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <\ \ other.m\_index;\ \}}
+\DoxyCodeLine{00167\ \ \ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ eigen\_assert(mp\_xpr\ ==\ other.mp\_xpr);\ \textcolor{keywordflow}{return}\ m\_index\ <=\ other.m\_index;\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ Derived\&\ derived()\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}Derived\&\textcolor{keyword}{>}(*this);\ \}}
+\DoxyCodeLine{00172\ \ \ \textcolor{keyword}{const}\ Derived\&\ derived()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }Derived\&\textcolor{keyword}{>}(*this);\ \}}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ XprType\ *mp\_xpr;}
+\DoxyCodeLine{00175\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_index;}
+\DoxyCodeLine{00176\ \};}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType>}
+\DoxyCodeLine{00179\ \textcolor{keyword}{class\ }pointer\_based\_stl\_iterator}
+\DoxyCodeLine{00180\ \{}
+\DoxyCodeLine{00181\ \ \ \textcolor{keyword}{enum}\ \{\ is\_lvalue\ \ =\ internal::is\_lvalue<XprType>::value\ \};}
+\DoxyCodeLine{00182\ \ \ \textcolor{keyword}{typedef}\ pointer\_based\_stl\_iterator<typename\ internal::remove\_const<XprType>::type>\ non\_const\_iterator;}
+\DoxyCodeLine{00183\ \ \ \textcolor{keyword}{typedef}\ pointer\_based\_stl\_iterator<typename\ internal::add\_const<XprType>::type>\ const\_iterator;}
+\DoxyCodeLine{00184\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<internal::is\_const<XprType>::value}},non\_const\_iterator,const\_iterator>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ other\_iterator;}
+\DoxyCodeLine{00185\ \ \ \textcolor{comment}{//\ NOTE:\ in\ C++03\ we\ cannot\ declare\ friend\ classes\ through\ typedefs\ because\ we\ need\ to\ write\ friend\ class:}}
+\DoxyCodeLine{00186\ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }pointer\_based\_stl\_iterator<typename\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1add__const}{add\_const}}<XprType>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}>;}
+\DoxyCodeLine{00187\ \ \ friend\ class\ pointer\_based\_stl\_iterator<typename\ internal::remove\_const<XprType>::type>;}
+\DoxyCodeLine{00188\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00189\ \ \ typedef\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ difference\_type;}
+\DoxyCodeLine{00190\ \ \ typedef\ typename\ XprType::Scalar\ value\_type;}
+\DoxyCodeLine{00191\ \ \ typedef\ std::random\_access\_iterator\_tag\ iterator\_category;}
+\DoxyCodeLine{00192\ \ \ typedef\ typename\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<bool(is\_lvalue),\ value\_type*,\ const\ value\_type*>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ pointer;}
+\DoxyCodeLine{00193\ \ \ typedef\ typename\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<bool(is\_lvalue),\ value\_type\&,\ const\ value\_type\&>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ reference;}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ }
+\DoxyCodeLine{00196\ \ \ pointer\_based\_stl\_iterator()\ EIGEN\_NO\_THROW\ :\ m\_ptr(0)\ \{\}}
+\DoxyCodeLine{00197\ \ \ pointer\_based\_stl\_iterator(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\ EIGEN\_NO\_THROW\ :\ m\_incr(xpr.innerStride())}
+\DoxyCodeLine{00198\ \ \ \{}
+\DoxyCodeLine{00199\ \ \ \ \ m\_ptr\ =\ xpr.data()\ +\ index\ *\ m\_incr.value();}
+\DoxyCodeLine{00200\ \ \ \}}
+\DoxyCodeLine{00201\ }
+\DoxyCodeLine{00202\ \ \ pointer\_based\_stl\_iterator(\textcolor{keyword}{const}\ non\_const\_iterator\&\ other)\ EIGEN\_NO\_THROW}
+\DoxyCodeLine{00203\ \ \ \ \ :\ m\_ptr(other.m\_ptr),\ m\_incr(other.m\_incr)}
+\DoxyCodeLine{00204\ \ \ \{\}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ pointer\_based\_stl\_iterator\&\ operator=(\textcolor{keyword}{const}\ non\_const\_iterator\&\ other)\ EIGEN\_NO\_THROW}
+\DoxyCodeLine{00207\ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ m\_ptr\ =\ other.m\_ptr;}
+\DoxyCodeLine{00209\ \ \ \ \ m\_incr.setValue(other.m\_incr);}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00211\ \ \ \}}
+\DoxyCodeLine{00212\ }
+\DoxyCodeLine{00213\ \ \ reference\ operator*()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ *m\_ptr;\ \ \ \}}
+\DoxyCodeLine{00214\ \ \ reference\ operator[](\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *(m\_ptr+i*m\_incr.value());\ \}}
+\DoxyCodeLine{00215\ \ \ pointer\ \ \ operator-\/>()\textcolor{keyword}{\ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr;\ \ \ \ \}}
+\DoxyCodeLine{00216\ }
+\DoxyCodeLine{00217\ \ \ pointer\_based\_stl\_iterator\&\ operator++()\ \{\ m\_ptr\ +=\ m\_incr.value();\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00218\ \ \ pointer\_based\_stl\_iterator\&\ operator-\/-\/()\ \{\ m\_ptr\ -\/=\ m\_incr.value();\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ pointer\_based\_stl\_iterator\ operator++(\textcolor{keywordtype}{int})\ \{\ pointer\_based\_stl\_iterator\ prev(*\textcolor{keyword}{this});\ operator++();\ \textcolor{keywordflow}{return}\ prev;\}}
+\DoxyCodeLine{00221\ \ \ pointer\_based\_stl\_iterator\ operator-\/-\/(\textcolor{keywordtype}{int})\ \{\ pointer\_based\_stl\_iterator\ prev(*\textcolor{keyword}{this});\ operator-\/-\/();\ \textcolor{keywordflow}{return}\ prev;\}}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \textcolor{keyword}{friend}\ pointer\_based\_stl\_iterator\ operator+(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ a,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ pointer\_based\_stl\_iterator\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(a);\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ +=\ b;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00224\ \ \ \textcolor{keyword}{friend}\ pointer\_based\_stl\_iterator\ operator-\/(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ a,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ pointer\_based\_stl\_iterator\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(a);\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ -\/=\ b;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00225\ \ \ \textcolor{keyword}{friend}\ pointer\_based\_stl\_iterator\ operator+(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ a,\ \textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ b)\ \{\ pointer\_based\_stl\_iterator\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(b);\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ +=\ a;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00226\ \ \ \textcolor{keyword}{friend}\ pointer\_based\_stl\_iterator\ operator-\/(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ a,\ \textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ b)\ \{\ pointer\_based\_stl\_iterator\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}(b);\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}}\ -\/=\ a;\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{ret}};\ \}}
+\DoxyCodeLine{00227\ \ \ }
+\DoxyCodeLine{00228\ \ \ pointer\_based\_stl\_iterator\&\ operator+=(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ m\_ptr\ +=\ b*m\_incr.value();\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00229\ \ \ pointer\_based\_stl\_iterator\&\ operator-\/=(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ b)\ \{\ m\_ptr\ -\/=\ b*m\_incr.value();\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ difference\_type\ operator-\/(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_ptr\ -\/\ other.m\_ptr)/m\_incr.value();}
+\DoxyCodeLine{00233\ \ \ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ difference\_type\ operator-\/(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_ptr\ -\/\ other.m\_ptr)/m\_incr.value();}
+\DoxyCodeLine{00237\ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ ==\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00240\ \ \ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ !=\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00241\ \ \ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ <\ \ other.m\_ptr;\ \}}
+\DoxyCodeLine{00242\ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ <=\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00243\ \ \ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ >\ \ other.m\_ptr;\ \}}
+\DoxyCodeLine{00244\ \ \ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ pointer\_based\_stl\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ >=\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \textcolor{keywordtype}{bool}\ operator==(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ ==\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00247\ \ \ \textcolor{keywordtype}{bool}\ operator!=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ !=\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00248\ \ \ \textcolor{keywordtype}{bool}\ operator<\ (\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ <\ \ other.m\_ptr;\ \}}
+\DoxyCodeLine{00249\ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ <=\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00250\ \ \ \textcolor{keywordtype}{bool}\ operator>\ (\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ >\ \ other.m\_ptr;\ \}}
+\DoxyCodeLine{00251\ \ \ \textcolor{keywordtype}{bool}\ operator>=(\textcolor{keyword}{const}\ other\_iterator\&\ other)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_ptr\ >=\ other.m\_ptr;\ \}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ pointer\ m\_ptr;}
+\DoxyCodeLine{00256\ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1variable__if__dynamic}{internal::variable\_if\_dynamic<Index,\ XprType::InnerStrideAtCompileTime>}}\ m\_incr;}
+\DoxyCodeLine{00257\ \};}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_XprType>}
+\DoxyCodeLine{00260\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1indexed__based__stl__iterator__traits}{indexed\_based\_stl\_iterator\_traits}}<\mbox{\hyperlink{classEigen_1_1internal_1_1generic__randaccess__stl__iterator}{generic\_randaccess\_stl\_iterator}}<\_XprType>\ >}
+\DoxyCodeLine{00261\ \{}
+\DoxyCodeLine{00262\ \ \ \textcolor{keyword}{typedef}\ \_XprType\ XprType;}
+\DoxyCodeLine{00263\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1generic__randaccess__stl__iterator}{generic\_randaccess\_stl\_iterator<typename\ internal::remove\_const<XprType>::type}}>\ non\_const\_iterator;}
+\DoxyCodeLine{00264\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1generic__randaccess__stl__iterator}{generic\_randaccess\_stl\_iterator<typename\ internal::add\_const<XprType>::type}}>\ const\_iterator;}
+\DoxyCodeLine{00265\ \};}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType>}
+\DoxyCodeLine{00268\ \textcolor{keyword}{class\ }generic\_randaccess\_stl\_iterator\ :\ \textcolor{keyword}{public}\ indexed\_based\_stl\_iterator\_base<generic\_randaccess\_stl\_iterator<XprType>\ >}
+\DoxyCodeLine{00269\ \{}
+\DoxyCodeLine{00270\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00271\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ value\_type;}
+\DoxyCodeLine{00272\ }
+\DoxyCodeLine{00273\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00276\ \ \ \ \ has\_direct\_access\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<XprType>::Flags}}\ \&\ \mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}})\ ?\ 1\ :\ 0,}
+\DoxyCodeLine{00277\ \ \ \ \ is\_lvalue\ \ =\ internal::is\_lvalue<XprType>::value}
+\DoxyCodeLine{00278\ \ \ \};}
+\DoxyCodeLine{00279\ }
+\DoxyCodeLine{00280\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_iterator\_base<generic\_randaccess\_stl\_iterator>\ Base;}
+\DoxyCodeLine{00281\ \ \ \textcolor{keyword}{using\ }Base::m\_index;}
+\DoxyCodeLine{00282\ \ \ \textcolor{keyword}{using\ }Base::mp\_xpr;}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \textcolor{comment}{//\ TODO\ currently\ const\ Transpose/Reshape\ expressions\ never\ returns\ const\ references,}}
+\DoxyCodeLine{00285\ \ \ \textcolor{comment}{//\ so\ lets\ return\ by\ value\ too.}}
+\DoxyCodeLine{00286\ \ \ \textcolor{comment}{//typedef\ typename\ internal::conditional<bool(has\_direct\_access),\ const\ value\_type\&,\ const\ value\_type>::type\ read\_only\_ref\_t;}}
+\DoxyCodeLine{00287\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ value\_type\ read\_only\_ref\_t;}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00290\ \ \ }
+\DoxyCodeLine{00291\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<bool(is\_lvalue),\ value\_type\ *,\ \textcolor{keyword}{const}\ value\_type\ *>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ pointer;}
+\DoxyCodeLine{00292\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<bool(is\_lvalue),\ value\_type\&,\ read\_only\_ref\_t>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ reference;}
+\DoxyCodeLine{00293\ \ \ }
+\DoxyCodeLine{00294\ \ \ generic\_randaccess\_stl\_iterator()\ :\ Base()\ \{\}}
+\DoxyCodeLine{00295\ \ \ generic\_randaccess\_stl\_iterator(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\ :\ Base(xpr,index)\ \{\}}
+\DoxyCodeLine{00296\ \ \ generic\_randaccess\_stl\_iterator(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ Base::non\_const\_iterator\&\ other)\ :\ Base(other)\ \{\}}
+\DoxyCodeLine{00297\ \ \ \textcolor{keyword}{using\ }Base::operator=;}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ reference\ operator*()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ \ \ (*mp\_xpr)(m\_index);\ \ \ \}}
+\DoxyCodeLine{00300\ \ \ reference\ operator[](\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \ \ (*mp\_xpr)(m\_index+i);\ \}}
+\DoxyCodeLine{00301\ \ \ pointer\ \ \ operator-\/>()\textcolor{keyword}{\ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ \&((*mp\_xpr)(m\_index));\ \}}
+\DoxyCodeLine{00302\ \};}
+\DoxyCodeLine{00303\ }
+\DoxyCodeLine{00304\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_XprType,\ DirectionType\ Direction>}
+\DoxyCodeLine{00305\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1indexed__based__stl__iterator__traits}{indexed\_based\_stl\_iterator\_traits}}<\mbox{\hyperlink{classEigen_1_1internal_1_1subvector__stl__iterator}{subvector\_stl\_iterator}}<\_XprType,Direction>\ >}
+\DoxyCodeLine{00306\ \{}
+\DoxyCodeLine{00307\ \ \ \textcolor{keyword}{typedef}\ \_XprType\ XprType;}
+\DoxyCodeLine{00308\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1subvector__stl__iterator}{subvector\_stl\_iterator<typename\ internal::remove\_const<XprType>::type}},\ Direction>\ non\_const\_iterator;}
+\DoxyCodeLine{00309\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1subvector__stl__iterator}{subvector\_stl\_iterator<typename\ internal::add\_const<XprType>::type}},\ Direction>\ const\_iterator;}
+\DoxyCodeLine{00310\ \};}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ DirectionType\ Direction>}
+\DoxyCodeLine{00313\ \textcolor{keyword}{class\ }subvector\_stl\_iterator\ :\ \textcolor{keyword}{public}\ indexed\_based\_stl\_iterator\_base<subvector\_stl\_iterator<XprType,Direction>\ >}
+\DoxyCodeLine{00314\ \{}
+\DoxyCodeLine{00315\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \ \ \textcolor{keyword}{enum}\ \{\ is\_lvalue\ \ =\ internal::is\_lvalue<XprType>::value\ \};}
+\DoxyCodeLine{00318\ }
+\DoxyCodeLine{00319\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_iterator\_base<subvector\_stl\_iterator>\ Base;}
+\DoxyCodeLine{00320\ \ \ \textcolor{keyword}{using\ }Base::m\_index;}
+\DoxyCodeLine{00321\ \ \ \textcolor{keyword}{using\ }Base::mp\_xpr;}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::conditional<Direction==Vertical,typename\ XprType::ColXpr,typename\ XprType::RowXpr>::type\ SubVectorType;}
+\DoxyCodeLine{00324\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::conditional<Direction==Vertical,typename\ XprType::ConstColXpr,typename\ XprType::ConstRowXpr>::type\ ConstSubVectorType;}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00328\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<bool(is\_lvalue),\ SubVectorType,\ ConstSubVectorType>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ reference;}
+\DoxyCodeLine{00329\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ reference::PlainObject\ value\_type;}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00332\ \ \ \textcolor{keyword}{class\ }subvector\_stl\_iterator\_ptr}
+\DoxyCodeLine{00333\ \ \ \{}
+\DoxyCodeLine{00334\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ subvector\_stl\_iterator\_ptr(\textcolor{keyword}{const}\ reference\ \&subvector)\ :\ m\_subvector(subvector)\ \{\}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ reference*\ operator-\/>()\ \{\ \textcolor{keywordflow}{return}\ \&m\_subvector;\ \}}
+\DoxyCodeLine{00337\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ reference\ m\_subvector;}
+\DoxyCodeLine{00339\ \ \ \};}
+\DoxyCodeLine{00340\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00341\ }
+\DoxyCodeLine{00342\ \ \ \textcolor{keyword}{typedef}\ subvector\_stl\_iterator\_ptr\ pointer;}
+\DoxyCodeLine{00343\ \ \ }
+\DoxyCodeLine{00344\ \ \ subvector\_stl\_iterator()\ :\ Base()\ \{\}}
+\DoxyCodeLine{00345\ \ \ subvector\_stl\_iterator(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\ :\ Base(xpr,index)\ \{\}}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \ \ reference\ operator*()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ (*mp\_xpr).template\ subVector<Direction>(m\_index);\ \}}
+\DoxyCodeLine{00348\ \ \ reference\ operator[](\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (*mp\_xpr).template\ subVector<Direction>(m\_index+i);\ \}}
+\DoxyCodeLine{00349\ \ \ pointer\ \ \ operator-\/>()\textcolor{keyword}{\ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ (*mp\_xpr).template\ subVector<Direction>(m\_index);\ \}}
+\DoxyCodeLine{00350\ \};}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_XprType,\ DirectionType\ Direction>}
+\DoxyCodeLine{00353\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1indexed__based__stl__iterator__traits}{indexed\_based\_stl\_iterator\_traits}}<\mbox{\hyperlink{classEigen_1_1internal_1_1subvector__stl__reverse__iterator}{subvector\_stl\_reverse\_iterator}}<\_XprType,Direction>\ >}
+\DoxyCodeLine{00354\ \{}
+\DoxyCodeLine{00355\ \ \ \textcolor{keyword}{typedef}\ \_XprType\ XprType;}
+\DoxyCodeLine{00356\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1subvector__stl__reverse__iterator}{subvector\_stl\_reverse\_iterator<typename\ internal::remove\_const<XprType>::type}},\ Direction>\ non\_const\_iterator;}
+\DoxyCodeLine{00357\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1subvector__stl__reverse__iterator}{subvector\_stl\_reverse\_iterator<typename\ internal::add\_const<XprType>::type}},\ Direction>\ const\_iterator;}
+\DoxyCodeLine{00358\ \};}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ DirectionType\ Direction>}
+\DoxyCodeLine{00361\ \textcolor{keyword}{class\ }subvector\_stl\_reverse\_iterator\ :\ \textcolor{keyword}{public}\ indexed\_based\_stl\_reverse\_iterator\_base<subvector\_stl\_reverse\_iterator<XprType,Direction>\ >}
+\DoxyCodeLine{00362\ \{}
+\DoxyCodeLine{00363\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \textcolor{keyword}{enum}\ \{\ is\_lvalue\ \ =\ internal::is\_lvalue<XprType>::value\ \};}
+\DoxyCodeLine{00366\ }
+\DoxyCodeLine{00367\ \ \ \textcolor{keyword}{typedef}\ indexed\_based\_stl\_reverse\_iterator\_base<subvector\_stl\_reverse\_iterator>\ Base;}
+\DoxyCodeLine{00368\ \ \ \textcolor{keyword}{using\ }Base::m\_index;}
+\DoxyCodeLine{00369\ \ \ \textcolor{keyword}{using\ }Base::mp\_xpr;}
+\DoxyCodeLine{00370\ }
+\DoxyCodeLine{00371\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::conditional<Direction==Vertical,typename\ XprType::ColXpr,typename\ XprType::RowXpr>::type\ SubVectorType;}
+\DoxyCodeLine{00372\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::conditional<Direction==Vertical,typename\ XprType::ConstColXpr,typename\ XprType::ConstRowXpr>::type\ ConstSubVectorType;}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00376\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<bool(is\_lvalue),\ SubVectorType,\ ConstSubVectorType>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ reference;}
+\DoxyCodeLine{00377\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ reference::PlainObject\ value\_type;}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00380\ \ \ \textcolor{keyword}{class\ }subvector\_stl\_reverse\_iterator\_ptr}
+\DoxyCodeLine{00381\ \ \ \{}
+\DoxyCodeLine{00382\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ subvector\_stl\_reverse\_iterator\_ptr(\textcolor{keyword}{const}\ reference\ \&subvector)\ :\ m\_subvector(subvector)\ \{\}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ reference*\ operator-\/>()\ \{\ \textcolor{keywordflow}{return}\ \&m\_subvector;\ \}}
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ reference\ m\_subvector;}
+\DoxyCodeLine{00387\ \ \ \};}
+\DoxyCodeLine{00388\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \ \ \textcolor{keyword}{typedef}\ subvector\_stl\_reverse\_iterator\_ptr\ pointer;}
+\DoxyCodeLine{00391\ \ \ }
+\DoxyCodeLine{00392\ \ \ subvector\_stl\_reverse\_iterator()\ :\ Base()\ \{\}}
+\DoxyCodeLine{00393\ \ \ subvector\_stl\_reverse\_iterator(XprType\&\ xpr,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\ :\ Base(xpr,index)\ \{\}}
+\DoxyCodeLine{00394\ }
+\DoxyCodeLine{00395\ \ \ reference\ operator*()\textcolor{keyword}{\ \ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ (*mp\_xpr).template\ subVector<Direction>(m\_index);\ \}}
+\DoxyCodeLine{00396\ \ \ reference\ operator[](\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (*mp\_xpr).template\ subVector<Direction>(m\_index+i);\ \}}
+\DoxyCodeLine{00397\ \ \ pointer\ \ \ operator-\/>()\textcolor{keyword}{\ \ \ \ \ \ \ \ const\ }\{\ \textcolor{keywordflow}{return}\ (*mp\_xpr).template\ subVector<Direction>(m\_index);\ \}}
+\DoxyCodeLine{00398\ \};}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00401\ }
+\DoxyCodeLine{00402\ \textcolor{comment}{}}
+\DoxyCodeLine{00403\ \textcolor{comment}{/**\ returns\ an\ iterator\ to\ the\ first\ element\ of\ the\ 1D\ vector\ or\ array}}
+\DoxyCodeLine{00404\ \textcolor{comment}{\ \ *\ \(\backslash\)only\_for\_vectors}}
+\DoxyCodeLine{00405\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ end(),\ cbegin()}}
+\DoxyCodeLine{00406\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00407\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00408\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::iterator\ \mbox{\hyperlink{classEigen_1_1DenseBase_a57591454af931f9dffa71c9da28d5641}{DenseBase<Derived>::begin}}()}
+\DoxyCodeLine{00409\ \{}
+\DoxyCodeLine{00410\ \ \ EIGEN\_STATIC\_ASSERT\_VECTOR\_ONLY(Derived);}
+\DoxyCodeLine{00411\ \ \ \textcolor{keywordflow}{return}\ iterator(derived(),\ 0);}
+\DoxyCodeLine{00412\ \}}
+\DoxyCodeLine{00413\ \textcolor{comment}{}}
+\DoxyCodeLine{00414\ \textcolor{comment}{/**\ const\ version\ of\ begin()\ */}}
+\DoxyCodeLine{00415\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00416\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::const\_iterator\ \mbox{\hyperlink{classEigen_1_1DenseBase_a57591454af931f9dffa71c9da28d5641}{DenseBase<Derived>::begin}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00417\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00418\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1DenseBase_ae9a3dfd9b826ba3103de0128576fb15b}{cbegin}}();}
+\DoxyCodeLine{00419\ \}}
+\DoxyCodeLine{00420\ \textcolor{comment}{}}
+\DoxyCodeLine{00421\ \textcolor{comment}{/**\ returns\ a\ read-\/only\ const\_iterator\ to\ the\ first\ element\ of\ the\ 1D\ vector\ or\ array}}
+\DoxyCodeLine{00422\ \textcolor{comment}{\ \ *\ \(\backslash\)only\_for\_vectors}}
+\DoxyCodeLine{00423\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ cend(),\ begin()}}
+\DoxyCodeLine{00424\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00425\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00426\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::const\_iterator\ \mbox{\hyperlink{classEigen_1_1DenseBase_ae9a3dfd9b826ba3103de0128576fb15b}{DenseBase<Derived>::cbegin}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00427\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00428\ \ \ EIGEN\_STATIC\_ASSERT\_VECTOR\_ONLY(Derived);}
+\DoxyCodeLine{00429\ \ \ \textcolor{keywordflow}{return}\ const\_iterator(derived(),\ 0);}
+\DoxyCodeLine{00430\ \}}
+\DoxyCodeLine{00431\ \textcolor{comment}{}}
+\DoxyCodeLine{00432\ \textcolor{comment}{/**\ returns\ an\ iterator\ to\ the\ element\ following\ the\ last\ element\ of\ the\ 1D\ vector\ or\ array}}
+\DoxyCodeLine{00433\ \textcolor{comment}{\ \ *\ \(\backslash\)only\_for\_vectors}}
+\DoxyCodeLine{00434\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ begin(),\ cend()}}
+\DoxyCodeLine{00435\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00436\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00437\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::iterator\ \mbox{\hyperlink{classEigen_1_1DenseBase_ae71d079e16d91360d10066b316b48485}{DenseBase<Derived>::end}}()}
+\DoxyCodeLine{00438\ \{}
+\DoxyCodeLine{00439\ \ \ EIGEN\_STATIC\_ASSERT\_VECTOR\_ONLY(Derived);}
+\DoxyCodeLine{00440\ \ \ \textcolor{keywordflow}{return}\ iterator(derived(),\ size());}
+\DoxyCodeLine{00441\ \}}
+\DoxyCodeLine{00442\ \textcolor{comment}{}}
+\DoxyCodeLine{00443\ \textcolor{comment}{/**\ const\ version\ of\ end()\ */}}
+\DoxyCodeLine{00444\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00445\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::const\_iterator\ \mbox{\hyperlink{classEigen_1_1DenseBase_ae71d079e16d91360d10066b316b48485}{DenseBase<Derived>::end}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00446\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00447\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1DenseBase_aeb3b76f02986c2af2521d07164b5ffde}{cend}}();}
+\DoxyCodeLine{00448\ \}}
+\DoxyCodeLine{00449\ \textcolor{comment}{}}
+\DoxyCodeLine{00450\ \textcolor{comment}{/**\ returns\ a\ read-\/only\ const\_iterator\ to\ the\ element\ following\ the\ last\ element\ of\ the\ 1D\ vector\ or\ array}}
+\DoxyCodeLine{00451\ \textcolor{comment}{\ \ *\ \(\backslash\)only\_for\_vectors}}
+\DoxyCodeLine{00452\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ begin(),\ cend()}}
+\DoxyCodeLine{00453\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00454\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00455\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::const\_iterator\ \mbox{\hyperlink{classEigen_1_1DenseBase_aeb3b76f02986c2af2521d07164b5ffde}{DenseBase<Derived>::cend}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00456\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00457\ \ \ EIGEN\_STATIC\_ASSERT\_VECTOR\_ONLY(Derived);}
+\DoxyCodeLine{00458\ \ \ \textcolor{keywordflow}{return}\ const\_iterator(derived(),\ size());}
+\DoxyCodeLine{00459\ \}}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \}\ \textcolor{comment}{//\ namespace\ Eigen}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_STLITERATORS\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,253 @@
+\doxysection{Indexed\+View.\+h}
+\hypertarget{IndexedView_8h_source}{}\label{IndexedView_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/IndexedView.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/IndexedView.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2017\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_INDEXED\_VIEW\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_INDEXED\_VIEW\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keyword}{typename}\ RowIndices,\ \textcolor{keyword}{typename}\ ColIndices>}
+\DoxyCodeLine{00018\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1IndexedView}{IndexedView}}<XprType,\ RowIndices,\ ColIndices>\ >}
+\DoxyCodeLine{00019\ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<XprType>}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ RowsAtCompileTime\ =\ int(array\_size<RowIndices>::value),}
+\DoxyCodeLine{00023\ \ \ \ \ ColsAtCompileTime\ =\ int(array\_size<ColIndices>::value),}
+\DoxyCodeLine{00024\ \ \ \ \ MaxRowsAtCompileTime\ =\ RowsAtCompileTime\ !=\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ int(RowsAtCompileTime)\ :\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00025\ \ \ \ \ MaxColsAtCompileTime\ =\ ColsAtCompileTime\ !=\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ int(ColsAtCompileTime)\ :\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \ \ XprTypeIsRowMajor\ =\ (int(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::Flags}})\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ !=\ 0,}
+\DoxyCodeLine{00028\ \ \ \ \ IsRowMajor\ =\ (MaxRowsAtCompileTime==1\&\&MaxColsAtCompileTime!=1)\ ?\ 1}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (MaxColsAtCompileTime==1\&\&MaxRowsAtCompileTime!=1)\ ?\ 0}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ XprTypeIsRowMajor,}
+\DoxyCodeLine{00031\ }
+\DoxyCodeLine{00032\ \ \ \ \ RowIncr\ =\ int(get\_compile\_time\_incr<RowIndices>::value),}
+\DoxyCodeLine{00033\ \ \ \ \ ColIncr\ =\ int(get\_compile\_time\_incr<ColIndices>::value),}
+\DoxyCodeLine{00034\ \ \ \ \ InnerIncr\ =\ IsRowMajor\ ?\ ColIncr\ :\ RowIncr,}
+\DoxyCodeLine{00035\ \ \ \ \ OuterIncr\ =\ IsRowMajor\ ?\ RowIncr\ :\ ColIncr,}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \ \ \ \ HasSameStorageOrderAsXprType\ =\ (IsRowMajor\ ==\ XprTypeIsRowMajor),}
+\DoxyCodeLine{00038\ \ \ \ \ XprInnerStride\ =\ HasSameStorageOrderAsXprType\ ?\ \textcolor{keywordtype}{int}(inner\_stride\_at\_compile\_time<XprType>::ret)\ :\ int(outer\_stride\_at\_compile\_time<XprType>::ret),}
+\DoxyCodeLine{00039\ \ \ \ \ XprOuterstride\ =\ HasSameStorageOrderAsXprType\ ?\ int(outer\_stride\_at\_compile\_time<XprType>::ret)\ :\ int(inner\_stride\_at\_compile\_time<XprType>::ret),}
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \ \ \ \ InnerSize\ =\ XprTypeIsRowMajor\ ?\ ColsAtCompileTime\ :\ RowsAtCompileTime,}
+\DoxyCodeLine{00042\ \ \ \ \ IsBlockAlike\ =\ InnerIncr==1\ \&\&\ OuterIncr==1,}
+\DoxyCodeLine{00043\ \ \ \ \ IsInnerPannel\ =\ HasSameStorageOrderAsXprType\ \&\&\ \mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same<AllRange<InnerSize>}},\textcolor{keyword}{typename}\ conditional<XprTypeIsRowMajor,ColIndices,RowIndices>::type>::value,}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \ \ \ \ InnerStrideAtCompileTime\ =\ InnerIncr<0\ ||\ InnerIncr==\mbox{\hyperlink{namespaceEigen_a73c597189a4a99127175e8167c456fff}{DynamicIndex}}\ ||\ XprInnerStride==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ XprInnerStride\ *\ InnerIncr,}
+\DoxyCodeLine{00046\ \ \ \ \ OuterStrideAtCompileTime\ =\ OuterIncr<0\ ||\ OuterIncr==\mbox{\hyperlink{namespaceEigen_a73c597189a4a99127175e8167c456fff}{DynamicIndex}}\ ||\ XprOuterstride==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ XprOuterstride\ *\ OuterIncr,}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ ReturnAsScalar\ =\ is\_same<RowIndices,SingleRange>::value\ \&\&\ is\_same<ColIndices,SingleRange>::value,}
+\DoxyCodeLine{00049\ \ \ \ \ ReturnAsBlock\ =\ (!ReturnAsScalar)\ \&\&\ IsBlockAlike,}
+\DoxyCodeLine{00050\ \ \ \ \ ReturnAsIndexedView\ =\ (!ReturnAsScalar)\ \&\&\ (!ReturnAsBlock),}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{comment}{//\ FIXME\ we\ deal\ with\ compile-\/time\ strides\ if\ and\ only\ if\ we\ have\ DirectAccessBit\ flag,}}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{comment}{//\ but\ this\ is\ too\ strict\ regarding\ negative\ strides...}}
+\DoxyCodeLine{00054\ \ \ \ \ DirectAccessMask\ =\ (\textcolor{keywordtype}{int}(InnerIncr)!=\mbox{\hyperlink{namespaceEigen_a06808a853a9baa38b23a5368e7491abd}{UndefinedIncr}}\ \&\&\ \textcolor{keywordtype}{int}(OuterIncr)!=\mbox{\hyperlink{namespaceEigen_a06808a853a9baa38b23a5368e7491abd}{UndefinedIncr}}\ \&\&\ InnerIncr>=0\ \&\&\ OuterIncr>=0)\ ?\ \mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00055\ \ \ \ \ FlagsRowMajorBit\ =\ IsRowMajor\ ?\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ :\ 0,}
+\DoxyCodeLine{00056\ \ \ \ \ FlagsLvalueBit\ =\ is\_lvalue<XprType>::value\ ?\ \mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}}\ :\ 0,}
+\DoxyCodeLine{00057\ \ \ \ \ FlagsLinearAccessBit\ =\ (RowsAtCompileTime\ ==\ 1\ ||\ ColsAtCompileTime\ ==\ 1)\ ?\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00058\ \ \ \ \ Flags\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::Flags}}\ \&\ (HereditaryBits\ |\ DirectAccessMask\ ))\ |\ FlagsLvalueBit\ |\ FlagsRowMajorBit\ |\ FlagsLinearAccessBit}
+\DoxyCodeLine{00059\ \ \ \};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Block}{Block<XprType,RowsAtCompileTime,ColsAtCompileTime,IsInnerPannel>}}\ BlockType;}
+\DoxyCodeLine{00062\ \};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keyword}{typename}\ RowIndices,\ \textcolor{keyword}{typename}\ ColIndices,\ \textcolor{keyword}{typename}\ StorageKind>}
+\DoxyCodeLine{00067\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1IndexedViewImpl}{IndexedViewImpl}};}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{}}
+\DoxyCodeLine{00070\ \textcolor{comment}{/**\ \(\backslash\)class\ IndexedView}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Expression\ of\ a\ non-\/sequential\ sub-\/matrix\ defined\ by\ arbitrary\ sequences\ of\ row\ and\ column\ indices}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ XprType\ the\ type\ of\ the\ expression\ in\ which\ we\ are\ taking\ the\ intersections\ of\ sub-\/rows\ and\ sub-\/columns}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ RowIndices\ the\ type\ of\ the\ object\ defining\ the\ sequence\ of\ row\ indices}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ ColIndices\ the\ type\ of\ the\ object\ defining\ the\ sequence\ of\ column\ indices}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ *\ This\ class\ represents\ an\ expression\ of\ a\ sub-\/matrix\ (or\ sub-\/vector)\ defined\ as\ the\ intersection}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ *\ of\ sub-\/sets\ of\ rows\ and\ columns,\ that\ are\ themself\ defined\ by\ generic\ sequences\ of\ row\ indices\ \(\backslash\)f\$\ \(\backslash\)\{r\_0,r\_1,..r\_\{m-\/1\}\(\backslash\)\}\ \(\backslash\)f\$}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ *\ and\ column\ indices\ \(\backslash\)f\$\ \(\backslash\)\{c\_0,c\_1,..c\_\{n-\/1\}\ \(\backslash\)\}\(\backslash\)f\$.\ Let\ \(\backslash\)f\$\ A\ \(\backslash\)f\$\ \ be\ the\ nested\ matrix,\ then\ the\ resulting\ matrix\ \(\backslash\)f\$\ B\ \(\backslash\)f\$\ has\ \(\backslash\)c\ m}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ *\ rows\ and\ \(\backslash\)c\ n\ columns,\ and\ its\ entries\ are\ given\ by:\ \(\backslash\)f\$\ B(i,j)\ =\ A(r\_i,c\_j)\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ *\ The\ \(\backslash\)c\ RowIndices\ and\ \(\backslash\)c\ ColIndices\ types\ must\ be\ compatible\ with\ the\ following\ API:}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ *\ <integral\ type>\ operator[](Index)\ const;}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ *\ Index\ size()\ const;}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ *\ Typical\ supported\ types\ thus\ include:}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ *\ \ -\/\ std::vector<int>}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ *\ \ -\/\ std::valarray<int>}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ *\ \ -\/\ std::array<int>}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ *\ \ -\/\ Plain\ C\ arrays:\ int[N]}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ *\ \ -\/\ Eigen::ArrayXi}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ *\ \ -\/\ decltype(ArrayXi::LinSpaced(...))}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ *\ \ -\/\ Any\ view/expressions\ of\ the\ previous\ types}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ *\ \ -\/\ Eigen::ArithmeticSequence}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ *\ \ -\/\ Eigen::internal::AllRange\ \ \ \ \ \ (helper\ for\ Eigen::all)}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ *\ \ -\/\ Eigen::internal::SingleRange\ \ (helper\ for\ single\ index)}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ \ *\ \ -\/\ etc.}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ \ *\ In\ typical\ usages\ of\ \%Eigen,\ this\ class\ should\ never\ be\ used\ directly.\ It\ is\ the\ return\ type\ of}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ *\ DenseBase::operator()(const\ RowIndices\&,\ const\ ColIndices\&).}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ Block}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00108\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keyword}{typename}\ RowIndices,\ \textcolor{keyword}{typename}\ ColIndices>}
+\DoxyCodeLine{00109\ \textcolor{keyword}{class\ }IndexedView\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1IndexedViewImpl}{IndexedViewImpl}}<XprType,\ RowIndices,\ ColIndices,\ typename\ internal::traits<XprType>::StorageKind>}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00112\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1IndexedViewImpl}{IndexedViewImpl<XprType,\ RowIndices,\ ColIndices,\ typename\ internal::traits<XprType>::StorageKind}}>::Base\ Base;}
+\DoxyCodeLine{00113\ \ \ EIGEN\_GENERIC\_PUBLIC\_INTERFACE(IndexedView)}
+\DoxyCodeLine{00114\ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(IndexedView)}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::ref\_selector<XprType>::non\_const\_type\ MatrixTypeNested;}
+\DoxyCodeLine{00117\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::remove\_all<XprType>::type\ NestedExpression;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T0,\ \textcolor{keyword}{typename}\ T1>}
+\DoxyCodeLine{00120\ \ \ IndexedView(XprType\&\ xpr,\ \textcolor{keyword}{const}\ T0\&\ \mbox{\hyperlink{classEigen_1_1IndexedView_a111af48fc1feadaa734c2321dd6def19}{rowIndices}},\ \textcolor{keyword}{const}\ T1\&\ \mbox{\hyperlink{classEigen_1_1IndexedView_a5f2adba009f83eaa778b3f2fe0051287}{colIndices}})}
+\DoxyCodeLine{00121\ \ \ \ \ :\ m\_xpr(xpr),\ m\_rowIndices(\mbox{\hyperlink{classEigen_1_1IndexedView_a111af48fc1feadaa734c2321dd6def19}{rowIndices}}),\ m\_colIndices(\mbox{\hyperlink{classEigen_1_1IndexedView_a5f2adba009f83eaa778b3f2fe0051287}{colIndices}})}
+\DoxyCodeLine{00122\ \ \ \{\}}
+\DoxyCodeLine{00123\ \textcolor{comment}{}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ number\ of\ rows\ */}}
+\DoxyCodeLine{00125\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1IndexedView_ae0d840059e7753d58f3de53da7d04ce0}{rows}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ internal::index\_list\_size(m\_rowIndices);\ \}}
+\DoxyCodeLine{00126\ \textcolor{comment}{}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ number\ of\ columns\ */}}
+\DoxyCodeLine{00128\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1IndexedView_a6d5f355dd721df6d39482a04e5ffd44d}{cols}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ internal::index\_list\_size(m\_colIndices);\ \}}
+\DoxyCodeLine{00129\ \textcolor{comment}{}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ nested\ expression\ */}}
+\DoxyCodeLine{00131\ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ internal::remove\_all<XprType>::type\&}
+\DoxyCodeLine{00132\ \ \ \mbox{\hyperlink{classEigen_1_1IndexedView_adce77031ea75ef0a91b9dfce9034c92a}{nestedExpression}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_xpr;\ \}}
+\DoxyCodeLine{00133\ \textcolor{comment}{}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ nested\ expression\ */}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keyword}{typename}\ internal::remove\_reference<XprType>::type\&}
+\DoxyCodeLine{00136\ \ \ \mbox{\hyperlink{classEigen_1_1IndexedView_a73c506f06b05eaba6f11e1a586ae8b2e}{nestedExpression}}()\ \{\ \textcolor{keywordflow}{return}\ m\_xpr;\ \}}
+\DoxyCodeLine{00137\ \textcolor{comment}{}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ a\ const\ reference\ to\ the\ object\ storing/generating\ the\ row\ indices\ */}}
+\DoxyCodeLine{00139\ \ \ \textcolor{keyword}{const}\ RowIndices\&\ \mbox{\hyperlink{classEigen_1_1IndexedView_a111af48fc1feadaa734c2321dd6def19}{rowIndices}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_rowIndices;\ \}}
+\DoxyCodeLine{00140\ \textcolor{comment}{}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ a\ const\ reference\ to\ the\ object\ storing/generating\ the\ column\ indices\ */}}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{const}\ ColIndices\&\ \mbox{\hyperlink{classEigen_1_1IndexedView_a5f2adba009f83eaa778b3f2fe0051287}{colIndices}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_colIndices;\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00145\ \ \ MatrixTypeNested\ m\_xpr;}
+\DoxyCodeLine{00146\ \ \ RowIndices\ m\_rowIndices;}
+\DoxyCodeLine{00147\ \ \ ColIndices\ m\_colIndices;}
+\DoxyCodeLine{00148\ \};}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ Generic\ API\ dispatcher}}
+\DoxyCodeLine{00152\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keyword}{typename}\ RowIndices,\ \textcolor{keyword}{typename}\ ColIndices,\ \textcolor{keyword}{typename}\ StorageKind>}
+\DoxyCodeLine{00153\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1IndexedViewImpl}{IndexedViewImpl}}}
+\DoxyCodeLine{00154\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{internal::generic\_xpr\_base}}<IndexedView<XprType,\ RowIndices,\ ColIndices>\ >::type}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00157\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{internal::generic\_xpr\_base<IndexedView<XprType,\ RowIndices,\ ColIndices>}}\ >::type\ Base;}
+\DoxyCodeLine{00158\ \};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ArgType,\ \textcolor{keyword}{typename}\ RowIndices,\ \textcolor{keyword}{typename}\ ColIndices>}
+\DoxyCodeLine{00164\ \textcolor{keyword}{struct\ }unary\_evaluator<\mbox{\hyperlink{classEigen_1_1IndexedView}{IndexedView}}<ArgType,\ RowIndices,\ ColIndices>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1IndexBased}{IndexBased}}>}
+\DoxyCodeLine{00165\ \ \ :\ evaluator\_base<IndexedView<ArgType,\ RowIndices,\ ColIndices>\ >}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1IndexedView}{IndexedView<ArgType,\ RowIndices,\ ColIndices>}}\ XprType;}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00170\ \ \ \ \ CoeffReadCost\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<ArgType>::CoeffReadCost}}\ \textcolor{comment}{/*\ TODO\ +\ cost\ of\ row/col\ index\ */},}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ FlagsLinearAccessBit\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::RowsAtCompileTime}}\ ==\ 1\ ||\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::ColsAtCompileTime}}\ ==\ 1)\ ?\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}\ :\ 0,}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \ \ FlagsRowMajorBit\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::FlagsRowMajorBit}},\ }
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \ \ \ \ Flags\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<ArgType>::Flags}}\ \&\ (HereditaryBits\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{\string~RowMajorBit}}\ \textcolor{comment}{/*|\ LinearAccessBit\ |\ DirectAccessBit*/}))\ |\ FlagsLinearAccessBit\ |\ FlagsRowMajorBit,}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \ \ \ \ Alignment\ =\ 0}
+\DoxyCodeLine{00179\ \ \ \};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{explicit}\ unary\_evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)\ :\ m\_argImpl(xpr.\mbox{\hyperlink{classEigen_1_1IndexedView_adce77031ea75ef0a91b9dfce9034c92a}{nestedExpression}}()),\ m\_xpr(xpr)}
+\DoxyCodeLine{00182\ \ \ \{}
+\DoxyCodeLine{00183\ \ \ \ \ EIGEN\_INTERNAL\_CHECK\_COST\_VALUE(CoeffReadCost);}
+\DoxyCodeLine{00184\ \ \ \}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ Scalar;}
+\DoxyCodeLine{00187\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::CoeffReturnType\ CoeffReturnType;}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00190\ \ \ CoeffReturnType\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00191\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00192\ \ \ \ \ eigen\_assert(m\_xpr.rowIndices()[row]\ >=\ 0\ \&\&\ m\_xpr.rowIndices()[row]\ <\ m\_xpr.nestedExpression().rows()}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_xpr.colIndices()[col]\ >=\ 0\ \&\&\ m\_xpr.colIndices()[col]\ <\ m\_xpr.nestedExpression().cols());}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeff(m\_xpr.rowIndices()[row],\ m\_xpr.colIndices()[col]);}
+\DoxyCodeLine{00195\ \ \ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00198\ \ \ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col)}
+\DoxyCodeLine{00199\ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ eigen\_assert(m\_xpr.rowIndices()[row]\ >=\ 0\ \&\&\ m\_xpr.rowIndices()[row]\ <\ m\_xpr.nestedExpression().rows()}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_xpr.colIndices()[col]\ >=\ 0\ \&\&\ m\_xpr.colIndices()[col]\ <\ m\_xpr.nestedExpression().cols());}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(m\_xpr.rowIndices()[row],\ m\_xpr.colIndices()[col]);}
+\DoxyCodeLine{00203\ \ \ \}}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00206\ \ \ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)}
+\DoxyCodeLine{00207\ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ EIGEN\_STATIC\_ASSERT\_LVALUE(XprType)}
+\DoxyCodeLine{00209\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row\ =\ XprType::RowsAtCompileTime\ ==\ 1\ ?\ 0\ :\ index;}
+\DoxyCodeLine{00210\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col\ =\ XprType::RowsAtCompileTime\ ==\ 1\ ?\ index\ :\ 0;}
+\DoxyCodeLine{00211\ \ \ \ \ eigen\_assert(m\_xpr.rowIndices()[row]\ >=\ 0\ \&\&\ m\_xpr.rowIndices()[row]\ <\ m\_xpr.nestedExpression().rows()}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_xpr.colIndices()[col]\ >=\ 0\ \&\&\ m\_xpr.colIndices()[col]\ <\ m\_xpr.nestedExpression().cols());}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(\ m\_xpr.rowIndices()[row],\ m\_xpr.colIndices()[col]);}
+\DoxyCodeLine{00214\ \ \ \}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00217\ \ \ \textcolor{keyword}{const}\ Scalar\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00218\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00219\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row\ =\ XprType::RowsAtCompileTime\ ==\ 1\ ?\ 0\ :\ index;}
+\DoxyCodeLine{00220\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col\ =\ XprType::RowsAtCompileTime\ ==\ 1\ ?\ index\ :\ 0;}
+\DoxyCodeLine{00221\ \ \ \ \ eigen\_assert(m\_xpr.rowIndices()[row]\ >=\ 0\ \&\&\ m\_xpr.rowIndices()[row]\ <\ m\_xpr.nestedExpression().rows()}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_xpr.colIndices()[col]\ >=\ 0\ \&\&\ m\_xpr.colIndices()[col]\ <\ m\_xpr.nestedExpression().cols());}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeffRef(\ m\_xpr.rowIndices()[row],\ m\_xpr.colIndices()[col]);}
+\DoxyCodeLine{00224\ \ \ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00227\ \ \ \textcolor{keyword}{const}\ CoeffReturnType\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00228\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00229\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row\ =\ XprType::RowsAtCompileTime\ ==\ 1\ ?\ 0\ :\ index;}
+\DoxyCodeLine{00230\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col\ =\ XprType::RowsAtCompileTime\ ==\ 1\ ?\ index\ :\ 0;}
+\DoxyCodeLine{00231\ \ \ \ \ eigen\_assert(m\_xpr.rowIndices()[row]\ >=\ 0\ \&\&\ m\_xpr.rowIndices()[row]\ <\ m\_xpr.nestedExpression().rows()}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ m\_xpr.colIndices()[col]\ >=\ 0\ \&\&\ m\_xpr.colIndices()[col]\ <\ m\_xpr.nestedExpression().cols());}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_argImpl.coeff(\ m\_xpr.rowIndices()[row],\ m\_xpr.colIndices()[col]);}
+\DoxyCodeLine{00234\ \ \ \}}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<ArgType>}}\ m\_argImpl;}
+\DoxyCodeLine{00239\ \ \ \textcolor{keyword}{const}\ XprType\&\ m\_xpr;}
+\DoxyCodeLine{00240\ }
+\DoxyCodeLine{00241\ \};}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_INDEXED\_VIEW\_H}}
+
+\end{DoxyCode}

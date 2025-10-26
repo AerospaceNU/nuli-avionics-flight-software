@@ -1,0 +1,400 @@
+\doxysection{Incomplete\+Cholesky.\+h}
+\hypertarget{IncompleteCholesky_8h_source}{}\label{IncompleteCholesky_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/IterativeLinearSolvers/IncompleteCholesky.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/IterativeLinearSolvers/IncompleteCholesky.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Désiré\ Nuentsa-\/Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2015\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_INCOMPLETE\_CHOlESKY\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_INCOMPLETE\_CHOlESKY\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <vector>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#include\ <list>}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\textcolor{comment}{}}
+\DoxyCodeLine{00018\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Modified\ Incomplete\ Cholesky\ with\ dual\ threshold}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *\ References\ :\ C-\/J.\ Lin\ and\ J.\ J.\ Moré,\ Incomplete\ Cholesky\ Factorizations\ with}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ Limited\ memory,\ SIAM\ J.\ Sci.\ Comput.\ \ 21(1),\ pp.\ 24-\/45,\ 1999}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Scalar\ the\ scalar\ type\ of\ the\ input\ matrices}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_UpLo\ The\ triangular\ part\ that\ will\ be\ used\ for\ the\ computations.\ It\ can\ be\ Lower}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ or\ Upper.\ Default\ is\ Lower.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_OrderingType\ The\ ordering\ method\ to\ use,\ either\ AMDOrdering<>\ or\ NaturalOrdering<>.\ Default\ is\ AMDOrdering<int>,}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ unless\ EIGEN\_MPL2\_ONLY\ is\ defined,\ in\ which\ case\ the\ default\ is\ NaturalOrdering<int>.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ *\ It\ performs\ the\ following\ incomplete\ factorization:\ \(\backslash\)f\$\ S\ P\ A\ P'\ S\ \(\backslash\)approx\ L\ L'\ \(\backslash\)f\$}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *\ where\ L\ is\ a\ lower\ triangular\ factor,\ S\ is\ a\ diagonal\ scaling\ matrix,\ and\ P\ is\ a}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ *\ fill-\/in\ reducing\ permutation\ as\ computed\ by\ the\ ordering\ method.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ \(\backslash\)b\ Shifting\ \(\backslash\)b\ strategy:\ Let\ \(\backslash\)f\$\ B\ =\ S\ P\ A\ P'\ S\ \(\backslash\)f\$\ \ be\ the\ scaled\ matrix\ on\ which\ the\ factorization\ is\ carried\ out,}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ and\ \(\backslash\)f\$\ \(\backslash\)beta\ \(\backslash\)f\$\ be\ the\ minimum\ value\ of\ the\ diagonal.\ If\ \(\backslash\)f\$\ \(\backslash\)beta\ >\ 0\ \(\backslash\)f\$\ then,\ the\ factorization\ is\ directly\ performed}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *\ on\ the\ matrix\ B.\ Otherwise,\ the\ factorization\ is\ performed\ on\ the\ shifted\ matrix\ \(\backslash\)f\$\ B\ +\ (\(\backslash\)sigma+|\(\backslash\)beta|\ I\ \(\backslash\)f\$\ where}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ \(\backslash\)f\$\ \(\backslash\)sigma\ \(\backslash\)f\$\ is\ the\ initial\ shift\ value\ as\ returned\ and\ set\ by\ setInitialShift()\ method.\ The\ default\ value\ is\ \(\backslash\)f\$\ \(\backslash\)sigma\ =\ 10\string^\{-\/3\}\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ If\ the\ factorization\ fails,\ then\ the\ shift\ in\ doubled\ until\ it\ succeed\ or\ a\ maximum\ of\ ten\ attempts.\ If\ it\ still\ fails,\ as\ returned\ by}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ the\ info()\ method,\ then\ you\ can\ either\ increase\ the\ initial\ shift,\ or\ better\ use\ another\ preconditioning\ technique.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00044\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ \_UpLo\ =\ Lower,\ \textcolor{keyword}{typename}\ \_OrderingType\ =\ AMDOrdering<\textcolor{keywordtype}{int}>\ >}
+\DoxyCodeLine{00045\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1IncompleteCholesky_adaaa3975b8cf53f910d6a3344af92379}{IncompleteCholesky}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}<IncompleteCholesky<Scalar,\_UpLo,\_OrderingType>\ >}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase<IncompleteCholesky<Scalar,\_UpLo,\_OrderingType>}}\ >\ Base;}
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_isInitialized;}
+\DoxyCodeLine{00050\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keyword}{typedef}\ \_OrderingType\ OrderingType;}
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ OrderingType::PermutationType\ PermutationType;}
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ PermutationType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<Scalar,ColMajor,StorageIndex>}}\ FactorType;}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,Dynamic,1>}}\ VectorSx;}
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<RealScalar,Dynamic,1>}}\ VectorRx;}
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<StorageIndex,Dynamic,\ 1>}}\ VectorIx;}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{typedef}\ std::vector<std::list<StorageIndex>\ >\ VectorList;}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ UpLo\ =\ \_UpLo\ \};}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ ColsAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}}
+\DoxyCodeLine{00064\ \ \ \ \ \};}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00066\ \textcolor{comment}{}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ /**\ Default\ constructor\ leaving\ the\ object\ in\ a\ partly\ non-\/initialized\ stage.}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ \ \ \ \ \ *\ You\ must\ call\ compute()\ or\ the\ pair\ analyzePattern()/factorize()\ to\ make\ it\ valid.}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ IncompleteCholesky(const\ MatrixType\&)}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00073\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_adaaa3975b8cf53f910d6a3344af92379}{IncompleteCholesky}}()\ :\ m\_initialShift(1e-\/3),m\_analysisIsOk(false),m\_factorizationIsOk(false)\ \{\}}
+\DoxyCodeLine{00074\ \textcolor{comment}{}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ /**\ Constructor\ computing\ the\ incomplete\ factorization\ for\ the\ given\ matrix\ \(\backslash\)a\ matrix.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a757499fc814988a5b112b1f34d0295e1}{IncompleteCholesky}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ matrix)\ :\ m\_initialShift(1e-\/3),m\_analysisIsOk(false),m\_factorizationIsOk(false)}
+\DoxyCodeLine{00079\ \ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a7966bedeebbeaa7a8fe4dd1da3797a0b}{compute}}(matrix);}
+\DoxyCodeLine{00081\ \ \ \ \ \}}
+\DoxyCodeLine{00082\ \textcolor{comment}{}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ number\ of\ rows\ of\ the\ factored\ matrix\ */}}
+\DoxyCodeLine{00084\ \ \ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a773e54c9ac272b998430bd27d2889277}{rows}}()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_L.rows();\ \}}
+\DoxyCodeLine{00085\ \textcolor{comment}{}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ number\ of\ columns\ of\ the\ factored\ matrix\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_ac78d2b46d4071963d3cab4a762de6129}{cols}}()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_L.cols();\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{comment}{}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Reports\ whether\ previous\ computation\ was\ successful.}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ \ \ \ \ *\ It\ triggers\ an\ assertion\ if\ \(\backslash\)c\ *this\ has\ not\ been\ initialized\ through\ the\ respective\ constructor,}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ \ \ \ \ *\ or\ a\ call\ to\ compute()\ or\ analyzePattern().}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \(\backslash\)c\ Success\ if\ computation\ was\ successful,}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \(\backslash\)c\ NumericalIssue\ if\ the\ matrix\ appears\ to\ be\ negative.}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00098\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_ada0e68cb22601849464506f5986a88c1}{info}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00099\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}IncompleteCholesky\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_info;}
+\DoxyCodeLine{00102\ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \textcolor{comment}{}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Set\ the\ initial\ shift\ parameter\ \(\backslash\)f\$\ \(\backslash\)sigma\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a409c9586e7d29566dda2c8f5e38a1228}{setInitialShift}}(RealScalar\ shift)\ \{\ m\_initialShift\ =\ shift;\ \}}
+\DoxyCodeLine{00107\ \textcolor{comment}{}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Computes\ the\ fill\ reducing\ permutation\ vector\ using\ the\ sparsity\ pattern\ of\ \(\backslash\)a\ mat}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a702560ecdddef77dc51d20ab22bd974e}{analyzePattern}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ mat)}
+\DoxyCodeLine{00112\ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ OrderingType\ ord;}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ PermutationType\ pinv;}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ ord(mat.template\ selfadjointView<UpLo>(),\ pinv);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(pinv.size()>0)\ m\_perm\ =\ pinv.inverse();}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_perm.resize(0);}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ m\_L.resize(mat.rows(),\ mat.cols());}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ m\_analysisIsOk\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00122\ \ \ \ \ \}}
+\DoxyCodeLine{00123\ \textcolor{comment}{}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Performs\ the\ numerical\ factorization\ of\ the\ input\ matrix\ \(\backslash\)a\ mat}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ method\ analyzePattern()\ or\ compute()\ must\ have\ been\ called\ beforehand}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ \ \ \ \ *\ with\ a\ matrix\ having\ the\ same\ pattern.}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute(),\ analyzePattern()}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_ac39c75ff7ca5d2db9a9f03b937e12601}{factorize}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ mat);}
+\DoxyCodeLine{00133\ \textcolor{comment}{}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ \ \ /**\ Computes\ or\ re-\/computes\ the\ incomplete\ Cholesky\ factorization\ of\ the\ input\ matrix\ \(\backslash\)a\ mat}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ \ \ \ \ \ *\ It\ is\ a\ shortcut\ for\ a\ sequential\ call\ to\ the\ analyzePattern()\ and\ factorize()\ methods.}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ analyzePattern(),\ factorize()}}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a7966bedeebbeaa7a8fe4dd1da3797a0b}{compute}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ mat)}
+\DoxyCodeLine{00142\ \ \ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a702560ecdddef77dc51d20ab22bd974e}{analyzePattern}}(mat);}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_ac39c75ff7ca5d2db9a9f03b937e12601}{factorize}}(mat);}
+\DoxyCodeLine{00145\ \ \ \ \ \}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{comment}{//\ internal}}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keywordtype}{void}\ \_solve\_impl(\textcolor{keyword}{const}\ Rhs\&\ b,\ Dest\&\ x)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00150\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}factorize()\ should\ be\ called\ first"{}});}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_perm.rows()\ ==\ b.rows())\ \ x\ =\ m\_perm\ *\ b;}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ x\ =\ b;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ x\ =\ m\_scale.asDiagonal()\ *\ x;}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ x\ =\ m\_L.template\ triangularView<Lower>().solve(x);}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ x\ =\ m\_L.adjoint().template\ triangularView<Upper>().solve(x);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ x\ =\ m\_scale.asDiagonal()\ *\ x;}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_perm.rows()\ ==\ b.rows())}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ x\ =\ m\_perm.inverse()\ *\ x;}
+\DoxyCodeLine{00160\ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \textcolor{comment}{}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ sparse\ lower\ triangular\ factor\ L\ */}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{const}\ FactorType\&\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_ae731a1e5b3e8d86b4eb87fd07a4e3532}{matrixL}}()\textcolor{keyword}{\ const\ }\{\ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}factorize()\ should\ be\ called\ first"{}});\ \textcolor{keywordflow}{return}\ m\_L;\ \}}
+\DoxyCodeLine{00164\ \textcolor{comment}{}}
+\DoxyCodeLine{00165\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ a\ vector\ representing\ the\ scaling\ factor\ S\ */}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{const}\ VectorRx\&\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_a781d291f3dc3cb5fd339ab99a18cddd0}{scalingS}}()\textcolor{keyword}{\ const\ }\{\ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}factorize()\ should\ be\ called\ first"{}});\ \textcolor{keywordflow}{return}\ m\_scale;\ \}}
+\DoxyCodeLine{00167\ \textcolor{comment}{}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ fill-\/in\ reducing\ permutation\ P\ (can\ be\ empty\ for\ a\ natural\ ordering)\ */}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{const}\ PermutationType\&\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_abd97f2b0c2463f009edbe8f9f7e6599a}{permutationP}}()\textcolor{keyword}{\ const\ }\{\ eigen\_assert(m\_analysisIsOk\ \&\&\ \textcolor{stringliteral}{"{}analyzePattern()\ should\ be\ called\ first"{}});\ \textcolor{keywordflow}{return}\ m\_perm;\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00172\ \ \ \ \ FactorType\ m\_L;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ lower\ part\ stored\ in\ CSC}}
+\DoxyCodeLine{00173\ \ \ \ \ VectorRx\ m\_scale;\ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ The\ vector\ for\ scaling\ the\ matrix}}
+\DoxyCodeLine{00174\ \ \ \ \ RealScalar\ m\_initialShift;\ \ \ \textcolor{comment}{//\ The\ initial\ shift\ parameter}}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_analysisIsOk;}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_factorizationIsOk;}
+\DoxyCodeLine{00177\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ m\_info;}
+\DoxyCodeLine{00178\ \ \ \ \ PermutationType\ m\_perm;}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ updateList(\mbox{\hyperlink{classEigen_1_1Ref}{Ref<const\ VectorIx>}}\ colPtr,\ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<VectorIx>}}\ rowIdx,\ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<VectorSx>}}\ vals,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ col,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ jk,\ VectorIx\&\ firstElt,\ VectorList\&\ listCol);}
+\DoxyCodeLine{00182\ \};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \textcolor{comment}{//\ Based\ on\ the\ following\ paper:}}
+\DoxyCodeLine{00185\ \textcolor{comment}{//\ \ \ C-\/J.\ Lin\ and\ J.\ J.\ Moré,\ Incomplete\ Cholesky\ Factorizations\ with}}
+\DoxyCodeLine{00186\ \textcolor{comment}{//\ \ \ Limited\ memory,\ SIAM\ J.\ Sci.\ Comput.\ \ 21(1),\ pp.\ 24-\/45,\ 1999}}
+\DoxyCodeLine{00187\ \textcolor{comment}{//\ \ \ http://ftp.mcs.anl.gov/pub/tech\_reports/reports/P682.pdf}}
+\DoxyCodeLine{00188\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ \_UpLo,\ \textcolor{keyword}{typename}\ OrderingType>}
+\DoxyCodeLine{00189\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>}
+\DoxyCodeLine{00190\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1IncompleteCholesky_ac39c75ff7ca5d2db9a9f03b937e12601}{IncompleteCholesky<Scalar,\_UpLo,\ OrderingType>::factorize}}(\textcolor{keyword}{const}\ \_MatrixType\&\ mat)}
+\DoxyCodeLine{00191\ \{}
+\DoxyCodeLine{00192\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00193\ \ \ eigen\_assert(m\_analysisIsOk\ \&\&\ \textcolor{stringliteral}{"{}analyzePattern()\ should\ be\ called\ first"{}});}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \textcolor{comment}{//\ Dropping\ strategy\ :\ Keep\ only\ the\ p\ largest\ elements\ per\ column,\ where\ p\ is\ the\ number\ of\ elements\ in\ the\ column\ of\ the\ original\ matrix.\ Other\ strategies\ will\ be\ added}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \textcolor{comment}{//\ Apply\ the\ fill-\/reducing\ permutation\ computed\ in\ analyzePattern()}}
+\DoxyCodeLine{00198\ \ \ \textcolor{keywordflow}{if}\ (m\_perm.rows()\ ==\ mat.rows()\ )\ \textcolor{comment}{//\ To\ detect\ the\ null\ permutation}}
+\DoxyCodeLine{00199\ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \textcolor{comment}{//\ The\ temporary\ is\ needed\ to\ make\ sure\ that\ the\ diagonal\ entry\ is\ properly\ sorted}}
+\DoxyCodeLine{00201\ \ \ \ \ FactorType\ tmp(mat.rows(),\ mat.cols());}
+\DoxyCodeLine{00202\ \ \ \ \ tmp\ =\ mat.template\ selfadjointView<\_UpLo>().twistedBy(m\_perm);}
+\DoxyCodeLine{00203\ \ \ \ \ m\_L.template\ selfadjointView<Lower>()\ =\ tmp.template\ selfadjointView<Lower>();}
+\DoxyCodeLine{00204\ \ \ \}}
+\DoxyCodeLine{00205\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00206\ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ m\_L.template\ selfadjointView<Lower>()\ =\ mat.template\ selfadjointView<\_UpLo>();}
+\DoxyCodeLine{00208\ \ \ \}}
+\DoxyCodeLine{00209\ }
+\DoxyCodeLine{00210\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ m\_L.cols();}
+\DoxyCodeLine{00211\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nnz\ =\ m\_L.nonZeros();}
+\DoxyCodeLine{00212\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<VectorSx>}}\ vals(m\_L.valuePtr(),\ nnz);\ \ \ \ \ \ \ \ \ \textcolor{comment}{//values}}
+\DoxyCodeLine{00213\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<VectorIx>}}\ rowIdx(m\_L.innerIndexPtr(),\ nnz);\ \ \textcolor{comment}{//Row\ indices}}
+\DoxyCodeLine{00214\ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<VectorIx>}}\ colPtr(\ m\_L.outerIndexPtr(),\ n+1);\ \textcolor{comment}{//\ Pointer\ to\ the\ beginning\ of\ each\ row}}
+\DoxyCodeLine{00215\ \ \ VectorIx\ firstElt(n-\/1);\ \textcolor{comment}{//\ for\ each\ j,\ points\ to\ the\ next\ entry\ in\ vals\ that\ will\ be\ used\ in\ the\ factorization}}
+\DoxyCodeLine{00216\ \ \ VectorList\ listCol(n);\ \ \textcolor{comment}{//\ listCol(j)\ is\ a\ linked\ list\ of\ columns\ to\ update\ column\ j}}
+\DoxyCodeLine{00217\ \ \ VectorSx\ col\_vals(n);\ \ \ \textcolor{comment}{//\ Store\ a\ \ nonzero\ values\ in\ each\ column}}
+\DoxyCodeLine{00218\ \ \ VectorIx\ col\_irow(n);\ \ \ \textcolor{comment}{//\ Row\ indices\ of\ nonzero\ elements\ in\ each\ column}}
+\DoxyCodeLine{00219\ \ \ VectorIx\ col\_pattern(n);}
+\DoxyCodeLine{00220\ \ \ col\_pattern.fill(-\/1);}
+\DoxyCodeLine{00221\ \ \ StorageIndex\ col\_nnz;}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \ \ \textcolor{comment}{//\ Computes\ the\ scaling\ factors}}
+\DoxyCodeLine{00225\ \ \ m\_scale.resize(n);}
+\DoxyCodeLine{00226\ \ \ m\_scale.setZero();}
+\DoxyCodeLine{00227\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ n;\ j++)}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ colPtr[j];\ k\ <\ colPtr[j+1];\ k++)}
+\DoxyCodeLine{00229\ \ \ \ \ \{}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ m\_scale(j)\ +=\ numext::abs2(vals(k));}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(rowIdx[k]!=j)}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ m\_scale(rowIdx[k])\ +=\ numext::abs2(vals(k));}
+\DoxyCodeLine{00233\ \ \ \ \ \}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \ \ m\_scale\ =\ m\_scale.cwiseSqrt().cwiseSqrt();}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ n;\ ++j)}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordflow}{if}(m\_scale(j)>(std::numeric\_limits<RealScalar>::min)())}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ m\_scale(j)\ =\ RealScalar(1)/m\_scale(j);}
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ m\_scale(j)\ =\ 1;}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \textcolor{comment}{//\ TODO\ disable\ scaling\ if\ not\ needed,\ i.e.,\ if\ it\ is\ roughly\ uniform?\ (this\ will\ make\ solve()\ faster)}}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \ \ \textcolor{comment}{//\ Scale\ and\ compute\ the\ shift\ for\ the\ matrix}}
+\DoxyCodeLine{00246\ \ \ RealScalar\ mindiag\ =\ NumTraits<RealScalar>::highest();}
+\DoxyCodeLine{00247\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ n;\ j++)}
+\DoxyCodeLine{00248\ \ \ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ colPtr[j];\ k\ <\ colPtr[j+1];\ k++)}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ vals[k]\ *=\ (m\_scale(j)*m\_scale(rowIdx[k]));}
+\DoxyCodeLine{00251\ \ \ \ \ eigen\_internal\_assert(rowIdx[colPtr[j]]==j\ \&\&\ \textcolor{stringliteral}{"{}IncompleteCholesky:\ only\ the\ lower\ triangular\ part\ must\ be\ stored"{}});}
+\DoxyCodeLine{00252\ \ \ \ \ mindiag\ =\ numext::mini(numext::real(vals[colPtr[j]]),\ mindiag);}
+\DoxyCodeLine{00253\ \ \ \}}
+\DoxyCodeLine{00254\ }
+\DoxyCodeLine{00255\ \ \ FactorType\ L\_save\ =\ m\_L;}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ RealScalar\ shift\ =\ 0;}
+\DoxyCodeLine{00258\ \ \ \textcolor{keywordflow}{if}(mindiag\ <=\ RealScalar(0.))}
+\DoxyCodeLine{00259\ \ \ \ \ shift\ =\ m\_initialShift\ -\/\ mindiag;}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \textcolor{comment}{//\ Try\ to\ perform\ the\ incomplete\ factorization\ using\ the\ current\ shift}}
+\DoxyCodeLine{00264\ \ \ \textcolor{keywordtype}{int}\ iter\ =\ 0;}
+\DoxyCodeLine{00265\ \ \ \textcolor{keywordflow}{do}}
+\DoxyCodeLine{00266\ \ \ \{}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{comment}{//\ Apply\ the\ shift\ to\ the\ diagonal\ elements\ of\ the\ matrix}}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ n;\ j++)}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ vals[colPtr[j]]\ +=\ shift;}
+\DoxyCodeLine{00270\ }
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{comment}{//\ jki\ version\ of\ the\ Cholesky\ factorization}}
+\DoxyCodeLine{00272\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keywordflow}{for}\ (;\ j\ <\ n;\ ++j)}
+\DoxyCodeLine{00274\ \ \ \ \ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \textcolor{comment}{//\ Left-\/looking\ factorization\ of\ the\ j-\/th\ column}}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \textcolor{comment}{//\ First,\ load\ the\ j-\/th\ column\ into\ col\_vals}}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ diag\ =\ vals[colPtr[j]];\ \ \textcolor{comment}{//\ It\ is\ assumed\ that\ only\ the\ lower\ part\ is\ stored}}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ col\_nnz\ =\ 0;}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ colPtr[j]\ +\ 1;\ i\ <\ colPtr[j+1];\ i++)}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ StorageIndex\ l\ =\ rowIdx[i];}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ col\_vals(col\_nnz)\ =\ vals[i];}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ col\_irow(col\_nnz)\ =\ l;}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ col\_pattern(l)\ =\ col\_nnz;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ col\_nnz++;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ std::list<StorageIndex>::iterator\ k;}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Browse\ all\ previous\ columns\ that\ will\ update\ column\ j}}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(k\ =\ listCol[j].begin();\ k\ !=\ listCol[j].end();\ k++)}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jk\ =\ firstElt(*k);\ \textcolor{comment}{//\ First\ element\ to\ use\ in\ the\ column}}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ \ \ eigen\_internal\_assert(rowIdx[jk]==j);}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ v\_j\_jk\ =\ numext::conj(vals[jk]);}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ \ \ jk\ +=\ 1;}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ jk;\ i\ <\ colPtr[*k+1];\ i++)}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ \ \ \ \ StorageIndex\ l\ =\ rowIdx[i];}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(col\_pattern[l]<0)}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_vals(col\_nnz)\ =\ vals[i]\ *\ v\_j\_jk;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_irow[col\_nnz]\ =\ l;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_pattern(l)\ =\ col\_nnz;}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_nnz++;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ col\_vals(col\_pattern[l])\ -\/=\ vals[i]\ *\ v\_j\_jk;}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ updateList(colPtr,rowIdx,vals,\ *k,\ jk,\ firstElt,\ listCol);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \textcolor{comment}{//\ Scale\ the\ current\ column}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(numext::real(diag)\ <=\ 0)}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(++iter>=10)}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ increase\ shift}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ shift\ =\ numext::maxi(m\_initialShift,RealScalar(2)*shift);}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ restore\ m\_L,\ col\_pattern,\ and\ listCol}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ vals\ =\ \mbox{\hyperlink{classEigen_1_1Map}{Map<const\ VectorSx>}}(L\_save.valuePtr(),\ nnz);}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ rowIdx\ =\ \mbox{\hyperlink{classEigen_1_1Map}{Map<const\ VectorIx>}}(L\_save.innerIndexPtr(),\ nnz);}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ colPtr\ =\ \mbox{\hyperlink{classEigen_1_1Map}{Map<const\ VectorIx>}}(L\_save.outerIndexPtr(),\ n+1);}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ col\_pattern.fill(-\/1);}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<n;\ ++i)}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \ \ listCol[i].clear();}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00332\ }
+\DoxyCodeLine{00333\ \ \ \ \ \ \ RealScalar\ rdiag\ =\ sqrt(numext::real(diag));}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ vals[colPtr[j]]\ =\ rdiag;}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;\ k<col\_nnz;\ ++k)}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ col\_irow[k];}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Scale}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ col\_vals(k)\ /=\ rdiag;}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \textcolor{comment}{//Update\ the\ remaining\ diagonals\ with\ col\_vals}}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ vals[colPtr[i]]\ -\/=\ numext::abs2(col\_vals(k));}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \textcolor{comment}{//\ Select\ the\ largest\ p\ elements}}
+\DoxyCodeLine{00344\ \ \ \ \ \ \ \textcolor{comment}{//\ p\ is\ the\ original\ number\ of\ elements\ in\ the\ column\ (without\ the\ diagonal)}}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p\ =\ colPtr[j+1]\ -\/\ colPtr[j]\ -\/\ 1\ ;}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<VectorSx>}}\ cvals\ =\ col\_vals.head(col\_nnz);}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<VectorIx>}}\ cirow\ =\ col\_irow.head(col\_nnz);}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ internal::QuickSplit(cvals,cirow,\ p);}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \textcolor{comment}{//\ Insert\ the\ largest\ p\ elements\ in\ the\ matrix}}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cpt\ =\ 0;}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ colPtr[j]+1;\ i\ <\ colPtr[j+1];\ i++)}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ vals[i]\ =\ col\_vals(cpt);}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ rowIdx[i]\ =\ col\_irow(cpt);}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ restore\ col\_pattern:}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ col\_pattern(col\_irow(cpt))\ =\ -\/1;}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ cpt++;}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{comment}{//\ Get\ the\ first\ smallest\ row\ index\ and\ put\ it\ after\ the\ diagonal\ element}}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jk\ =\ colPtr(j)+1;}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ updateList(colPtr,rowIdx,vals,j,jk,firstElt,listCol);}
+\DoxyCodeLine{00362\ \ \ \ \ \}}
+\DoxyCodeLine{00363\ }
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keywordflow}{if}(j==n)}
+\DoxyCodeLine{00365\ \ \ \ \ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00368\ \ \ \ \ \}}
+\DoxyCodeLine{00369\ \ \ \}\ \textcolor{keywordflow}{while}(m\_info!=\mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}});}
+\DoxyCodeLine{00370\ \}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ \_UpLo,\ \textcolor{keyword}{typename}\ OrderingType>}
+\DoxyCodeLine{00373\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ IncompleteCholesky<Scalar,\_UpLo,\ OrderingType>::updateList(\mbox{\hyperlink{classEigen_1_1Ref}{Ref<const\ VectorIx>}}\ colPtr,\ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<VectorIx>}}\ rowIdx,\ \mbox{\hyperlink{classEigen_1_1Ref}{Ref<VectorSx>}}\ vals,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ col,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ jk,\ VectorIx\&\ firstElt,\ VectorList\&\ listCol)}
+\DoxyCodeLine{00374\ \{}
+\DoxyCodeLine{00375\ \ \ \textcolor{keywordflow}{if}\ (jk\ <\ colPtr(col+1)\ )}
+\DoxyCodeLine{00376\ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ p\ =\ colPtr(col+1)\ -\/\ jk;}
+\DoxyCodeLine{00378\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ minpos;}
+\DoxyCodeLine{00379\ \ \ \ \ rowIdx.segment(jk,p).minCoeff(\&minpos);}
+\DoxyCodeLine{00380\ \ \ \ \ minpos\ +=\ jk;}
+\DoxyCodeLine{00381\ \ \ \ \ \textcolor{keywordflow}{if}\ (rowIdx(minpos)\ !=\ rowIdx(jk))}
+\DoxyCodeLine{00382\ \ \ \ \ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \textcolor{comment}{//Swap}}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ std::swap(rowIdx(jk),rowIdx(minpos));}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ std::swap(vals(jk),vals(minpos));}
+\DoxyCodeLine{00386\ \ \ \ \ \}}
+\DoxyCodeLine{00387\ \ \ \ \ firstElt(col)\ =\ internal::convert\_index<StorageIndex,Index>(jk);}
+\DoxyCodeLine{00388\ \ \ \ \ listCol[rowIdx(jk)].push\_back(internal::convert\_index<StorageIndex,Index>(col));}
+\DoxyCodeLine{00389\ \ \ \}}
+\DoxyCodeLine{00390\ \}}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

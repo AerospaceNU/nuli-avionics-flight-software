@@ -1,0 +1,559 @@
+\doxysection{Householder\+Sequence.\+h}
+\hypertarget{HouseholderSequence_8h_source}{}\label{HouseholderSequence_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Householder/HouseholderSequence.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Householder/HouseholderSequence.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_HOUSEHOLDER\_SEQUENCE\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_HOUSEHOLDER\_SEQUENCE\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ \textcolor{comment}{}}
+\DoxyCodeLine{00016\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ Householder\_Module}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *\ \(\backslash\)householder\_module}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ HouseholderSequence}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Sequence\ of\ Householder\ reflections\ acting\ on\ subspaces\ with\ decreasing\ size}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ VectorsType\ type\ of\ matrix\ containing\ the\ Householder\ vectors}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ CoeffsType\ \ type\ of\ vector\ containing\ the\ Householder\ coefficients}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Side\ \ \ \ \ \ \ \ either\ OnTheLeft\ (the\ default)\ or\ OnTheRight}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ *\ This\ class\ represents\ a\ product\ sequence\ of\ Householder\ reflections\ where\ the\ first\ Householder\ reflection}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ *\ acts\ on\ the\ whole\ space,\ the\ second\ Householder\ reflection\ leaves\ the\ one-\/dimensional\ subspace\ spanned\ by}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ *\ the\ first\ unit\ vector\ invariant,\ the\ third\ Householder\ reflection\ leaves\ the\ two-\/dimensional\ subspace}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ *\ spanned\ by\ the\ first\ two\ unit\ vectors\ invariant,\ and\ so\ on\ up\ to\ the\ last\ reflection\ which\ leaves\ all\ but}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ *\ one\ dimensions\ invariant\ and\ acts\ only\ on\ the\ last\ dimension.\ Such\ sequences\ of\ Householder\ reflections}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ *\ are\ used\ in\ several\ algorithms\ to\ zero\ out\ certain\ parts\ of\ a\ matrix.\ Indeed,\ the\ methods}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ *\ HessenbergDecomposition::matrixQ(),\ Tridiagonalization::matrixQ(),\ HouseholderQR::householderQ(),}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *\ and\ ColPivHouseholderQR::householderQ()\ all\ return\ a\ \%HouseholderSequence.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ *\ More\ precisely,\ the\ class\ \%HouseholderSequence\ represents\ an\ \(\backslash\)f\$\ n\ \(\backslash\)times\ n\ \(\backslash\)f\$\ matrix\ \(\backslash\)f\$\ H\ \(\backslash\)f\$\ of\ the}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ form\ \(\backslash\)f\$\ H\ =\ \(\backslash\)prod\_\{i=0\}\string^\{n-\/1\}\ H\_i\ \(\backslash\)f\$\ where\ the\ i-\/th\ Householder\ reflection\ is\ \(\backslash\)f\$\ H\_i\ =\ I\ -\/\ h\_i\ v\_i}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ v\_i\string^*\ \(\backslash\)f\$.\ The\ i-\/th\ Householder\ coefficient\ \(\backslash\)f\$\ h\_i\ \(\backslash\)f\$\ is\ a\ scalar\ and\ the\ i-\/th\ Householder\ vector\ \(\backslash\)f\$}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *\ v\_i\ \(\backslash\)f\$\ is\ a\ vector\ of\ the\ form}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ \(\backslash\)f[}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ v\_i\ =\ [\(\backslash\)underbrace\{0,\ \(\backslash\)ldots,\ 0\}\_\{i-\/1\(\backslash\)mbox\{\ zeros\}\},\ 1,\ \(\backslash\)underbrace\{*,\ \(\backslash\)ldots,*\}\_\{n-\/i\(\backslash\)mbox\{\ arbitrary\ entries\}\}\ ].}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ \(\backslash\)f]}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *\ The\ last\ \(\backslash\)f\$\ n-\/i\ \(\backslash\)f\$\ entries\ of\ \(\backslash\)f\$\ v\_i\ \(\backslash\)f\$\ are\ called\ the\ essential\ part\ of\ the\ Householder\ vector.}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *\ Typical\ usages\ are\ listed\ below,\ where\ H\ is\ a\ HouseholderSequence:}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ *\ A.applyOnTheRight(H);\ \ \ \ \ \ \ \ \ \ \ \ \ //\ A\ =\ A\ *\ H}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ *\ A.applyOnTheLeft(H);\ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ A\ =\ H\ *\ A}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ *\ A.applyOnTheRight(H.adjoint());\ \ \ //\ A\ =\ A\ *\ H\string^*}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ *\ A.applyOnTheLeft(H.adjoint());\ \ \ \ //\ A\ =\ H\string^*\ *\ A}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ *\ MatrixXd\ Q\ =\ H;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ conversion\ to\ a\ dense\ matrix}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ *\ In\ addition\ to\ the\ adjoint,\ you\ can\ also\ apply\ the\ inverse\ (=adjoint),\ the\ transpose,\ and\ the\ conjugate\ operators.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ *\ See\ the\ documentation\ for\ HouseholderSequence(const\ VectorsType\&,\ const\ CoeffsType\&)\ for\ an\ example.}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ MatrixBase::applyOnTheLeft(),\ MatrixBase::applyOnTheRight()}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType,\ \textcolor{keywordtype}{int}\ S\textcolor{keywordtype}{id}e>}
+\DoxyCodeLine{00062\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence}}<VectorsType,CoeffsType,Side>\ >}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ VectorsType::Scalar\ Scalar;}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ VectorsType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00066\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ VectorsType::StorageKind\ StorageKind;}
+\DoxyCodeLine{00067\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00068\ \ \ \ \ RowsAtCompileTime\ =\ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba21b30a61e9cb10c967aec17567804007}{OnTheLeft}}\ ?\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<VectorsType>::RowsAtCompileTime}}}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<VectorsType>::ColsAtCompileTime}},}
+\DoxyCodeLine{00070\ \ \ \ \ ColsAtCompileTime\ =\ RowsAtCompileTime,}
+\DoxyCodeLine{00071\ \ \ \ \ MaxRowsAtCompileTime\ =\ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba21b30a61e9cb10c967aec17567804007}{OnTheLeft}}\ ?\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<VectorsType>::MaxRowsAtCompileTime}}}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<VectorsType>::MaxColsAtCompileTime}},}
+\DoxyCodeLine{00073\ \ \ \ \ MaxColsAtCompileTime\ =\ MaxRowsAtCompileTime,}
+\DoxyCodeLine{00074\ \ \ \ \ Flags\ =\ 0}
+\DoxyCodeLine{00075\ \ \ \};}
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1HouseholderSequenceShape}{HouseholderSequenceShape}}\ \{\};}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType,\ \textcolor{keywordtype}{int}\ S\textcolor{keywordtype}{id}e>}
+\DoxyCodeLine{00081\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator__traits}{evaluator\_traits}}<\mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence}}<VectorsType,CoeffsType,Side>\ >}
+\DoxyCodeLine{00082\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator__traits__base}{evaluator\_traits\_base}}<HouseholderSequence<VectorsType,CoeffsType,Side>\ >}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1HouseholderSequenceShape}{HouseholderSequenceShape}}\ Shape;}
+\DoxyCodeLine{00085\ \};}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType,\ \textcolor{keywordtype}{int}\ S\textcolor{keywordtype}{id}e>}
+\DoxyCodeLine{00088\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1hseq__side__dependent__impl}{hseq\_side\_dependent\_impl}}}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Block}{Block<const\ VectorsType,\ Dynamic,\ 1>}}\ EssentialVectorType;}
+\DoxyCodeLine{00091\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,\ CoeffsType,\ OnTheLeft>}}\ HouseholderSequenceType;}
+\DoxyCodeLine{00092\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ EssentialVectorType\ essentialVector(\textcolor{keyword}{const}\ HouseholderSequenceType\&\ h,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k)}
+\DoxyCodeLine{00093\ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ start\ =\ k+1+h.m\_shift;}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Block}{Block<const\ VectorsType,Dynamic,1>}}(h.m\_vectors,\ start,\ k,\ h.\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/start,\ 1);}
+\DoxyCodeLine{00096\ \ \ \}}
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType>}
+\DoxyCodeLine{00100\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1hseq__side__dependent__impl}{hseq\_side\_dependent\_impl}}<VectorsType,\ CoeffsType,\ \mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba329fc3a54ceb2b6e0e73b400998b8a82}{OnTheRight}}>}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Transpose}{Transpose<Block<const\ VectorsType,\ 1,\ Dynamic>}}\ >\ EssentialVectorType;}
+\DoxyCodeLine{00103\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,\ CoeffsType,\ OnTheRight>}}\ HouseholderSequenceType;}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ EssentialVectorType\ essentialVector(\textcolor{keyword}{const}\ HouseholderSequenceType\&\ h,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k)}
+\DoxyCodeLine{00105\ \ \ \{}
+\DoxyCodeLine{00106\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ start\ =\ k+1+h.m\_shift;}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Block}{Block<const\ VectorsType,1,Dynamic>}}(h.m\_vectors,\ k,\ start,\ 1,\ h.\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/start).transpose();}
+\DoxyCodeLine{00108\ \ \ \}}
+\DoxyCodeLine{00109\ \};}
+\DoxyCodeLine{00110\ }
+\DoxyCodeLine{00111\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherScalarType,\ \textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1matrix__type__times__scalar__type}{matrix\_type\_times\_scalar\_type}}}
+\DoxyCodeLine{00112\ \{}
+\DoxyCodeLine{00113\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits<OtherScalarType,\ typename\ MatrixType::Scalar>::ReturnType}}}
+\DoxyCodeLine{00114\ \ \ \ \ ResultScalar;}
+\DoxyCodeLine{00115\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<ResultScalar,\ MatrixType::RowsAtCompileTime,\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,\ MatrixType::MaxRowsAtCompileTime,\ MatrixType::MaxColsAtCompileTime>\ Type;}
+\DoxyCodeLine{00117\ \};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType,\ \textcolor{keywordtype}{int}\ S\textcolor{keywordtype}{id}e>\ \textcolor{keyword}{class\ }HouseholderSequence}
+\DoxyCodeLine{00122\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase}}<HouseholderSequence<VectorsType,CoeffsType,Side>\ >}
+\DoxyCodeLine{00123\ \{}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::hseq\_side\_dependent\_impl<VectorsType,CoeffsType,Side>::EssentialVectorType\ EssentialVectorType;}
+\DoxyCodeLine{00125\ }
+\DoxyCodeLine{00126\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ RowsAtCompileTime\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<HouseholderSequence>::RowsAtCompileTime}},}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ ColsAtCompileTime\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<HouseholderSequence>::ColsAtCompileTime}},}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ MaxRowsAtCompileTime\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<HouseholderSequence>::MaxRowsAtCompileTime}},}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<HouseholderSequence>::MaxColsAtCompileTime}}}
+\DoxyCodeLine{00132\ \ \ \ \ \};}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<HouseholderSequence>::Scalar}}\ Scalar;}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{typedef}\ HouseholderSequence<}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<NumTraits<Scalar>::IsComplex}},}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::remove\_all<typename\ VectorsType::ConjugateReturnType>::type,}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ VectorsType>::type,}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<NumTraits<Scalar>::IsComplex}},}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::remove\_all<typename\ CoeffsType::ConjugateReturnType>::type,}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ CoeffsType>::type,}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ Side}
+\DoxyCodeLine{00143\ \ \ \ \ >\ ConjugateReturnType;}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{typedef}\ HouseholderSequence<}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ VectorsType,}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<NumTraits<Scalar>::IsComplex}},}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::remove\_all<typename\ CoeffsType::ConjugateReturnType>::type,}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ CoeffsType>::type,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ Side}
+\DoxyCodeLine{00151\ \ \ \ \ >\ AdjointReturnType;}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{typedef}\ HouseholderSequence<}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<NumTraits<Scalar>::IsComplex}},}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::remove\_all<typename\ VectorsType::ConjugateReturnType>::type,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ VectorsType>::type,}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ CoeffsType,}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ Side}
+\DoxyCodeLine{00159\ \ \ \ \ >\ TransposeReturnType;}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \textcolor{keyword}{typedef}\ HouseholderSequence<}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::add\_const<VectorsType>::type,}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::add\_const<CoeffsType>::type,}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ Side}
+\DoxyCodeLine{00165\ \ \ \ \ >\ ConstHouseholderSequence;}
+\DoxyCodeLine{00166\ \textcolor{comment}{}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor.}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ v\ \ \ \ \ \ \%Matrix\ containing\ the\ essential\ parts\ of\ the\ Householder\ vectors}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ h\ \ \ \ \ \ Vector\ containing\ the\ Householder\ coefficients}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ \ \ \ *\ Constructs\ the\ Householder\ sequence\ with\ coefficients\ given\ by\ \(\backslash\)p\ h\ and\ vectors\ given\ by\ \(\backslash\)p\ v.\ The}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ \ *\ i-\/th\ Householder\ coefficient\ \(\backslash\)f\$\ h\_i\ \(\backslash\)f\$\ is\ given\ by\ \(\backslash\)p\ h(i)\ and\ the\ essential\ part\ of\ the\ i-\/th}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ \ *\ Householder\ vector\ \(\backslash\)f\$\ v\_i\ \(\backslash\)f\$\ is\ given\ by\ \(\backslash\)p\ v(k,i)\ with\ \(\backslash\)p\ k\ >\ \(\backslash\)p\ i\ (the\ subdiagonal\ part\ of\ the}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ \ \ \ \ *\ i-\/th\ column).\ If\ \(\backslash\)p\ v\ has\ fewer\ columns\ than\ rows,\ then\ the\ Householder\ sequence\ contains\ as\ many}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ \ \ *\ Householder\ reflections\ as\ there\ are\ columns.}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00177\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)note\ The\ \%HouseholderSequence\ object\ stores\ \(\backslash\)p\ v\ and\ \(\backslash\)p\ h\ by\ reference.}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00179\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ HouseholderSequence\_HouseholderSequence.cpp}}
+\DoxyCodeLine{00180\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ HouseholderSequence\_HouseholderSequence.out}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00182\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ setLength(),\ setShift()}}
+\DoxyCodeLine{00183\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00184\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00185\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a12ea5d68522cc22337df0aa4c98d1c91}{HouseholderSequence}}(\textcolor{keyword}{const}\ VectorsType\&\ v,\ \textcolor{keyword}{const}\ CoeffsType\&\ h)}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ :\ m\_vectors(v),\ m\_coeffs(h),\ m\_reverse(false),\ m\_length(v.diagonalSize()),}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \ \ m\_shift(0)}
+\DoxyCodeLine{00188\ \ \ \ \ \{}
+\DoxyCodeLine{00189\ \ \ \ \ \}}
+\DoxyCodeLine{00190\ \textcolor{comment}{}}
+\DoxyCodeLine{00191\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Copy\ constructor.\ */}}
+\DoxyCodeLine{00192\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00193\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a35832610ccbdd4350f2df9681d3f7f4e}{HouseholderSequence}}(\textcolor{keyword}{const}\ HouseholderSequence\&\ other)}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ :\ m\_vectors(other.m\_vectors),}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ m\_coeffs(other.m\_coeffs),}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ m\_reverse(other.m\_reverse),}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \ \ m\_length(other.m\_length),}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ m\_shift(other.m\_shift)}
+\DoxyCodeLine{00199\ \ \ \ \ \{}
+\DoxyCodeLine{00200\ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \textcolor{comment}{}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Number\ of\ rows\ of\ transformation\ viewed\ as\ a\ matrix.}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ Number\ of\ rows}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)details\ This\ equals\ the\ dimension\ of\ the\ space\ that\ the\ transformation\ acts\ on.}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00206\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00207\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba21b30a61e9cb10c967aec17567804007}{OnTheLeft}}\ ?\ m\_vectors.rows()\ :\ m\_vectors.cols();\ \}}
+\DoxyCodeLine{00208\ \textcolor{comment}{}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Number\ of\ columns\ of\ transformation\ viewed\ as\ a\ matrix.}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ Number\ of\ columns}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)details\ This\ equals\ the\ dimension\ of\ the\ space\ that\ the\ transformation\ acts\ on.}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00213\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00214\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a0ca78443feed425d4881cb4e5b538d21}{cols}}()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}();\ \}}
+\DoxyCodeLine{00215\ \textcolor{comment}{}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Essential\ part\ of\ a\ Householder\ vector.}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ k\ \ Index\ of\ Householder\ reflection}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \ \ \ Vector\ containing\ non-\/trivial\ entries\ of\ k-\/th\ Householder\ vector}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ function\ returns\ the\ essential\ part\ of\ the\ Householder\ vector\ \(\backslash\)f\$\ v\_i\ \(\backslash\)f\$.\ This\ is\ a\ vector\ of}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ \ \ \ \ *\ length\ \(\backslash\)f\$\ n-\/i\ \(\backslash\)f\$\ containing\ the\ last\ \(\backslash\)f\$\ n-\/i\ \(\backslash\)f\$\ entries\ of\ the\ vector}}
+\DoxyCodeLine{00222\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f[}}
+\DoxyCodeLine{00223\ \textcolor{comment}{\ \ \ \ \ \ *\ v\_i\ =\ [\(\backslash\)underbrace\{0,\ \(\backslash\)ldots,\ 0\}\_\{i-\/1\(\backslash\)mbox\{\ zeros\}\},\ 1,\ \(\backslash\)underbrace\{*,\ \(\backslash\)ldots,*\}\_\{n-\/i\(\backslash\)mbox\{\ arbitrary\ entries\}\}\ ].}}
+\DoxyCodeLine{00224\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f]}}
+\DoxyCodeLine{00225\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ index\ \(\backslash\)f\$\ i\ \(\backslash\)f\$\ equals\ \(\backslash\)p\ k\ +\ shift(),\ corresponding\ to\ the\ k-\/th\ column\ of\ the\ matrix\ \(\backslash\)p\ v}}
+\DoxyCodeLine{00226\ \textcolor{comment}{\ \ \ \ \ \ *\ passed\ to\ the\ constructor.}}
+\DoxyCodeLine{00227\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ setShift(),\ shift()}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00230\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{const}\ EssentialVectorType\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00232\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ eigen\_assert(k\ >=\ 0\ \&\&\ k\ <\ m\_length);}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ internal::hseq\_side\_dependent\_impl<VectorsType,CoeffsType,Side>::essentialVector(*\textcolor{keyword}{this},\ k);}
+\DoxyCodeLine{00235\ \ \ \ \ \}}
+\DoxyCodeLine{00236\ \textcolor{comment}{}}
+\DoxyCodeLine{00237\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ \%Transpose\ of\ the\ Householder\ sequence.\ */}}
+\DoxyCodeLine{00238\ \ \ \ \ TransposeReturnType\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ae0959abb2cfa16c9df2e5782e721811c}{transpose}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00239\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ TransposeReturnType(m\_vectors.conjugate(),\ m\_coeffs)}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .setReverseFlag(!m\_reverse)}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classEigen_1_1HouseholderSequence_af34f776bdc7f1d20ac73c19ddb54d443}{setLength}}(m\_length)}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ae3b8d3583d98adbcad45403883ebbb74}{setShift}}(m\_shift);}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \textcolor{comment}{}}
+\DoxyCodeLine{00246\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Complex\ conjugate\ of\ the\ Householder\ sequence.\ */}}
+\DoxyCodeLine{00247\ \ \ \ \ ConjugateReturnType\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ac71fa85a4f177b0aeb1026752aea5590}{conjugate}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00248\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ConjugateReturnType(m\_vectors.conjugate(),\ m\_coeffs.conjugate())}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \ \ \ .setReverseFlag(m\_reverse)}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classEigen_1_1HouseholderSequence_af34f776bdc7f1d20ac73c19ddb54d443}{setLength}}(m\_length)}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ae3b8d3583d98adbcad45403883ebbb74}{setShift}}(m\_shift);}
+\DoxyCodeLine{00253\ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \textcolor{comment}{}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ complex\ conjugate\ of\ \(\backslash\)c\ *this\ if\ Cond==true,}}
+\DoxyCodeLine{00256\ \textcolor{comment}{\ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ returns\ \(\backslash\)c\ *this\ otherwise.}}
+\DoxyCodeLine{00257\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Cond>}
+\DoxyCodeLine{00259\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ internal::conditional<Cond,ConjugateReturnType,ConstHouseholderSequence>::type}
+\DoxyCodeLine{00261\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_aec2aa1e2c3568597441eb837e56eb9b9}{conjugateIf}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00262\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::conditional<Cond,ConjugateReturnType,ConstHouseholderSequence>::type\ \mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ReturnType}};}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ReturnType}}(m\_vectors.template\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_aec2aa1e2c3568597441eb837e56eb9b9}{conjugateIf<Cond>}}(),\ m\_coeffs.template\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_aec2aa1e2c3568597441eb837e56eb9b9}{conjugateIf<Cond>}}());}
+\DoxyCodeLine{00265\ \ \ \ \ \}}
+\DoxyCodeLine{00266\ \textcolor{comment}{}}
+\DoxyCodeLine{00267\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Adjoint\ (conjugate\ transpose)\ of\ the\ Householder\ sequence.\ */}}
+\DoxyCodeLine{00268\ \ \ \ \ AdjointReturnType\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_af3967dc6ea7a3671224a4b4a9776a329}{adjoint}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00269\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ AdjointReturnType(m\_vectors,\ m\_coeffs.conjugate())}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .setReverseFlag(!m\_reverse)}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classEigen_1_1HouseholderSequence_af34f776bdc7f1d20ac73c19ddb54d443}{setLength}}(m\_length)}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ae3b8d3583d98adbcad45403883ebbb74}{setShift}}(m\_shift);}
+\DoxyCodeLine{00274\ \ \ \ \ \}}
+\DoxyCodeLine{00275\ \textcolor{comment}{}}
+\DoxyCodeLine{00276\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Inverse\ of\ the\ Householder\ sequence\ (equals\ the\ adjoint).\ */}}
+\DoxyCodeLine{00277\ \ \ \ \ AdjointReturnType\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a02014cb7359500d5bd51b6f8ee4d34fc}{inverse}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_af3967dc6ea7a3671224a4b4a9776a329}{adjoint}}();\ \}}
+\DoxyCodeLine{00278\ \textcolor{comment}{}}
+\DoxyCodeLine{00279\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DestType>}
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{keyword}{inline}\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordtype}{void}\ evalTo(DestType\&\ dst)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00283\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<\mbox{\hyperlink{classEigen_1_1Product}{Scalar}},\ DestType::RowsAtCompileTime,\ 1,}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13ad0e7f67d40bcde3d41c12849b16ce6ea}{AutoAlign}}|\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},\ DestType::MaxRowsAtCompileTime,\ 1>\ workspace(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}());}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ evalTo(dst,\ workspace);}
+\DoxyCodeLine{00287\ \ \ \ \ \}}
+\DoxyCodeLine{00288\ \textcolor{comment}{}}
+\DoxyCodeLine{00289\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Workspace>}
+\DoxyCodeLine{00291\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00292\ \ \ \ \ \textcolor{keywordtype}{void}\ evalTo(Dest\&\ dst,\ Workspace\&\ workspace)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00293\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ workspace.resize(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}());}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ vecs\ =\ m\_length;}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(internal::is\_same\_dense(dst,m\_vectors))}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ in-\/place}}
+\DoxyCodeLine{00299\ \ \ \ \ \ \ \ \ dst.diagonal().setOnes();}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \ \ dst.template\ triangularView<StrictlyUpper>().setZero();}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k\ =\ vecs-\/1;\ k\ >=\ 0;\ -\/-\/k)}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ cornerSize\ =\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()\ -\/\ k\ -\/\ m\_shift;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_reverse)}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \ \ \ \ dst.bottomRightCorner(cornerSize,\ cornerSize)}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .applyHouseholderOnTheRight(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(k),\ m\_coeffs.coeff(k),\ workspace.data());}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ \ \ dst.bottomRightCorner(cornerSize,\ cornerSize)}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .applyHouseholderOnTheLeft(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(k),\ m\_coeffs.coeff(k),\ workspace.data());}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clear\ the\ off\ diagonal\ vector}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ dst.col(k).tail(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/k-\/1).setZero();}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ clear\ the\ remaining\ columns\ if\ needed}}
+\DoxyCodeLine{00315\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k\ =\ 0;\ k<\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a0ca78443feed425d4881cb4e5b538d21}{cols}}()-\/vecs\ ;\ ++k)}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \ \ \ \ dst.col(k).tail(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/k-\/1).setZero();}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(m\_length>BlockSize)}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ dst.setIdentity(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}(),\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}());}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_reverse)}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ applyThisOnTheLeft(dst,workspace,\textcolor{keyword}{true});}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ applyThisOnTheLeft(dst,workspace,\textcolor{keyword}{true});}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ dst.setIdentity(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}(),\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}());}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k\ =\ vecs-\/1;\ k\ >=\ 0;\ -\/-\/k)}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ cornerSize\ =\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()\ -\/\ k\ -\/\ m\_shift;}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_reverse)}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \ \ dst.bottomRightCorner(cornerSize,\ cornerSize)}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .applyHouseholderOnTheRight(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(k),\ m\_coeffs.coeff(k),\ workspace.data());}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ dst.bottomRightCorner(cornerSize,\ cornerSize)}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .applyHouseholderOnTheLeft(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(k),\ m\_coeffs.coeff(k),\ workspace.data());}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \}}
+\DoxyCodeLine{00341\ \textcolor{comment}{}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ applyThisOnTheRight(Dest\&\ dst)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00344\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00345\ \ \ \ \ \ \ Matrix<Scalar,1,Dest::RowsAtCompileTime,RowMajor,1,Dest::MaxRowsAtCompileTime>\ workspace(dst.rows());}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ applyThisOnTheRight(dst,\ workspace);}
+\DoxyCodeLine{00347\ \ \ \ \ \}}
+\DoxyCodeLine{00348\ \textcolor{comment}{}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Workspace>}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ applyThisOnTheRight(Dest\&\ dst,\ Workspace\&\ workspace)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00352\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ workspace.resize(dst.rows());}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k\ =\ 0;\ k\ <\ m\_length;\ ++k)}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ actual\_k\ =\ m\_reverse\ ?\ m\_length-\/k-\/1\ :\ k;}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \ \ dst.rightCols(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/m\_shift-\/actual\_k)}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ \ \ \ .applyHouseholderOnTheRight(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(actual\_k),\ m\_coeffs.coeff(actual\_k),\ workspace.data());}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00360\ \ \ \ \ \}}
+\DoxyCodeLine{00361\ \textcolor{comment}{}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ applyThisOnTheLeft(Dest\&\ dst,\ \textcolor{keywordtype}{bool}\ inputIsIdentity\ =\ \textcolor{keyword}{false})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00364\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ Matrix<Scalar,1,Dest::ColsAtCompileTime,RowMajor,1,Dest::MaxColsAtCompileTime>\ workspace;}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ applyThisOnTheLeft(dst,\ workspace,\ inputIsIdentity);}
+\DoxyCodeLine{00367\ \ \ \ \ \}}
+\DoxyCodeLine{00368\ \textcolor{comment}{}}
+\DoxyCodeLine{00369\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00370\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Workspace>}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ applyThisOnTheLeft(Dest\&\ dst,\ Workspace\&\ workspace,\ \textcolor{keywordtype}{bool}\ inputIsIdentity\ =\ \textcolor{keyword}{false})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00372\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(inputIsIdentity\ \&\&\ m\_reverse)}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ inputIsIdentity\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ the\ entries\ are\ large\ enough,\ then\ apply\ the\ reflectors\ by\ block}}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_length>=BlockSize\ \&\&\ dst.cols()>1)}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ we\ have\ at\ least\ 2\ useful\ blocks,\ otherwise\ it\ is\ point-\/less:}}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ blockSize\ =\ m\_length<\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}(2*BlockSize)\ ?\ (m\_length+1)/2\ :\ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}(BlockSize);}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ i\ =\ 0;\ i\ <\ m\_length;\ i+=blockSize)}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ end\ =\ m\_reverse\ ?\ (std::min)(m\_length,i+blockSize)\ :\ m\_length-\/i;}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k\ =\ m\_reverse\ ?\ i\ :\ (std::max)(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}(0),end-\/blockSize);}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ bs\ =\ end-\/k;}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ start\ =\ k\ +\ m\_shift;}
+\DoxyCodeLine{00386\ }
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ Block<typename\ internal::remove\_all<VectorsType>::type,\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}>\ SubVectorsType;}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ SubVectorsType\ sub\_vecs1(m\_vectors.const\_cast\_derived(),\ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba329fc3a54ceb2b6e0e73b400998b8a82}{OnTheRight}}\ ?\ k\ :\ start,}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba329fc3a54ceb2b6e0e73b400998b8a82}{OnTheRight}}\ ?\ start\ :\ k,}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba329fc3a54ceb2b6e0e73b400998b8a82}{OnTheRight}}\ ?\ bs\ :\ m\_vectors.rows()-\/start,}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Side==\mbox{\hyperlink{group__enums_ggac22de43beeac7a78b384f99bed5cee0ba329fc3a54ceb2b6e0e73b400998b8a82}{OnTheRight}}\ ?\ m\_vectors.cols()-\/start\ :\ bs);}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::conditional<Side==OnTheRight,\ Transpose<SubVectorsType>,\ SubVectorsType\&>::type\ sub\_vecs(sub\_vecs1);}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ dstStart\ =\ dst.rows()-\/\mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()+m\_shift+k;}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ dstRows\ \ =\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/m\_shift-\/k;}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ Block<Dest,Dynamic,Dynamic>\ sub\_dst(dst,}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dstStart,}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inputIsIdentity\ ?\ dstStart\ :\ 0,}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ dstRows,}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ inputIsIdentity\ ?\ dstRows\ :\ dst.cols());}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ \ apply\_block\_householder\_on\_the\_left(sub\_dst,\ sub\_vecs,\ m\_coeffs.segment(k,\ bs),\ !m\_reverse);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ workspace.resize(dst.cols());}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ k\ =\ 0;\ k\ <\ m\_length;\ ++k)}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ actual\_k\ =\ m\_reverse\ ?\ k\ :\ m\_length-\/k-\/1;}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ dstStart\ =\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ad85c4afec721dd20691d47c580acf805}{rows}}()-\/m\_shift-\/actual\_k;}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \ \ \ \ dst.bottomRightCorner(dstStart,\ inputIsIdentity\ ?\ dstStart\ :\ dst.cols())}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \ \ \ \ .applyHouseholderOnTheLeft(\mbox{\hyperlink{classEigen_1_1HouseholderSequence_a82f35fa3f893ec94efd249cd76841dbb}{essentialVector}}(actual\_k),\ m\_coeffs.coeff(actual\_k),\ workspace.data());}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00415\ \ \ \ \ \}}
+\DoxyCodeLine{00416\ \textcolor{comment}{}}
+\DoxyCodeLine{00417\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Computes\ the\ product\ of\ a\ Householder\ sequence\ with\ a\ matrix.}}
+\DoxyCodeLine{00418\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ other\ \ \%Matrix\ being\ multiplied.}}
+\DoxyCodeLine{00419\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \ \ \ Expression\ object\ representing\ the\ product.}}
+\DoxyCodeLine{00420\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00421\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ function\ computes\ \(\backslash\)f\$\ HM\ \(\backslash\)f\$\ where\ \(\backslash\)f\$\ H\ \(\backslash\)f\$\ is\ the\ Householder\ sequence\ represented\ by\ \(\backslash\)p\ *this}}
+\DoxyCodeLine{00422\ \textcolor{comment}{\ \ \ \ \ \ *\ and\ \(\backslash\)f\$\ M\ \(\backslash\)f\$\ is\ the\ matrix\ \(\backslash\)p\ other.}}
+\DoxyCodeLine{00423\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00425\ \ \ \ \ \textcolor{keyword}{typename}\ internal::matrix\_type\_times\_scalar\_type<Scalar,\ OtherDerived>::Type\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ab857ac85a9a200ab8dce3315c99b3fb9}{operator*}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<OtherDerived>}}\&\ other)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00426\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ internal::matrix\_type\_times\_scalar\_type<Scalar,\ OtherDerived>::Type}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ res(other.template\ cast<\textcolor{keyword}{typename}\ internal::matrix\_type\_times\_scalar\_type<Scalar,OtherDerived>::ResultScalar>());}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ applyThisOnTheLeft(res,\ internal::is\_identity<OtherDerived>::value\ \&\&\ res.rows()==res.cols());}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00431\ \ \ \ \ \}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_VectorsType,\ \textcolor{keyword}{typename}\ \_CoeffsType,\ \textcolor{keywordtype}{int}\ \_S\textcolor{keywordtype}{id}e>\ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1hseq__side__dependent__impl}{internal::hseq\_side\_dependent\_impl}};}
+\DoxyCodeLine{00434\ \textcolor{comment}{}}
+\DoxyCodeLine{00435\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Sets\ the\ length\ of\ the\ Householder\ sequence.}}
+\DoxyCodeLine{00436\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ \ length\ \ New\ value\ for\ the\ length.}}
+\DoxyCodeLine{00437\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00438\ \textcolor{comment}{\ \ \ \ \ \ *\ By\ default,\ the\ length\ \(\backslash\)f\$\ n\ \(\backslash\)f\$\ of\ the\ Householder\ sequence\ \(\backslash\)f\$\ H\ =\ H\_0\ H\_1\ \(\backslash\)ldots\ H\_\{n-\/1\}\ \(\backslash\)f\$\ is\ set}}
+\DoxyCodeLine{00439\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ the\ number\ of\ columns\ of\ the\ matrix\ \(\backslash\)p\ v\ passed\ to\ the\ constructor,\ or\ the\ number\ of\ rows\ if\ that}}
+\DoxyCodeLine{00440\ \textcolor{comment}{\ \ \ \ \ \ *\ is\ smaller.\ After\ this\ function\ is\ called,\ the\ length\ equals\ \(\backslash\)p\ length.}}
+\DoxyCodeLine{00441\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00442\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ length()}}
+\DoxyCodeLine{00443\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00444\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00445\ \ \ \ \ HouseholderSequence\&\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_af34f776bdc7f1d20ac73c19ddb54d443}{setLength}}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ac61e77c639cc8751b92e71bbbf4d386d}{length}})}
+\DoxyCodeLine{00446\ \ \ \ \ \{}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ m\_length\ =\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ac61e77c639cc8751b92e71bbbf4d386d}{length}};}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00449\ \ \ \ \ \}}
+\DoxyCodeLine{00450\ \textcolor{comment}{}}
+\DoxyCodeLine{00451\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Sets\ the\ shift\ of\ the\ Householder\ sequence.}}
+\DoxyCodeLine{00452\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ \ shift\ \ New\ value\ for\ the\ shift.}}
+\DoxyCodeLine{00453\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00454\ \textcolor{comment}{\ \ \ \ \ \ *\ By\ default,\ a\ \%HouseholderSequence\ object\ represents\ \(\backslash\)f\$\ H\ =\ H\_0\ H\_1\ \(\backslash\)ldots\ H\_\{n-\/1\}\ \(\backslash\)f\$\ and\ the\ i-\/th}}
+\DoxyCodeLine{00455\ \textcolor{comment}{\ \ \ \ \ \ *\ column\ of\ the\ matrix\ \(\backslash\)p\ v\ passed\ to\ the\ constructor\ corresponds\ to\ the\ i-\/th\ Householder}}
+\DoxyCodeLine{00456\ \textcolor{comment}{\ \ \ \ \ \ *\ reflection.\ After\ this\ function\ is\ called,\ the\ object\ represents\ \(\backslash\)f\$\ H\ =\ H\_\{\(\backslash\)mathrm\{shift\}\}}}
+\DoxyCodeLine{00457\ \textcolor{comment}{\ \ \ \ \ \ *\ H\_\{\(\backslash\)mathrm\{shift\}+1\}\ \(\backslash\)ldots\ H\_\{n-\/1\}\ \(\backslash\)f\$\ and\ the\ i-\/th\ column\ of\ \(\backslash\)p\ v\ corresponds\ to\ the\ (shift+i)-\/th}}
+\DoxyCodeLine{00458\ \textcolor{comment}{\ \ \ \ \ \ *\ Householder\ reflection.}}
+\DoxyCodeLine{00459\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00460\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ shift()}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00462\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00463\ \ \ \ \ HouseholderSequence\&\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ae3b8d3583d98adbcad45403883ebbb74}{setShift}}(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a927abf54737ab2e3d7d0a7ae9395768f}{shift}})}
+\DoxyCodeLine{00464\ \ \ \ \ \{}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ m\_shift\ =\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a927abf54737ab2e3d7d0a7ae9395768f}{shift}};}
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00467\ \ \ \ \ \}}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00470\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_ac61e77c639cc8751b92e71bbbf4d386d}{length}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_length;\ \}\ \ \textcolor{comment}{/**<\ \(\backslash\)brief\ Returns\ the\ length\ of\ the\ Householder\ sequence.\ */}}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00473\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence_a927abf54737ab2e3d7d0a7ae9395768f}{shift}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_shift;\ \}\ \ \ \ \textcolor{comment}{/**<\ \(\backslash\)brief\ Returns\ the\ shift\ of\ the\ Householder\ sequence.\ */}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{comment}{/*\ Necessary\ for\ .adjoint()\ and\ .conjugate()\ */}}
+\DoxyCodeLine{00476\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ VectorsType2,\ \textcolor{keyword}{typename}\ CoeffsType2,\ \textcolor{keywordtype}{int}\ S\textcolor{keywordtype}{id}e2>\ \textcolor{keyword}{friend}\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence}};}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00479\ \textcolor{comment}{}}
+\DoxyCodeLine{00480\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal}}
+\DoxyCodeLine{00481\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)brief\ Sets\ the\ reverse\ flag.}}
+\DoxyCodeLine{00482\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ \ reverse\ \ New\ value\ of\ the\ reverse\ flag.}}
+\DoxyCodeLine{00483\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00484\ \textcolor{comment}{\ \ \ \ \ \ *\ By\ default,\ the\ reverse\ flag\ is\ not\ set.\ If\ the\ reverse\ flag\ is\ set,\ then\ this\ object\ represents}}
+\DoxyCodeLine{00485\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ H\string^r\ =\ H\_\{n-\/1\}\ \(\backslash\)ldots\ H\_1\ H\_0\ \(\backslash\)f\$\ instead\ of\ \(\backslash\)f\$\ H\ =\ H\_0\ H\_1\ \(\backslash\)ldots\ H\_\{n-\/1\}\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00486\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)note\ For\ real\ valued\ HouseholderSequence\ this\ is\ equivalent\ to\ transposing\ \(\backslash\)f\$\ H\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00488\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ reverseFlag(),\ transpose(),\ adjoint()}}
+\DoxyCodeLine{00489\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00490\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence}}\&\ setReverseFlag(\textcolor{keywordtype}{bool}\ reverse)}
+\DoxyCodeLine{00491\ \ \ \ \ \{}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ m\_reverse\ =\ reverse;}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00494\ \ \ \ \ \}}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \textcolor{keywordtype}{bool}\ reverseFlag()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_reverse;\ \}\ \ \ \ \ \textcolor{comment}{/**<\ \(\backslash\)internal\ \(\backslash\)brief\ Returns\ the\ reverse\ flag.\ */}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \ \ \textcolor{keyword}{typename}\ VectorsType::Nested\ m\_vectors;}
+\DoxyCodeLine{00499\ \ \ \ \ \textcolor{keyword}{typename}\ CoeffsType::Nested\ m\_coeffs;}
+\DoxyCodeLine{00500\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_reverse;}
+\DoxyCodeLine{00501\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ m\_length;}
+\DoxyCodeLine{00502\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ m\_shift;}
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ BlockSize\ =\ 48\ \};}
+\DoxyCodeLine{00504\ \};}
+\DoxyCodeLine{00505\ \textcolor{comment}{}}
+\DoxyCodeLine{00506\ \textcolor{comment}{/**\ \(\backslash\)brief\ Computes\ the\ product\ of\ a\ matrix\ with\ a\ Householder\ sequence.}}
+\DoxyCodeLine{00507\ \textcolor{comment}{\ \ *\ \(\backslash\)param[in]\ \ other\ \ \%Matrix\ being\ multiplied.}}
+\DoxyCodeLine{00508\ \textcolor{comment}{\ \ *\ \(\backslash\)param[in]\ \ h\ \ \ \ \ \ \%HouseholderSequence\ being\ multiplied.}}
+\DoxyCodeLine{00509\ \textcolor{comment}{\ \ *\ \(\backslash\)returns\ \ \ \ Expression\ object\ representing\ the\ product.}}
+\DoxyCodeLine{00510\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00511\ \textcolor{comment}{\ \ *\ This\ function\ computes\ \(\backslash\)f\$\ MH\ \(\backslash\)f\$\ where\ \(\backslash\)f\$\ M\ \(\backslash\)f\$\ is\ the\ matrix\ \(\backslash\)p\ other\ and\ \(\backslash\)f\$\ H\ \(\backslash\)f\$\ is\ the}}
+\DoxyCodeLine{00512\ \textcolor{comment}{\ \ *\ Householder\ sequence\ represented\ by\ \(\backslash\)p\ h.}}
+\DoxyCodeLine{00513\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00514\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived,\ \textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType,\ \textcolor{keywordtype}{int}\ S\textcolor{keywordtype}{id}e>}
+\DoxyCodeLine{00515\ \textcolor{keyword}{typename}\ internal::matrix\_type\_times\_scalar\_type<typename\ VectorsType::Scalar,OtherDerived>::Type\ \mbox{\hyperlink{namespaceEigen_a32970f7eb62fe31eeefee72d24a046d0}{operator*}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<OtherDerived>}}\&\ other,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,CoeffsType,Side>}}\&\ h)}
+\DoxyCodeLine{00516\ \{}
+\DoxyCodeLine{00517\ \ \ \textcolor{keyword}{typename}\ internal::matrix\_type\_times\_scalar\_type<typename\ VectorsType::Scalar,OtherDerived>::Type}
+\DoxyCodeLine{00518\ \ \ \ \ res(other.template\ cast<\textcolor{keyword}{typename}\ internal::matrix\_type\_times\_scalar\_type<typename\ VectorsType::Scalar,OtherDerived>::ResultScalar>());}
+\DoxyCodeLine{00519\ \ \ h.applyThisOnTheRight(res);}
+\DoxyCodeLine{00520\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00521\ \}}
+\DoxyCodeLine{00522\ \textcolor{comment}{}}
+\DoxyCodeLine{00523\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ Householder\_Module}}
+\DoxyCodeLine{00524\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00525\ \textcolor{comment}{\ \ *\ \(\backslash\)householder\_module}}
+\DoxyCodeLine{00526\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00527\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Convenience\ function\ for\ constructing\ a\ Householder\ sequence.}}
+\DoxyCodeLine{00528\ \textcolor{comment}{\ \ *\ \(\backslash\)returns\ A\ HouseholderSequence\ constructed\ from\ the\ specified\ arguments.}}
+\DoxyCodeLine{00529\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00530\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType>}
+\DoxyCodeLine{00531\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,CoeffsType>}}\ \mbox{\hyperlink{namespaceEigen_a4bd4b85120e014cf1125a054b02d4d92}{householderSequence}}(\textcolor{keyword}{const}\ VectorsType\&\ v,\ \textcolor{keyword}{const}\ CoeffsType\&\ h)}
+\DoxyCodeLine{00532\ \{}
+\DoxyCodeLine{00533\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,CoeffsType,OnTheLeft>}}(v,\ h);}
+\DoxyCodeLine{00534\ \}}
+\DoxyCodeLine{00535\ \textcolor{comment}{}}
+\DoxyCodeLine{00536\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ Householder\_Module}}
+\DoxyCodeLine{00537\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00538\ \textcolor{comment}{\ \ *\ \(\backslash\)householder\_module}}
+\DoxyCodeLine{00539\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00540\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Convenience\ function\ for\ constructing\ a\ Householder\ sequence.}}
+\DoxyCodeLine{00541\ \textcolor{comment}{\ \ *\ \(\backslash\)returns\ A\ HouseholderSequence\ constructed\ from\ the\ specified\ arguments.}}
+\DoxyCodeLine{00542\ \textcolor{comment}{\ \ *\ \(\backslash\)details\ This\ function\ differs\ from\ householderSequence()\ in\ that\ the\ template\ argument\ \(\backslash\)p\ OnTheSide\ of}}
+\DoxyCodeLine{00543\ \textcolor{comment}{\ \ *\ the\ constructed\ HouseholderSequence\ is\ set\ to\ OnTheRight,\ instead\ of\ the\ default\ OnTheLeft.}}
+\DoxyCodeLine{00544\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00545\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorsType,\ \textcolor{keyword}{typename}\ CoeffsType>}
+\DoxyCodeLine{00546\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,CoeffsType,OnTheRight>}}\ \mbox{\hyperlink{namespaceEigen_a59f16274f9e66f902f1a4b3f23e8b002}{rightHouseholderSequence}}(\textcolor{keyword}{const}\ VectorsType\&\ v,\ \textcolor{keyword}{const}\ CoeffsType\&\ h)}
+\DoxyCodeLine{00547\ \{}
+\DoxyCodeLine{00548\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<VectorsType,CoeffsType,OnTheRight>}}(v,\ h);}
+\DoxyCodeLine{00549\ \}}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_HOUSEHOLDER\_SEQUENCE\_H}}
+
+\end{DoxyCode}

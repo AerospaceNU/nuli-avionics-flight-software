@@ -1,0 +1,862 @@
+\doxysection{Xpr\+Helper.\+h}
+\hypertarget{XprHelper_8h_source}{}\label{XprHelper_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/util/XprHelper.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/util/XprHelper.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2006-\/2008\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_XPRHELPER\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_XPRHELPER\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ just\ a\ workaround\ because\ GCC\ seems\ to\ not\ really\ like\ empty\ structs}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ FIXME:\ gcc\ 4.3\ generates\ bad\ code\ when\ strict-\/aliasing\ is\ enabled}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ so\ currently\ we\ simply\ disable\ this\ optimization\ for\ gcc\ 4.3}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#if\ EIGEN\_COMP\_GNUC\ \&\&\ !EIGEN\_GNUC\_AT(4,3)}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_EMPTY\_STRUCT\_CTOR(X)\ \(\backslash\)}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ X()\ \{\}\ \(\backslash\)}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ X(const\ X\&\ )\ \{\}}}
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_EMPTY\_STRUCT\_CTOR(X)}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ IndexDest,\ \textcolor{keyword}{typename}\ IndexSrc>}
+\DoxyCodeLine{00030\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00031\ \textcolor{keyword}{inline}\ IndexDest\ convert\_index(\textcolor{keyword}{const}\ IndexSrc\&\ idx)\ \{}
+\DoxyCodeLine{00032\ \ \ \textcolor{comment}{//\ for\ sizeof(IndexDest)>=sizeof(IndexSrc)\ compilers\ should\ be\ able\ to\ optimize\ this\ away:}}
+\DoxyCodeLine{00033\ \ \ eigen\_internal\_assert(idx\ <=\ NumTraits<IndexDest>::highest()\ \&\&\ \textcolor{stringliteral}{"{}Index\ value\ to\ big\ for\ target\ type"{}});}
+\DoxyCodeLine{00034\ \ \ \textcolor{keywordflow}{return}\ IndexDest(idx);}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ true\ if\ T\ can\ be\ considered\ as\ an\ integral\ index\ (i.e.,\ and\ integral\ type\ or\ enum)}}
+\DoxyCodeLine{00038\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__valid__index__type}{is\_valid\_index\_type}}}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#if\ EIGEN\_HAS\_TYPE\_TRAITS}}
+\DoxyCodeLine{00042\ \ \ \ \ internal::is\_integral<T>::value\ ||\ std::is\_enum<T>::value}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#elif\ EIGEN\_COMP\_MSVC}}
+\DoxyCodeLine{00044\ \ \ \ \ internal::is\_integral<T>::value\ ||\ \_\_is\_enum(T)}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00046\ \ \ \ \ \textcolor{comment}{//\ without\ C++11,\ we\ use\ is\_convertible\ to\ Index\ instead\ of\ is\_integral\ in\ order\ to\ treat\ enums\ as\ Index.}}
+\DoxyCodeLine{00047\ \ \ \ \ internal::is\_convertible<T,Index>::value\ \&\&\ !internal::is\_same<T,float>::value\ \&\&\ !is\_same<T,double>::value}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00049\ \ \ \};}
+\DoxyCodeLine{00050\ \};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{comment}{//\ true\ if\ both\ types\ are\ not\ valid\ index\ types}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ RowIndices,\ \textcolor{keyword}{typename}\ ColIndices>}
+\DoxyCodeLine{00054\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1valid__indexed__view__overload}{valid\_indexed\_view\_overload}}\ \{}
+\DoxyCodeLine{00055\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ !(internal::is\_valid\_index\_type<RowIndices>::value\ \&\&\ internal::is\_valid\_index\_type<ColIndices>::value)\ \};}
+\DoxyCodeLine{00056\ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{comment}{//\ promote\_scalar\_arg\ is\ an\ helper\ used\ in\ operation\ between\ an\ expression\ and\ a\ scalar,\ like:}}
+\DoxyCodeLine{00059\ \textcolor{comment}{//\ \ \ \ expression\ *\ scalar}}
+\DoxyCodeLine{00060\ \textcolor{comment}{//\ Its\ role\ is\ to\ determine\ how\ the\ type\ T\ of\ the\ scalar\ operand\ should\ be\ promoted\ given\ the\ scalar\ type\ ExprScalar\ of\ the\ given\ expression.}}
+\DoxyCodeLine{00061\ \textcolor{comment}{//\ The\ IsSupported\ template\ parameter\ must\ be\ provided\ by\ the\ caller\ as:\ internal::has\_ReturnType<ScalarBinaryOpTraits<ExprScalar,T,op>\ >::value\ using\ the\ proper\ order\ for\ ExprScalar\ and\ T.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{//\ Then\ the\ logic\ is\ as\ follows:}}
+\DoxyCodeLine{00063\ \textcolor{comment}{//\ \ -\/\ if\ the\ operation\ is\ natively\ supported\ as\ defined\ by\ IsSupported,\ then\ the\ scalar\ type\ is\ not\ promoted,\ and\ T\ is\ returned.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{//\ \ -\/\ otherwise,\ NumTraits<ExprScalar>::Literal\ is\ returned\ if\ T\ is\ implicitly\ convertible\ to\ NumTraits<ExprScalar>::Literal\ AND\ that\ this\ does\ not\ imply\ a\ float\ to\ integer\ conversion.}}
+\DoxyCodeLine{00065\ \textcolor{comment}{//\ \ -\/\ otherwise,\ ExprScalar\ is\ returned\ if\ T\ is\ implicitly\ convertible\ to\ ExprScalar\ AND\ that\ this\ does\ not\ imply\ a\ float\ to\ integer\ conversion.}}
+\DoxyCodeLine{00066\ \textcolor{comment}{//\ \ -\/\ In\ all\ other\ cases,\ the\ promoted\ type\ is\ not\ defined,\ and\ the\ respective\ operation\ is\ thus\ invalid\ and\ not\ available\ (SFINAE).}}
+\DoxyCodeLine{00067\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExprScalar,\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{bool}\ IsSupported>}
+\DoxyCodeLine{00068\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg}{promote\_scalar\_arg}};}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ S,\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00071\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg}{promote\_scalar\_arg}}<S,T,true>}
+\DoxyCodeLine{00072\ \{}
+\DoxyCodeLine{00073\ \ \ \textcolor{keyword}{typedef}\ T\ type;}
+\DoxyCodeLine{00074\ \};}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ Recursively\ check\ safe\ conversion\ to\ PromotedType,\ and\ then\ ExprScalar\ if\ they\ are\ different.}}
+\DoxyCodeLine{00077\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExprScalar,\textcolor{keyword}{typename}\ T,\textcolor{keyword}{typename}\ PromotedType,}
+\DoxyCodeLine{00078\ \ \ \textcolor{keywordtype}{bool}\ ConvertibleToLiteral\ =\ internal::is\_convertible<T,PromotedType>::value,}
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordtype}{bool}\ IsSafe\ =\ NumTraits<T>::IsInteger\ ||\ !NumTraits<PromotedType>::IsInteger>}
+\DoxyCodeLine{00080\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}};}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Start\ recursion\ with\ NumTraits<ExprScalar>::Literal}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ S,\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00084\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg}{promote\_scalar\_arg}}<S,T,false>\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}}<S,T,typename\ NumTraits<S>::Literal>\ \{\};}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \textcolor{comment}{//\ We\ found\ a\ match!}}
+\DoxyCodeLine{00087\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ S,\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ PromotedType>}
+\DoxyCodeLine{00088\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}}<S,T,PromotedType,true,true>}
+\DoxyCodeLine{00089\ \{}
+\DoxyCodeLine{00090\ \ \ \textcolor{keyword}{typedef}\ PromotedType\ type;}
+\DoxyCodeLine{00091\ \};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{comment}{//\ No\ match,\ but\ no\ real-\/to-\/integer\ issues,\ and\ ExprScalar\ and\ current\ PromotedType\ are\ different,}}
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ so\ let's\ try\ to\ promote\ to\ ExprScalar}}
+\DoxyCodeLine{00095\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExprScalar,\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ PromotedType>}
+\DoxyCodeLine{00096\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}}<ExprScalar,T,PromotedType,false,true>}
+\DoxyCodeLine{00097\ \ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}}<ExprScalar,T,ExprScalar>}
+\DoxyCodeLine{00098\ \{\};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ Unsafe\ real-\/to-\/integer,\ let's\ stop.}}
+\DoxyCodeLine{00101\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ S,\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ PromotedType,\ \textcolor{keywordtype}{bool}\ ConvertibleToLiteral>}
+\DoxyCodeLine{00102\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}}<S,T,PromotedType,ConvertibleToLiteral,false>\ \{\};}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \textcolor{comment}{//\ T\ is\ not\ even\ convertible\ to\ ExprScalar,\ let's\ stop.}}
+\DoxyCodeLine{00105\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ S,\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00106\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__scalar__arg__unsupported}{promote\_scalar\_arg\_unsupported}}<S,T,S,false,true>\ \{\};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{//classes\ inheriting\ no\_assignment\_operator\ don't\ generate\ a\ default\ operator=.}}
+\DoxyCodeLine{00109\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{no\_assignment\_operator}}}
+\DoxyCodeLine{00110\ \{}
+\DoxyCodeLine{00111\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{no\_assignment\_operator}}\&\ operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{no\_assignment\_operator}}\&);}
+\DoxyCodeLine{00113\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00114\ \ \ \ \ EIGEN\_DEFAULT\_COPY\_CONSTRUCTOR(\mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{no\_assignment\_operator}})}
+\DoxyCodeLine{00115\ \ \ \ \ EIGEN\_DEFAULT\_EMPTY\_CONSTRUCTOR\_AND\_DESTRUCTOR(\mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{no\_assignment\_operator}})}
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ \textcolor{comment}{}}
+\DoxyCodeLine{00118\ \textcolor{comment}{/**\ \(\backslash\)internal\ return\ the\ index\ type\ with\ the\ largest\ number\ of\ bits\ */}}
+\DoxyCodeLine{00119\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ I1,\ \textcolor{keyword}{typename}\ I2>}
+\DoxyCodeLine{00120\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__index__type}{promote\_index\_type}}}
+\DoxyCodeLine{00121\ \{}
+\DoxyCodeLine{00122\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<(\textcolor{keyword}{sizeof}(I1)<\textcolor{keyword}{sizeof}(I2)),\ I2,\ I1>::type\ type;}
+\DoxyCodeLine{00123\ \};}
+\DoxyCodeLine{00124\ \textcolor{comment}{}}
+\DoxyCodeLine{00125\ \textcolor{comment}{/**\ \(\backslash\)internal\ If\ the\ template\ parameter\ Value\ is\ Dynamic,\ this\ class\ is\ just\ a\ wrapper\ around\ a\ T\ variable\ that}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ *\ can\ be\ accessed\ using\ value()\ and\ setValue().}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ *\ Otherwise,\ this\ class\ is\ an\ empty\ structure\ and\ value()\ just\ returns\ the\ template\ parameter\ Value.}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00129\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ Value>\ \textcolor{keyword}{class\ }variable\_if\_dynamic}
+\DoxyCodeLine{00130\ \{}
+\DoxyCodeLine{00131\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00132\ \ \ \ \ EIGEN\_DEFAULT\_EMPTY\_CONSTRUCTOR\_AND\_DESTRUCTOR(variable\_if\_dynamic)}
+\DoxyCodeLine{00133\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{explicit}\ variable\_if\_dynamic(T\ v)\ \{\ EIGEN\_ONLY\_USED\_FOR\_DEBUG(v);\ eigen\_assert(v\ ==\ T(Value));\ \}}
+\DoxyCodeLine{00134\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ EIGEN\_STRONG\_INLINE\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00135\ \ \ \ \ T\ value()\ \{\ \textcolor{keywordflow}{return}\ T(Value);\ \}}
+\DoxyCodeLine{00136\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{operator}\ T()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ T(Value);\ \}}
+\DoxyCodeLine{00138\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keywordtype}{void}\ setValue(T\ v)\textcolor{keyword}{\ const\ }\{\ EIGEN\_ONLY\_USED\_FOR\_DEBUG(v);\ eigen\_assert(v\ ==\ T(Value));\ \}}
+\DoxyCodeLine{00140\ \};}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }variable\_if\_dynamic<T,\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}>}
+\DoxyCodeLine{00143\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ T\ m\_value;}
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00146\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{explicit}\ variable\_if\_dynamic(T\ value\ =\ 0)\ EIGEN\_NO\_THROW\ :\ m\_value(value)\ \{\}}
+\DoxyCodeLine{00147\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ T\ value()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_value;\ \}}
+\DoxyCodeLine{00148\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{operator}\ T()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_value;\ \}}
+\DoxyCodeLine{00149\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ setValue(T\ value)\ \{\ m\_value\ =\ value;\ \}}
+\DoxyCodeLine{00150\ \};}
+\DoxyCodeLine{00151\ \textcolor{comment}{}}
+\DoxyCodeLine{00152\ \textcolor{comment}{/**\ \(\backslash\)internal\ like\ variable\_if\_dynamic\ but\ for\ DynamicIndex}}
+\DoxyCodeLine{00153\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00154\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ Value>\ \textcolor{keyword}{class\ }variable\_if\_dynamicindex}
+\DoxyCodeLine{00155\ \{}
+\DoxyCodeLine{00156\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00157\ \ \ \ \ EIGEN\_EMPTY\_STRUCT\_CTOR(variable\_if\_dynamicindex)}
+\DoxyCodeLine{00158\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{explicit}\ variable\_if\_dynamicindex(T\ v)\ \{\ EIGEN\_ONLY\_USED\_FOR\_DEBUG(v);\ eigen\_assert(v\ ==\ T(Value));\ \}}
+\DoxyCodeLine{00159\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ EIGEN\_STRONG\_INLINE\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00160\ \ \ \ \ T\ value()\ \{\ \textcolor{keywordflow}{return}\ T(Value);\ \}}
+\DoxyCodeLine{00161\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{void}\ setValue(T)\ \{\}}
+\DoxyCodeLine{00163\ \};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{class\ }variable\_if\_dynamicindex<T,\ \mbox{\hyperlink{namespaceEigen_a73c597189a4a99127175e8167c456fff}{DynamicIndex}}>}
+\DoxyCodeLine{00166\ \{}
+\DoxyCodeLine{00167\ \ \ \ \ T\ m\_value;}
+\DoxyCodeLine{00168\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ variable\_if\_dynamicindex()\ \{\ eigen\_assert(\textcolor{keyword}{false});\ \}}
+\DoxyCodeLine{00169\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00170\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{explicit}\ variable\_if\_dynamicindex(T\ value)\ :\ m\_value(value)\ \{\}}
+\DoxyCodeLine{00171\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ T\ EIGEN\_STRONG\_INLINE\ value()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_value;\ \}}
+\DoxyCodeLine{00172\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ setValue(T\ value)\ \{\ m\_value\ =\ value;\ \}}
+\DoxyCodeLine{00173\ \};}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1functor__traits}{functor\_traits}}}
+\DoxyCodeLine{00176\ \{}
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00178\ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ Cost\ =\ 10,}
+\DoxyCodeLine{00180\ \ \ \ \ PacketAccess\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00181\ \ \ \ \ IsRepeatable\ =\ \textcolor{keyword}{false}}
+\DoxyCodeLine{00182\ \ \ \};}
+\DoxyCodeLine{00183\ \};}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}};}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}};}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Size,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}},}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ Stop\ =\ Size==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ||\ (Size\%unpacket\_traits<PacketType>::size)==0\ ||\ \mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same}}<\mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}},\textcolor{keyword}{typename}\ unpacket\_traits<PacketType>::half>::value>}
+\DoxyCodeLine{00191\ \textcolor{keyword}{struct}\ \mbox{\hyperlink{structEigen_1_1internal_1_1find__best__packet__helper}{find\_best\_packet\_helper}};}
+\DoxyCodeLine{00192\ }
+\DoxyCodeLine{00193\ \textcolor{keyword}{template}<\ \textcolor{keywordtype}{int}\ Size,\ \textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00194\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1find__best__packet__helper}{find\_best\_packet\_helper<Size,PacketType,true>}}}
+\DoxyCodeLine{00195\ \{}
+\DoxyCodeLine{00196\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ type;}
+\DoxyCodeLine{00197\ \};}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Size,\ \textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00200\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1find__best__packet__helper}{find\_best\_packet\_helper<Size,PacketType,false>}}}
+\DoxyCodeLine{00201\ \{}
+\DoxyCodeLine{00202\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1find__best__packet__helper}{find\_best\_packet\_helper<Size,typename\ unpacket\_traits<PacketType>::half}}>::type\ type;}
+\DoxyCodeLine{00203\ \};}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ Size>}
+\DoxyCodeLine{00206\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1find__best__packet}{find\_best\_packet}}}
+\DoxyCodeLine{00207\ \{}
+\DoxyCodeLine{00208\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1find__best__packet__helper}{find\_best\_packet\_helper<Size,typename\ packet\_traits<T>::type}}>::type\ type;}
+\DoxyCodeLine{00209\ \};}
+\DoxyCodeLine{00210\ }
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\#if\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES>0}}
+\DoxyCodeLine{00212\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ ArrayBytes,\ \textcolor{keywordtype}{int}\ AlignmentBytes,}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ Match\ \ \ \ \ =\ \ bool((ArrayBytes\%AlignmentBytes)==0),}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ TryHalf\ \ \ =\ \ bool(EIGEN\_MIN\_ALIGN\_BYTES<AlignmentBytes)\ >}
+\DoxyCodeLine{00215\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__default__alignment__helper}{compute\_default\_alignment\_helper}}}
+\DoxyCodeLine{00216\ \{}
+\DoxyCodeLine{00217\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ 0\ \};}
+\DoxyCodeLine{00218\ \};}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ ArrayBytes,\ \textcolor{keywordtype}{int}\ AlignmentBytes,\ \textcolor{keywordtype}{bool}\ TryHalf>}
+\DoxyCodeLine{00221\ \textcolor{keyword}{struct\ }compute\_default\_alignment\_helper<ArrayBytes,\ AlignmentBytes,\ true,\ TryHalf>\ \textcolor{comment}{//\ Match}}
+\DoxyCodeLine{00222\ \{}
+\DoxyCodeLine{00223\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ AlignmentBytes\ \};}
+\DoxyCodeLine{00224\ \};}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ ArrayBytes,\ \textcolor{keywordtype}{int}\ AlignmentBytes>}
+\DoxyCodeLine{00227\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__default__alignment__helper}{compute\_default\_alignment\_helper}}<ArrayBytes,\ AlignmentBytes,\ false,\ true>\ \textcolor{comment}{//\ Try-\/half}}
+\DoxyCodeLine{00228\ \{}
+\DoxyCodeLine{00229\ \ \ \textcolor{comment}{//\ current\ packet\ too\ large,\ try\ with\ an\ half-\/packet}}
+\DoxyCodeLine{00230\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ compute\_default\_alignment\_helper<ArrayBytes,\ AlignmentBytes/2>::value\ \};}
+\DoxyCodeLine{00231\ \};}
+\DoxyCodeLine{00232\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00233\ \textcolor{comment}{//\ If\ static\ alignment\ is\ disabled,\ no\ need\ to\ bother.}}
+\DoxyCodeLine{00234\ \textcolor{comment}{//\ This\ also\ avoids\ a\ division\ by\ zero\ in\ "{}bool\ Match\ =\ \ bool((ArrayBytes\%AlignmentBytes)==0)"{}}}
+\DoxyCodeLine{00235\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ ArrayBytes,\ \textcolor{keywordtype}{int}\ AlignmentBytes>}
+\DoxyCodeLine{00236\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__default__alignment__helper}{compute\_default\_alignment\_helper}}}
+\DoxyCodeLine{00237\ \{}
+\DoxyCodeLine{00238\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ 0\ \};}
+\DoxyCodeLine{00239\ \};}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ Size>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__default__alignment}{compute\_default\_alignment}}\ \{}
+\DoxyCodeLine{00243\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1compute__default__alignment__helper}{compute\_default\_alignment\_helper}}<Size*\textcolor{keyword}{sizeof}(T),EIGEN\_MAX\_STATIC\_ALIGN\_BYTES>::value\ \};}
+\DoxyCodeLine{00244\ \};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__default__alignment}{compute\_default\_alignment}}<T,\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}>\ \{}
+\DoxyCodeLine{00247\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ EIGEN\_MAX\_ALIGN\_BYTES\ \};}
+\DoxyCodeLine{00248\ \};}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Rows,\ \textcolor{keywordtype}{int}\ \_Cols,}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \_Options\ =\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13ad0e7f67d40bcde3d41c12849b16ce6ea}{AutoAlign}}\ |}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (\ (\_Rows==1\ \&\&\ \_Cols!=1)\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (\_Cols==1\ \&\&\ \_Rows!=1)\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ EIGEN\_DEFAULT\_MATRIX\_STORAGE\_ORDER\_OPTION\ ),}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \_MaxRows\ =\ \_Rows,}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ \_MaxCols\ =\ \_Cols}
+\DoxyCodeLine{00257\ >\ \textcolor{keyword}{class}\ \mbox{\hyperlink{classEigen_1_1internal_1_1make__proper__matrix__type}{make\_proper\_matrix\_type}}}
+\DoxyCodeLine{00258\ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ IsColVector\ =\ \_Cols==1\ \&\&\ \_Rows!=1,}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ IsRowVector\ =\ \_Rows==1\ \&\&\ \_Cols!=1,}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ Options\ =\ IsColVector\ ?\ (\_Options\ |\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}})\ \&\ \string~\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ IsRowVector\ ?\ (\_Options\ |\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}})\ \&\ \string~\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ \_Options}
+\DoxyCodeLine{00265\ \ \ \ \ \};}
+\DoxyCodeLine{00266\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<\_Scalar,\ \_Rows,\ \_Cols,\ Options,\ \_MaxRows,\ \_MaxCols>}}\ type;}
+\DoxyCodeLine{00268\ \};}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ Rows,\ \textcolor{keywordtype}{int}\ Cols,\ \textcolor{keywordtype}{int}\ Options,\ \textcolor{keywordtype}{int}\ MaxRows,\ \textcolor{keywordtype}{int}\ MaxCols>}
+\DoxyCodeLine{00271\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1internal_1_1compute__matrix__flags}{compute\_matrix\_flags}}}
+\DoxyCodeLine{00272\ \{}
+\DoxyCodeLine{00273\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ row\_major\_bit\ =\ Options\&\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ ?\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ :\ 0\ \};}
+\DoxyCodeLine{00274\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{comment}{//\ FIXME\ currently\ we\ still\ have\ to\ handle\ DirectAccessBit\ at\ the\ expression\ level\ to\ handle\ DenseCoeffsBase<>}}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{comment}{//\ and\ then\ propagate\ this\ information\ to\ the\ evaluator's\ flags.}}
+\DoxyCodeLine{00277\ \ \ \ \ \textcolor{comment}{//\ However,\ I\ (Gael)\ think\ that\ DirectAccessBit\ should\ only\ matter\ at\ the\ evaluation\ stage.}}
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ ret\ =\ \mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}}\ |\ \mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}}\ |\ NestByRefBit\ |\ row\_major\_bit\ \};}
+\DoxyCodeLine{00279\ \};}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ \_Rows,\ \textcolor{keywordtype}{int}\ \_Cols>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1size__at__compile__time}{size\_at\_compile\_time}}}
+\DoxyCodeLine{00282\ \{}
+\DoxyCodeLine{00283\ \ \ \textcolor{keyword}{enum}\ \{\ ret\ =\ (\_Rows==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ||\ \_Cols==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}})\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ \_Rows\ *\ \_Cols\ \};}
+\DoxyCodeLine{00284\ \};}
+\DoxyCodeLine{00285\ }
+\DoxyCodeLine{00286\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1size__of__xpr__at__compile__time}{size\_of\_xpr\_at\_compile\_time}}}
+\DoxyCodeLine{00287\ \{}
+\DoxyCodeLine{00288\ \ \ \textcolor{keyword}{enum}\ \{\ ret\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1size__at__compile__time}{size\_at\_compile\_time<traits<XprType>::RowsAtCompileTime}},\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::ColsAtCompileTime}}>::ret\ \};}
+\DoxyCodeLine{00289\ \};}
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \textcolor{comment}{/*\ plain\_matrix\_type\ :\ the\ difference\ from\ eval\ is\ that\ plain\_matrix\_type\ is\ always\ a\ plain\ matrix\ type,}}
+\DoxyCodeLine{00292\ \textcolor{comment}{\ *\ whereas\ eval\ is\ a\ const\ reference\ in\ the\ case\ of\ a\ matrix}}
+\DoxyCodeLine{00293\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00294\ }
+\DoxyCodeLine{00295\ template<typename\ T,\ typename\ StorageKind\ =\ typename\ traits<T>::StorageKind>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type}};}
+\DoxyCodeLine{00296\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ BaseClassType,\ \textcolor{keywordtype}{int}\ Flags>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__dense}{plain\_matrix\_type\_dense}};}
+\DoxyCodeLine{00297\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type}}<T,\mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00298\ \{}
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__dense}{plain\_matrix\_type\_dense<T,typename\ traits<T>::XprKind}},\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::Flags}}>::type\ type;}
+\DoxyCodeLine{00300\ \};}
+\DoxyCodeLine{00301\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type}}<T,\mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}}>}
+\DoxyCodeLine{00302\ \{}
+\DoxyCodeLine{00303\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ T::PlainObject\ type;}
+\DoxyCodeLine{00304\ \};}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ Flags>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__dense}{plain\_matrix\_type\_dense}}<T,\mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}},Flags>}
+\DoxyCodeLine{00307\ \{}
+\DoxyCodeLine{00308\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<typename\ traits<T>::Scalar}},}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::RowsAtCompileTime}},}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::ColsAtCompileTime}},}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13ad0e7f67d40bcde3d41c12849b16ce6ea}{AutoAlign}}\ |\ (Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}),}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxRowsAtCompileTime}},}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxColsAtCompileTime}}}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \ \ \ \ >\ type;}
+\DoxyCodeLine{00315\ \};}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ Flags>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__dense}{plain\_matrix\_type\_dense}}<T,\mbox{\hyperlink{structEigen_1_1ArrayXpr}{ArrayXpr}},Flags>}
+\DoxyCodeLine{00318\ \{}
+\DoxyCodeLine{00319\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array<typename\ traits<T>::Scalar}},}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::RowsAtCompileTime}},}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::ColsAtCompileTime}},}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13ad0e7f67d40bcde3d41c12849b16ce6ea}{AutoAlign}}\ |\ (Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}),}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxRowsAtCompileTime}},}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxColsAtCompileTime}}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ \ \ >\ type;}
+\DoxyCodeLine{00326\ \};}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \textcolor{comment}{/*\ eval\ :\ the\ return\ type\ of\ eval().\ For\ matrices,\ this\ is\ just\ a\ const\ reference}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ *\ in\ order\ to\ avoid\ a\ useless\ copy}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ template<typename\ T,\ typename\ StorageKind\ =\ typename\ traits<T>::StorageKind>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}};}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}<T,\mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00335\ \{}
+\DoxyCodeLine{00336\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type<T>::type}}\ type;}
+\DoxyCodeLine{00337\ \textcolor{comment}{//\ \ \ typedef\ typename\ T::PlainObject\ type;}}
+\DoxyCodeLine{00338\ \textcolor{comment}{//\ \ \ typedef\ T::Matrix<typename\ traits<T>::Scalar,}}
+\DoxyCodeLine{00339\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ traits<T>::RowsAtCompileTime,}}
+\DoxyCodeLine{00340\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ traits<T>::ColsAtCompileTime,}}
+\DoxyCodeLine{00341\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ AutoAlign\ |\ (traits<T>::Flags\&RowMajorBit\ ?\ RowMajor\ :\ ColMajor),}}
+\DoxyCodeLine{00342\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ traits<T>::MaxRowsAtCompileTime,}}
+\DoxyCodeLine{00343\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ traits<T>::MaxColsAtCompileTime}}
+\DoxyCodeLine{00344\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ >\ type;}}
+\DoxyCodeLine{00345\ \};}
+\DoxyCodeLine{00346\ }
+\DoxyCodeLine{00347\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}<T,\mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}}>}
+\DoxyCodeLine{00348\ \{}
+\DoxyCodeLine{00349\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type<T>::type}}\ type;}
+\DoxyCodeLine{00350\ \};}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \textcolor{comment}{//\ for\ matrices,\ no\ need\ to\ evaluate,\ just\ use\ a\ const\ reference\ to\ avoid\ a\ useless\ copy}}
+\DoxyCodeLine{00353\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Rows,\ \textcolor{keywordtype}{int}\ \_Cols,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keywordtype}{int}\ \_MaxRows,\ \textcolor{keywordtype}{int}\ \_MaxCols>}
+\DoxyCodeLine{00354\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}<\mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>,\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00355\ \{}
+\DoxyCodeLine{00356\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>}}\&\ type;}
+\DoxyCodeLine{00357\ \};}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Rows,\ \textcolor{keywordtype}{int}\ \_Cols,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keywordtype}{int}\ \_MaxRows,\ \textcolor{keywordtype}{int}\ \_MaxCols>}
+\DoxyCodeLine{00360\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}<\mbox{\hyperlink{classEigen_1_1Array}{Array}}<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>,\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00361\ \{}
+\DoxyCodeLine{00362\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Array}{Array<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>}}\&\ type;}
+\DoxyCodeLine{00363\ \};}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{comment}{/*\ similar\ to\ plain\_matrix\_type,\ but\ using\ the\ evaluator's\ Flags\ */}}
+\DoxyCodeLine{00367\ template<typename\ T,\ typename\ StorageKind\ =\ typename\ traits<T>::StorageKind>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__object__eval}{plain\_object\_eval}};}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00370\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__object__eval}{plain\_object\_eval}}<T,\mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00371\ \{}
+\DoxyCodeLine{00372\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__dense}{plain\_matrix\_type\_dense<T,typename\ traits<T>::XprKind}},\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<T>::Flags}}>::type\ type;}
+\DoxyCodeLine{00373\ \};}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ }
+\DoxyCodeLine{00376\ \textcolor{comment}{/*\ plain\_matrix\_type\_column\_major\ :\ same\ as\ plain\_matrix\_type\ but\ guaranteed\ to\ be\ column-\/major}}
+\DoxyCodeLine{00377\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00378\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__column__major}{plain\_matrix\_type\_column\_major}}}
+\DoxyCodeLine{00379\ \{}
+\DoxyCodeLine{00380\ \ \ \textcolor{keyword}{enum}\ \{\ Rows\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::RowsAtCompileTime}},}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ Cols\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::ColsAtCompileTime}},}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ MaxRows\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxRowsAtCompileTime}},}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ MaxCols\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxColsAtCompileTime}}}
+\DoxyCodeLine{00384\ \ \ \};}
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<typename\ traits<T>::Scalar}},}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rows,}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Cols,}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (MaxRows==1\&\&MaxCols!=1)\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MaxRows,}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MaxCols}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \ \ >\ type;}
+\DoxyCodeLine{00392\ \};}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \textcolor{comment}{/*\ plain\_matrix\_type\_row\_major\ :\ same\ as\ plain\_matrix\_type\ but\ guaranteed\ to\ be\ row-\/major}}
+\DoxyCodeLine{00395\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00396\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type__row__major}{plain\_matrix\_type\_row\_major}}}
+\DoxyCodeLine{00397\ \{}
+\DoxyCodeLine{00398\ \ \ \textcolor{keyword}{enum}\ \{\ Rows\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::RowsAtCompileTime}},}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \ \ \ Cols\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::ColsAtCompileTime}},}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \ \ \ MaxRows\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxRowsAtCompileTime}},}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ \ \ \ MaxCols\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::MaxColsAtCompileTime}}}
+\DoxyCodeLine{00402\ \ \ \};}
+\DoxyCodeLine{00403\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<typename\ traits<T>::Scalar}},}
+\DoxyCodeLine{00404\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Rows,}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Cols,}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (MaxCols==1\&\&MaxRows!=1)\ ?\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}\ :\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}},}
+\DoxyCodeLine{00407\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MaxRows,}
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ MaxCols}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \ \ \ \ >\ type;}
+\DoxyCodeLine{00410\ \};}
+\DoxyCodeLine{00411\ \textcolor{comment}{}}
+\DoxyCodeLine{00412\ \textcolor{comment}{/**\ \(\backslash\)internal\ The\ reference\ selector\ for\ template\ expressions.\ The\ idea\ is\ that\ we\ don't}}
+\DoxyCodeLine{00413\ \textcolor{comment}{\ \ *\ need\ to\ use\ references\ for\ expressions\ since\ they\ are\ light\ weight\ proxy}}
+\DoxyCodeLine{00414\ \textcolor{comment}{\ \ *\ objects\ which\ should\ generate\ no\ copying\ overhead.\ */}}
+\DoxyCodeLine{00415\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00416\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1ref__selector}{ref\_selector}}}
+\DoxyCodeLine{00417\ \{}
+\DoxyCodeLine{00418\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00419\ \ \ \ \ bool(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::Flags}}\ \&\ NestByRefBit),}
+\DoxyCodeLine{00420\ \ \ \ \ T\ \textcolor{keyword}{const}\&,}
+\DoxyCodeLine{00421\ \ \ \ \ \textcolor{keyword}{const}\ T}
+\DoxyCodeLine{00422\ \ \ >::type\ type;}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00425\ \ \ \ \ bool(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<T>::Flags}}\ \&\ NestByRefBit),}
+\DoxyCodeLine{00426\ \ \ \ \ T\ \&,}
+\DoxyCodeLine{00427\ \ \ \ \ T}
+\DoxyCodeLine{00428\ \ \ >::type\ non\_const\_type;}
+\DoxyCodeLine{00429\ \};}
+\DoxyCodeLine{00430\ \textcolor{comment}{}}
+\DoxyCodeLine{00431\ \textcolor{comment}{/**\ \(\backslash\)internal\ Adds\ the\ const\ qualifier\ on\ the\ value-\/type\ of\ T2\ if\ and\ only\ if\ T1\ is\ a\ const\ type\ */}}
+\DoxyCodeLine{00432\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T1,\ \textcolor{keyword}{typename}\ T2>}
+\DoxyCodeLine{00433\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1transfer__constness}{transfer\_constness}}}
+\DoxyCodeLine{00434\ \{}
+\DoxyCodeLine{00435\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00436\ \ \ \ \ bool(internal::is\_const<T1>::value),}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keyword}{typename}\ internal::add\_const\_on\_value\_type<T2>::type,}
+\DoxyCodeLine{00438\ \ \ \ \ T2}
+\DoxyCodeLine{00439\ \ \ >::type\ type;}
+\DoxyCodeLine{00440\ \};}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{comment}{//\ However,\ we\ still\ need\ a\ mechanism\ to\ detect\ whether\ an\ expression\ which\ is\ evaluated\ multiple\ time}}
+\DoxyCodeLine{00444\ \textcolor{comment}{//\ has\ to\ be\ evaluated\ into\ a\ temporary.}}
+\DoxyCodeLine{00445\ \textcolor{comment}{//\ That's\ the\ purpose\ of\ this\ new\ nested\_eval\ helper:}\textcolor{comment}{}}
+\DoxyCodeLine{00446\ \textcolor{comment}{/**\ \(\backslash\)internal\ Determines\ how\ a\ given\ expression\ should\ be\ nested\ when\ evaluated\ multiple\ times.}}
+\DoxyCodeLine{00447\ \textcolor{comment}{\ \ *\ For\ example,\ when\ you\ do\ a\ *\ (b+c),\ Eigen\ will\ determine\ how\ the\ expression\ b+c\ should\ be}}
+\DoxyCodeLine{00448\ \textcolor{comment}{\ \ *\ evaluated\ into\ the\ bigger\ product\ expression.\ The\ choice\ is\ between\ nesting\ the\ expression\ b+c\ as-\/is,\ or}}
+\DoxyCodeLine{00449\ \textcolor{comment}{\ \ *\ evaluating\ that\ expression\ b+c\ into\ a\ temporary\ variable\ d,\ and\ nest\ d\ so\ that\ the\ resulting\ expression\ is}}
+\DoxyCodeLine{00450\ \textcolor{comment}{\ \ *\ a*d.\ Evaluating\ can\ be\ beneficial\ for\ example\ if\ every\ coefficient\ access\ in\ the\ resulting\ expression\ causes}}
+\DoxyCodeLine{00451\ \textcolor{comment}{\ \ *\ many\ coefficient\ accesses\ in\ the\ nested\ expressions\ -\/-\/\ as\ is\ the\ case\ with\ matrix\ product\ for\ example.}}
+\DoxyCodeLine{00452\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00453\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ T\ the\ type\ of\ the\ expression\ being\ nested.}}
+\DoxyCodeLine{00454\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ n\ the\ number\ of\ coefficient\ accesses\ in\ the\ nested\ expression\ for\ each\ coefficient\ access\ in\ the\ bigger\ expression.}}
+\DoxyCodeLine{00455\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ PlainObject\ the\ type\ of\ the\ temporary\ if\ needed.}}
+\DoxyCodeLine{00456\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00457\ template<typename\ T,\ int\ n,\ typename\ PlainObject\ =\ typename\ plain\_object\_eval<T>::type>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1nested__eval}{nested\_eval}}}
+\DoxyCodeLine{00458\ \{}
+\DoxyCodeLine{00459\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00460\ \ \ \ \ ScalarReadCost\ =\ \mbox{\hyperlink{structEigen_1_1NumTraits}{NumTraits<typename\ traits<T>::Scalar}}>::ReadCost,}
+\DoxyCodeLine{00461\ \ \ \ \ CoeffReadCost\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<T>::CoeffReadCost}},\ \ \textcolor{comment}{//\ NOTE\ What\ if\ an\ evaluator\ evaluate\ itself\ into\ a\ temporary?}}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ Then\ CoeffReadCost\ will\ be\ small\ (e.g.,\ 1)\ but\ we\ still\ have\ to\ evaluate,\ especially\ if\ n>1.}}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ This\ situation\ is\ already\ taken\ care\ by\ the\ EvalBeforeNestingBit\ flag,\ which\ is\ turned\ ON}}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ for\ all\ evaluator\ creating\ a\ temporary.\ This\ flag\ is\ then\ propagated\ by\ the\ parent\ evaluators.}}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ Another\ solution\ could\ be\ to\ count\ the\ number\ of\ temps?}}
+\DoxyCodeLine{00466\ \ \ \ \ NAsInteger\ =\ n\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}}\ :\ n,}
+\DoxyCodeLine{00467\ \ \ \ \ CostEval\ \ \ =\ (NAsInteger+1)\ *\ ScalarReadCost\ +\ CoeffReadCost,}
+\DoxyCodeLine{00468\ \ \ \ \ CostNoEval\ =\ NAsInteger\ *\ CoeffReadCost,}
+\DoxyCodeLine{00469\ \ \ \ \ Evaluate\ =\ (\textcolor{keywordtype}{int}(\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<T>::Flags}})\ \&\ \mbox{\hyperlink{group__flags_gaa34e83bae46a8eeae4e69ebe3aaecbed}{EvalBeforeNestingBit}})\ ||\ (int(CostEval)\ <\ int(CostNoEval))}
+\DoxyCodeLine{00470\ \ \ \};}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional<Evaluate,\ PlainObject,\ typename\ ref\_selector<T>::type}}>::type\ type;}
+\DoxyCodeLine{00473\ \};}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00476\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00477\ \textcolor{keyword}{inline}\ T*\ const\_cast\_ptr(\textcolor{keyword}{const}\ T*\ ptr)}
+\DoxyCodeLine{00478\ \{}
+\DoxyCodeLine{00479\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{const\_cast<}T*\textcolor{keyword}{>}(ptr);}
+\DoxyCodeLine{00480\ \}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ template<typename\ Derived,\ typename\ XprKind\ =\ typename\ traits<Derived>::XprKind>}
+\DoxyCodeLine{00483\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1dense__xpr__base}{dense\_xpr\_base}}}
+\DoxyCodeLine{00484\ \{}
+\DoxyCodeLine{00485\ \ \ \textcolor{comment}{/*\ dense\_xpr\_base\ should\ only\ ever\ be\ used\ on\ dense\ expressions,\ thus\ falling\ either\ into\ the\ MatrixXpr\ or\ into\ the\ ArrayXpr\ cases\ */}}
+\DoxyCodeLine{00486\ \};}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00489\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1dense__xpr__base}{dense\_xpr\_base}}<Derived,\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}>}
+\DoxyCodeLine{00490\ \{}
+\DoxyCodeLine{00491\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\ type;}
+\DoxyCodeLine{00492\ \};}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00495\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1dense__xpr__base}{dense\_xpr\_base}}<Derived,\ \mbox{\hyperlink{structEigen_1_1ArrayXpr}{ArrayXpr}}>}
+\DoxyCodeLine{00496\ \{}
+\DoxyCodeLine{00497\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1ArrayBase}{ArrayBase<Derived>}}\ type;}
+\DoxyCodeLine{00498\ \};}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ template<typename\ Derived,\ typename\ XprKind\ =\ typename\ traits<Derived>::XprKind,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageKind}}\ =\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Derived>::StorageKind}}>}
+\DoxyCodeLine{00501\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{generic\_xpr\_base}};}
+\DoxyCodeLine{00502\ }
+\DoxyCodeLine{00503\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ XprKind>}
+\DoxyCodeLine{00504\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{generic\_xpr\_base}}<Derived,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{XprKind}},\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00505\ \{}
+\DoxyCodeLine{00506\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ dense\_xpr\_base<Derived,XprKind>::type\ type;}
+\DoxyCodeLine{00507\ \};}
+\DoxyCodeLine{00508\ }
+\DoxyCodeLine{00509\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keyword}{typename}\ CastType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cast__return__type}{cast\_return\_type}}}
+\DoxyCodeLine{00510\ \{}
+\DoxyCodeLine{00511\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ CurrentScalarType;}
+\DoxyCodeLine{00512\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ remove\_all<CastType>::type\ \_CastType;}
+\DoxyCodeLine{00513\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \_CastType::Scalar\ NewScalarType;}
+\DoxyCodeLine{00514\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional<is\_same<CurrentScalarType,NewScalarType>::value}},}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ XprType\&,CastType>::type\ type;}
+\DoxyCodeLine{00516\ \};}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__storage__type}{promote\_storage\_type}};}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__storage__type}{promote\_storage\_type}}<A,A>}
+\DoxyCodeLine{00521\ \{}
+\DoxyCodeLine{00522\ \ \ \textcolor{keyword}{typedef}\ A\ ret;}
+\DoxyCodeLine{00523\ \};}
+\DoxyCodeLine{00524\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__storage__type}{promote\_storage\_type}}<A,\ const\ A>}
+\DoxyCodeLine{00525\ \{}
+\DoxyCodeLine{00526\ \ \ \textcolor{keyword}{typedef}\ A\ ret;}
+\DoxyCodeLine{00527\ \};}
+\DoxyCodeLine{00528\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1promote__storage__type}{promote\_storage\_type}}<const\ A,\ A>}
+\DoxyCodeLine{00529\ \{}
+\DoxyCodeLine{00530\ \ \ \textcolor{keyword}{typedef}\ A\ ret;}
+\DoxyCodeLine{00531\ \};}
+\DoxyCodeLine{00532\ \textcolor{comment}{}}
+\DoxyCodeLine{00533\ \textcolor{comment}{/**\ \(\backslash\)internal\ Specify\ the\ "{}storage\ kind"{}\ of\ applying\ a\ coefficient-\/wise}}
+\DoxyCodeLine{00534\ \textcolor{comment}{\ \ *\ binary\ operations\ between\ two\ expressions\ of\ kinds\ A\ and\ B\ respectively.}}
+\DoxyCodeLine{00535\ \textcolor{comment}{\ \ *\ The\ template\ parameter\ Functor\ permits\ to\ specialize\ the\ resulting\ storage\ kind\ wrt\ to}}
+\DoxyCodeLine{00536\ \textcolor{comment}{\ \ *\ the\ functor.}}
+\DoxyCodeLine{00537\ \textcolor{comment}{\ \ *\ The\ default\ rules\ are\ as\ follows:}}
+\DoxyCodeLine{00538\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00539\ \textcolor{comment}{\ \ *\ A\ \ \ \ \ \ op\ A\ \ \ \ \ \ -\/>\ A}}
+\DoxyCodeLine{00540\ \textcolor{comment}{\ \ *\ A\ \ \ \ \ \ op\ dense\ \ -\/>\ dense}}
+\DoxyCodeLine{00541\ \textcolor{comment}{\ \ *\ dense\ \ op\ B\ \ \ \ \ \ -\/>\ dense}}
+\DoxyCodeLine{00542\ \textcolor{comment}{\ \ *\ sparse\ op\ dense\ \ -\/>\ sparse}}
+\DoxyCodeLine{00543\ \textcolor{comment}{\ \ *\ dense\ \ op\ sparse\ -\/>\ sparse}}
+\DoxyCodeLine{00544\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00545\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00546\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B,\ \textcolor{keyword}{typename}\ Functor>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}};}
+\DoxyCodeLine{00547\ }
+\DoxyCodeLine{00548\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}}<A,A,Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ A\ \ \ \ \ \ ret;\ \};}
+\DoxyCodeLine{00549\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ \ ret;\ \};}
+\DoxyCodeLine{00550\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}}<A,\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ \ ret;\ \};}
+\DoxyCodeLine{00551\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ B,\ \textcolor{keyword}{typename}\ Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},B,Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ \ ret;\ \};}
+\DoxyCodeLine{00552\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}},\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}}\ ret;\ \};}
+\DoxyCodeLine{00553\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{cwise\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}},Functor>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}}\ ret;\ \};}
+\DoxyCodeLine{00554\ }
+\DoxyCodeLine{00555\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LhsKind,\ \textcolor{keyword}{typename}\ RhsKind,\ \textcolor{keywordtype}{int}\ LhsOrder,\ \textcolor{keywordtype}{int}\ RhsOrder>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__order}{cwise\_promote\_storage\_order}}\ \{}
+\DoxyCodeLine{00556\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ LhsOrder\ \};}
+\DoxyCodeLine{00557\ \};}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LhsKind,\ \textcolor{keywordtype}{int}\ LhsOrder,\ \textcolor{keywordtype}{int}\ RhsOrder>\ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__order}{cwise\_promote\_storage\_order}}<LhsKind,\mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}},LhsOrder,RhsOrder>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ RhsOrder\ \};\ \};}
+\DoxyCodeLine{00560\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ RhsKind,\ \textcolor{keywordtype}{int}\ LhsOrder,\ \textcolor{keywordtype}{int}\ RhsOrder>\ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__order}{cwise\_promote\_storage\_order}}<\mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}},RhsKind,LhsOrder,RhsOrder>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ LhsOrder\ \};\ \};}
+\DoxyCodeLine{00561\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ Order>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__order}{cwise\_promote\_storage\_order}}<\mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}},\mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}},Order,Order>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ Order\ \};\ \};}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \textcolor{comment}{}}
+\DoxyCodeLine{00564\ \textcolor{comment}{/**\ \(\backslash\)internal\ Specify\ the\ "{}storage\ kind"{}\ of\ multiplying\ an\ expression\ of\ kind\ A\ with\ kind\ B.}}
+\DoxyCodeLine{00565\ \textcolor{comment}{\ \ *\ The\ template\ parameter\ ProductTag\ permits\ to\ specialize\ the\ resulting\ storage\ kind\ wrt\ to}}
+\DoxyCodeLine{00566\ \textcolor{comment}{\ \ *\ some\ compile-\/time\ properties\ of\ the\ product:\ GemmProduct,\ GemvProduct,\ OuterProduct,\ InnerProduct.}}
+\DoxyCodeLine{00567\ \textcolor{comment}{\ \ *\ The\ default\ rules\ are\ as\ follows:}}
+\DoxyCodeLine{00568\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00569\ \textcolor{comment}{\ \ *\ \ K\ *\ K\ \ \ \ \ \ \ \ \ \ \ \ -\/>\ K}}
+\DoxyCodeLine{00570\ \textcolor{comment}{\ \ *\ \ dense\ *\ K\ \ \ \ \ \ \ \ -\/>\ dense}}
+\DoxyCodeLine{00571\ \textcolor{comment}{\ \ *\ \ K\ *\ dense\ \ \ \ \ \ \ \ -\/>\ dense}}
+\DoxyCodeLine{00572\ \textcolor{comment}{\ \ *\ \ diag\ *\ K\ \ \ \ \ \ \ \ \ -\/>\ K}}
+\DoxyCodeLine{00573\ \textcolor{comment}{\ \ *\ \ K\ *\ diag\ \ \ \ \ \ \ \ \ -\/>\ K}}
+\DoxyCodeLine{00574\ \textcolor{comment}{\ \ *\ \ Perm\ *\ K\ \ \ \ \ \ \ \ \ -\/>\ K}}
+\DoxyCodeLine{00575\ \textcolor{comment}{\ \ *\ K\ *\ Perm\ \ \ \ \ \ \ \ \ \ -\/>\ K}}
+\DoxyCodeLine{00576\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00577\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00578\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keyword}{typename}\ B,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}};}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<A,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ A,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ A\ \ \ \ \ ret;\};}
+\DoxyCodeLine{00581\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ ProductTag>\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\};}
+\DoxyCodeLine{00582\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<A,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\ \};}
+\DoxyCodeLine{00583\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ B,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ B,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\ \};}
+\DoxyCodeLine{00584\ }
+\DoxyCodeLine{00585\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<A,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}},\ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ A\ ret;\ \};}
+\DoxyCodeLine{00586\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ B,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}},\ \ \ \ \ \ B,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ B\ ret;\ \};}
+\DoxyCodeLine{00587\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ ProductTag>\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}},\ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\ \};}
+\DoxyCodeLine{00588\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ ProductTag>\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}},\ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\ \};}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ A,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<A,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1PermutationStorage}{PermutationStorage}},\ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ A\ ret;\ \};}
+\DoxyCodeLine{00591\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ B,\ \textcolor{keywordtype}{int}\ ProductTag>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1PermutationStorage}{PermutationStorage}},\ B,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ B\ ret;\ \};}
+\DoxyCodeLine{00592\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ ProductTag>\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1PermutationStorage}{PermutationStorage}},\ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\ \};}
+\DoxyCodeLine{00593\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ ProductTag>\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1product__promote__storage__type}{product\_promote\_storage\_type}}<\mbox{\hyperlink{structEigen_1_1PermutationStorage}{PermutationStorage}},\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}},\ \ \ \ \ \ \ \ \ \ \ \ \ \ ProductTag>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ ret;\ \};}
+\DoxyCodeLine{00594\ \textcolor{comment}{}}
+\DoxyCodeLine{00595\ \textcolor{comment}{/**\ \(\backslash\)internal\ gives\ the\ plain\ matrix\ or\ array\ type\ to\ store\ a\ row/column/diagonal\ of\ a\ matrix\ type.}}
+\DoxyCodeLine{00596\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Scalar\ optional\ parameter\ allowing\ to\ pass\ a\ different\ scalar\ type\ than\ the\ one\ of\ the\ MatrixType.}}
+\DoxyCodeLine{00597\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00598\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExpressionType,\ \textcolor{keyword}{typename}\ Scalar\ =\ \textcolor{keyword}{typename}\ ExpressionType::Scalar>}
+\DoxyCodeLine{00599\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__row__type}{plain\_row\_type}}}
+\DoxyCodeLine{00600\ \{}
+\DoxyCodeLine{00601\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ 1,\ ExpressionType::ColsAtCompileTime,}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int(ExpressionType::PlainObject::Options)\ |\ int(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}),\ 1,\ ExpressionType::MaxColsAtCompileTime>\ MatrixRowType;}
+\DoxyCodeLine{00603\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ 1,\ ExpressionType::ColsAtCompileTime,}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ int(ExpressionType::PlainObject::Options)\ |\ int(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}),\ 1,\ ExpressionType::MaxColsAtCompileTime>\ ArrayRowType;}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00607\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same<\ typename\ traits<ExpressionType>::XprKind}},\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}\ >::value,}
+\DoxyCodeLine{00608\ \ \ \ \ MatrixRowType,}
+\DoxyCodeLine{00609\ \ \ \ \ ArrayRowType}
+\DoxyCodeLine{00610\ \ \ >::type\ type;}
+\DoxyCodeLine{00611\ \};}
+\DoxyCodeLine{00612\ }
+\DoxyCodeLine{00613\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExpressionType,\ \textcolor{keyword}{typename}\ Scalar\ =\ \textcolor{keyword}{typename}\ ExpressionType::Scalar>}
+\DoxyCodeLine{00614\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__col__type}{plain\_col\_type}}}
+\DoxyCodeLine{00615\ \{}
+\DoxyCodeLine{00616\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ ExpressionType::RowsAtCompileTime,\ 1,}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ExpressionType::PlainObject::Options\ \&\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{\string~RowMajor}},\ ExpressionType::MaxRowsAtCompileTime,\ 1>\ MatrixColType;}
+\DoxyCodeLine{00618\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ ExpressionType::RowsAtCompileTime,\ 1,}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ExpressionType::PlainObject::Options\ \&\ \mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{\string~RowMajor}},\ ExpressionType::MaxRowsAtCompileTime,\ 1>\ ArrayColType;}
+\DoxyCodeLine{00620\ }
+\DoxyCodeLine{00621\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00622\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same<\ typename\ traits<ExpressionType>::XprKind}},\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}\ >::value,}
+\DoxyCodeLine{00623\ \ \ \ \ MatrixColType,}
+\DoxyCodeLine{00624\ \ \ \ \ ArrayColType}
+\DoxyCodeLine{00625\ \ \ >::type\ type;}
+\DoxyCodeLine{00626\ \};}
+\DoxyCodeLine{00627\ }
+\DoxyCodeLine{00628\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExpressionType,\ \textcolor{keyword}{typename}\ Scalar\ =\ \textcolor{keyword}{typename}\ ExpressionType::Scalar>}
+\DoxyCodeLine{00629\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__diag__type}{plain\_diag\_type}}}
+\DoxyCodeLine{00630\ \{}
+\DoxyCodeLine{00631\ \ \ \textcolor{keyword}{enum}\ \{\ diag\_size\ =\ EIGEN\_SIZE\_MIN\_PREFER\_DYNAMIC(ExpressionType::RowsAtCompileTime,\ ExpressionType::ColsAtCompileTime),}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ max\_diag\_size\ =\ EIGEN\_SIZE\_MIN\_PREFER\_FIXED(ExpressionType::MaxRowsAtCompileTime,\ ExpressionType::MaxColsAtCompileTime)}
+\DoxyCodeLine{00633\ \ \ \};}
+\DoxyCodeLine{00634\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ diag\_size,\ 1,\ ExpressionType::PlainObject::Options\ \&\ \string~RowMajor,\ max\_diag\_size,\ 1>}}\ MatrixDiagType;}
+\DoxyCodeLine{00635\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array<Scalar,\ diag\_size,\ 1,\ ExpressionType::PlainObject::Options\ \&\ \string~RowMajor,\ max\_diag\_size,\ 1>}}\ ArrayDiagType;}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<}
+\DoxyCodeLine{00638\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same<\ typename\ traits<ExpressionType>::XprKind}},\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}\ >::value,}
+\DoxyCodeLine{00639\ \ \ \ \ MatrixDiagType,}
+\DoxyCodeLine{00640\ \ \ \ \ ArrayDiagType}
+\DoxyCodeLine{00641\ \ \ >::type\ type;}
+\DoxyCodeLine{00642\ \};}
+\DoxyCodeLine{00643\ }
+\DoxyCodeLine{00644\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Expr,\textcolor{keyword}{typename}\ Scalar\ =\ \textcolor{keyword}{typename}\ Expr::Scalar>}
+\DoxyCodeLine{00645\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1plain__constant__type}{plain\_constant\_type}}}
+\DoxyCodeLine{00646\ \{}
+\DoxyCodeLine{00647\ \ \ \textcolor{keyword}{enum}\ \{\ Options\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::Flags}}\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})?\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}:0\ \};}
+\DoxyCodeLine{00648\ }
+\DoxyCodeLine{00649\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Array}{Array<Scalar,\ \ traits<Expr>::RowsAtCompileTime}},\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::ColsAtCompileTime}},}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Options,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::MaxRowsAtCompileTime}},\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::MaxColsAtCompileTime}}>\ array\_type;}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ \ traits<Expr>::RowsAtCompileTime}},\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::ColsAtCompileTime}},}
+\DoxyCodeLine{00653\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Options,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::MaxRowsAtCompileTime}},\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Expr>::MaxColsAtCompileTime}}>\ matrix\_type;}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1CwiseNullaryOp}{CwiseNullaryOp<scalar\_constant\_op<Scalar>}},\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional<is\_same<\ typename\ traits<Expr>::XprKind}},\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}\ >::value,\ matrix\_type,\ array\_type>::type\ >\ type;}
+\DoxyCodeLine{00656\ \};}
+\DoxyCodeLine{00657\ }
+\DoxyCodeLine{00658\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExpressionType>}
+\DoxyCodeLine{00659\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__lvalue}{is\_lvalue}}}
+\DoxyCodeLine{00660\ \{}
+\DoxyCodeLine{00661\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ (!bool(is\_const<ExpressionType>::value))\ \&\&}
+\DoxyCodeLine{00662\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<ExpressionType>::Flags}}\ \&\ \mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}})\ \};}
+\DoxyCodeLine{00663\ \};}
+\DoxyCodeLine{00664\ }
+\DoxyCodeLine{00665\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__diagonal}{is\_diagonal}}}
+\DoxyCodeLine{00666\ \{\ \textcolor{keyword}{enum}\ \{\ ret\ =\ \textcolor{keyword}{false}\ \};\ \};}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__diagonal}{is\_diagonal}}<\mbox{\hyperlink{classEigen_1_1DiagonalBase}{DiagonalBase}}<T>\ >}
+\DoxyCodeLine{00669\ \{\ \textcolor{keyword}{enum}\ \{\ ret\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00670\ }
+\DoxyCodeLine{00671\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__diagonal}{is\_diagonal}}<\mbox{\hyperlink{classEigen_1_1DiagonalWrapper}{DiagonalWrapper}}<T>\ >}
+\DoxyCodeLine{00672\ \{\ \textcolor{keyword}{enum}\ \{\ ret\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00673\ }
+\DoxyCodeLine{00674\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ S>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__diagonal}{is\_diagonal}}<\mbox{\hyperlink{classEigen_1_1DiagonalMatrix}{DiagonalMatrix}}<T,S>\ >}
+\DoxyCodeLine{00675\ \{\ \textcolor{keyword}{enum}\ \{\ ret\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__identity}{is\_identity}}}
+\DoxyCodeLine{00679\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ \textcolor{keyword}{false}\ \};\ \};}
+\DoxyCodeLine{00680\ }
+\DoxyCodeLine{00681\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__identity}{is\_identity}}<\mbox{\hyperlink{classEigen_1_1CwiseNullaryOp}{CwiseNullaryOp}}<internal::\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__identity__op}{scalar\_identity\_op}}<typename\ T::Scalar>,\ T>\ >}
+\DoxyCodeLine{00682\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ }
+\DoxyCodeLine{00685\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ S1,\ \textcolor{keyword}{typename}\ S2>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1glue__shapes}{glue\_shapes}};}
+\DoxyCodeLine{00686\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1glue__shapes}{glue\_shapes}}<\mbox{\hyperlink{structEigen_1_1DenseShape}{DenseShape}},\mbox{\hyperlink{structEigen_1_1TriangularShape}{TriangularShape}}>\ \{\ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1TriangularShape}{TriangularShape}}\ type;\ \ \};}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T1,\ \textcolor{keyword}{typename}\ T2>}
+\DoxyCodeLine{00689\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1possibly__same__dense}{possibly\_same\_dense}}\ \{}
+\DoxyCodeLine{00690\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ has\_direct\_access<T1>::ret\ \&\&\ has\_direct\_access<T2>::ret\ \&\&\ is\_same<typename\ T1::Scalar,typename\ T2::Scalar>::value\ \};}
+\DoxyCodeLine{00691\ \};}
+\DoxyCodeLine{00692\ }
+\DoxyCodeLine{00693\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T1,\ \textcolor{keyword}{typename}\ T2>}
+\DoxyCodeLine{00694\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00695\ \textcolor{keywordtype}{bool}\ is\_same\_dense(\textcolor{keyword}{const}\ T1\ \&mat1,\ \textcolor{keyword}{const}\ T2\ \&mat2,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<possibly\_same\_dense<T1,T2>::value>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ *\ =\ 0)}
+\DoxyCodeLine{00696\ \{}
+\DoxyCodeLine{00697\ \ \ \textcolor{keywordflow}{return}\ (mat1.data()==mat2.data())\ \&\&\ (mat1.innerStride()==mat2.innerStride())\ \&\&\ (mat1.outerStride()==mat2.outerStride());}
+\DoxyCodeLine{00698\ \}}
+\DoxyCodeLine{00699\ }
+\DoxyCodeLine{00700\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T1,\ \textcolor{keyword}{typename}\ T2>}
+\DoxyCodeLine{00701\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00702\ \textcolor{keywordtype}{bool}\ is\_same\_dense(\textcolor{keyword}{const}\ T1\ \&,\ \textcolor{keyword}{const}\ T2\ \&,\ \textcolor{keyword}{typename}\ enable\_if<!possibly\_same\_dense<T1,T2>::value>::type\ *\ =\ 0)}
+\DoxyCodeLine{00703\ \{}
+\DoxyCodeLine{00704\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00705\ \}}
+\DoxyCodeLine{00706\ }
+\DoxyCodeLine{00707\ \textcolor{comment}{//\ Internal\ helper\ defining\ the\ cost\ of\ a\ scalar\ division\ for\ the\ type\ T.}}
+\DoxyCodeLine{00708\ \textcolor{comment}{//\ The\ default\ heuristic\ can\ be\ specialized\ for\ each\ scalar\ type\ and\ architecture.}}
+\DoxyCodeLine{00709\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\textcolor{keywordtype}{bool}\ Vectorized=false,\textcolor{keyword}{typename}\ EnableIf\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00710\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__div__cost}{scalar\_div\_cost}}\ \{}
+\DoxyCodeLine{00711\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ 8*NumTraits<T>::MulCost\ \};}
+\DoxyCodeLine{00712\ \};}
+\DoxyCodeLine{00713\ }
+\DoxyCodeLine{00714\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\textcolor{keywordtype}{bool}\ Vectorized>}
+\DoxyCodeLine{00715\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__div__cost}{scalar\_div\_cost}}<std::complex<T>,\ Vectorized>\ \{}
+\DoxyCodeLine{00716\ \ \ \textcolor{keyword}{enum}\ \{\ value\ =\ 2*scalar\_div\_cost<T>::value}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ 6*NumTraits<T>::MulCost}
+\DoxyCodeLine{00718\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ +\ 3*NumTraits<T>::AddCost}
+\DoxyCodeLine{00719\ \ \ \};}
+\DoxyCodeLine{00720\ \};}
+\DoxyCodeLine{00721\ }
+\DoxyCodeLine{00722\ }
+\DoxyCodeLine{00723\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Vectorized>}
+\DoxyCodeLine{00724\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__div__cost}{scalar\_div\_cost}}<signed\ long,Vectorized,typename\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<sizeof(long)==8,void,\mbox{\hyperlink{structEigen_1_1internal_1_1false__type}{false\_type}}>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}>\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ 24\ \};\ \};}
+\DoxyCodeLine{00725\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Vectorized>}
+\DoxyCodeLine{00726\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__div__cost}{scalar\_div\_cost}}<unsigned\ long,Vectorized,typename\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<sizeof(long)==8,void,\mbox{\hyperlink{structEigen_1_1internal_1_1false__type}{false\_type}}>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}>\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ 21\ \};\ \};}
+\DoxyCodeLine{00727\ }
+\DoxyCodeLine{00728\ }
+\DoxyCodeLine{00729\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_DEBUG\_ASSIGN}}
+\DoxyCodeLine{00730\ std::string\ demangle\_traversal(\textcolor{keywordtype}{int}\ t)}
+\DoxyCodeLine{00731\ \{}
+\DoxyCodeLine{00732\ \ \ \textcolor{keywordflow}{if}(t==DefaultTraversal)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}DefaultTraversal"{}};}
+\DoxyCodeLine{00733\ \ \ \textcolor{keywordflow}{if}(t==LinearTraversal)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LinearTraversal"{}};}
+\DoxyCodeLine{00734\ \ \ \textcolor{keywordflow}{if}(t==InnerVectorizedTraversal)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}InnerVectorizedTraversal"{}};}
+\DoxyCodeLine{00735\ \ \ \textcolor{keywordflow}{if}(t==LinearVectorizedTraversal)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}LinearVectorizedTraversal"{}};}
+\DoxyCodeLine{00736\ \ \ \textcolor{keywordflow}{if}(t==SliceVectorizedTraversal)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}SliceVectorizedTraversal"{}};}
+\DoxyCodeLine{00737\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}?"{}};}
+\DoxyCodeLine{00738\ \}}
+\DoxyCodeLine{00739\ std::string\ demangle\_unrolling(\textcolor{keywordtype}{int}\ t)}
+\DoxyCodeLine{00740\ \{}
+\DoxyCodeLine{00741\ \ \ \textcolor{keywordflow}{if}(t==NoUnrolling)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}NoUnrolling"{}};}
+\DoxyCodeLine{00742\ \ \ \textcolor{keywordflow}{if}(t==InnerUnrolling)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}InnerUnrolling"{}};}
+\DoxyCodeLine{00743\ \ \ \textcolor{keywordflow}{if}(t==CompleteUnrolling)\ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}CompleteUnrolling"{}};}
+\DoxyCodeLine{00744\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}?"{}};}
+\DoxyCodeLine{00745\ \}}
+\DoxyCodeLine{00746\ std::string\ demangle\_flags(\textcolor{keywordtype}{int}\ f)}
+\DoxyCodeLine{00747\ \{}
+\DoxyCodeLine{00748\ \ \ std::string\ res;}
+\DoxyCodeLine{00749\ \ \ \textcolor{keywordflow}{if}(f\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ RowMajor"{}};}
+\DoxyCodeLine{00750\ \ \ \textcolor{keywordflow}{if}(f\&\mbox{\hyperlink{group__flags_ga1a306a438e1ab074e8be59512e887b9f}{PacketAccessBit}})\ \ \ \ \ \ \ \ \ \ \ \ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ Packet"{}};}
+\DoxyCodeLine{00751\ \ \ \textcolor{keywordflow}{if}(f\&\mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}})\ \ \ \ \ \ \ \ \ \ \ \ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ Linear"{}};}
+\DoxyCodeLine{00752\ \ \ \textcolor{keywordflow}{if}(f\&\mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}})\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ Lvalue"{}};}
+\DoxyCodeLine{00753\ \ \ \textcolor{keywordflow}{if}(f\&\mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}})\ \ \ \ \ \ \ \ \ \ \ \ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ Direct"{}};}
+\DoxyCodeLine{00754\ \ \ \textcolor{keywordflow}{if}(f\&NestByRefBit)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ NestByRef"{}};}
+\DoxyCodeLine{00755\ \ \ \textcolor{keywordflow}{if}(f\&\mbox{\hyperlink{group__flags_ga3c186ad80ddcf5e2ed3d7ee31cca1860}{NoPreferredStorageOrderBit}})\ \ res\ +=\ \textcolor{stringliteral}{"{}\ |\ NoPreferredStorageOrderBit"{}};}
+\DoxyCodeLine{00756\ }
+\DoxyCodeLine{00757\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00758\ \}}
+\DoxyCodeLine{00759\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00763\ \textcolor{comment}{}}
+\DoxyCodeLine{00764\ \textcolor{comment}{/**\ \(\backslash\)class\ ScalarBinaryOpTraits}}
+\DoxyCodeLine{00765\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00766\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00767\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Determines\ whether\ the\ given\ binary\ operation\ of\ two\ numeric\ types\ is\ allowed\ and\ what\ the\ scalar\ return\ type\ is.}}
+\DoxyCodeLine{00768\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00769\ \textcolor{comment}{\ \ *\ This\ class\ permits\ to\ control\ the\ scalar\ return\ type\ of\ any\ binary\ operation\ performed\ on\ two\ different\ scalar\ types\ through\ (partial)\ template\ specializations.}}
+\DoxyCodeLine{00770\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00771\ \textcolor{comment}{\ \ *\ For\ instance,\ let\ \(\backslash\)c\ U1,\ \(\backslash\)c\ U2\ and\ \(\backslash\)c\ U3\ be\ three\ user\ defined\ scalar\ types\ for\ which\ most\ operations\ between\ instances\ of\ \(\backslash\)c\ U1\ and\ \(\backslash\)c\ U2\ returns\ an\ \(\backslash\)c\ U3.}}
+\DoxyCodeLine{00772\ \textcolor{comment}{\ \ *\ You\ can\ let\ \%Eigen\ knows\ that\ by\ defining:}}
+\DoxyCodeLine{00773\ \textcolor{comment}{\ \ \ \ \(\backslash\)code}}
+\DoxyCodeLine{00774\ \textcolor{comment}{\ \ \ \ template<typename\ BinaryOp>}}
+\DoxyCodeLine{00775\ \textcolor{comment}{\ \ \ \ struct\ ScalarBinaryOpTraits<U1,U2,BinaryOp>\ \{\ typedef\ U3\ ReturnType;\ \ \};}}
+\DoxyCodeLine{00776\ \textcolor{comment}{\ \ \ \ template<typename\ BinaryOp>}}
+\DoxyCodeLine{00777\ \textcolor{comment}{\ \ \ \ struct\ ScalarBinaryOpTraits<U2,U1,BinaryOp>\ \{\ typedef\ U3\ ReturnType;\ \ \};}}
+\DoxyCodeLine{00778\ \textcolor{comment}{\ \ \ \ \(\backslash\)endcode}}
+\DoxyCodeLine{00779\ \textcolor{comment}{\ \ *\ You\ can\ then\ explicitly\ disable\ some\ particular\ operations\ to\ get\ more\ explicit\ error\ messages:}}
+\DoxyCodeLine{00780\ \textcolor{comment}{\ \ \ \ \(\backslash\)code}}
+\DoxyCodeLine{00781\ \textcolor{comment}{\ \ \ \ template<>}}
+\DoxyCodeLine{00782\ \textcolor{comment}{\ \ \ \ struct\ ScalarBinaryOpTraits<U1,U2,internal::scalar\_max\_op<U1,U2>\ >\ \{\};}}
+\DoxyCodeLine{00783\ \textcolor{comment}{\ \ \ \ \(\backslash\)endcode}}
+\DoxyCodeLine{00784\ \textcolor{comment}{\ \ *\ Or\ customize\ the\ return\ type\ for\ individual\ operation:}}
+\DoxyCodeLine{00785\ \textcolor{comment}{\ \ \ \ \(\backslash\)code}}
+\DoxyCodeLine{00786\ \textcolor{comment}{\ \ \ \ template<>}}
+\DoxyCodeLine{00787\ \textcolor{comment}{\ \ \ \ struct\ ScalarBinaryOpTraits<U1,U2,internal::scalar\_sum\_op<U1,U2>\ >\ \{\ typedef\ U1\ ReturnType;\ \};}}
+\DoxyCodeLine{00788\ \textcolor{comment}{\ \ \ \ \(\backslash\)endcode}}
+\DoxyCodeLine{00789\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00790\ \textcolor{comment}{\ \ *\ By\ default,\ the\ following\ generic\ combinations\ are\ supported:}}
+\DoxyCodeLine{00791\ \textcolor{comment}{\ \ <table\ class="{}manual"{}>}}
+\DoxyCodeLine{00792\ \textcolor{comment}{\ \ <tr><th>ScalarA</th><th>ScalarB</th><th>BinaryOp</th><th>ReturnType</th><th>Note</th></tr>}}
+\DoxyCodeLine{00793\ \textcolor{comment}{\ \ <tr\ \ \ \ \ \ \ \ \ \ \ \ ><td>\(\backslash\)c\ T\ </td><td>\(\backslash\)c\ T\ </td><td>\(\backslash\)c\ *\ </td><td>\(\backslash\)c\ T\ </td><td></td></tr>}}
+\DoxyCodeLine{00794\ \textcolor{comment}{\ \ <tr\ class="{}alt"{}><td>\(\backslash\)c\ NumTraits<T>::Real\ </td><td>\(\backslash\)c\ T\ </td><td>\(\backslash\)c\ *\ </td><td>\(\backslash\)c\ T\ </td><td>Only\ if\ \(\backslash\)c\ NumTraits<T>::IsComplex\ </td></tr>}}
+\DoxyCodeLine{00795\ \textcolor{comment}{\ \ <tr\ \ \ \ \ \ \ \ \ \ \ \ ><td>\(\backslash\)c\ T\ </td><td>\(\backslash\)c\ NumTraits<T>::Real\ </td><td>\(\backslash\)c\ *\ </td><td>\(\backslash\)c\ T\ </td><td>Only\ if\ \(\backslash\)c\ NumTraits<T>::IsComplex\ </td></tr>}}
+\DoxyCodeLine{00796\ \textcolor{comment}{\ \ </table>}}
+\DoxyCodeLine{00797\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00798\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ CwiseBinaryOp}}
+\DoxyCodeLine{00799\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00800\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ScalarA,\ \textcolor{keyword}{typename}\ ScalarB,\ \textcolor{keyword}{typename}\ BinaryOp=\textcolor{keywordtype}{int}ernal::scalar\_product\_op<ScalarA,ScalarB>\ >}
+\DoxyCodeLine{00801\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}}
+\DoxyCodeLine{00802\ \#ifndef\ EIGEN\_PARSED\_BY\_DOXYGEN}
+\DoxyCodeLine{00803\ \ \ \textcolor{comment}{//\ for\ backward\ compatibility,\ use\ the\ hints\ given\ by\ the\ (deprecated)\ internal::scalar\_product\_traits\ class.}}
+\DoxyCodeLine{00804\ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1scalar__product__traits}{internal::scalar\_product\_traits}}<ScalarA,ScalarB>}
+\DoxyCodeLine{00805\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00806\ \{\};}
+\DoxyCodeLine{00807\ }
+\DoxyCodeLine{00808\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{00809\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}<T,T,BinaryOp>}
+\DoxyCodeLine{00810\ \{}
+\DoxyCodeLine{00811\ \ \ \textcolor{keyword}{typedef}\ T\ ReturnType;}
+\DoxyCodeLine{00812\ \};}
+\DoxyCodeLine{00813\ }
+\DoxyCodeLine{00814\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{00815\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}<T,\ typename\ \mbox{\hyperlink{structEigen_1_1NumTraits}{NumTraits}}<typename\ internal::enable\_if<NumTraits<T>::IsComplex,T>::type>\mbox{\hyperlink{structEigen_1_1NumTraits}{::Real}},\ BinaryOp>}
+\DoxyCodeLine{00816\ \{}
+\DoxyCodeLine{00817\ \ \ \textcolor{keyword}{typedef}\ T\ ReturnType;}
+\DoxyCodeLine{00818\ \};}
+\DoxyCodeLine{00819\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{00820\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}<typename\ \mbox{\hyperlink{structEigen_1_1NumTraits}{NumTraits}}<typename\ internal::enable\_if<NumTraits<T>::IsComplex,T>::type>\mbox{\hyperlink{structEigen_1_1NumTraits}{::Real}},\ T,\ BinaryOp>}
+\DoxyCodeLine{00821\ \{}
+\DoxyCodeLine{00822\ \ \ \textcolor{keyword}{typedef}\ T\ ReturnType;}
+\DoxyCodeLine{00823\ \};}
+\DoxyCodeLine{00824\ }
+\DoxyCodeLine{00825\ \textcolor{comment}{//\ For\ Matrix\ *\ Permutation}}
+\DoxyCodeLine{00826\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{00827\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}<T,void,BinaryOp>}
+\DoxyCodeLine{00828\ \{}
+\DoxyCodeLine{00829\ \ \ \textcolor{keyword}{typedef}\ T\ ReturnType;}
+\DoxyCodeLine{00830\ \};}
+\DoxyCodeLine{00831\ }
+\DoxyCodeLine{00832\ \textcolor{comment}{//\ For\ Permutation\ *\ Matrix}}
+\DoxyCodeLine{00833\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{00834\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}<void,T,BinaryOp>}
+\DoxyCodeLine{00835\ \{}
+\DoxyCodeLine{00836\ \ \ \textcolor{keyword}{typedef}\ T\ ReturnType;}
+\DoxyCodeLine{00837\ \};}
+\DoxyCodeLine{00838\ }
+\DoxyCodeLine{00839\ \textcolor{comment}{//\ for\ Permutation*Permutation}}
+\DoxyCodeLine{00840\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ BinaryOp>}
+\DoxyCodeLine{00841\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1ScalarBinaryOpTraits}{ScalarBinaryOpTraits}}<void,void,BinaryOp>}
+\DoxyCodeLine{00842\ \{}
+\DoxyCodeLine{00843\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{void}\ ReturnType;}
+\DoxyCodeLine{00844\ \};}
+\DoxyCodeLine{00845\ }
+\DoxyCodeLine{00846\ \textcolor{comment}{//\ We\ require\ Lhs\ and\ Rhs\ to\ have\ "{}compatible"{}\ scalar\ types.}}
+\DoxyCodeLine{00847\ \textcolor{comment}{//\ It\ is\ tempting\ to\ always\ allow\ mixing\ different\ types\ but\ remember\ that\ this\ is\ often\ impossible\ in\ the\ vectorized\ paths.}}
+\DoxyCodeLine{00848\ \textcolor{comment}{//\ So\ allowing\ mixing\ different\ types\ gives\ very\ unexpected\ errors\ when\ enabling\ vectorization,\ when\ the\ user\ tries\ to}}
+\DoxyCodeLine{00849\ \textcolor{comment}{//\ add\ together\ a\ float\ matrix\ and\ a\ double\ matrix.}}
+\DoxyCodeLine{00850\ \textcolor{preprocessor}{\#define\ EIGEN\_CHECK\_BINARY\_COMPATIBILIY(BINOP,LHS,RHS)\ \(\backslash\)}}
+\DoxyCodeLine{00851\ \textcolor{preprocessor}{\ \ EIGEN\_STATIC\_ASSERT((Eigen::internal::has\_ReturnType<ScalarBinaryOpTraits<LHS,\ RHS,BINOP>\ >::value),\ \(\backslash\)}}
+\DoxyCodeLine{00852\ \textcolor{preprocessor}{\ \ \ \ YOU\_MIXED\_DIFFERENT\_NUMERIC\_TYPES\_\_YOU\_NEED\_TO\_USE\_THE\_CAST\_METHOD\_OF\_MATRIXBASE\_TO\_CAST\_NUMERIC\_TYPES\_EXPLICITLY)}}
+\DoxyCodeLine{00853\ }
+\DoxyCodeLine{00854\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00856\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_XPRHELPER\_H}}
+
+\end{DoxyCode}

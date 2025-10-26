@@ -1,0 +1,369 @@
+\doxysection{Inverse\+Size4.\+h}
+\hypertarget{InverseSize4_8h_source}{}\label{InverseSize4_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/LU/arch/InverseSize4.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/LU/arch/InverseSize4.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2001\ Intel\ Corporation}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ The\ algorithm\ below\ is\ a\ reimplementation\ of\ former\ \(\backslash\)src\(\backslash\)LU\(\backslash\)Inverse\_SSE.h\ using\ PacketMath.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ inv(M)\ =\ M\#/|M|,\ where\ inv(M),\ M\#\ and\ |M|\ denote\ the\ inverse\ of\ M,}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ adjugate\ of\ M\ and\ determinant\ of\ M\ respectively.\ M\#\ is\ computed\ block-\/wise}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ using\ specific\ formulae.\ For\ proof,\ see:}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ https://lxjk.github.io/2017/09/03/Fast-\/4x4-\/Matrix-\/Inverse-\/with-\/SSE-\/SIMD-\/Explained.html}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ Variable\ names\ are\ adopted\ from\ \(\backslash\)src\(\backslash\)LU\(\backslash\)Inverse\_SSE.h.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ The\ SSE\ code\ for\ the\ 4x4\ float\ and\ double\ matrix\ inverse\ in\ former\ (deprecated)\ \(\backslash\)src\(\backslash\)LU\(\backslash\)Inverse\_SSE.h}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ comes\ from\ the\ following\ Intel's\ library:}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ http://software.intel.com/en-\/us/articles/optimized-\/matrix-\/library-\/for-\/use-\/with-\/the-\/intel-\/pentiumr-\/4-\/processors-\/sse2-\/instructions/}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ Here\ is\ the\ respective\ copyright\ and\ license\ statement:}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ Copyright\ (c)\ 2001\ Intel\ Corporation.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ Permition\ is\ granted\ to\ use,\ copy,\ distribute\ and\ prepare\ derivative\ works}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ of\ this\ library\ for\ any\ purpose\ and\ without\ fee,\ provided,\ that\ the\ above}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ copyright\ notice\ and\ this\ statement\ appear\ in\ all\ copies.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ Intel\ makes\ no\ representations\ about\ the\ suitability\ of\ this\ software\ for}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ any\ purpose,\ and\ specifically\ disclaims\ all\ warranties.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ See\ LEGAL.TXT\ for\ all\ the\ legal\ information.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ TODO:\ Unify\ implementations\ of\ different\ data\ types\ (i.e.\ float\ and\ double).}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_INVERSE\_SIZE\_4\_H}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#define\ EIGEN\_INVERSE\_SIZE\_4\_H}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#if\ EIGEN\_COMP\_GNUC\_STRICT}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ These\ routines\ requires\ bit\ manipulation\ of\ the\ sign,\ which\ is\ not\ compatible}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ with\ fastmath.}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#pragma\ GCC\ push\_options}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#pragma\ GCC\ optimize\ ("{}no-\/fast-\/math"{})}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}}
+\DoxyCodeLine{00046\ \{}
+\DoxyCodeLine{00047\ \textcolor{keyword}{namespace\ }internal}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ ResultType>}
+\DoxyCodeLine{00050\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__inverse__size4}{compute\_inverse\_size4}}<Architecture::Target,\ float,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ ResultType>}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00053\ \ \ \{}
+\DoxyCodeLine{00054\ \ \ \ \ MatrixAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<MatrixType>::Alignment}},}
+\DoxyCodeLine{00055\ \ \ \ \ ResultAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<ResultType>::Alignment}},}
+\DoxyCodeLine{00056\ \ \ \ \ StorageOrdersMatch\ =\ (MatrixType::Flags\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ==\ (ResultType::Flags\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})}
+\DoxyCodeLine{00057\ \ \ \};}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<(MatrixType::Flags\ \&\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}),\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\ \textcolor{keyword}{const}\ \&,\ \textcolor{keyword}{typename}\ MatrixType::PlainObject>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ ActualMatrixType;}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\ \&mat,\ ResultType\ \&result)}
+\DoxyCodeLine{00061\ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ ActualMatrixType\ matrix(mat);}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ data\ =\ matrix.data();}
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride\ =\ matrix.innerStride();}
+\DoxyCodeLine{00066\ \ \ \ \ Packet4f\ \_L1\ =\ ploadt<Packet4f,MatrixAlignment>(data);}
+\DoxyCodeLine{00067\ \ \ \ \ Packet4f\ \_L2\ =\ ploadt<Packet4f,MatrixAlignment>(data\ +\ stride*4);}
+\DoxyCodeLine{00068\ \ \ \ \ Packet4f\ \_L3\ =\ ploadt<Packet4f,MatrixAlignment>(data\ +\ stride*8);}
+\DoxyCodeLine{00069\ \ \ \ \ Packet4f\ \_L4\ =\ ploadt<Packet4f,MatrixAlignment>(data\ +\ stride*12);}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ Four\ 2x2\ sub-\/matrices\ of\ the\ input\ matrix}}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ input\ =\ [[A,\ B],}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ [C,\ D]]}}
+\DoxyCodeLine{00074\ \ \ \ \ Packet4f\ A,\ B,\ C,\ D;}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{if}\ (!StorageOrdersMatch)}
+\DoxyCodeLine{00077\ \ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ A\ =\ vec4f\_unpacklo(\_L1,\ \_L2);}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ B\ =\ vec4f\_unpacklo(\_L3,\ \_L4);}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ C\ =\ vec4f\_unpackhi(\_L1,\ \_L2);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ D\ =\ vec4f\_unpackhi(\_L3,\ \_L4);}
+\DoxyCodeLine{00082\ \ \ \ \ \}}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00084\ \ \ \ \ \{}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ A\ =\ vec4f\_movelh(\_L1,\ \_L2);}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ B\ =\ vec4f\_movehl(\_L2,\ \_L1);}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ C\ =\ vec4f\_movelh(\_L3,\ \_L4);}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ D\ =\ vec4f\_movehl(\_L4,\ \_L3);}
+\DoxyCodeLine{00089\ \ \ \ \ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \ \ \ Packet4f\ AB,\ DC;}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{comment}{//\ AB\ =\ A\#\ *\ B,\ where\ A\#\ denotes\ the\ adjugate\ of\ A,\ and\ *\ denotes\ matrix\ product.}}
+\DoxyCodeLine{00094\ \ \ \ \ AB\ =\ pmul(vec4f\_swizzle2(A,\ A,\ 3,\ 3,\ 0,\ 0),\ B);}
+\DoxyCodeLine{00095\ \ \ \ \ AB\ =\ psub(AB,\ pmul(vec4f\_swizzle2(A,\ A,\ 1,\ 1,\ 2,\ 2),\ vec4f\_swizzle2(B,\ B,\ 2,\ 3,\ 0,\ 1)));}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ DC\ =\ D\#*C}}
+\DoxyCodeLine{00098\ \ \ \ \ DC\ =\ pmul(vec4f\_swizzle2(D,\ D,\ 3,\ 3,\ 0,\ 0),\ C);}
+\DoxyCodeLine{00099\ \ \ \ \ DC\ =\ psub(DC,\ pmul(vec4f\_swizzle2(D,\ D,\ 1,\ 1,\ 2,\ 2),\ vec4f\_swizzle2(C,\ C,\ 2,\ 3,\ 0,\ 1)));}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{comment}{//\ determinants\ of\ the\ sub-\/matrices}}
+\DoxyCodeLine{00102\ \ \ \ \ Packet4f\ dA,\ dB,\ dC,\ dD;}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ dA\ =\ pmul(vec4f\_swizzle2(A,\ A,\ 3,\ 3,\ 1,\ 1),\ A);}
+\DoxyCodeLine{00105\ \ \ \ \ dA\ =\ psub(dA,\ vec4f\_movehl(dA,\ dA));}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \ \ \ \ dB\ =\ pmul(vec4f\_swizzle2(B,\ B,\ 3,\ 3,\ 1,\ 1),\ B);}
+\DoxyCodeLine{00108\ \ \ \ \ dB\ =\ psub(dB,\ vec4f\_movehl(dB,\ dB));}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \ \ \ \ dC\ =\ pmul(vec4f\_swizzle2(C,\ C,\ 3,\ 3,\ 1,\ 1),\ C);}
+\DoxyCodeLine{00111\ \ \ \ \ dC\ =\ psub(dC,\ vec4f\_movehl(dC,\ dC));}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ dD\ =\ pmul(vec4f\_swizzle2(D,\ D,\ 3,\ 3,\ 1,\ 1),\ D);}
+\DoxyCodeLine{00114\ \ \ \ \ dD\ =\ psub(dD,\ vec4f\_movehl(dD,\ dD));}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \ \ Packet4f\ d,\ d1,\ d2;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ \ \ d\ =\ pmul(vec4f\_swizzle2(DC,\ DC,\ 0,\ 2,\ 1,\ 3),\ AB);}
+\DoxyCodeLine{00119\ \ \ \ \ d\ =\ padd(d,\ vec4f\_movehl(d,\ d));}
+\DoxyCodeLine{00120\ \ \ \ \ d\ =\ padd(d,\ vec4f\_swizzle2(d,\ d,\ 1,\ 0,\ 0,\ 0));}
+\DoxyCodeLine{00121\ \ \ \ \ d1\ =\ pmul(dA,\ dD);}
+\DoxyCodeLine{00122\ \ \ \ \ d2\ =\ pmul(dB,\ dC);}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ determinant\ of\ the\ input\ matrix,\ det\ =\ |A||D|\ +\ |B||C|\ -\/\ trace(A\#*B*D\#*C)}}
+\DoxyCodeLine{00125\ \ \ \ \ Packet4f\ det\ =\ vec4f\_duplane(psub(padd(d1,\ d2),\ d),\ 0);}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \ \ \textcolor{comment}{//\ reciprocal\ of\ the\ determinant\ of\ the\ input\ matrix,\ rd\ =\ 1/det}}
+\DoxyCodeLine{00128\ \ \ \ \ Packet4f\ rd\ =\ pdiv(pset1<Packet4f>(1.0f),\ det);}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{comment}{//\ Four\ sub-\/matrices\ of\ the\ inverse}}
+\DoxyCodeLine{00131\ \ \ \ \ Packet4f\ iA,\ iB,\ iC,\ iD;}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{comment}{//\ iD\ =\ D*|A|\ -\/\ C*A\#*B}}
+\DoxyCodeLine{00134\ \ \ \ \ iD\ =\ pmul(vec4f\_swizzle2(C,\ C,\ 0,\ 0,\ 2,\ 2),\ vec4f\_movelh(AB,\ AB));}
+\DoxyCodeLine{00135\ \ \ \ \ iD\ =\ padd(iD,\ pmul(vec4f\_swizzle2(C,\ C,\ 1,\ 1,\ 3,\ 3),\ vec4f\_movehl(AB,\ AB)));}
+\DoxyCodeLine{00136\ \ \ \ \ iD\ =\ psub(pmul(D,\ vec4f\_duplane(dA,\ 0)),\ iD);}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ iA\ =\ A*|D|\ -\/\ B*D\#*C}}
+\DoxyCodeLine{00139\ \ \ \ \ iA\ =\ pmul(vec4f\_swizzle2(B,\ B,\ 0,\ 0,\ 2,\ 2),\ vec4f\_movelh(DC,\ DC));}
+\DoxyCodeLine{00140\ \ \ \ \ iA\ =\ padd(iA,\ pmul(vec4f\_swizzle2(B,\ B,\ 1,\ 1,\ 3,\ 3),\ vec4f\_movehl(DC,\ DC)));}
+\DoxyCodeLine{00141\ \ \ \ \ iA\ =\ psub(pmul(A,\ vec4f\_duplane(dD,\ 0)),\ iA);}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{comment}{//\ iB\ =\ C*|B|\ -\/\ D\ *\ (A\#B)\#\ =\ C*|B|\ -\/\ D*B\#*A}}
+\DoxyCodeLine{00144\ \ \ \ \ iB\ =\ pmul(D,\ vec4f\_swizzle2(AB,\ AB,\ 3,\ 0,\ 3,\ 0));}
+\DoxyCodeLine{00145\ \ \ \ \ iB\ =\ psub(iB,\ pmul(vec4f\_swizzle2(D,\ D,\ 1,\ 0,\ 3,\ 2),\ vec4f\_swizzle2(AB,\ AB,\ 2,\ 1,\ 2,\ 1)));}
+\DoxyCodeLine{00146\ \ \ \ \ iB\ =\ psub(pmul(C,\ vec4f\_duplane(dB,\ 0)),\ iB);}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{comment}{//\ iC\ =\ B*|C|\ -\/\ A\ *\ (D\#C)\#\ =\ B*|C|\ -\/\ A*C\#*D}}
+\DoxyCodeLine{00149\ \ \ \ \ iC\ =\ pmul(A,\ vec4f\_swizzle2(DC,\ DC,\ 3,\ 0,\ 3,\ 0));}
+\DoxyCodeLine{00150\ \ \ \ \ iC\ =\ psub(iC,\ pmul(vec4f\_swizzle2(A,\ A,\ 1,\ 0,\ 3,\ 2),\ vec4f\_swizzle2(DC,\ DC,\ 2,\ 1,\ 2,\ 1)));}
+\DoxyCodeLine{00151\ \ \ \ \ iC\ =\ psub(pmul(B,\ vec4f\_duplane(dC,\ 0)),\ iC);}
+\DoxyCodeLine{00152\ }
+\DoxyCodeLine{00153\ \ \ \ \ EIGEN\_ALIGN\_MAX\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ sign\_mask[4]\ =\ \{0.0f,\ -\/0.0f,\ -\/0.0f,\ 0.0f\};}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{const}\ Packet4f\ p4f\_sign\_PNNP\ =\ pload<Packet4f>(sign\_mask);}
+\DoxyCodeLine{00155\ \ \ \ \ rd\ =\ pxor(rd,\ p4f\_sign\_PNNP);}
+\DoxyCodeLine{00156\ \ \ \ \ iA\ =\ pmul(iA,\ rd);}
+\DoxyCodeLine{00157\ \ \ \ \ iB\ =\ pmul(iB,\ rd);}
+\DoxyCodeLine{00158\ \ \ \ \ iC\ =\ pmul(iC,\ rd);}
+\DoxyCodeLine{00159\ \ \ \ \ iD\ =\ pmul(iD,\ rd);}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ res\_stride\ =\ result.outerStride();}
+\DoxyCodeLine{00162\ \ \ \ \ \textcolor{keywordtype}{float}\ *res\ =\ result.data();}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ pstoret<float,\ Packet4f,\ ResultAlignment>(res\ +\ 0,\ vec4f\_swizzle2(iA,\ iB,\ 3,\ 1,\ 3,\ 1));}
+\DoxyCodeLine{00165\ \ \ \ \ pstoret<float,\ Packet4f,\ ResultAlignment>(res\ +\ res\_stride,\ vec4f\_swizzle2(iA,\ iB,\ 2,\ 0,\ 2,\ 0));}
+\DoxyCodeLine{00166\ \ \ \ \ pstoret<float,\ Packet4f,\ ResultAlignment>(res\ +\ 2\ *\ res\_stride,\ vec4f\_swizzle2(iC,\ iD,\ 3,\ 1,\ 3,\ 1));}
+\DoxyCodeLine{00167\ \ \ \ \ pstoret<float,\ Packet4f,\ ResultAlignment>(res\ +\ 3\ *\ res\_stride,\ vec4f\_swizzle2(iC,\ iD,\ 2,\ 0,\ 2,\ 0));}
+\DoxyCodeLine{00168\ \ \ \}}
+\DoxyCodeLine{00169\ \};}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\#if\ !(defined\ EIGEN\_VECTORIZE\_NEON\ \&\&\ !(EIGEN\_ARCH\_ARM64\ \&\&\ !EIGEN\_APPLE\_DOUBLE\_NEON\_BUG))}}
+\DoxyCodeLine{00172\ \textcolor{comment}{//\ same\ algorithm\ as\ above,\ except\ that\ each\ operand\ is\ split\ into}}
+\DoxyCodeLine{00173\ \textcolor{comment}{//\ halves\ for\ two\ registers\ to\ hold.}}
+\DoxyCodeLine{00174\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ ResultType>}
+\DoxyCodeLine{00175\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1compute__inverse__size4}{compute\_inverse\_size4}}<Architecture::Target,\ double,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ ResultType>}
+\DoxyCodeLine{00176\ \{}
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00178\ \ \ \{}
+\DoxyCodeLine{00179\ \ \ \ \ MatrixAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<MatrixType>::Alignment}},}
+\DoxyCodeLine{00180\ \ \ \ \ ResultAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<ResultType>::Alignment}},}
+\DoxyCodeLine{00181\ \ \ \ \ StorageOrdersMatch\ =\ (MatrixType::Flags\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ==\ (ResultType::Flags\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})}
+\DoxyCodeLine{00182\ \ \ \};}
+\DoxyCodeLine{00183\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<(MatrixType::Flags\ \&\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}),}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\ \textcolor{keyword}{const}\ \&,}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ MatrixType::PlainObject>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ ActualMatrixType;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\ \&mat,\ ResultType\ \&result)}
+\DoxyCodeLine{00189\ \ \ \{}
+\DoxyCodeLine{00190\ \ \ \ \ ActualMatrixType\ matrix(mat);}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{comment}{//\ Four\ 2x2\ sub-\/matrices\ of\ the\ input\ matrix,\ each\ is\ further\ divided\ into\ upper\ and\ lower}}
+\DoxyCodeLine{00193\ \ \ \ \ \textcolor{comment}{//\ row\ e.g.\ A1,\ upper\ row\ of\ A,\ A2,\ lower\ row\ of\ A}}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{comment}{//\ input\ =\ [[A,\ B],\ \ =\ \ [[[A1,\ [B1,}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ [C,\ D]]\ \ \ \ \ \ \ \ A2],\ B2]],}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ [[C1,\ [D1,}}
+\DoxyCodeLine{00197\ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ C2],\ D2]]]}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \ \ Packet2d\ A1,\ A2,\ B1,\ B2,\ C1,\ C2,\ D1,\ D2;}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ data\ =\ matrix.data();}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride\ =\ matrix.innerStride();}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{if}\ (StorageOrdersMatch)}
+\DoxyCodeLine{00204\ \ \ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ A1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*0);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ B1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*2);}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ A2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*4);}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ B2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*6);}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ C1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*8);}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ D1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*10);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ C2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*12);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ D2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*14);}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00215\ \ \ \ \ \{}
+\DoxyCodeLine{00216\ \ \ \ \ \ \ Packet2d\ temp;}
+\DoxyCodeLine{00217\ \ \ \ \ \ \ A1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*0);}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ C1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*2);}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ A2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*4);}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ C2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*6);}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ temp\ =\ A1;}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ A1\ =\ vec2d\_unpacklo(A1,\ A2);}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ A2\ =\ vec2d\_unpackhi(temp,\ A2);}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ temp\ =\ C1;}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ C1\ =\ vec2d\_unpacklo(C1,\ C2);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ C2\ =\ vec2d\_unpackhi(temp,\ C2);}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \ \ B1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*8);}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ D1\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*10);}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ B2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*12);}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ D2\ =\ ploadt<Packet2d,MatrixAlignment>(data\ +\ stride*14);}
+\DoxyCodeLine{00233\ }
+\DoxyCodeLine{00234\ \ \ \ \ \ \ temp\ =\ B1;}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ B1\ =\ vec2d\_unpacklo(B1,\ B2);}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ B2\ =\ vec2d\_unpackhi(temp,\ B2);}
+\DoxyCodeLine{00237\ }
+\DoxyCodeLine{00238\ \ \ \ \ \ \ temp\ =\ D1;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ D1\ =\ vec2d\_unpacklo(D1,\ D2);}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ D2\ =\ vec2d\_unpackhi(temp,\ D2);}
+\DoxyCodeLine{00241\ \ \ \ \ \}}
+\DoxyCodeLine{00242\ }
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ determinants\ of\ the\ sub-\/matrices}}
+\DoxyCodeLine{00244\ \ \ \ \ Packet2d\ dA,\ dB,\ dC,\ dD;}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \ \ \ \ dA\ =\ vec2d\_swizzle2(A2,\ A2,\ 1);}
+\DoxyCodeLine{00247\ \ \ \ \ dA\ =\ pmul(A1,\ dA);}
+\DoxyCodeLine{00248\ \ \ \ \ dA\ =\ psub(dA,\ vec2d\_duplane(dA,\ 1));}
+\DoxyCodeLine{00249\ }
+\DoxyCodeLine{00250\ \ \ \ \ dB\ =\ vec2d\_swizzle2(B2,\ B2,\ 1);}
+\DoxyCodeLine{00251\ \ \ \ \ dB\ =\ pmul(B1,\ dB);}
+\DoxyCodeLine{00252\ \ \ \ \ dB\ =\ psub(dB,\ vec2d\_duplane(dB,\ 1));}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \ \ \ \ dC\ =\ vec2d\_swizzle2(C2,\ C2,\ 1);}
+\DoxyCodeLine{00255\ \ \ \ \ dC\ =\ pmul(C1,\ dC);}
+\DoxyCodeLine{00256\ \ \ \ \ dC\ =\ psub(dC,\ vec2d\_duplane(dC,\ 1));}
+\DoxyCodeLine{00257\ }
+\DoxyCodeLine{00258\ \ \ \ \ dD\ =\ vec2d\_swizzle2(D2,\ D2,\ 1);}
+\DoxyCodeLine{00259\ \ \ \ \ dD\ =\ pmul(D1,\ dD);}
+\DoxyCodeLine{00260\ \ \ \ \ dD\ =\ psub(dD,\ vec2d\_duplane(dD,\ 1));}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ \ \ \ \ Packet2d\ DC1,\ DC2,\ AB1,\ AB2;}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{comment}{//\ AB\ =\ A\#\ *\ B,\ where\ A\#\ denotes\ the\ adjugate\ of\ A,\ and\ *\ denotes\ matrix\ product.}}
+\DoxyCodeLine{00265\ \ \ \ \ AB1\ =\ pmul(B1,\ vec2d\_duplane(A2,\ 1));}
+\DoxyCodeLine{00266\ \ \ \ \ AB2\ =\ pmul(B2,\ vec2d\_duplane(A1,\ 0));}
+\DoxyCodeLine{00267\ \ \ \ \ AB1\ =\ psub(AB1,\ pmul(B2,\ vec2d\_duplane(A1,\ 1)));}
+\DoxyCodeLine{00268\ \ \ \ \ AB2\ =\ psub(AB2,\ pmul(B1,\ vec2d\_duplane(A2,\ 0)));}
+\DoxyCodeLine{00269\ }
+\DoxyCodeLine{00270\ \ \ \ \ \textcolor{comment}{//\ DC\ =\ D\#*C}}
+\DoxyCodeLine{00271\ \ \ \ \ DC1\ =\ pmul(C1,\ vec2d\_duplane(D2,\ 1));}
+\DoxyCodeLine{00272\ \ \ \ \ DC2\ =\ pmul(C2,\ vec2d\_duplane(D1,\ 0));}
+\DoxyCodeLine{00273\ \ \ \ \ DC1\ =\ psub(DC1,\ pmul(C2,\ vec2d\_duplane(D1,\ 1)));}
+\DoxyCodeLine{00274\ \ \ \ \ DC2\ =\ psub(DC2,\ pmul(C1,\ vec2d\_duplane(D2,\ 0)));}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ Packet2d\ d1,\ d2;}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \ \ \textcolor{comment}{//\ determinant\ of\ the\ input\ matrix,\ det\ =\ |A||D|\ +\ |B||C|\ -\/\ trace(A\#*B*D\#*C)}}
+\DoxyCodeLine{00279\ \ \ \ \ Packet2d\ det;}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \ \ \ \ \textcolor{comment}{//\ reciprocal\ of\ the\ determinant\ of\ the\ input\ matrix,\ rd\ =\ 1/det}}
+\DoxyCodeLine{00282\ \ \ \ \ Packet2d\ rd;}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \ \ \ \ d1\ =\ pmul(AB1,\ vec2d\_swizzle2(DC1,\ DC2,\ 0));}
+\DoxyCodeLine{00285\ \ \ \ \ d2\ =\ pmul(AB2,\ vec2d\_swizzle2(DC1,\ DC2,\ 3));}
+\DoxyCodeLine{00286\ \ \ \ \ rd\ =\ padd(d1,\ d2);}
+\DoxyCodeLine{00287\ \ \ \ \ rd\ =\ padd(rd,\ vec2d\_duplane(rd,\ 1));}
+\DoxyCodeLine{00288\ }
+\DoxyCodeLine{00289\ \ \ \ \ d1\ =\ pmul(dA,\ dD);}
+\DoxyCodeLine{00290\ \ \ \ \ d2\ =\ pmul(dB,\ dC);}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \ \ \ \ det\ =\ padd(d1,\ d2);}
+\DoxyCodeLine{00293\ \ \ \ \ det\ =\ psub(det,\ rd);}
+\DoxyCodeLine{00294\ \ \ \ \ det\ =\ vec2d\_duplane(det,\ 0);}
+\DoxyCodeLine{00295\ \ \ \ \ rd\ =\ pdiv(pset1<Packet2d>(1.0),\ det);}
+\DoxyCodeLine{00296\ }
+\DoxyCodeLine{00297\ \ \ \ \ \textcolor{comment}{//\ rows\ of\ four\ sub-\/matrices\ of\ the\ inverse}}
+\DoxyCodeLine{00298\ \ \ \ \ Packet2d\ iA1,\ iA2,\ iB1,\ iB2,\ iC1,\ iC2,\ iD1,\ iD2;}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{comment}{//\ iD\ =\ D*|A|\ -\/\ C*A\#*B}}
+\DoxyCodeLine{00301\ \ \ \ \ iD1\ =\ pmul(AB1,\ vec2d\_duplane(C1,\ 0));}
+\DoxyCodeLine{00302\ \ \ \ \ iD2\ =\ pmul(AB1,\ vec2d\_duplane(C2,\ 0));}
+\DoxyCodeLine{00303\ \ \ \ \ iD1\ =\ padd(iD1,\ pmul(AB2,\ vec2d\_duplane(C1,\ 1)));}
+\DoxyCodeLine{00304\ \ \ \ \ iD2\ =\ padd(iD2,\ pmul(AB2,\ vec2d\_duplane(C2,\ 1)));}
+\DoxyCodeLine{00305\ \ \ \ \ dA\ =\ vec2d\_duplane(dA,\ 0);}
+\DoxyCodeLine{00306\ \ \ \ \ iD1\ =\ psub(pmul(D1,\ dA),\ iD1);}
+\DoxyCodeLine{00307\ \ \ \ \ iD2\ =\ psub(pmul(D2,\ dA),\ iD2);}
+\DoxyCodeLine{00308\ }
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{comment}{//\ iA\ =\ A*|D|\ -\/\ B*D\#*C}}
+\DoxyCodeLine{00310\ \ \ \ \ iA1\ =\ pmul(DC1,\ vec2d\_duplane(B1,\ 0));}
+\DoxyCodeLine{00311\ \ \ \ \ iA2\ =\ pmul(DC1,\ vec2d\_duplane(B2,\ 0));}
+\DoxyCodeLine{00312\ \ \ \ \ iA1\ =\ padd(iA1,\ pmul(DC2,\ vec2d\_duplane(B1,\ 1)));}
+\DoxyCodeLine{00313\ \ \ \ \ iA2\ =\ padd(iA2,\ pmul(DC2,\ vec2d\_duplane(B2,\ 1)));}
+\DoxyCodeLine{00314\ \ \ \ \ dD\ =\ vec2d\_duplane(dD,\ 0);}
+\DoxyCodeLine{00315\ \ \ \ \ iA1\ =\ psub(pmul(A1,\ dD),\ iA1);}
+\DoxyCodeLine{00316\ \ \ \ \ iA2\ =\ psub(pmul(A2,\ dD),\ iA2);}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{comment}{//\ iB\ =\ C*|B|\ -\/\ D\ *\ (A\#B)\#\ =\ C*|B|\ -\/\ D*B\#*A}}
+\DoxyCodeLine{00319\ \ \ \ \ iB1\ =\ pmul(D1,\ vec2d\_swizzle2(AB2,\ AB1,\ 1));}
+\DoxyCodeLine{00320\ \ \ \ \ iB2\ =\ pmul(D2,\ vec2d\_swizzle2(AB2,\ AB1,\ 1));}
+\DoxyCodeLine{00321\ \ \ \ \ iB1\ =\ psub(iB1,\ pmul(vec2d\_swizzle2(D1,\ D1,\ 1),\ vec2d\_swizzle2(AB2,\ AB1,\ 2)));}
+\DoxyCodeLine{00322\ \ \ \ \ iB2\ =\ psub(iB2,\ pmul(vec2d\_swizzle2(D2,\ D2,\ 1),\ vec2d\_swizzle2(AB2,\ AB1,\ 2)));}
+\DoxyCodeLine{00323\ \ \ \ \ dB\ =\ vec2d\_duplane(dB,\ 0);}
+\DoxyCodeLine{00324\ \ \ \ \ iB1\ =\ psub(pmul(C1,\ dB),\ iB1);}
+\DoxyCodeLine{00325\ \ \ \ \ iB2\ =\ psub(pmul(C2,\ dB),\ iB2);}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ \ \ \ \ \textcolor{comment}{//\ iC\ =\ B*|C|\ -\/\ A\ *\ (D\#C)\#\ =\ B*|C|\ -\/\ A*C\#*D}}
+\DoxyCodeLine{00328\ \ \ \ \ iC1\ =\ pmul(A1,\ vec2d\_swizzle2(DC2,\ DC1,\ 1));}
+\DoxyCodeLine{00329\ \ \ \ \ iC2\ =\ pmul(A2,\ vec2d\_swizzle2(DC2,\ DC1,\ 1));}
+\DoxyCodeLine{00330\ \ \ \ \ iC1\ =\ psub(iC1,\ pmul(vec2d\_swizzle2(A1,\ A1,\ 1),\ vec2d\_swizzle2(DC2,\ DC1,\ 2)));}
+\DoxyCodeLine{00331\ \ \ \ \ iC2\ =\ psub(iC2,\ pmul(vec2d\_swizzle2(A2,\ A2,\ 1),\ vec2d\_swizzle2(DC2,\ DC1,\ 2)));}
+\DoxyCodeLine{00332\ \ \ \ \ dC\ =\ vec2d\_duplane(dC,\ 0);}
+\DoxyCodeLine{00333\ \ \ \ \ iC1\ =\ psub(pmul(B1,\ dC),\ iC1);}
+\DoxyCodeLine{00334\ \ \ \ \ iC2\ =\ psub(pmul(B2,\ dC),\ iC2);}
+\DoxyCodeLine{00335\ }
+\DoxyCodeLine{00336\ \ \ \ \ EIGEN\_ALIGN\_MAX\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ sign\_mask1[2]\ =\ \{0.0,\ -\/0.0\};}
+\DoxyCodeLine{00337\ \ \ \ \ EIGEN\_ALIGN\_MAX\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ sign\_mask2[2]\ =\ \{-\/0.0,\ 0.0\};}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{keyword}{const}\ Packet2d\ sign\_PN\ =\ pload<Packet2d>(sign\_mask1);}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keyword}{const}\ Packet2d\ sign\_NP\ =\ pload<Packet2d>(sign\_mask2);}
+\DoxyCodeLine{00340\ \ \ \ \ d1\ =\ pxor(rd,\ sign\_PN);}
+\DoxyCodeLine{00341\ \ \ \ \ d2\ =\ pxor(rd,\ sign\_NP);}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ res\_stride\ =\ result.outerStride();}
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{keywordtype}{double}\ *res\ =\ result.data();}
+\DoxyCodeLine{00345\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ 0,\ pmul(vec2d\_swizzle2(iA2,\ iA1,\ 3),\ d1));}
+\DoxyCodeLine{00346\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ res\_stride,\ pmul(vec2d\_swizzle2(iA2,\ iA1,\ 0),\ d2));}
+\DoxyCodeLine{00347\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ 2,\ pmul(vec2d\_swizzle2(iB2,\ iB1,\ 3),\ d1));}
+\DoxyCodeLine{00348\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ res\_stride\ +\ 2,\ pmul(vec2d\_swizzle2(iB2,\ iB1,\ 0),\ d2));}
+\DoxyCodeLine{00349\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ 2\ *\ res\_stride,\ pmul(vec2d\_swizzle2(iC2,\ iC1,\ 3),\ d1));}
+\DoxyCodeLine{00350\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ 3\ *\ res\_stride,\ pmul(vec2d\_swizzle2(iC2,\ iC1,\ 0),\ d2));}
+\DoxyCodeLine{00351\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ 2\ *\ res\_stride\ +\ 2,\ pmul(vec2d\_swizzle2(iD2,\ iD1,\ 3),\ d1));}
+\DoxyCodeLine{00352\ \ \ \ \ pstoret<double,\ Packet2d,\ ResultAlignment>(res\ +\ 3\ *\ res\_stride\ +\ 2,\ pmul(vec2d\_swizzle2(iD2,\ iD1,\ 0),\ d2));}
+\DoxyCodeLine{00353\ \ \ \}}
+\DoxyCodeLine{00354\ \};}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00356\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00357\ \}\ \textcolor{comment}{//\ namespace\ Eigen}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ \textcolor{preprocessor}{\#if\ EIGEN\_COMP\_GNUC\_STRICT}}
+\DoxyCodeLine{00360\ \textcolor{preprocessor}{\#pragma\ GCC\ pop\_options}}
+\DoxyCodeLine{00361\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

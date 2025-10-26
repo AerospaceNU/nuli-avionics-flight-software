@@ -1,0 +1,188 @@
+\doxysection{Sparse\+Product.\+h}
+\hypertarget{SparseProduct_8h_source}{}\label{SparseProduct_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseProduct.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseProduct.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2015\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SPARSEPRODUCT\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_SPARSEPRODUCT\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{}}
+\DoxyCodeLine{00015\ \textcolor{comment}{/**\ \(\backslash\)returns\ an\ expression\ of\ the\ product\ of\ two\ sparse\ matrices.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ *\ By\ default\ a\ conservative\ product\ preserving\ the\ symbolic\ non\ zeros\ is\ performed.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ *\ The\ automatic\ pruning\ of\ the\ small\ values\ can\ be\ achieved\ by\ calling\ the\ pruned()\ function}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *\ in\ which\ case\ a\ totally\ different\ product\ algorithm\ is\ employed:}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *\ C\ =\ (A*B).pruned();\ \ \ \ \ \ \ \ \ \ \ \ \ //\ suppress\ numerical\ zeros\ (exact)}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *\ C\ =\ (A*B).pruned(ref);}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ C\ =\ (A*B).pruned(ref,epsilon);}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *\ where\ \(\backslash\)c\ ref\ is\ a\ meaningful\ non\ zero\ reference\ value.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *\ */}}
+\DoxyCodeLine{00026\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00028\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Derived,OtherDerived,AliasFreeProduct>}}}
+\DoxyCodeLine{00029\ SparseMatrixBase<Derived>::operator*(\textcolor{keyword}{const}\ SparseMatrixBase<OtherDerived>\ \&other)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00030\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00031\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Derived,OtherDerived,AliasFreeProduct>}}(derived(),\ other.derived());}
+\DoxyCodeLine{00032\ \}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ sparse\ *\ sparse}}
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keywordtype}{int}\ ProductType>}
+\DoxyCodeLine{00038\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl}}<Lhs,\ Rhs,\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}},\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}},\ ProductType>}
+\DoxyCodeLine{00039\ \{}
+\DoxyCodeLine{00040\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00041\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ evalTo(Dest\&\ dst,\ \textcolor{keyword}{const}\ Lhs\&\ lhs,\ \textcolor{keyword}{const}\ Rhs\&\ rhs)}
+\DoxyCodeLine{00042\ \ \ \{}
+\DoxyCodeLine{00043\ \ \ \ \ evalTo(dst,\ lhs,\ rhs,\ \textcolor{keyword}{typename}\ evaluator\_traits<Dest>::Shape());}
+\DoxyCodeLine{00044\ \ \ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \ \ \textcolor{comment}{//\ dense\ +=\ sparse\ *\ sparse}}
+\DoxyCodeLine{00047\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest,\textcolor{keyword}{typename}\ ActualLhs>}
+\DoxyCodeLine{00048\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ addTo(Dest\&\ dst,\ \textcolor{keyword}{const}\ ActualLhs\&\ lhs,\ \textcolor{keyword}{const}\ Rhs\&\ rhs,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<\mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same}}<\textcolor{keyword}{typename}\ evaluator\_traits<Dest>::Shape,\mbox{\hyperlink{structEigen_1_1DenseShape}{DenseShape}}>::value,\textcolor{keywordtype}{int}*>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}*\ =\ 0)}
+\DoxyCodeLine{00049\ \ \ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ nested\_eval<ActualLhs,Dynamic>::type\ LhsNested;}
+\DoxyCodeLine{00051\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ nested\_eval<Rhs,Dynamic>::type\ RhsNested;}
+\DoxyCodeLine{00052\ \ \ \ \ LhsNested\ lhsNested(lhs);}
+\DoxyCodeLine{00053\ \ \ \ \ RhsNested\ rhsNested(rhs);}
+\DoxyCodeLine{00054\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__sparse__to__dense__product__selector}{internal::sparse\_sparse\_to\_dense\_product\_selector<typename\ remove\_all<LhsNested>::type}},}
+\DoxyCodeLine{00055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ remove\_all<RhsNested>::type,\ Dest>::run(lhsNested,rhsNested,dst);}
+\DoxyCodeLine{00056\ \ \ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \textcolor{comment}{//\ dense\ -\/=\ sparse\ *\ sparse}}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ subTo(Dest\&\ dst,\ \textcolor{keyword}{const}\ Lhs\&\ lhs,\ \textcolor{keyword}{const}\ Rhs\&\ rhs,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<\mbox{\hyperlink{structEigen_1_1internal_1_1is__same}{is\_same}}<\textcolor{keyword}{typename}\ evaluator\_traits<Dest>::Shape,\mbox{\hyperlink{structEigen_1_1DenseShape}{DenseShape}}>::value,\textcolor{keywordtype}{int}*>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}*\ =\ 0)}
+\DoxyCodeLine{00061\ \ \ \{}
+\DoxyCodeLine{00062\ \ \ \ \ addTo(dst,\ -\/lhs,\ rhs);}
+\DoxyCodeLine{00063\ \ \ \}}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \ \ \textcolor{comment}{//\ sparse\ =\ sparse\ *\ sparse}}
+\DoxyCodeLine{00068\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ evalTo(Dest\&\ dst,\ \textcolor{keyword}{const}\ Lhs\&\ lhs,\ \textcolor{keyword}{const}\ Rhs\&\ rhs,\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}})}
+\DoxyCodeLine{00070\ \ \ \{}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ nested\_eval<Lhs,Dynamic>::type\ LhsNested;}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ nested\_eval<Rhs,Dynamic>::type\ RhsNested;}
+\DoxyCodeLine{00073\ \ \ \ \ LhsNested\ lhsNested(lhs);}
+\DoxyCodeLine{00074\ \ \ \ \ RhsNested\ rhsNested(rhs);}
+\DoxyCodeLine{00075\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1conservative__sparse__sparse__product__selector}{internal::conservative\_sparse\_sparse\_product\_selector<typename\ remove\_all<LhsNested>::type}},}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ remove\_all<RhsNested>::type,\ Dest>::run(lhsNested,rhsNested,dst);}
+\DoxyCodeLine{00077\ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \textcolor{comment}{//\ dense\ =\ sparse\ *\ sparse}}
+\DoxyCodeLine{00080\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00081\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ evalTo(Dest\&\ dst,\ \textcolor{keyword}{const}\ Lhs\&\ lhs,\ \textcolor{keyword}{const}\ Rhs\&\ rhs,\ \mbox{\hyperlink{structEigen_1_1DenseShape}{DenseShape}})}
+\DoxyCodeLine{00082\ \ \ \{}
+\DoxyCodeLine{00083\ \ \ \ \ dst.setZero();}
+\DoxyCodeLine{00084\ \ \ \ \ addTo(dst,\ lhs,\ rhs);}
+\DoxyCodeLine{00085\ \ \ \}}
+\DoxyCodeLine{00086\ \};}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ sparse\ *\ sparse-\/triangular}}
+\DoxyCodeLine{00089\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keywordtype}{int}\ ProductType>}
+\DoxyCodeLine{00090\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl}}<Lhs,\ Rhs,\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}},\ \mbox{\hyperlink{structEigen_1_1internal_1_1SparseTriangularShape}{SparseTriangularShape}},\ ProductType>}
+\DoxyCodeLine{00091\ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl}}<Lhs,\ Rhs,\ SparseShape,\ SparseShape,\ ProductType>}
+\DoxyCodeLine{00092\ \{\};}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \textcolor{comment}{//\ sparse-\/triangular\ *\ sparse}}
+\DoxyCodeLine{00095\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keywordtype}{int}\ ProductType>}
+\DoxyCodeLine{00096\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl}}<Lhs,\ Rhs,\ \mbox{\hyperlink{structEigen_1_1internal_1_1SparseTriangularShape}{SparseTriangularShape}},\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}},\ ProductType>}
+\DoxyCodeLine{00097\ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl}}<Lhs,\ Rhs,\ SparseShape,\ SparseShape,\ ProductType>}
+\DoxyCodeLine{00098\ \{\};}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \textcolor{comment}{//\ dense\ =\ sparse-\/product\ (can\ be\ sparse*sparse,\ sparse*perm,\ etc.)}}
+\DoxyCodeLine{00101\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ DstXprType,\ \textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00102\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Assignment}{Assignment}}<DstXprType,\ \mbox{\hyperlink{classEigen_1_1Product}{Product}}<Lhs,Rhs,AliasFreeProduct>,\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{assign\_op}}<typename\ DstXprType::Scalar,typename\ Product<Lhs,Rhs,AliasFreeProduct>::Scalar>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1Sparse2Dense}{Sparse2Dense}}>}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Lhs,Rhs,AliasFreeProduct>}}\ SrcXprType;}
+\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(DstXprType\ \&dst,\ \textcolor{keyword}{const}\ SrcXprType\ \&src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{internal::assign\_op<typename\ DstXprType::Scalar,typename\ SrcXprType::Scalar>}}\ \&)}
+\DoxyCodeLine{00106\ \ \ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstRows\ =\ src.rows();}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstCols\ =\ src.cols();}
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keywordflow}{if}((dst.rows()!=dstRows)\ ||\ (dst.cols()!=dstCols))}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ dst.resize(dstRows,\ dstCols);}
+\DoxyCodeLine{00111\ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl<Lhs,\ Rhs>::evalTo}}(dst,src.lhs(),src.rhs());}
+\DoxyCodeLine{00113\ \ \ \}}
+\DoxyCodeLine{00114\ \};}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \textcolor{comment}{//\ dense\ +=\ sparse-\/product\ (can\ be\ sparse*sparse,\ sparse*perm,\ etc.)}}
+\DoxyCodeLine{00117\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ DstXprType,\ \textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00118\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Assignment}{Assignment}}<DstXprType,\ \mbox{\hyperlink{classEigen_1_1Product}{Product}}<Lhs,Rhs,AliasFreeProduct>,\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1add__assign__op}{add\_assign\_op}}<typename\ DstXprType::Scalar,typename\ Product<Lhs,Rhs,AliasFreeProduct>::Scalar>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1Sparse2Dense}{Sparse2Dense}}>}
+\DoxyCodeLine{00119\ \{}
+\DoxyCodeLine{00120\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Lhs,Rhs,AliasFreeProduct>}}\ SrcXprType;}
+\DoxyCodeLine{00121\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(DstXprType\ \&dst,\ \textcolor{keyword}{const}\ SrcXprType\ \&src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1add__assign__op}{internal::add\_assign\_op<typename\ DstXprType::Scalar,typename\ SrcXprType::Scalar>}}\ \&)}
+\DoxyCodeLine{00122\ \ \ \{}
+\DoxyCodeLine{00123\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl<Lhs,\ Rhs>::addTo}}(dst,src.lhs(),src.rhs());}
+\DoxyCodeLine{00124\ \ \ \}}
+\DoxyCodeLine{00125\ \};}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{comment}{//\ dense\ -\/=\ sparse-\/product\ (can\ be\ sparse*sparse,\ sparse*perm,\ etc.)}}
+\DoxyCodeLine{00128\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ DstXprType,\ \textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00129\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Assignment}{Assignment}}<DstXprType,\ \mbox{\hyperlink{classEigen_1_1Product}{Product}}<Lhs,Rhs,AliasFreeProduct>,\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1sub__assign__op}{sub\_assign\_op}}<typename\ DstXprType::Scalar,typename\ Product<Lhs,Rhs,AliasFreeProduct>::Scalar>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1Sparse2Dense}{Sparse2Dense}}>}
+\DoxyCodeLine{00130\ \{}
+\DoxyCodeLine{00131\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Lhs,Rhs,AliasFreeProduct>}}\ SrcXprType;}
+\DoxyCodeLine{00132\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(DstXprType\ \&dst,\ \textcolor{keyword}{const}\ SrcXprType\ \&src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1sub__assign__op}{internal::sub\_assign\_op<typename\ DstXprType::Scalar,typename\ SrcXprType::Scalar>}}\ \&)}
+\DoxyCodeLine{00133\ \ \ \{}
+\DoxyCodeLine{00134\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{generic\_product\_impl<Lhs,\ Rhs>::subTo}}(dst,src.lhs(),src.rhs());}
+\DoxyCodeLine{00135\ \ \ \}}
+\DoxyCodeLine{00136\ \};}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keywordtype}{int}\ Options>}
+\DoxyCodeLine{00139\ \textcolor{keyword}{struct\ }unary\_evaluator<\mbox{\hyperlink{classEigen_1_1SparseView}{SparseView}}<\mbox{\hyperlink{classEigen_1_1Product}{Product}}<Lhs,\ Rhs,\ Options>\ >,\ \mbox{\hyperlink{structEigen_1_1internal_1_1IteratorBased}{IteratorBased}}>}
+\DoxyCodeLine{00140\ \ :\ \textcolor{keyword}{public}\ evaluator<typename\ Product<Lhs,\ Rhs,\ DefaultProduct>::PlainObject>}
+\DoxyCodeLine{00141\ \{}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseView}{SparseView<Product<Lhs,\ Rhs,\ Options>}}\ >\ XprType;}
+\DoxyCodeLine{00143\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::PlainObject\ PlainObject;}
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{typedef}\ evaluator<PlainObject>\ Base;}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \textcolor{keyword}{explicit}\ unary\_evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)}
+\DoxyCodeLine{00147\ \ \ \ \ :\ m\_result(xpr.rows(),\ xpr.cols())}
+\DoxyCodeLine{00148\ \ \ \{}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00150\ \ \ \ \ ::new\ (\textcolor{keyword}{static\_cast<}Base*\textcolor{keyword}{>}(\textcolor{keyword}{this}))\ Base(m\_result);}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ nested\_eval<Lhs,Dynamic>::type\ LhsNested;}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ nested\_eval<Rhs,Dynamic>::type\ RhsNested;}
+\DoxyCodeLine{00153\ \ \ \ \ LhsNested\ lhsNested(xpr.\mbox{\hyperlink{classEigen_1_1SparseView_a5bc829741c9e96299782b97a3c1660a0}{nestedExpression}}().lhs());}
+\DoxyCodeLine{00154\ \ \ \ \ RhsNested\ rhsNested(xpr.\mbox{\hyperlink{classEigen_1_1SparseView_a5bc829741c9e96299782b97a3c1660a0}{nestedExpression}}().rhs());}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__sparse__product__with__pruning__selector}{internal::sparse\_sparse\_product\_with\_pruning\_selector<typename\ remove\_all<LhsNested>::type}},}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ remove\_all<RhsNested>::type,\ PlainObject>::run(lhsNested,rhsNested,m\_result,}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ abs(xpr.reference())*xpr.epsilon());}
+\DoxyCodeLine{00159\ \ \ \}}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00162\ \ \ PlainObject\ m\_result;}
+\DoxyCodeLine{00163\ \};}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ sparse\ matrix\ =\ sparse-\/product\ (can\ be\ sparse*sparse,\ sparse*perm,\ etc.)}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_StorageIndex>}
+\DoxyCodeLine{00170\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00171\ \mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<Scalar,\_Options,\_StorageIndex>}}\&\ SparseMatrix<Scalar,\_Options,\_StorageIndex>::operator=(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Lhs,Rhs,AliasFreeProduct>}}\&\ src)}
+\DoxyCodeLine{00172\ \{}
+\DoxyCodeLine{00173\ \ \ \textcolor{comment}{//\ std::cout\ <<\ "{}in\ Assignment\ :\ "{}\ <<\ DstOptions\ <<\ "{}\(\backslash\)n"{};}}
+\DoxyCodeLine{00174\ \ \ \mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix}}\ dst(src.rows(),src.cols());}
+\DoxyCodeLine{00175\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__product__impl}{internal::generic\_product\_impl<Lhs,\ Rhs>::evalTo}}(dst,src.lhs(),src.rhs());}
+\DoxyCodeLine{00176\ \ \ this-\/>swap(dst);}
+\DoxyCodeLine{00177\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00178\ \}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SPARSEPRODUCT\_H}}
+
+\end{DoxyCode}

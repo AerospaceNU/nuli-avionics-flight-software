@@ -1,0 +1,527 @@
+\doxysection{Configure\+Vectorization.\+h}
+\hypertarget{ConfigureVectorization_8h_source}{}\label{ConfigureVectorization_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/util/ConfigureVectorization.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/util/ConfigureVectorization.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2018\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2020,\ Arm\ Limited\ and\ Contributors}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_CONFIGURE\_VECTORIZATION\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_CONFIGURE\_VECTORIZATION\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ Static\ and\ dynamic\ alignment\ control}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ The\ main\ purpose\ of\ this\ section\ is\ to\ define\ EIGEN\_MAX\_ALIGN\_BYTES\ and\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ as\ the\ maximal\ boundary\ in\ bytes\ on\ which\ dynamically\ and\ statically\ allocated\ data\ may\ be\ alignment\ respectively.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ The\ values\ of\ EIGEN\_MAX\_ALIGN\_BYTES\ and\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ can\ be\ specified\ by\ the\ user.\ If\ not,}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ a\ default\ value\ is\ automatically\ computed\ based\ on\ architecture,\ compiler,\ and\ OS.}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ This\ section\ also\ defines\ macros\ EIGEN\_ALIGN\_TO\_BOUNDARY(N)\ and\ the\ shortcuts\ EIGEN\_ALIGN\{8,16,32,\_MAX\}}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ to\ be\ used\ to\ declare\ statically\ aligned\ buffers.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{comment}{/*\ EIGEN\_ALIGN\_TO\_BOUNDARY(n)\ forces\ data\ to\ be\ n-\/byte\ aligned.\ This\ is\ used\ to\ satisfy\ SIMD\ requirements.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ However,\ we\ do\ that\ EVEN\ if\ vectorization\ (EIGEN\_VECTORIZE)\ is\ disabled,}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ so\ that\ vectorization\ doesn't\ affect\ binary\ compatibility.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ *\ If\ we\ made\ alignment\ depend\ on\ whether\ or\ not\ EIGEN\_VECTORIZE\ is\ defined,\ it\ would\ be\ impossible\ to\ link}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ *\ vectorized\ and\ non-\/vectorized\ code.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ *\ FIXME:\ this\ code\ can\ be\ cleaned\ up\ once\ we\ switch\ to\ proper\ C++11\ only.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#if\ (defined\ EIGEN\_CUDACC)}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGN\_TO\_BOUNDARY(n)\ \_\_align\_\_(n)}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGNOF(x)\ \_\_alignof(x)}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#elif\ EIGEN\_HAS\_ALIGNAS}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGN\_TO\_BOUNDARY(n)\ alignas(n)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGNOF(x)\ alignof(x)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#elif\ EIGEN\_COMP\_GNUC\ ||\ EIGEN\_COMP\_PGI\ ||\ EIGEN\_COMP\_IBM\ ||\ EIGEN\_COMP\_ARM}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGN\_TO\_BOUNDARY(n)\ \_\_attribute\_\_((aligned(n)))}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGNOF(x)\ \_\_alignof(x)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\#elif\ EIGEN\_COMP\_MSVC}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGN\_TO\_BOUNDARY(n)\ \_\_declspec(align(n))}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGNOF(x)\ \_\_alignof(x)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#elif\ EIGEN\_COMP\_SUNCC}}
+\DoxyCodeLine{00049\ \ \ \textcolor{comment}{//\ FIXME\ not\ sure\ about\ this\ one:}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGN\_TO\_BOUNDARY(n)\ \_\_attribute\_\_((aligned(n)))}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_ALIGNOF(x)\ \_\_alignof(x)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \#error\ Please\ tell\ me\ what\ is\ the\ equivalent\ of\ alignas(n)\ and\ alignof(x)\ for\ your\ compiler}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \textcolor{comment}{//\ If\ the\ user\ explicitly\ disable\ vectorization,\ then\ we\ also\ disable\ alignment}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_DONT\_VECTORIZE)}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \#if\ defined(EIGEN\_GPUCC)}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//\ GPU\ code\ is\ always\ vectorized\ and\ requires\ memory\ alignment\ for}}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{comment}{//\ statically\ allocated\ buffers.}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES\ 16}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES\ 0}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\#elif\ defined(\_\_AVX512F\_\_)}}
+\DoxyCodeLine{00066\ \ \ \textcolor{comment}{//\ 64\ bytes\ static\ alignment\ is\ preferred\ only\ if\ really\ required}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES\ 64}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\#elif\ defined(\_\_AVX\_\_)}}
+\DoxyCodeLine{00069\ \ \ \textcolor{comment}{//\ 32\ bytes\ static\ alignment\ is\ preferred\ only\ if\ really\ required}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES\ 32}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES\ 16}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{comment}{//\ EIGEN\_MIN\_ALIGN\_BYTES\ defines\ the\ minimal\ value\ for\ which\ the\ notion\ of\ explicit\ alignment\ makes\ sense}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#define\ EIGEN\_MIN\_ALIGN\_BYTES\ 16}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{comment}{//\ Defined\ the\ boundary\ (in\ bytes)\ on\ which\ the\ data\ needs\ to\ be\ aligned.\ Note}}
+\DoxyCodeLine{00080\ \textcolor{comment}{//\ that\ unless\ EIGEN\_ALIGN\ is\ defined\ and\ not\ equal\ to\ 0,\ the\ data\ may\ not\ be}}
+\DoxyCodeLine{00081\ \textcolor{comment}{//\ aligned\ at\ all\ regardless\ of\ the\ value\ of\ this\ \#define.}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\#if\ (defined(EIGEN\_DONT\_ALIGN\_STATICALLY)\ ||\ defined(EIGEN\_DONT\_ALIGN))\ \ \&\&\ defined(EIGEN\_MAX\_STATIC\_ALIGN\_BYTES)\ \&\&\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES>0}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\#error\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ and\ EIGEN\_DONT\_ALIGN[\_STATICALLY]\ are\ both\ defined\ with\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES!=0.\ Use\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES=0\ as\ a\ synonym\ of\ EIGEN\_DONT\_ALIGN\_STATICALLY.}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \textcolor{comment}{//\ EIGEN\_DONT\_ALIGN\_STATICALLY\ and\ EIGEN\_DONT\_ALIGN\ are\ deprecated}}
+\DoxyCodeLine{00088\ \textcolor{comment}{//\ They\ imply\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES=0}}
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_DONT\_ALIGN\_STATICALLY)\ ||\ defined(EIGEN\_DONT\_ALIGN)}}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\ \ \#ifdef\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\ \ \ \ \#undef\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ 0}}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \textcolor{comment}{//\ Try\ to\ automatically\ guess\ what\ is\ the\ best\ default\ value\ for\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00099\ }
+\DoxyCodeLine{00100\ \ \ \textcolor{comment}{//\ 16\ byte\ alignment\ is\ only\ useful\ for\ vectorization.\ Since\ it\ affects\ the\ ABI,\ we\ need\ to\ enable}}
+\DoxyCodeLine{00101\ \ \ \textcolor{comment}{//\ 16\ byte\ alignment\ on\ all\ platforms\ where\ vectorization\ might\ be\ enabled.\ In\ theory\ we\ could\ always}}
+\DoxyCodeLine{00102\ \ \ \textcolor{comment}{//\ enable\ alignment,\ but\ it\ can\ be\ a\ cause\ of\ problems\ on\ some\ platforms,\ so\ we\ just\ disable\ it\ in}}
+\DoxyCodeLine{00103\ \ \ \textcolor{comment}{//\ certain\ common\ platform\ (compiler+architecture\ combinations)\ to\ avoid\ these\ problems.}}
+\DoxyCodeLine{00104\ \ \ \textcolor{comment}{//\ Only\ static\ alignment\ is\ really\ problematic\ (relies\ on\ nonstandard\ compiler\ extensions),}}
+\DoxyCodeLine{00105\ \ \ \textcolor{comment}{//\ try\ to\ keep\ heap\ alignment\ even\ when\ we\ have\ to\ disable\ static\ alignment.}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ \#if\ EIGEN\_COMP\_GNUC\ \&\&\ !(EIGEN\_ARCH\_i386\_OR\_x86\_64\ ||\ EIGEN\_ARCH\_ARM\_OR\_ARM64\ ||\ EIGEN\_ARCH\_PPC\ ||\ EIGEN\_ARCH\_IA64\ ||\ EIGEN\_ARCH\_MIPS)}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_GCC\_AND\_ARCH\_DOESNT\_WANT\_STACK\_ALIGNMENT\ 1}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \#elif\ EIGEN\_ARCH\_ARM\_OR\_ARM64\ \&\&\ EIGEN\_COMP\_GNUC\_STRICT\ \&\&\ EIGEN\_GNUC\_AT\_MOST(4,\ 6)}}
+\DoxyCodeLine{00109\ \ \ \textcolor{comment}{//\ Old\ versions\ of\ GCC\ on\ ARM,\ at\ least\ 4.4,\ were\ once\ seen\ to\ have\ buggy\ static\ alignment\ support.}}
+\DoxyCodeLine{00110\ \ \ \textcolor{comment}{//\ Not\ sure\ which\ version\ fixed\ it,\ hopefully\ it\ doesn't\ affect\ 4.7,\ which\ is\ still\ somewhat\ in\ use.}}
+\DoxyCodeLine{00111\ \ \ \textcolor{comment}{//\ 4.8\ and\ newer\ seem\ definitely\ unaffected.}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_GCC\_AND\_ARCH\_DOESNT\_WANT\_STACK\_ALIGNMENT\ 1}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_GCC\_AND\_ARCH\_DOESNT\_WANT\_STACK\_ALIGNMENT\ 0}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{comment}{//\ static\ alignment\ is\ completely\ disabled\ with\ GCC\ 3,\ Sun\ Studio,\ and\ QCC/QNX}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \#if\ !EIGEN\_GCC\_AND\_ARCH\_DOESNT\_WANT\_STACK\_ALIGNMENT\ \(\backslash\)}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\ \ \&\&\ !EIGEN\_GCC3\_OR\_OLDER\ \(\backslash\)}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \&\&\ !EIGEN\_COMP\_SUNCC\ \(\backslash\)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\ \ \&\&\ !EIGEN\_OS\_QNX}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_ARCH\_WANTS\_STACK\_ALIGNMENT\ 1}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_ARCH\_WANTS\_STACK\_ALIGNMENT\ 0}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\ \ \#if\ EIGEN\_ARCH\_WANTS\_STACK\_ALIGNMENT}}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00130\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ 0}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ If\ EIGEN\_MAX\_ALIGN\_BYTES\ is\ defined,\ then\ it\ is\ considered\ as\ an\ upper\ bound\ for\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00136\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_MAX\_ALIGN\_BYTES)\ \&\&\ EIGEN\_MAX\_ALIGN\_BYTES<EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#define\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ EIGEN\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\#if\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES==0\ \&\&\ !defined(EIGEN\_DISABLE\_UNALIGNED\_ARRAY\_ASSERT)}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_DISABLE\_UNALIGNED\_ARRAY\_ASSERT}}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ \textcolor{comment}{//\ At\ this\ stage,\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES>0\ is\ the\ true\ test\ whether\ we\ want\ to\ align\ arrays\ on\ the\ stack\ or\ not.}}
+\DoxyCodeLine{00146\ \textcolor{comment}{//\ It\ takes\ into\ account\ both\ the\ user\ choice\ to\ explicitly\ enable/disable\ alignment\ (by\ setting\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES)}}
+\DoxyCodeLine{00147\ \textcolor{comment}{//\ and\ the\ architecture\ config\ (EIGEN\_ARCH\_WANTS\_STACK\_ALIGNMENT).}}
+\DoxyCodeLine{00148\ \textcolor{comment}{//\ Henceforth,\ only\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES\ should\ be\ used.}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ Shortcuts\ to\ EIGEN\_ALIGN\_TO\_BOUNDARY}}
+\DoxyCodeLine{00152\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGN8\ \ EIGEN\_ALIGN\_TO\_BOUNDARY(8)}}
+\DoxyCodeLine{00153\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGN16\ EIGEN\_ALIGN\_TO\_BOUNDARY(16)}}
+\DoxyCodeLine{00154\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGN32\ EIGEN\_ALIGN\_TO\_BOUNDARY(32)}}
+\DoxyCodeLine{00155\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGN64\ EIGEN\_ALIGN\_TO\_BOUNDARY(64)}}
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\#if\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES>0}}
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGN\_MAX\ EIGEN\_ALIGN\_TO\_BOUNDARY(EIGEN\_MAX\_STATIC\_ALIGN\_BYTES)}}
+\DoxyCodeLine{00158\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGN\_MAX}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \textcolor{comment}{//\ Dynamic\ alignment\ control}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_DONT\_ALIGN)\ \&\&\ defined(EIGEN\_MAX\_ALIGN\_BYTES)\ \&\&\ EIGEN\_MAX\_ALIGN\_BYTES>0}}
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\#error\ EIGEN\_MAX\_ALIGN\_BYTES\ and\ EIGEN\_DONT\_ALIGN\ are\ both\ defined\ with\ EIGEN\_MAX\_ALIGN\_BYTES!=0.\ Use\ EIGEN\_MAX\_ALIGN\_BYTES=0\ as\ a\ synonym\ of\ EIGEN\_DONT\_ALIGN.}}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_DONT\_ALIGN}}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\ \ \#ifdef\ EIGEN\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \ \ \#undef\ EIGEN\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00172\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MAX\_ALIGN\_BYTES\ 0}}
+\DoxyCodeLine{00174\ \textcolor{preprocessor}{\#elif\ !defined(EIGEN\_MAX\_ALIGN\_BYTES)}}
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_MAX\_ALIGN\_BYTES\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \textcolor{preprocessor}{\#if\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES\ >\ EIGEN\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#define\ EIGEN\_DEFAULT\_ALIGN\_BYTES\ EIGEN\_IDEAL\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00181\ \textcolor{preprocessor}{\#define\ EIGEN\_DEFAULT\_ALIGN\_BYTES\ EIGEN\_MAX\_ALIGN\_BYTES}}
+\DoxyCodeLine{00182\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_UNALIGNED\_VECTORIZE}}
+\DoxyCodeLine{00186\ \textcolor{preprocessor}{\#define\ EIGEN\_UNALIGNED\_VECTORIZE\ 1}}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{comment}{//-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \textcolor{comment}{//\ if\ alignment\ is\ disabled,\ then\ disable\ vectorization.\ Note:\ EIGEN\_MAX\_ALIGN\_BYTES\ is\ the\ proper\ check,\ it\ takes\ into}}
+\DoxyCodeLine{00192\ \textcolor{comment}{//\ account\ both\ the\ user's\ will\ (EIGEN\_MAX\_ALIGN\_BYTES,EIGEN\_DONT\_ALIGN)\ and\ our\ own\ platform\ checks}}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\#if\ EIGEN\_MAX\_ALIGN\_BYTES==0}}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\ \ \#ifndef\ EIGEN\_DONT\_VECTORIZE}}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_DONT\_VECTORIZE}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ }
+\DoxyCodeLine{00200\ \textcolor{comment}{//\ The\ following\ (except\ \#include\ <malloc.h>\ and\ \_M\_IX86\_FP\ ??)\ can\ likely\ be}}
+\DoxyCodeLine{00201\ \textcolor{comment}{//\ removed\ as\ gcc\ 4.1\ and\ msvc\ 2008\ are\ not\ supported\ anyways.}}
+\DoxyCodeLine{00202\ \textcolor{preprocessor}{\#if\ EIGEN\_COMP\_MSVC}}
+\DoxyCodeLine{00203\ \textcolor{preprocessor}{\ \ \#include\ <malloc.h>}\ \textcolor{comment}{//\ for\ \_aligned\_malloc\ -\/-\/\ need\ it\ regardless\ of\ whether\ vectorization\ is\ enabled}}
+\DoxyCodeLine{00204\ \textcolor{preprocessor}{\ \ \#if\ (EIGEN\_COMP\_MSVC\ >=\ 1500)\ }\textcolor{comment}{//\ 2008\ or\ later}}
+\DoxyCodeLine{00205\ \ \ \ \ \textcolor{comment}{//\ a\ user\ reported\ that\ in\ 64-\/bit\ mode,\ MSVC\ doesn't\ care\ to\ define\ \_M\_IX86\_FP.}}
+\DoxyCodeLine{00206\ \textcolor{preprocessor}{\ \ \ \ \#if\ (defined(\_M\_IX86\_FP)\ \&\&\ (\_M\_IX86\_FP\ >=\ 2))\ ||\ EIGEN\_ARCH\_x86\_64}}
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_SSE2\_ON\_MSVC\_2008\_OR\_LATER}}
+\DoxyCodeLine{00208\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00210\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\ \ \#if\ (defined\ \_\_SSE2\_\_)\ \&\&\ (\ (!EIGEN\_COMP\_GNUC)\ ||\ EIGEN\_COMP\_ICC\ ||\ EIGEN\_GNUC\_AT\_LEAST(4,2)\ )}}
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_SSE2\_ON\_NON\_MSVC\_BUT\_NOT\_OLD\_GCC}}
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00214\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{preprocessor}{\#if\ !(defined(EIGEN\_DONT\_VECTORIZE)\ ||\ defined(EIGEN\_GPUCC))}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{preprocessor}{\ \ \#if\ defined\ (EIGEN\_SSE2\_ON\_NON\_MSVC\_BUT\_NOT\_OLD\_GCC)\ ||\ defined(EIGEN\_SSE2\_ON\_MSVC\_2008\_OR\_LATER)}}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{comment}{//\ Defines\ symbols\ for\ compile-\/time\ detection\ of\ which\ instructions\ are}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{comment}{//\ used.}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{comment}{//\ EIGEN\_VECTORIZE\_YY\ is\ defined\ if\ and\ only\ if\ the\ instruction\ set\ YY\ is\ used}}
+\DoxyCodeLine{00223\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00224\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE}}
+\DoxyCodeLine{00225\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE2}}
+\DoxyCodeLine{00226\ }
+\DoxyCodeLine{00227\ \ \ \ \ \textcolor{comment}{//\ Detect\ sse3/ssse3/sse4:}}
+\DoxyCodeLine{00228\ \ \ \ \ \textcolor{comment}{//\ gcc\ and\ icc\ defines\ \_\_SSE3\_\_,\ ...}}
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{comment}{//\ there\ is\ no\ way\ to\ know\ about\ this\ on\ msvc.\ You\ can\ define\ EIGEN\_VECTORIZE\_SSE*\ if\ you}}
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{comment}{//\ want\ to\ force\ the\ use\ of\ those\ instructions\ with\ msvc.}}
+\DoxyCodeLine{00231\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_SSE3\_\_}}
+\DoxyCodeLine{00232\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE3}}
+\DoxyCodeLine{00233\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00234\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_SSSE3\_\_}}
+\DoxyCodeLine{00235\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSSE3}}
+\DoxyCodeLine{00236\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_SSE4\_1\_\_}}
+\DoxyCodeLine{00238\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_1}}
+\DoxyCodeLine{00239\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00240\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_SSE4\_2\_\_}}
+\DoxyCodeLine{00241\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_2}}
+\DoxyCodeLine{00242\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00243\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_AVX\_\_}}
+\DoxyCodeLine{00244\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifndef\ EIGEN\_USE\_SYCL\ }}
+\DoxyCodeLine{00245\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX}}
+\DoxyCodeLine{00246\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00247\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE3}}
+\DoxyCodeLine{00248\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSSE3}}
+\DoxyCodeLine{00249\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_1}}
+\DoxyCodeLine{00250\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_2}}
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00252\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ \_\_AVX2\_\_}}
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifndef\ EIGEN\_USE\_SYCL\ }}
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX2}}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX}}
+\DoxyCodeLine{00256\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00257\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE3}}
+\DoxyCodeLine{00258\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSSE3}}
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_1}}
+\DoxyCodeLine{00260\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_2}}
+\DoxyCodeLine{00261\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00262\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_FMA\_\_)\ ||\ (EIGEN\_COMP\_MSVC\ \&\&\ defined(\_\_AVX2\_\_))}}
+\DoxyCodeLine{00263\ \ \ \ \ \ \ \textcolor{comment}{//\ MSVC\ does\ not\ expose\ a\ switch\ dedicated\ for\ FMA}}
+\DoxyCodeLine{00264\ \ \ \ \ \ \ \textcolor{comment}{//\ For\ MSVC,\ AVX2\ =>\ FMA}}
+\DoxyCodeLine{00265\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00266\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00267\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_AVX512F\_\_)}}
+\DoxyCodeLine{00268\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifndef\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\ \ \ \ \ \ \#if\ EIGEN\_COMP\_GNUC}}
+\DoxyCodeLine{00270\ \textcolor{preprocessor}{\ \ \ \ \ \ \#error\ Please\ add\ -\/mfma\ to\ your\ compiler\ flags:\ compiling\ with\ -\/mavx512f\ alone\ without\ SSE/AVX\ FMA\ is\ not\ supported\ (bug\ 1638).}}
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00272\ \textcolor{preprocessor}{\ \ \ \ \ \ \#error\ Please\ enable\ FMA\ in\ your\ compiler\ flags\ (e.g.\ -\/mfma):\ compiling\ with\ AVX512\ alone\ without\ SSE/AVX\ FMA\ is\ not\ supported\ (bug\ 1638).}}
+\DoxyCodeLine{00273\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00274\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00275\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifndef\ EIGEN\_USE\_SYCL}}
+\DoxyCodeLine{00276\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX512}}
+\DoxyCodeLine{00277\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX2}}
+\DoxyCodeLine{00278\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX}}
+\DoxyCodeLine{00279\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00280\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00281\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE3}}
+\DoxyCodeLine{00282\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSSE3}}
+\DoxyCodeLine{00283\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_1}}
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_SSE4\_2}}
+\DoxyCodeLine{00285\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifndef\ EIGEN\_USE\_SYCL}}
+\DoxyCodeLine{00286\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ \_\_AVX512DQ\_\_}}
+\DoxyCodeLine{00287\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX512DQ}}
+\DoxyCodeLine{00288\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00289\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ \_\_AVX512ER\_\_}}
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX512ER}}
+\DoxyCodeLine{00291\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00292\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ \_\_AVX512BF16\_\_}}
+\DoxyCodeLine{00293\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#define\ EIGEN\_VECTORIZE\_AVX512BF16}}
+\DoxyCodeLine{00294\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00295\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00296\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00297\ }
+\DoxyCodeLine{00298\ \ \ \ \ \textcolor{comment}{//\ Disable\ AVX\ support\ on\ broken\ xcode\ versions}}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined(\_\_apple\_build\_version\_\_)\ \&\&\ (\_\_apple\_build\_version\_\_\ ==\ 11000033\ )\ \&\&\ (\ \_\_MAC\_OS\_X\_VERSION\_MIN\_REQUIRED\ ==\ 101500\ )}}
+\DoxyCodeLine{00300\ \ \ \ \ \ \ \textcolor{comment}{//\ A\ nasty\ bug\ in\ the\ clang\ compiler\ shipped\ with\ xcode\ in\ a\ common\ compilation\ situation}}
+\DoxyCodeLine{00301\ \ \ \ \ \ \ \textcolor{comment}{//\ when\ XCode\ 11.0\ and\ Mac\ deployment\ target\ macOS\ 10.15\ is\ https://trac.macports.org/ticket/58776\#no1}}
+\DoxyCodeLine{00302\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_AVX}}
+\DoxyCodeLine{00303\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#undef\ EIGEN\_VECTORIZE\_AVX}}
+\DoxyCodeLine{00304\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#warning\ "{}Disabling\ AVX\ support:\ clang\ compiler\ shipped\ with\ XCode\ 11.[012]\ generates\ broken\ assembly\ with\ -\/macosx-\/version-\/min=10.15\ and\ AVX\ enabled.\ "{}}}
+\DoxyCodeLine{00305\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_AVX2}}
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#undef\ EIGEN\_VECTORIZE\_AVX2}}
+\DoxyCodeLine{00307\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00308\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#undef\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00311\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_AVX512}}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#undef\ EIGEN\_VECTORIZE\_AVX512}}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00314\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_AVX512DQ}}
+\DoxyCodeLine{00315\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#undef\ EIGEN\_VECTORIZE\_AVX512DQ}}
+\DoxyCodeLine{00316\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00317\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_AVX512ER}}
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \#undef\ EIGEN\_VECTORIZE\_AVX512ER}}
+\DoxyCodeLine{00319\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE:\ Confirmed\ test\ failures\ in\ XCode\ 11.0,\ and\ XCode\ 11.2\ with\ \ -\/macosx-\/version-\/min=10.15\ and\ AVX}}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ using\ -\/macosx-\/version-\/min=10.15\ with\ Xcode\ 11.0\ results\ in\ runtime\ segmentation\ faults\ in\ many\ tests,\ 11.2\ produce\ core\ dumps\ in\ 3\ tests}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ using\ -\/macosx-\/version-\/min=10.14\ produces\ functioning\ and\ passing\ tests\ in\ all\ cases}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ \_\_clang\_version\_\_\ "{}11.0.0\ (clang-\/1100.0.33.8)"{}\ \ XCode\ 11.0\ <-\/\ Produces\ many\ segfault\ and\ core\ dumping\ tests}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ with\ \ -\/macosx-\/version-\/min=10.15\ and\ AVX}}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{comment}{//\ NOTE\ \_\_clang\_version\_\_\ "{}11.0.0\ (clang-\/1100.0.33.12)"{}\ XCode\ 11.2\ <-\/\ Produces\ 3\ core\ dumping\ tests\ with\ \ }}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ -\/macosx-\/version-\/min=10.15\ and\ AVX}}
+\DoxyCodeLine{00328\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \ \ \ \ \textcolor{comment}{//\ include\ files}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{comment}{//\ This\ extern\ "{}C"{}\ works\ around\ a\ MINGW-\/w64\ compilation\ issue}}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{comment}{//\ https://sourceforge.net/tracker/index.php?func=detail\&aid=3018394\&group\_id=202880\&atid=983354}}
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{comment}{//\ In\ essence,\ intrin.h\ is\ included\ by\ windows.h\ and\ also\ declares\ intrinsics\ (just\ as\ emmintrin.h\ etc.\ below\ do).}}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{comment}{//\ However,\ intrin.h\ uses\ an\ extern\ "{}C"{}\ declaration,\ and\ g++\ thus\ complains\ of\ duplicate\ declarations}}
+\DoxyCodeLine{00336\ \ \ \ \ \textcolor{comment}{//\ with\ conflicting\ linkage.\ \ The\ linkage\ for\ intrinsics\ doesn't\ matter,\ but\ at\ that\ stage\ the\ compiler\ doesn't\ know;}}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{comment}{//\ so,\ to\ avoid\ compile\ errors\ when\ windows.h\ is\ included\ after\ Eigen/Core,\ ensure\ intrinsics\ are\ extern\ "{}C"{}\ here\ too.}}
+\DoxyCodeLine{00338\ \ \ \ \ \textcolor{comment}{//\ notice\ that\ since\ these\ are\ C\ headers,\ the\ extern\ "{}C"{}\ is\ theoretically\ needed\ anyways.}}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keyword}{extern}\ \textcolor{stringliteral}{"{}C"{}}\ \{}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \textcolor{comment}{//\ In\ theory\ we\ should\ only\ include\ immintrin.h\ and\ not\ the\ other\ *mmintrin.h\ header\ files\ directly.}}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \textcolor{comment}{//\ Doing\ so\ triggers\ some\ issues\ with\ ICC.\ However\ old\ gcc\ versions\ seems\ to\ not\ have\ this\ file,\ thus:}}
+\DoxyCodeLine{00342\ \textcolor{preprocessor}{\ \ \ \ \ \ \#if\ EIGEN\_COMP\_ICC\ >=\ 1110\ ||\ EIGEN\_COMP\_EMSCRIPTEN}}
+\DoxyCodeLine{00343\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <immintrin.h>}}
+\DoxyCodeLine{00344\ \textcolor{preprocessor}{\ \ \ \ \ \ \#else}}
+\DoxyCodeLine{00345\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <mmintrin.h>}}
+\DoxyCodeLine{00346\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <emmintrin.h>}}
+\DoxyCodeLine{00347\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <xmmintrin.h>}}
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ \ EIGEN\_VECTORIZE\_SSE3}}
+\DoxyCodeLine{00349\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <pmmintrin.h>}}
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00351\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_SSSE3}}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <tmmintrin.h>}}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_SSE4\_1}}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <smmintrin.h>}}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#ifdef\ EIGEN\_VECTORIZE\_SSE4\_2}}
+\DoxyCodeLine{00358\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <nmmintrin.h>}}
+\DoxyCodeLine{00359\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00360\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#if\ defined(EIGEN\_VECTORIZE\_AVX)\ ||\ defined(EIGEN\_VECTORIZE\_AVX512)}}
+\DoxyCodeLine{00361\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#include\ <immintrin.h>}}
+\DoxyCodeLine{00362\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00364\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ extern\ "{}C"{}}}
+\DoxyCodeLine{00365\ }
+\DoxyCodeLine{00366\ \textcolor{preprocessor}{\ \ \#elif\ defined(\_\_VSX\_\_)\ \&\&\ !defined(\_\_APPLE\_\_)}}
+\DoxyCodeLine{00367\ }
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_VSX\ 1}}
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\ \ \ \ \#include\ <altivec.h>}}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{comment}{//\ We\ need\ to\ \#undef\ all\ these\ ugly\ tokens\ defined\ in\ <altivec.h>}}
+\DoxyCodeLine{00373\ \ \ \ \ \textcolor{comment}{//\ =>\ use\ \_\_vector\ instead\ of\ vector}}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\ \ \ \ \#undef\ bool}}
+\DoxyCodeLine{00375\ \textcolor{preprocessor}{\ \ \ \ \#undef\ vector}}
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\ \ \ \ \#undef\ pixel}}
+\DoxyCodeLine{00377\ }
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\ \ \#elif\ defined\ \_\_ALTIVEC\_\_}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_ALTIVEC}}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00383\ \textcolor{preprocessor}{\ \ \ \ \#include\ <altivec.h>}}
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{comment}{//\ We\ need\ to\ \#undef\ all\ these\ ugly\ tokens\ defined\ in\ <altivec.h>}}
+\DoxyCodeLine{00385\ \ \ \ \ \textcolor{comment}{//\ =>\ use\ \_\_vector\ instead\ of\ vector}}
+\DoxyCodeLine{00386\ \textcolor{preprocessor}{\ \ \ \ \#undef\ bool}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\ \ \ \ \#undef\ vector}}
+\DoxyCodeLine{00388\ \textcolor{preprocessor}{\ \ \ \ \#undef\ pixel}}
+\DoxyCodeLine{00389\ }
+\DoxyCodeLine{00390\ \textcolor{preprocessor}{\ \ \#elif\ ((defined\ \ \_\_ARM\_NEON)\ ||\ (defined\ \_\_ARM\_NEON\_\_))\ \&\&\ !(defined\ EIGEN\_ARM64\_USE\_SVE)}}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_NEON}}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\ \ \ \ \#include\ <arm\_neon.h>}}
+\DoxyCodeLine{00395\ }
+\DoxyCodeLine{00396\ \ \ \textcolor{comment}{//\ We\ currently\ require\ SVE\ to\ be\ enabled\ explicitly\ via\ EIGEN\_ARM64\_USE\_SVE\ and}}
+\DoxyCodeLine{00397\ \ \ \textcolor{comment}{//\ will\ not\ select\ the\ backend\ automatically}}
+\DoxyCodeLine{00398\ \textcolor{preprocessor}{\ \ \#elif\ (defined\ \_\_ARM\_FEATURE\_SVE)\ \&\&\ (defined\ EIGEN\_ARM64\_USE\_SVE)}}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00401\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_VECTORIZE\_SVE}}
+\DoxyCodeLine{00402\ \textcolor{preprocessor}{\ \ \ \ \#include\ <arm\_sve.h>}}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{comment}{//\ Since\ we\ depend\ on\ knowing\ SVE\ vector\ lengths\ at\ compile-\/time,\ we\ need}}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{comment}{//\ to\ ensure\ a\ fixed\ lengths\ is\ set}}
+\DoxyCodeLine{00406\ \textcolor{preprocessor}{\ \ \ \ \#if\ defined\ \_\_ARM\_FEATURE\_SVE\_BITS}}
+\DoxyCodeLine{00407\ \textcolor{preprocessor}{\ \ \ \ \ \ \#define\ EIGEN\_ARM64\_SVE\_VL\ \_\_ARM\_FEATURE\_SVE\_BITS}}
+\DoxyCodeLine{00408\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00409\ \textcolor{preprocessor}{\#error\ "{}Eigen\ requires\ a\ fixed\ SVE\ lector\ length\ but\ EIGEN\_ARM64\_SVE\_VL\ is\ not\ set."{}}}
+\DoxyCodeLine{00410\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00411\ }
+\DoxyCodeLine{00412\ \textcolor{preprocessor}{\#elif\ (defined\ \_\_s390x\_\_\ \&\&\ defined\ \_\_VEC\_\_)}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \textcolor{preprocessor}{\#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00415\ \textcolor{preprocessor}{\#define\ EIGEN\_VECTORIZE\_ZVECTOR}}
+\DoxyCodeLine{00416\ \textcolor{preprocessor}{\#include\ <vecintrin.h>}}
+\DoxyCodeLine{00417\ }
+\DoxyCodeLine{00418\ \textcolor{preprocessor}{\#elif\ defined\ \_\_mips\_msa}}
+\DoxyCodeLine{00419\ }
+\DoxyCodeLine{00420\ \textcolor{comment}{//\ Limit\ MSA\ optimizations\ to\ little-\/endian\ CPUs\ for\ now.}}
+\DoxyCodeLine{00421\ \textcolor{comment}{//\ TODO:\ Perhaps,\ eventually\ support\ MSA\ optimizations\ on\ big-\/endian\ CPUs?}}
+\DoxyCodeLine{00422\ \textcolor{preprocessor}{\#if\ defined(\_\_BYTE\_ORDER\_\_)\ \&\&\ (\_\_BYTE\_ORDER\_\_\ ==\ \_\_ORDER\_LITTLE\_ENDIAN\_\_)}}
+\DoxyCodeLine{00423\ \textcolor{preprocessor}{\#if\ defined(\_\_LP64\_\_)}}
+\DoxyCodeLine{00424\ \textcolor{preprocessor}{\#define\ EIGEN\_MIPS\_64}}
+\DoxyCodeLine{00425\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00426\ \textcolor{preprocessor}{\#define\ EIGEN\_MIPS\_32}}
+\DoxyCodeLine{00427\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00428\ \textcolor{preprocessor}{\#define\ EIGEN\_VECTORIZE}}
+\DoxyCodeLine{00429\ \textcolor{preprocessor}{\#define\ EIGEN\_VECTORIZE\_MSA}}
+\DoxyCodeLine{00430\ \textcolor{preprocessor}{\#include\ <msa.h>}}
+\DoxyCodeLine{00431\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00434\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \textcolor{comment}{//\ Following\ the\ Arm\ ACLE\ arm\_neon.h\ should\ also\ include\ arm\_fp16.h\ but\ not\ all}}
+\DoxyCodeLine{00437\ \textcolor{comment}{//\ compilers\ seem\ to\ follow\ this.\ We\ therefore\ include\ it\ explicitly.}}
+\DoxyCodeLine{00438\ \textcolor{comment}{//\ See\ also:\ https://bugs.llvm.org/show\_bug.cgi?id=47955}}
+\DoxyCodeLine{00439\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HAS\_ARM64\_FP16\_SCALAR\_ARITHMETIC)}}
+\DoxyCodeLine{00440\ \textcolor{preprocessor}{\ \ \#include\ <arm\_fp16.h>}}
+\DoxyCodeLine{00441\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{comment}{//\ Enable\ FMA\ for\ ARM.}}
+\DoxyCodeLine{00444\ \textcolor{preprocessor}{\#if\ defined(\_\_ARM\_FEATURE\_FMA)}}
+\DoxyCodeLine{00445\ \textcolor{preprocessor}{\#define\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00446\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \textcolor{preprocessor}{\#if\ defined(\_\_F16C\_\_)\ \&\&\ !defined(EIGEN\_GPUCC)\ \&\&\ (!EIGEN\_COMP\_CLANG\_STRICT\ ||\ EIGEN\_COMP\_CLANG>=380)}}
+\DoxyCodeLine{00449\ \ \ \textcolor{comment}{//\ We\ can\ use\ the\ optimized\ fp16\ to\ float\ and\ float\ to\ fp16\ conversion\ routines}}
+\DoxyCodeLine{00450\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_HAS\_FP16\_C}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \textcolor{preprocessor}{\ \ \#if\ EIGEN\_COMP\_GNUC}}
+\DoxyCodeLine{00453\ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ immintrin.h\ is\ included,\ even\ if\ e.g.\ vectorization\ is}}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{//\ explicitly\ disabled\ (see\ also\ issue\ \#2395).}}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{comment}{//\ Note\ that\ FP16C\ intrinsics\ for\ gcc\ and\ clang\ are\ included\ by\ immintrin.h,}}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{comment}{//\ as\ opposed\ to\ emmintrin.h\ as\ suggested\ by\ Intel:}}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{comment}{//\ https://software.intel.com/sites/landingpage/IntrinsicsGuide/\#othertechs=FP16C\&expand=1711}}
+\DoxyCodeLine{00458\ \textcolor{preprocessor}{\ \ \ \ \#include\ <immintrin.h>}}
+\DoxyCodeLine{00459\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00460\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \textcolor{preprocessor}{\#if\ defined\ EIGEN\_CUDACC}}
+\DoxyCodeLine{00463\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_VECTORIZE\_GPU}}
+\DoxyCodeLine{00464\ \textcolor{preprocessor}{\ \ \#include\ <vector\_types.h>}}
+\DoxyCodeLine{00465\ \textcolor{preprocessor}{\ \ \#if\ EIGEN\_CUDA\_SDK\_VER\ >=\ 70500}}
+\DoxyCodeLine{00466\ \textcolor{preprocessor}{\ \ \ \ \#define\ EIGEN\_HAS\_CUDA\_FP16}}
+\DoxyCodeLine{00467\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00468\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HAS\_CUDA\_FP16)}}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{\ \ \#include\ <cuda\_runtime\_api.h>}}
+\DoxyCodeLine{00472\ \textcolor{preprocessor}{\ \ \#include\ <cuda\_fp16.h>}}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HIPCC)}}
+\DoxyCodeLine{00476\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_VECTORIZE\_GPU}}
+\DoxyCodeLine{00477\ \textcolor{preprocessor}{\ \ \#include\ <hip/hip\_vector\_types.h>}}
+\DoxyCodeLine{00478\ \textcolor{preprocessor}{\ \ \#define\ EIGEN\_HAS\_HIP\_FP16}}
+\DoxyCodeLine{00479\ \textcolor{preprocessor}{\ \ \#include\ <hip/hip\_fp16.h>}}
+\DoxyCodeLine{00480\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \textcolor{comment}{}}
+\DoxyCodeLine{00483\ \textcolor{comment}{/**\ \(\backslash\)brief\ Namespace\ containing\ all\ symbols\ from\ the\ \%Eigen\ library.\ */}}
+\DoxyCodeLine{00484\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \textcolor{keyword}{inline}\ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{char}\ *SimdInstructionSetsInUse(\textcolor{keywordtype}{void})\ \{}
+\DoxyCodeLine{00487\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_VECTORIZE\_AVX512)}}
+\DoxyCodeLine{00488\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}AVX512,\ FMA,\ AVX2,\ AVX,\ SSE,\ SSE2,\ SSE3,\ SSSE3,\ SSE4.1,\ SSE4.2"{}};}
+\DoxyCodeLine{00489\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_AVX)}}
+\DoxyCodeLine{00490\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}AVX\ SSE,\ SSE2,\ SSE3,\ SSSE3,\ SSE4.1,\ SSE4.2"{}};}
+\DoxyCodeLine{00491\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_SSE4\_2)}}
+\DoxyCodeLine{00492\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}SSE,\ SSE2,\ SSE3,\ SSSE3,\ SSE4.1,\ SSE4.2"{}};}
+\DoxyCodeLine{00493\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_SSE4\_1)}}
+\DoxyCodeLine{00494\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}SSE,\ SSE2,\ SSE3,\ SSSE3,\ SSE4.1"{}};}
+\DoxyCodeLine{00495\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_SSSE3)}}
+\DoxyCodeLine{00496\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}SSE,\ SSE2,\ SSE3,\ SSSE3"{}};}
+\DoxyCodeLine{00497\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_SSE3)}}
+\DoxyCodeLine{00498\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}SSE,\ SSE2,\ SSE3"{}};}
+\DoxyCodeLine{00499\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_SSE2)}}
+\DoxyCodeLine{00500\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}SSE,\ SSE2"{}};}
+\DoxyCodeLine{00501\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_ALTIVEC)}}
+\DoxyCodeLine{00502\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}AltiVec"{}};}
+\DoxyCodeLine{00503\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_VSX)}}
+\DoxyCodeLine{00504\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}VSX"{}};}
+\DoxyCodeLine{00505\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_NEON)}}
+\DoxyCodeLine{00506\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}ARM\ NEON"{}};}
+\DoxyCodeLine{00507\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_SVE)}}
+\DoxyCodeLine{00508\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}ARM\ SVE"{}};}
+\DoxyCodeLine{00509\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_ZVECTOR)}}
+\DoxyCodeLine{00510\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}S390X\ ZVECTOR"{}};}
+\DoxyCodeLine{00511\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_VECTORIZE\_MSA)}}
+\DoxyCodeLine{00512\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}MIPS\ MSA"{}};}
+\DoxyCodeLine{00513\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00514\ \ \ \textcolor{keywordflow}{return}\ \textcolor{stringliteral}{"{}None"{}};}
+\DoxyCodeLine{00515\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00516\ \}}
+\DoxyCodeLine{00517\ }
+\DoxyCodeLine{00518\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00519\ }
+\DoxyCodeLine{00520\ }
+\DoxyCodeLine{00521\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_CONFIGURE\_VECTORIZATION\_H}}
+
+\end{DoxyCode}

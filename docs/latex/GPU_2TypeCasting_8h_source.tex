@@ -1,0 +1,85 @@
+\doxysection{Type\+Casting.\+h}
+\hypertarget{GPU_2TypeCasting_8h_source}{}\label{GPU_2TypeCasting_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/GPU/TypeCasting.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/GPU/TypeCasting.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2016\ Benoit\ Steiner\ <benoit.steiner.goog@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_TYPE\_CASTING\_GPU\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_TYPE\_CASTING\_GPU\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#if\ (defined(EIGEN\_HAS\_CUDA\_FP16)\ \&\&\ defined(EIGEN\_CUDA\_ARCH)\ \&\&\ EIGEN\_CUDA\_ARCH\ >=\ 300)\ ||\ \(\backslash\)}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\ \ \ \ (defined(EIGEN\_HAS\_HIP\_FP16)\ \&\&\ defined(EIGEN\_HIP\_DEVICE\_COMPILE))}}
+\DoxyCodeLine{00019\ }
+\DoxyCodeLine{00020\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00021\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1type__casting__traits}{type\_casting\_traits}}<Eigen::\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}},\ float>\ \{}
+\DoxyCodeLine{00022\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00023\ \ \ \ \ VectorizedCast\ =\ 1,}
+\DoxyCodeLine{00024\ \ \ \ \ SrcCoeffRatio\ =\ 1,}
+\DoxyCodeLine{00025\ \ \ \ \ TgtCoeffRatio\ =\ 2}
+\DoxyCodeLine{00026\ \ \ \};}
+\DoxyCodeLine{00027\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pcast<half2,\ float4>(\textcolor{keyword}{const}\ half2\&\ a,\ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00030\ \ \ float2\ r1\ =\ \_\_half22float2(a);}
+\DoxyCodeLine{00031\ \ \ float2\ r2\ =\ \_\_half22float2(b);}
+\DoxyCodeLine{00032\ \ \ \textcolor{keywordflow}{return}\ make\_float4(r1.x,\ r1.y,\ r2.x,\ r2.y);}
+\DoxyCodeLine{00033\ \}}
+\DoxyCodeLine{00034\ }
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pcast<float4,\ Packet4h2>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00037\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{00038\ \ \ half2*\ r\_alias=\textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{00039\ \ \ r\_alias[0]=\_\_floats2half2\_rn(a.x,a.y);}
+\DoxyCodeLine{00040\ \ \ r\_alias[1]=\_\_floats2half2\_rn(a.z,a.w);}
+\DoxyCodeLine{00041\ \ \ r\_alias[2]=\_\_floats2half2\_rn(b.x,b.y);}
+\DoxyCodeLine{00042\ \ \ r\_alias[3]=\_\_floats2half2\_rn(b.z,b.w);}
+\DoxyCodeLine{00043\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00044\ \}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00047\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1type__casting__traits}{type\_casting\_traits}}<float,\ Eigen::\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}>\ \{}
+\DoxyCodeLine{00048\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00049\ \ \ \ \ VectorizedCast\ =\ 1,}
+\DoxyCodeLine{00050\ \ \ \ \ SrcCoeffRatio\ =\ 2,}
+\DoxyCodeLine{00051\ \ \ \ \ TgtCoeffRatio\ =\ 1}
+\DoxyCodeLine{00052\ \ \ \};}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pcast<Packet4h2,\ float4>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{00056\ \ \ \textcolor{comment}{//\ Simply\ discard\ the\ second\ half\ of\ the\ input}}
+\DoxyCodeLine{00057\ \ \ float4\ r;}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias=\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{00059\ \ \ float2\ r1\ =\ \_\_half22float2(a\_alias[0]);}
+\DoxyCodeLine{00060\ \ \ float2\ r2\ =\ \_\_half22float2(a\_alias[1]);}
+\DoxyCodeLine{00061\ \ \ r.x=\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(r1.x);}
+\DoxyCodeLine{00062\ \ \ r.y=\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(r1.y);}
+\DoxyCodeLine{00063\ \ \ r.z=\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(r2.x);}
+\DoxyCodeLine{00064\ \ \ r.w=\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(r2.y);}
+\DoxyCodeLine{00065\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00066\ \}}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pcast<float4,\ half2>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00069\ \ \ \textcolor{comment}{//\ Simply\ discard\ the\ second\ half\ of\ the\ input}}
+\DoxyCodeLine{00070\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(a.x,\ a.y);}
+\DoxyCodeLine{00071\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_TYPE\_CASTING\_GPU\_H}}
+
+\end{DoxyCode}

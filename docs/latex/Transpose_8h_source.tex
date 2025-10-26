@@ -1,0 +1,470 @@
+\doxysection{Transpose.\+h}
+\hypertarget{Transpose_8h_source}{}\label{Transpose_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Transpose.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Transpose.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2006-\/2008\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2009-\/2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_TRANSPOSE\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_TRANSPOSE\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00018\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1Transpose}{Transpose}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}>\ >\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<MatrixType>}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ ref\_selector<MatrixType>::type\ MatrixTypeNested;}
+\DoxyCodeLine{00021\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ remove\_reference<MatrixTypeNested>::type\ MatrixTypeNestedPlain;}
+\DoxyCodeLine{00022\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00023\ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00024\ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00025\ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime,}
+\DoxyCodeLine{00026\ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00027\ \ \ \ \ FlagsLvalueBit\ =\ is\_lvalue<MatrixType>::value\ ?\ \mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}}\ :\ 0,}
+\DoxyCodeLine{00028\ \ \ \ \ Flags0\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<MatrixTypeNestedPlain>::Flags}}\ \&\ \string~(\mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}}\ |\ NestByRefBit),}
+\DoxyCodeLine{00029\ \ \ \ \ Flags1\ =\ Flags0\ |\ FlagsLvalueBit,}
+\DoxyCodeLine{00030\ \ \ \ \ Flags\ =\ Flags1\ \string^\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}},}
+\DoxyCodeLine{00031\ \ \ \ \ InnerStrideAtCompileTime\ =\ inner\_stride\_at\_compile\_time<MatrixType>::ret,}
+\DoxyCodeLine{00032\ \ \ \ \ OuterStrideAtCompileTime\ =\ outer\_stride\_at\_compile\_time<MatrixType>::ret}
+\DoxyCodeLine{00033\ \ \ \};}
+\DoxyCodeLine{00034\ \};}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ StorageKind>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl}};}
+\DoxyCodeLine{00038\ \textcolor{comment}{}}
+\DoxyCodeLine{00039\ \textcolor{comment}{/**\ \(\backslash\)class\ Transpose}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Expression\ of\ the\ transpose\ of\ a\ matrix}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ MatrixType\ the\ type\ of\ the\ object\ of\ which\ we\ are\ taking\ the\ transpose}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ *\ This\ class\ represents\ an\ expression\ of\ the\ transpose\ of\ a\ matrix.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ *\ It\ is\ the\ return\ type\ of\ MatrixBase::transpose()\ and\ MatrixBase::adjoint()}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ *\ and\ most\ of\ the\ time\ this\ is\ the\ only\ way\ it\ is\ used.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ MatrixBase::transpose(),\ MatrixBase::adjoint()}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{class\ }Transpose}
+\DoxyCodeLine{00053\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl}}<MatrixType,typename\ internal::traits<MatrixType>::StorageKind>}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::ref\_selector<MatrixType>::non\_const\_type\ MatrixTypeNested;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl<MatrixType,typename\ internal::traits<MatrixType>::StorageKind}}>::Base\ Base;}
+\DoxyCodeLine{00060\ \ \ \ \ EIGEN\_GENERIC\_PUBLIC\_INTERFACE(Transpose)}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::remove\_all<MatrixType>::type\ NestedExpression;}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{explicit}\ EIGEN\_STRONG\_INLINE\ Transpose(\mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ matrix)\ :\ m\_matrix(matrix)\ \{\}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(Transpose)}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00069\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\ \textcolor{keyword}{const}\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_matrix.cols();\ \}}
+\DoxyCodeLine{00070\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00071\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\ \textcolor{keyword}{const}\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_matrix.rows();\ \}}
+\DoxyCodeLine{00072\ \textcolor{comment}{}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ nested\ expression\ */}}
+\DoxyCodeLine{00074\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ internal::remove\_all<MatrixTypeNested>::type\&}
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Transpose_ad7a6e63756170ed6bf8512f7ee795a69}{nestedExpression}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_matrix;\ \}}
+\DoxyCodeLine{00077\ \textcolor{comment}{}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ nested\ expression\ */}}
+\DoxyCodeLine{00079\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{typename}\ internal::remove\_reference<MatrixTypeNested>::type\&}
+\DoxyCodeLine{00081\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Transpose_abb1075bab7c3f83918b1a659c2333fb7}{nestedExpression}}()\ \{\ \textcolor{keywordflow}{return}\ m\_matrix;\ \}}
+\DoxyCodeLine{00082\ \textcolor{comment}{}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00084\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordtype}{void}\ resize(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nrows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ ncols)\ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ m\_matrix.resize(ncols,nrows);}
+\DoxyCodeLine{00087\ \ \ \ \ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keyword}{typename}\ internal::ref\_selector<MatrixType>::non\_const\_type\ m\_matrix;}
+\DoxyCodeLine{00091\ \};}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ template<typename\ MatrixType,\ bool\ HasDirectAccess\ =\ has\_direct\_access<MatrixType>::ret>}
+\DoxyCodeLine{00096\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1TransposeImpl__base}{TransposeImpl\_base}}}
+\DoxyCodeLine{00097\ \{}
+\DoxyCodeLine{00098\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1dense__xpr__base}{dense\_xpr\_base<Transpose<MatrixType>}}\ >::type\ type;}
+\DoxyCodeLine{00099\ \};}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00102\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1TransposeImpl__base}{TransposeImpl\_base}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},\ false>}
+\DoxyCodeLine{00103\ \{}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1dense__xpr__base}{dense\_xpr\_base<Transpose<MatrixType>}}\ >::type\ type;}
+\DoxyCodeLine{00105\ \};}
+\DoxyCodeLine{00106\ }
+\DoxyCodeLine{00107\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{comment}{//\ Generic\ API\ dispatcher}}
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ XprType,\ \textcolor{keyword}{typename}\ StorageKind>}
+\DoxyCodeLine{00111\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl}}}
+\DoxyCodeLine{00112\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{internal::generic\_xpr\_base}}<Transpose<XprType>\ >::type}
+\DoxyCodeLine{00113\ \{}
+\DoxyCodeLine{00114\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00115\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{internal::generic\_xpr\_base<Transpose<XprType>}}\ >::type\ Base;}
+\DoxyCodeLine{00116\ \};}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl}}<\mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}},\mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00119\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1TransposeImpl__base}{internal::TransposeImpl\_base}}<MatrixType>::type}
+\DoxyCodeLine{00120\ \{}
+\DoxyCodeLine{00121\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::TransposeImpl\_base<MatrixType>::type\ Base;}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{keyword}{using\ }Base::coeffRef;}
+\DoxyCodeLine{00125\ \ \ \ \ EIGEN\_DENSE\_PUBLIC\_INTERFACE(\mbox{\hyperlink{classEigen_1_1Transpose}{Transpose<MatrixType>}})}
+\DoxyCodeLine{00126\ \ \ \ \ EIGEN\_INHERIT\_ASSIGNMENT\_OPERATORS(\mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl}})}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00129\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ innerStride()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ derived().nestedExpression().innerStride();\ \}}
+\DoxyCodeLine{00130\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00131\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outerStride()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ derived().nestedExpression().outerStride();\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional}}<}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ internal::is\_lvalue<MatrixType>::value,}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}},}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ >::type\ ScalarWithConstIfNotLvalue;}
+\DoxyCodeLine{00138\ }
+\DoxyCodeLine{00139\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00140\ \ \ \ \ ScalarWithConstIfNotLvalue*\ data()\ \{\ \textcolor{keywordflow}{return}\ derived().nestedExpression().data();\ \}}
+\DoxyCodeLine{00141\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}*\ data()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ derived().nestedExpression().data();\ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{//\ FIXME:\ shall\ we\ keep\ the\ const\ version\ of\ coeffRef?}}
+\DoxyCodeLine{00145\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rowId,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ colId)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00147\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ derived().nestedExpression().coeffRef(colId,\ rowId);}
+\DoxyCodeLine{00149\ \ \ \ \ \}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00153\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ derived().nestedExpression().coeffRef(index);}
+\DoxyCodeLine{00155\ \ \ \ \ \}}
+\DoxyCodeLine{00156\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00157\ \ \ \ \ EIGEN\_DEFAULT\_EMPTY\_CONSTRUCTOR\_AND\_DESTRUCTOR(\mbox{\hyperlink{classEigen_1_1TransposeImpl}{TransposeImpl}})}
+\DoxyCodeLine{00158\ \};}
+\DoxyCodeLine{00159\ \textcolor{comment}{}}
+\DoxyCodeLine{00160\ \textcolor{comment}{/**\ \(\backslash\)returns\ an\ expression\ of\ the\ transpose\ of\ *this.}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ *\ Example:\ \(\backslash\)include\ MatrixBase\_transpose.cpp}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ *\ Output:\ \(\backslash\)verbinclude\ MatrixBase\_transpose.out}}
+\DoxyCodeLine{00164\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00165\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ If\ you\ want\ to\ replace\ a\ matrix\ by\ its\ own\ transpose,\ do\ \(\backslash\)b\ NOT\ do\ this:}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ *\ m\ =\ m.transpose();\ //\ bug!!!\ caused\ by\ aliasing\ effect}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ *\ Instead,\ use\ the\ transposeInPlace()\ method:}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ *\ m.transposeInPlace();}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ *\ which\ gives\ Eigen\ good\ opportunities\ for\ optimization,\ or\ alternatively\ you\ can\ also\ do:}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ *\ m\ =\ m.transpose().eval();}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00177\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ transposeInPlace(),\ adjoint()\ */}}
+\DoxyCodeLine{00179\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00180\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00181\ \textcolor{keyword}{typename}\ DenseBase<Derived>::TransposeReturnType}
+\DoxyCodeLine{00182\ \mbox{\hyperlink{classEigen_1_1DenseBase_acdada00d813939c0c9e90db5c01585c8}{DenseBase<Derived>::transpose}}()}
+\DoxyCodeLine{00183\ \{}
+\DoxyCodeLine{00184\ \ \ \textcolor{keywordflow}{return}\ TransposeReturnType(derived());}
+\DoxyCodeLine{00185\ \}}
+\DoxyCodeLine{00186\ \textcolor{comment}{}}
+\DoxyCodeLine{00187\ \textcolor{comment}{/**\ This\ is\ the\ const\ version\ of\ transpose().}}
+\DoxyCodeLine{00188\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00189\ \textcolor{comment}{\ \ *\ Make\ sure\ you\ read\ the\ warning\ for\ transpose()\ !}}
+\DoxyCodeLine{00190\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00191\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ transposeInPlace(),\ adjoint()\ */}}
+\DoxyCodeLine{00192\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00193\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00194\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ DenseBase<Derived>::ConstTransposeReturnType}
+\DoxyCodeLine{00195\ \mbox{\hyperlink{classEigen_1_1DenseBase_acdada00d813939c0c9e90db5c01585c8}{DenseBase<Derived>::transpose}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00196\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00197\ \ \ \textcolor{keywordflow}{return}\ ConstTransposeReturnType(derived());}
+\DoxyCodeLine{00198\ \}}
+\DoxyCodeLine{00199\ \textcolor{comment}{}}
+\DoxyCodeLine{00200\ \textcolor{comment}{/**\ \(\backslash\)returns\ an\ expression\ of\ the\ adjoint\ (i.e.\ conjugate\ transpose)\ of\ *this.}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ *\ Example:\ \(\backslash\)include\ MatrixBase\_adjoint.cpp}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ *\ Output:\ \(\backslash\)verbinclude\ MatrixBase\_adjoint.out}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ If\ you\ want\ to\ replace\ a\ matrix\ by\ its\ own\ adjoint,\ do\ \(\backslash\)b\ NOT\ do\ this:}}
+\DoxyCodeLine{00206\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00207\ \textcolor{comment}{\ \ *\ m\ =\ m.adjoint();\ //\ bug!!!\ caused\ by\ aliasing\ effect}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ *\ Instead,\ use\ the\ adjointInPlace()\ method:}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ *\ m.adjointInPlace();}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ *\ which\ gives\ Eigen\ good\ opportunities\ for\ optimization,\ or\ alternatively\ you\ can\ also\ do:}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ *\ m\ =\ m.adjoint().eval();}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ adjointInPlace(),\ transpose(),\ conjugate(),\ class\ Transpose,\ class\ internal::scalar\_conjugate\_op\ */}}
+\DoxyCodeLine{00219\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00220\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ MatrixBase<Derived>::AdjointReturnType}
+\DoxyCodeLine{00221\ \mbox{\hyperlink{classEigen_1_1MatrixBase_a73d8782980bd75141785340d3a7a8e10}{MatrixBase<Derived>::adjoint}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00222\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00223\ \ \ \textcolor{keywordflow}{return}\ AdjointReturnType(this-\/>\mbox{\hyperlink{classEigen_1_1DenseBase_acdada00d813939c0c9e90db5c01585c8}{transpose}}());}
+\DoxyCodeLine{00224\ \}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00227\ \textcolor{comment}{*\ "{}in\ place"{}\ transpose\ implementation}}
+\DoxyCodeLine{00228\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}},}
+\DoxyCodeLine{00233\ \ \ \textcolor{keywordtype}{bool}\ IsSquare\ =\ (MatrixType::RowsAtCompileTime\ ==\ MatrixType::ColsAtCompileTime)\ \&\&\ MatrixType::RowsAtCompileTime!=\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00234\ \ \ \textcolor{keywordtype}{bool}\ MatchPacketSize\ =}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \ \ (\textcolor{keywordtype}{int}(MatrixType::RowsAtCompileTime)\ ==\ \textcolor{keywordtype}{int}(internal::packet\_traits<typename\ MatrixType::Scalar>::size))}
+\DoxyCodeLine{00236\ \ \ \ \ \&\&\ \ (\mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{internal::evaluator<MatrixType>::Flags}}\&\mbox{\hyperlink{group__flags_ga1a306a438e1ab074e8be59512e887b9f}{PacketAccessBit}})\ >}
+\DoxyCodeLine{00237\ \textcolor{keyword}{struct}\ \mbox{\hyperlink{structEigen_1_1internal_1_1inplace__transpose__selector}{inplace\_transpose\_selector}};}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00240\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1inplace__transpose__selector}{inplace\_transpose\_selector<MatrixType,true,false>}}\ \{\ \textcolor{comment}{//\ square\ matrix}}
+\DoxyCodeLine{00241\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ m)\ \{}
+\DoxyCodeLine{00242\ \ \ \ \ m.matrix().template\ triangularView<StrictlyUpper>().swap(m.matrix().transpose().template\ triangularView<StrictlyUpper>());}
+\DoxyCodeLine{00243\ \ \ \}}
+\DoxyCodeLine{00244\ \};}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00247\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1inplace__transpose__selector}{inplace\_transpose\_selector<MatrixType,true,true>}}\ \{\ \textcolor{comment}{//\ PacketSize\ x\ PacketSize}}
+\DoxyCodeLine{00248\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ m)\ \{}
+\DoxyCodeLine{00249\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::packet\_traits<typename\ MatrixType::Scalar>::type\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}};}
+\DoxyCodeLine{00251\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ PacketSize\ =\ internal::packet\_traits<Scalar>::size;}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ Alignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{internal::evaluator<MatrixType>::Alignment}};}
+\DoxyCodeLine{00253\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet>}}\ A;}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<PacketSize;\ ++i)}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ A.packet[i]\ =\ m.template\ packetByOuterInner<Alignment>(i,0);}
+\DoxyCodeLine{00256\ \ \ \ \ internal::ptranspose(A);}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<PacketSize;\ ++i)}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ m.template\ writePacket<Alignment>(m.rowIndexByOuterInner(i,0),\ m.colIndexByOuterInner(i,0),\ A.packet[i]);}
+\DoxyCodeLine{00259\ \ \ \}}
+\DoxyCodeLine{00260\ \};}
+\DoxyCodeLine{00261\ }
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType,\ Index\ Alignment>}
+\DoxyCodeLine{00264\ \textcolor{keywordtype}{void}\ BlockedInPlaceTranspose(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ m)\ \{}
+\DoxyCodeLine{00265\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00266\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::packet\_traits<typename\ MatrixType::Scalar>::type\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}};}
+\DoxyCodeLine{00267\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ PacketSize\ =\ internal::packet\_traits<Scalar>::size;}
+\DoxyCodeLine{00268\ \ \ eigen\_assert(m.rows()\ ==\ m.cols());}
+\DoxyCodeLine{00269\ \ \ \textcolor{keywordtype}{int}\ row\_start\ =\ 0;}
+\DoxyCodeLine{00270\ \ \ \textcolor{keywordflow}{for}\ (;\ row\_start\ +\ PacketSize\ <=\ m.rows();\ row\_start\ +=\ PacketSize)\ \{}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ col\_start\ =\ row\_start;\ col\_start\ +\ PacketSize\ <=\ m.cols();\ col\_start\ +=\ PacketSize)\ \{}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet>}}\ A;}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (row\_start\ ==\ col\_start)\ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<PacketSize;\ ++i)}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ A.packet[i]\ =\ m.template\ packetByOuterInner<Alignment>(row\_start\ +\ i,col\_start);}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ internal::ptranspose(A);}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<PacketSize;\ ++i)}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ \ \ \ \ m.template\ writePacket<Alignment>(m.rowIndexByOuterInner(row\_start\ +\ i,\ col\_start),\ m.colIndexByOuterInner(row\_start\ +\ i,col\_start),\ A.packet[i]);}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \ \ PacketBlock<Packet>\ B;}
+\DoxyCodeLine{00281\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<PacketSize;\ ++i)\ \{}
+\DoxyCodeLine{00282\ \ \ \ \ \ \ \ \ \ \ A.packet[i]\ =\ m.template\ packetByOuterInner<Alignment>(row\_start\ +\ i,col\_start);}
+\DoxyCodeLine{00283\ \ \ \ \ \ \ \ \ \ \ B.packet[i]\ =\ m.template\ packetByOuterInner<Alignment>(col\_start\ +\ i,\ row\_start);}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \ \ internal::ptranspose(A);}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \ \ internal::ptranspose(B);}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<PacketSize;\ ++i)\ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ m.template\ writePacket<Alignment>(m.rowIndexByOuterInner(row\_start\ +\ i,\ col\_start),\ m.colIndexByOuterInner(row\_start\ +\ i,col\_start),\ B.packet[i]);}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \ \ m.template\ writePacket<Alignment>(m.rowIndexByOuterInner(col\_start\ +\ i,\ row\_start),\ m.colIndexByOuterInner(col\_start\ +\ i,row\_start),\ A.packet[i]);}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00292\ \ \ \ \ \}}
+\DoxyCodeLine{00293\ \ \ \}}
+\DoxyCodeLine{00294\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row\ =\ row\_start;\ row\ <\ m.rows();\ ++row)\ \{}
+\DoxyCodeLine{00295\ \ \ \ \ m.matrix().row(row).head(row).swap(}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ \ \ m.matrix().col(row).head(row).transpose());}
+\DoxyCodeLine{00297\ \ \ \}}
+\DoxyCodeLine{00298\ \}}
+\DoxyCodeLine{00299\ }
+\DoxyCodeLine{00300\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\textcolor{keywordtype}{bool}\ MatchPacketSize>}
+\DoxyCodeLine{00301\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1inplace__transpose__selector}{inplace\_transpose\_selector<MatrixType,false,MatchPacketSize>}}\ \{\ \textcolor{comment}{//\ non\ square\ or\ dynamic\ matrix}}
+\DoxyCodeLine{00302\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ m)\ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00304\ \ \ \ \ \textcolor{keywordflow}{if}\ (m.rows()\ ==\ m.cols())\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ PacketSize\ =\ internal::packet\_traits<Scalar>::size;}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!NumTraits<Scalar>::IsComplex\ \&\&\ m.rows()\ >=\ PacketSize)\ \{}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ ((m.rows()\ \%\ PacketSize)\ ==\ 0)}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \ \ \ \ BlockedInPlaceTranspose<MatrixType,internal::evaluator<MatrixType>::Alignment>(m);}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ \ \ BlockedInPlaceTranspose<MatrixType,Unaligned>(m);}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00313\ \ \ \ \ \ \ \ \ m.matrix().template\ triangularView<StrictlyUpper>().swap(m.matrix().transpose().template\ triangularView<StrictlyUpper>());}
+\DoxyCodeLine{00314\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ m\ =\ m.transpose().eval();}
+\DoxyCodeLine{00317\ \ \ \ \ \}}
+\DoxyCodeLine{00318\ \ \ \}}
+\DoxyCodeLine{00319\ \};}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00323\ \textcolor{comment}{}}
+\DoxyCodeLine{00324\ \textcolor{comment}{/**\ This\ is\ the\ "{}in\ place"{}\ version\ of\ transpose():\ it\ replaces\ \(\backslash\)c\ *this\ by\ its\ own\ transpose.}}
+\DoxyCodeLine{00325\ \textcolor{comment}{\ \ *\ Thus,\ doing}}
+\DoxyCodeLine{00326\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00327\ \textcolor{comment}{\ \ *\ m.transposeInPlace();}}
+\DoxyCodeLine{00328\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ \ *\ has\ the\ same\ effect\ on\ m\ as\ doing}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00331\ \textcolor{comment}{\ \ *\ m\ =\ m.transpose().eval();}}
+\DoxyCodeLine{00332\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00333\ \textcolor{comment}{\ \ *\ and\ is\ faster\ and\ also\ safer\ because\ in\ the\ latter\ line\ of\ code,\ forgetting\ the\ eval()\ results}}
+\DoxyCodeLine{00334\ \textcolor{comment}{\ \ *\ in\ a\ bug\ caused\ by\ \(\backslash\)ref\ TopicAliasing\ "{}aliasing"{}.}}
+\DoxyCodeLine{00335\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ \ *\ Notice\ however\ that\ this\ method\ is\ only\ useful\ if\ you\ want\ to\ replace\ a\ matrix\ by\ its\ own\ transpose.}}
+\DoxyCodeLine{00337\ \textcolor{comment}{\ \ *\ If\ you\ just\ need\ the\ transpose\ of\ a\ matrix,\ use\ transpose().}}
+\DoxyCodeLine{00338\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00339\ \textcolor{comment}{\ \ *\ \(\backslash\)note\ if\ the\ matrix\ is\ not\ square,\ then\ \(\backslash\)c\ *this\ must\ be\ a\ resizable\ matrix.}}
+\DoxyCodeLine{00340\ \textcolor{comment}{\ \ *\ This\ excludes\ (non-\/square)\ fixed-\/size\ matrices,\ block-\/expressions\ and\ maps.}}
+\DoxyCodeLine{00341\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ transpose(),\ adjoint(),\ adjointInPlace()\ */}}
+\DoxyCodeLine{00343\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00344\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1DenseBase_a2bf1856f4ff79f0db0e6d416a2edfb0f}{DenseBase<Derived>::transposeInPlace}}()}
+\DoxyCodeLine{00345\ \{}
+\DoxyCodeLine{00346\ \ \ eigen\_assert((rows()\ ==\ cols()\ ||\ (\mbox{\hyperlink{classEigen_1_1DenseBase_a1c5061e6cfaa937b590e2d64b78a519dadb37c78ebbf15aa20b65c3b70415a1ab}{RowsAtCompileTime}}\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ \&\&\ \mbox{\hyperlink{classEigen_1_1DenseBase_a1c5061e6cfaa937b590e2d64b78a519da787f85fd67ee5985917eb2cef6e70441}{ColsAtCompileTime}}\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}))}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ \textcolor{stringliteral}{"{}transposeInPlace()\ called\ on\ a\ non-\/square\ non-\/resizable\ matrix"{}});}
+\DoxyCodeLine{00348\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1inplace__transpose__selector}{internal::inplace\_transpose\_selector<Derived>::run}}(derived());}
+\DoxyCodeLine{00349\ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00352\ \textcolor{comment}{*\ "{}in\ place"{}\ adjoint\ implementation}}
+\DoxyCodeLine{00353\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{00354\ \textcolor{comment}{}}
+\DoxyCodeLine{00355\ \textcolor{comment}{/**\ This\ is\ the\ "{}in\ place"{}\ version\ of\ adjoint():\ it\ replaces\ \(\backslash\)c\ *this\ by\ its\ own\ transpose.}}
+\DoxyCodeLine{00356\ \textcolor{comment}{\ \ *\ Thus,\ doing}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ *\ m.adjointInPlace();}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ *\ has\ the\ same\ effect\ on\ m\ as\ doing}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ *\ m\ =\ m.adjoint().eval();}}
+\DoxyCodeLine{00363\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ *\ and\ is\ faster\ and\ also\ safer\ because\ in\ the\ latter\ line\ of\ code,\ forgetting\ the\ eval()\ results}}
+\DoxyCodeLine{00365\ \textcolor{comment}{\ \ *\ in\ a\ bug\ caused\ by\ aliasing.}}
+\DoxyCodeLine{00366\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00367\ \textcolor{comment}{\ \ *\ Notice\ however\ that\ this\ method\ is\ only\ useful\ if\ you\ want\ to\ replace\ a\ matrix\ by\ its\ own\ adjoint.}}
+\DoxyCodeLine{00368\ \textcolor{comment}{\ \ *\ If\ you\ just\ need\ the\ adjoint\ of\ a\ matrix,\ use\ adjoint().}}
+\DoxyCodeLine{00369\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00370\ \textcolor{comment}{\ \ *\ \(\backslash\)note\ if\ the\ matrix\ is\ not\ square,\ then\ \(\backslash\)c\ *this\ must\ be\ a\ resizable\ matrix.}}
+\DoxyCodeLine{00371\ \textcolor{comment}{\ \ *\ This\ excludes\ (non-\/square)\ fixed-\/size\ matrices,\ block-\/expressions\ and\ maps.}}
+\DoxyCodeLine{00372\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00373\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ transpose(),\ adjoint(),\ transposeInPlace()\ */}}
+\DoxyCodeLine{00374\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00375\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1MatrixBase_ad2a2f67a3a6e5f65f41ab47e78bbf904}{MatrixBase<Derived>::adjointInPlace}}()}
+\DoxyCodeLine{00376\ \{}
+\DoxyCodeLine{00377\ \ \ derived()\ =\ \mbox{\hyperlink{classEigen_1_1MatrixBase_a73d8782980bd75141785340d3a7a8e10}{adjoint}}().eval();}
+\DoxyCodeLine{00378\ \}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_NO\_DEBUG}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \textcolor{comment}{//\ The\ following\ is\ to\ detect\ aliasing\ problems\ in\ most\ common\ cases.}}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ DestIsTransposed,\ \textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00387\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1check__transpose__aliasing__compile__time__selector}{check\_transpose\_aliasing\_compile\_time\_selector}}}
+\DoxyCodeLine{00388\ \{}
+\DoxyCodeLine{00389\ \ \ \textcolor{keyword}{enum}\ \{\ ret\ =\ bool(blas\_traits<OtherDerived>::IsTransposed)\ !=\ DestIsTransposed\ \};}
+\DoxyCodeLine{00390\ \};}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ DestIsTransposed,\ \textcolor{keyword}{typename}\ BinOp,\ \textcolor{keyword}{typename}\ DerivedA,\ \textcolor{keyword}{typename}\ DerivedB>}
+\DoxyCodeLine{00393\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1check__transpose__aliasing__compile__time__selector}{check\_transpose\_aliasing\_compile\_time\_selector}}<DestIsTransposed,\mbox{\hyperlink{classEigen_1_1CwiseBinaryOp}{CwiseBinaryOp}}<BinOp,DerivedA,DerivedB>\ >}
+\DoxyCodeLine{00394\ \{}
+\DoxyCodeLine{00395\ \ \ \textcolor{keyword}{enum}\ \{\ ret\ =\ \ \ \ bool(blas\_traits<DerivedA>::IsTransposed)\ !=\ DestIsTransposed}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ bool(blas\_traits<DerivedB>::IsTransposed)\ !=\ DestIsTransposed}
+\DoxyCodeLine{00397\ \ \ \};}
+\DoxyCodeLine{00398\ \};}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{bool}\ DestIsTransposed,\ \textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00401\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1check__transpose__aliasing__run__time__selector}{check\_transpose\_aliasing\_run\_time\_selector}}}
+\DoxyCodeLine{00402\ \{}
+\DoxyCodeLine{00403\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ dest,\ \textcolor{keyword}{const}\ OtherDerived\&\ src)}
+\DoxyCodeLine{00404\ \ \ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keywordtype}{bool}(blas\_traits<OtherDerived>::IsTransposed)\ !=\ DestIsTransposed)\ \&\&\ (dest!=0\ \&\&\ dest==(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*)extract\_data(src));}
+\DoxyCodeLine{00406\ \ \ \}}
+\DoxyCodeLine{00407\ \};}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keywordtype}{bool}\ DestIsTransposed,\ \textcolor{keyword}{typename}\ BinOp,\ \textcolor{keyword}{typename}\ DerivedA,\ \textcolor{keyword}{typename}\ DerivedB>}
+\DoxyCodeLine{00410\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1check__transpose__aliasing__run__time__selector}{check\_transpose\_aliasing\_run\_time\_selector}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},DestIsTransposed,\mbox{\hyperlink{classEigen_1_1CwiseBinaryOp}{CwiseBinaryOp}}<BinOp,DerivedA,DerivedB>\ >}
+\DoxyCodeLine{00411\ \{}
+\DoxyCodeLine{00412\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ dest,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1CwiseBinaryOp}{CwiseBinaryOp<BinOp,DerivedA,DerivedB>}}\&\ src)}
+\DoxyCodeLine{00413\ \ \ \{}
+\DoxyCodeLine{00414\ \ \ \ \ \textcolor{keywordflow}{return}\ ((blas\_traits<DerivedA>::IsTransposed\ !=\ DestIsTransposed)\ \&\&\ (dest!=0\ \&\&\ dest==(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*)extract\_data(src.\mbox{\hyperlink{classEigen_1_1CwiseBinaryOp_ae42aa9e1940f262f443d0138b6e840cd}{lhs}}())))}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ ||\ ((blas\_traits<DerivedB>::IsTransposed\ !=\ DestIsTransposed)\ \&\&\ (dest!=0\ \&\&\ dest==(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*)extract\_data(src.\mbox{\hyperlink{classEigen_1_1CwiseBinaryOp_a243d6e1e98290a0a57cddd7f58472b25}{rhs}}())));}
+\DoxyCodeLine{00416\ \ \ \}}
+\DoxyCodeLine{00417\ \};}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \textcolor{comment}{//\ the\ following\ selector,\ checkTransposeAliasing\_impl,\ based\ on\ MightHaveTransposeAliasing,}}
+\DoxyCodeLine{00420\ \textcolor{comment}{//\ is\ because\ when\ the\ condition\ controlling\ the\ assert\ is\ known\ at\ compile\ time,\ ICC\ emits\ a\ warning.}}
+\DoxyCodeLine{00421\ \textcolor{comment}{//\ This\ is\ actually\ a\ good\ warning:\ in\ expressions\ that\ don't\ have\ any\ transposing,\ the\ condition\ is}}
+\DoxyCodeLine{00422\ \textcolor{comment}{//\ known\ at\ compile\ time\ to\ be\ false,\ and\ using\ that,\ we\ can\ avoid\ generating\ the\ code\ of\ the\ assert\ again}}
+\DoxyCodeLine{00423\ \textcolor{comment}{//\ and\ again\ for\ all\ these\ expressions\ that\ don't\ need\ it.}}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ OtherDerived,}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ MightHaveTransposeAliasing}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1check__transpose__aliasing__compile__time__selector}{check\_transpose\_aliasing\_compile\_time\_selector}}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <blas\_traits<Derived>::IsTransposed,OtherDerived>\mbox{\hyperlink{structEigen_1_1internal_1_1cwise__promote__storage__type}{::ret}}}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ >}
+\DoxyCodeLine{00430\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1checkTransposeAliasing__impl}{checkTransposeAliasing\_impl}}}
+\DoxyCodeLine{00431\ \{}
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\textcolor{keyword}{const}\ Derived\&\ dst,\ \textcolor{keyword}{const}\ OtherDerived\&\ other)}
+\DoxyCodeLine{00433\ \ \ \ \ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ eigen\_assert((!\mbox{\hyperlink{structEigen_1_1internal_1_1check__transpose__aliasing__run__time__selector}{check\_transpose\_aliasing\_run\_time\_selector}}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ <\textcolor{keyword}{typename}\ Derived::Scalar,blas\_traits<Derived>::IsTransposed,OtherDerived>}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ::run(extract\_data(dst),\ other))}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ \ \ \&\&\ \textcolor{stringliteral}{"{}aliasing\ detected\ during\ transposition,\ use\ transposeInPlace()\ "{}}}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{stringliteral}{"{}or\ evaluate\ the\ rhs\ into\ a\ temporary\ using\ .eval()"{}});}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \ \ \ \ \}}
+\DoxyCodeLine{00441\ \};}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00444\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1checkTransposeAliasing__impl}{checkTransposeAliasing\_impl}}<Derived,\ OtherDerived,\ false>}
+\DoxyCodeLine{00445\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\textcolor{keyword}{const}\ Derived\&,\ \textcolor{keyword}{const}\ OtherDerived\&)}
+\DoxyCodeLine{00447\ \ \ \ \ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \}}
+\DoxyCodeLine{00449\ \};}
+\DoxyCodeLine{00450\ }
+\DoxyCodeLine{00451\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dst,\ \textcolor{keyword}{typename}\ Src>}
+\DoxyCodeLine{00452\ \textcolor{keywordtype}{void}\ check\_for\_aliasing(\textcolor{keyword}{const}\ Dst\ \&dst,\ \textcolor{keyword}{const}\ Src\ \&src)}
+\DoxyCodeLine{00453\ \{}
+\DoxyCodeLine{00454\ \ \ \textcolor{keywordflow}{if}((!Dst::IsVectorAtCompileTime)\ \&\&\ dst.rows()>1\ \&\&\ dst.cols()>1)}
+\DoxyCodeLine{00455\ \ \ \ \ internal::checkTransposeAliasing\_impl<Dst,\ Src>::run(dst,\ src);}
+\DoxyCodeLine{00456\ \}}
+\DoxyCodeLine{00457\ }
+\DoxyCodeLine{00458\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_NO\_DEBUG}}
+\DoxyCodeLine{00461\ }
+\DoxyCodeLine{00462\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_TRANSPOSE\_H}}
+
+\end{DoxyCode}

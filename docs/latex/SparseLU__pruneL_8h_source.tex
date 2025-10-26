@@ -1,0 +1,142 @@
+\doxysection{Sparse\+LU\+\_\+prune\+L.\+h}
+\hypertarget{SparseLU__pruneL_8h_source}{}\label{SparseLU__pruneL_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_pruneL.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_pruneL.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Désiré\ Nuentsa-\/Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{/*\ }}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ }}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ NOTE:\ This\ file\ is\ the\ modified\ version\ of\ [s,d,c,z]pruneL.c\ file\ in\ SuperLU\ }}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ }}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ -\/-\/\ SuperLU\ routine\ (version\ 2.0)\ -\/-\/}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ Univ.\ of\ California\ Berkeley,\ Xerox\ Palo\ Alto\ Research\ Center,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ and\ Lawrence\ Berkeley\ National\ Lab.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ November\ 15,\ 1997}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ Copyright\ (c)\ 1994\ by\ Xerox\ Corporation.\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ MATERIAL\ IS\ PROVIDED\ AS\ IS,\ WITH\ ABSOLUTELY\ NO\ WARRANTY}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ EXPRESSED\ OR\ IMPLIED.\ \ ANY\ USE\ IS\ AT\ YOUR\ OWN\ RISK.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ Permission\ is\ hereby\ granted\ to\ use\ or\ copy\ this\ program\ for\ any}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ purpose,\ provided\ the\ above\ notices\ are\ retained\ on\ all\ copies.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ Permission\ to\ modify\ the\ code\ and\ to\ distribute\ modified\ code\ is}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ granted,\ provided\ the\ above\ notices\ are\ retained,\ and\ a\ notice\ that}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ the\ code\ was\ modified\ is\ included\ with\ the\ above\ copyright\ notice.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifndef\ SPARSELU\_PRUNEL\_H}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ SPARSELU\_PRUNEL\_H}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00035\ \textcolor{comment}{}}
+\DoxyCodeLine{00036\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ *\ \(\backslash\)brief\ Prunes\ the\ L-\/structure.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ *\ It\ prunes\ the\ L-\/structure\ \ of\ supernodes\ whose\ L-\/structure\ contains\ the\ current\ pivot\ row\ "{}pivrow"{}}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ *\ \(\backslash\)param\ jcol\ The\ current\ column\ of\ L}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ *\ \(\backslash\)param[in]\ perm\_r\ Row\ permutation}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ *\ \(\backslash\)param[out]\ pivrow\ \ The\ pivot\ row}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ *\ \(\backslash\)param\ nseg\ Number\ of\ segments}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ *\ \(\backslash\)param\ segrep\ }}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ *\ \(\backslash\)param\ repfnz}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ *\ \(\backslash\)param[out]\ xprune\ }}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ *\ \(\backslash\)param\ glu\ Global\ LU\ data}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00053\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a350464d1c83182fbd7da8a5a74bdfde8}{SparseLUImpl<Scalar,StorageIndex>::pruneL}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol,\ \textcolor{keyword}{const}\ IndexVector\&\ perm\_r,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ pivrow,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nseg,}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ IndexVector\&\ segrep,\ BlockIndexVector\ repfnz,\ IndexVector\&\ xprune,\ GlobalLU\_t\&\ glu)}
+\DoxyCodeLine{00055\ \{}
+\DoxyCodeLine{00056\ \ \ \textcolor{comment}{//\ For\ each\ supernode-\/rep\ irep\ in\ U(*,j]}}
+\DoxyCodeLine{00057\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jsupno\ =\ glu.supno(jcol);\ }
+\DoxyCodeLine{00058\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i,irep,irep1;\ }
+\DoxyCodeLine{00059\ \ \ \textcolor{keywordtype}{bool}\ movnum,\ do\_prune\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00060\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ kmin\ =\ 0,\ kmax\ =\ 0,\ minloc,\ maxloc,krow;\ }
+\DoxyCodeLine{00061\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ nseg;\ i++)}
+\DoxyCodeLine{00062\ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ irep\ =\ segrep(i);\ }
+\DoxyCodeLine{00064\ \ \ \ \ irep1\ =\ irep\ +\ 1;\ }
+\DoxyCodeLine{00065\ \ \ \ \ do\_prune\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00066\ \ \ \ \ }
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{comment}{//\ Don't\ prune\ with\ a\ zero\ U-\/segment\ }}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{if}\ (repfnz(irep)\ ==\ emptyIdxLU)\ \textcolor{keywordflow}{continue};\ }
+\DoxyCodeLine{00069\ \ \ \ \ }
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{comment}{//\ If\ a\ snode\ overlaps\ with\ the\ next\ panel,\ then\ the\ U-\/segment}}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{comment}{//\ is\ fragmented\ into\ two\ parts\ -\/-\/\ irep\ and\ irep1.\ We\ should\ let\ }}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{comment}{//\ pruning\ occur\ at\ the\ rep-\/column\ in\ irep1s\ snode.\ }}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keywordflow}{if}\ (glu.supno(irep)\ ==\ glu.supno(irep1)\ )\ \textcolor{keywordflow}{continue};\ \textcolor{comment}{//\ don't\ prune\ }}
+\DoxyCodeLine{00074\ \ \ \ \ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{comment}{//\ If\ it\ has\ not\ been\ pruned\ \&\ it\ has\ a\ nonz\ in\ row\ L(pivrow,i)}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keywordflow}{if}\ (glu.supno(irep)\ !=\ jsupno\ )}
+\DoxyCodeLine{00077\ \ \ \ \ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ xprune\ (irep)\ >=\ glu.xlsub(irep1)\ )}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ kmin\ =\ glu.xlsub(irep);}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ kmax\ =\ glu.xlsub(irep1)\ -\/\ 1;\ }
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (krow\ =\ kmin;\ krow\ <=\ kmax;\ krow++)}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (glu.lsub(krow)\ ==\ pivrow)\ }
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ \ \ \ \ do\_prune\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ }
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ }
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (do\_prune)\ }
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ do\ a\ quicksort-\/type\ partition}}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ movnum=true\ means\ that\ the\ num\ values\ have\ to\ be\ exchanged}}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ movnum\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (irep\ ==\ glu.xsup(glu.supno(irep))\ )\ \textcolor{comment}{//\ Snode\ of\ size\ 1\ }}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \ movnum\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (kmin\ <=\ kmax)}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (perm\_r(glu.lsub(kmax))\ ==\ emptyIdxLU)}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ \ \ \ \ kmax-\/-\/;\ }
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (\ perm\_r(glu.lsub(kmin))\ !=\ emptyIdxLU)}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ \ \ \ \ kmin++;}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ kmin\ below\ pivrow\ (not\ yet\ pivoted),\ and\ kmax}}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ above\ pivrow:\ interchange\ the\ two\ suscripts}}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(glu.lsub(kmin),\ glu.lsub(kmax));\ }
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ supernode\ has\ only\ one\ column,\ then\ we\ }}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ only\ keep\ one\ set\ of\ subscripts.\ For\ any\ subscript}}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ intercnahge\ performed,\ similar\ interchange\ must\ be\ }}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ done\ on\ the\ numerical\ values.\ }}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (movnum)\ }
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ minloc\ =\ glu.xlusup(irep)\ +\ (\ kmin\ -\/\ glu.xlsub(irep)\ );\ }
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ maxloc\ =\ glu.xlusup(irep)\ +\ (\ kmax\ -\/\ glu.xlsub(irep)\ );\ }
+\DoxyCodeLine{00120\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::swap(glu.lusup(minloc),\ glu.lusup(maxloc));\ }
+\DoxyCodeLine{00121\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \ \ \ \ \ \ kmin++;}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ \ \ \ \ kmax-\/-\/;}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ while\ }}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ xprune(irep)\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(kmin);\ \ \textcolor{comment}{//Pruning\ }}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ end\ if\ do\_prune\ }}
+\DoxyCodeLine{00129\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ pruning\ }}
+\DoxyCodeLine{00130\ \ \ \}\ \textcolor{comment}{//\ End\ for\ each\ U-\/segment}}
+\DoxyCodeLine{00131\ \}}
+\DoxyCodeLine{00132\ }
+\DoxyCodeLine{00133\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00134\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ SPARSELU\_PRUNEL\_H}}
+
+\end{DoxyCode}

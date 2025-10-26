@@ -1,0 +1,232 @@
+\doxysection{Basic\+Preconditioners.\+h}
+\hypertarget{BasicPreconditioners_8h_source}{}\label{BasicPreconditioners_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/IterativeLinearSolvers/BasicPreconditioners.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2011-\/2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_BASIC\_PRECONDITIONERS\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_BASIC\_PRECONDITIONERS\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ \textcolor{comment}{}}
+\DoxyCodeLine{00015\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ IterativeLinearSolvers\_Module}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ preconditioner\ based\ on\ the\ digonal\ entries}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *\ This\ class\ allows\ to\ approximately\ solve\ for\ A.x\ =\ b\ problems\ assuming\ A\ is\ a\ diagonal\ matrix.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *\ In\ other\ words,\ this\ preconditioner\ neglects\ all\ off\ diagonal\ entries\ and,\ in\ Eigen's\ language,\ solves\ for:}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ \ \ \(\backslash\)code}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ \ \ A.diagonal().asDiagonal()\ .\ x\ =\ b}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ \ \ \(\backslash\)endcode}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Scalar\ the\ type\ of\ the\ scalar.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ *\ This\ preconditioner\ is\ suitable\ for\ both\ selfadjoint\ and\ general\ problems.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ *\ The\ diagonal\ entries\ are\ pre-\/inverted\ and\ stored\ into\ a\ dense\ vector.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ *\ \(\backslash\)note\ A\ variant\ that\ has\ yet\ to\ be\ implemented\ would\ attempt\ to\ preserve\ the\ norm\ of\ each\ column.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ LeastSquareDiagonalPreconditioner,\ class\ ConjugateGradient}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00035\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \_Scalar>}
+\DoxyCodeLine{00036\ \textcolor{keyword}{class\ }DiagonalPreconditioner}
+\DoxyCodeLine{00037\ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keyword}{typedef}\ \_Scalar\ Scalar;}
+\DoxyCodeLine{00039\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,Dynamic,1>}}\ Vector;}
+\DoxyCodeLine{00040\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00041\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Vector::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00042\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ ColsAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00044\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}}
+\DoxyCodeLine{00045\ \ \ \ \ \};}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ DiagonalPreconditioner()\ :\ m\_isInitialized(\textcolor{keyword}{false})\ \{\}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{explicit}\ DiagonalPreconditioner(\textcolor{keyword}{const}\ MatType\&\ mat)\ :\ m\_invdiag(mat.cols())}
+\DoxyCodeLine{00051\ \ \ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ compute(mat);}
+\DoxyCodeLine{00053\ \ \ \ \ \}}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\ \textcolor{keyword}{const}\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_invdiag.size();\ \}}
+\DoxyCodeLine{00056\ \ \ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\ \textcolor{keyword}{const}\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_invdiag.size();\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00059\ \ \ \ \ DiagonalPreconditioner\&\ analyzePattern(\textcolor{keyword}{const}\ MatType\&\ )}
+\DoxyCodeLine{00060\ \ \ \ \ \{}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00062\ \ \ \ \ \}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00065\ \ \ \ \ DiagonalPreconditioner\&\ factorize(\textcolor{keyword}{const}\ MatType\&\ mat)}
+\DoxyCodeLine{00066\ \ \ \ \ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ m\_invdiag.resize(mat.cols());}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ j=0;\ j<mat.outerSize();\ ++j)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ MatType::InnerIterator\ it(mat,j);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}(it\ \&\&\ it.index()!=j)\ ++it;}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it\ \&\&\ it.index()==j\ \&\&\ it.value()!=Scalar(0))}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ m\_invdiag(j)\ =\ Scalar(1)/it.value();}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ \ \ \ \ m\_invdiag(j)\ =\ Scalar(1);}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00079\ \ \ \ \ \}}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00082\ \ \ \ \ DiagonalPreconditioner\&\ compute(\textcolor{keyword}{const}\ MatType\&\ mat)}
+\DoxyCodeLine{00083\ \ \ \ \ \{}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ factorize(mat);}
+\DoxyCodeLine{00085\ \ \ \ \ \}}
+\DoxyCodeLine{00086\ \textcolor{comment}{}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00088\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keywordtype}{void}\ \_solve\_impl(\textcolor{keyword}{const}\ Rhs\&\ b,\ Dest\&\ x)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00090\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ x\ =\ m\_invdiag.array()\ *\ b.array()\ ;}
+\DoxyCodeLine{00092\ \ \ \ \ \}}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs>\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<DiagonalPreconditioner,\ Rhs>}}}
+\DoxyCodeLine{00095\ \ \ \ \ solve(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00096\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}DiagonalPreconditioner\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ eigen\_assert(m\_invdiag.size()==b.rows()}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ \textcolor{stringliteral}{"{}DiagonalPreconditioner::solve():\ invalid\ number\ of\ rows\ of\ the\ right\ hand\ side\ matrix\ b"{}});}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<DiagonalPreconditioner,\ Rhs>}}(*\textcolor{keyword}{this},\ b.derived());}
+\DoxyCodeLine{00101\ \ \ \ \ \}}
+\DoxyCodeLine{00102\ }
+\DoxyCodeLine{00103\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ info()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};\ \}}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00106\ \ \ \ \ Vector\ m\_invdiag;}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_isInitialized;}
+\DoxyCodeLine{00108\ \};}
+\DoxyCodeLine{00109\ \textcolor{comment}{}}
+\DoxyCodeLine{00110\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ IterativeLinearSolvers\_Module}}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Jacobi\ preconditioner\ for\ LeastSquaresConjugateGradient}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ *\ This\ class\ allows\ to\ approximately\ solve\ for\ A'\ A\ x\ \ =\ A'\ b\ problems\ assuming\ A'\ A\ is\ a\ diagonal\ matrix.}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ *\ In\ other\ words,\ this\ preconditioner\ neglects\ all\ off\ diagonal\ entries\ and,\ in\ Eigen's\ language,\ solves\ for:}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ \(\backslash\)code}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ \ (A.adjoint()\ *\ A).diagonal().asDiagonal()\ *\ x\ =\ b}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ \(\backslash\)endcode}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Scalar\ the\ type\ of\ the\ scalar.}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ *\ The\ diagonal\ entries\ are\ pre-\/inverted\ and\ stored\ into\ a\ dense\ vector.}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ LeastSquaresConjugateGradient,\ class\ DiagonalPreconditioner}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00127\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \_Scalar>}
+\DoxyCodeLine{00128\ \textcolor{keyword}{class\ }LeastSquareDiagonalPreconditioner\ :\ \textcolor{keyword}{public}\ DiagonalPreconditioner<\_Scalar>}
+\DoxyCodeLine{00129\ \{}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keyword}{typedef}\ \_Scalar\ Scalar;}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keyword}{typedef}\ DiagonalPreconditioner<\_Scalar>\ Base;}
+\DoxyCodeLine{00133\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_invdiag;}
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \ \ \ \ LeastSquareDiagonalPreconditioner()\ :\ Base()\ \{\}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{keyword}{explicit}\ LeastSquareDiagonalPreconditioner(\textcolor{keyword}{const}\ MatType\&\ mat)\ :\ Base()}
+\DoxyCodeLine{00140\ \ \ \ \ \{}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ compute(mat);}
+\DoxyCodeLine{00142\ \ \ \ \ \}}
+\DoxyCodeLine{00143\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00145\ \ \ \ \ LeastSquareDiagonalPreconditioner\&\ analyzePattern(\textcolor{keyword}{const}\ MatType\&\ )}
+\DoxyCodeLine{00146\ \ \ \ \ \{}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00148\ \ \ \ \ \}}
+\DoxyCodeLine{00149\ }
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00151\ \ \ \ \ LeastSquareDiagonalPreconditioner\&\ factorize(\textcolor{keyword}{const}\ MatType\&\ mat)}
+\DoxyCodeLine{00152\ \ \ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \textcolor{comment}{//\ Compute\ the\ inverse\ squared-\/norm\ of\ each\ column\ of\ mat}}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ m\_invdiag.resize(mat.cols());}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(MatType::IsRowMajor)}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ m\_invdiag.setZero();}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<mat.outerSize();\ ++j)}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{typename}\ MatType::InnerIterator\ it(mat,j);\ it;\ ++it)}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ m\_invdiag(it.index())\ +=\ numext::abs2(it.value());}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<mat.cols();\ ++j)}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(numext::real(m\_invdiag(j))>RealScalar(0))}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ m\_invdiag(j)\ =\ RealScalar(1)/numext::real(m\_invdiag(j));}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<mat.outerSize();\ ++j)}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ \ \ RealScalar\ sum\ =\ mat.col(j).squaredNorm();}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(sum>RealScalar(0))}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \ \ \ \ \ \ m\_invdiag(j)\ =\ RealScalar(1)/sum;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \ \ \ \ \ \ m\_invdiag(j)\ =\ RealScalar(1);}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ Base::m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00180\ \ \ \ \ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatType>}
+\DoxyCodeLine{00183\ \ \ \ \ LeastSquareDiagonalPreconditioner\&\ compute(\textcolor{keyword}{const}\ MatType\&\ mat)}
+\DoxyCodeLine{00184\ \ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ factorize(mat);}
+\DoxyCodeLine{00186\ \ \ \ \ \}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ info()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};\ \}}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00191\ \};}
+\DoxyCodeLine{00192\ \textcolor{comment}{}}
+\DoxyCodeLine{00193\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ IterativeLinearSolvers\_Module}}
+\DoxyCodeLine{00194\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ naive\ preconditioner\ which\ approximates\ any\ matrix\ as\ the\ identity\ matrix}}
+\DoxyCodeLine{00195\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00196\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ DiagonalPreconditioner}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00200\ \textcolor{keyword}{class\ }IdentityPreconditioner}
+\DoxyCodeLine{00201\ \{}
+\DoxyCodeLine{00202\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00203\ }
+\DoxyCodeLine{00204\ \ \ \ \ IdentityPreconditioner()\ \{\}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keyword}{explicit}\ IdentityPreconditioner(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ )\ \{\}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00210\ \ \ \ \ IdentityPreconditioner\&\ analyzePattern(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ )\ \{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00213\ \ \ \ \ IdentityPreconditioner\&\ factorize(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ )\ \{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00216\ \ \ \ \ IdentityPreconditioner\&\ compute(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ )\ \{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00219\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Rhs\&\ solve(\textcolor{keyword}{const}\ Rhs\&\ b)\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ b;\ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ info()\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};\ \}}
+\DoxyCodeLine{00222\ \};}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_BASIC\_PRECONDITIONERS\_H}}
+
+\end{DoxyCode}

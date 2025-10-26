@@ -1,0 +1,257 @@
+\doxysection{Stable\+Norm.\+h}
+\hypertarget{StableNorm_8h_source}{}\label{StableNorm_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/StableNorm.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/StableNorm.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_STABLENORM\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_STABLENORM\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ExpressionType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00018\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ stable\_norm\_kernel(\textcolor{keyword}{const}\ ExpressionType\&\ bl,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\&\ ssq,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\&\ scale,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\&\ invScale)}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ maxCoeff\ =\ bl.cwiseAbs().maxCoeff();}
+\DoxyCodeLine{00021\ \ \ }
+\DoxyCodeLine{00022\ \ \ \textcolor{keywordflow}{if}(maxCoeff>scale)}
+\DoxyCodeLine{00023\ \ \ \{}
+\DoxyCodeLine{00024\ \ \ \ \ ssq\ =\ ssq\ *\ numext::abs2(scale/maxCoeff);}
+\DoxyCodeLine{00025\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ tmp\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1)/maxCoeff;}
+\DoxyCodeLine{00026\ \ \ \ \ \textcolor{keywordflow}{if}(tmp\ >\ NumTraits<Scalar>::highest())}
+\DoxyCodeLine{00027\ \ \ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ invScale\ =\ NumTraits<Scalar>::highest();}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ scale\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1)/invScale;}
+\DoxyCodeLine{00030\ \ \ \ \ \}}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(maxCoeff>NumTraits<Scalar>::highest())\ \textcolor{comment}{//\ we\ got\ a\ INF}}
+\DoxyCodeLine{00032\ \ \ \ \ \{}
+\DoxyCodeLine{00033\ \ \ \ \ \ \ invScale\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1);}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ scale\ =\ maxCoeff;}
+\DoxyCodeLine{00035\ \ \ \ \ \}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00037\ \ \ \ \ \{}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ scale\ =\ maxCoeff;}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ invScale\ =\ tmp;}
+\DoxyCodeLine{00040\ \ \ \ \ \}}
+\DoxyCodeLine{00041\ \ \ \}}
+\DoxyCodeLine{00042\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(maxCoeff!=maxCoeff)\ \textcolor{comment}{//\ we\ got\ a\ NaN}}
+\DoxyCodeLine{00043\ \ \ \{}
+\DoxyCodeLine{00044\ \ \ \ \ scale\ =\ maxCoeff;}
+\DoxyCodeLine{00045\ \ \ \}}
+\DoxyCodeLine{00046\ \ \ }
+\DoxyCodeLine{00047\ \ \ \textcolor{comment}{//\ TODO\ if\ the\ maxCoeff\ is\ much\ much\ smaller\ than\ the\ current\ scale,}}
+\DoxyCodeLine{00048\ \ \ \textcolor{comment}{//\ then\ we\ can\ neglect\ this\ sub\ vector}}
+\DoxyCodeLine{00049\ \ \ \textcolor{keywordflow}{if}(scale>\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(0))\ \textcolor{comment}{//\ if\ scale==0,\ then\ bl\ is\ 0\ }}
+\DoxyCodeLine{00050\ \ \ \ \ ssq\ +=\ (bl*invScale).squaredNorm();}
+\DoxyCodeLine{00051\ \}}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorType,\ \textcolor{keyword}{typename}\ RealScalar>}
+\DoxyCodeLine{00054\ \textcolor{keywordtype}{void}\ stable\_norm\_impl\_inner\_step(\textcolor{keyword}{const}\ VectorType\ \&vec,\ RealScalar\&\ ssq,\ RealScalar\&\ scale,\ RealScalar\&\ invScale)}
+\DoxyCodeLine{00055\ \{}
+\DoxyCodeLine{00056\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ VectorType::Scalar\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ blockSize\ =\ 4096;}
+\DoxyCodeLine{00058\ \ \ }
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::nested\_eval<VectorType,2>::type\ VectorTypeCopy;}
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::remove\_all<VectorTypeCopy>::type\ VectorTypeCopyClean;}
+\DoxyCodeLine{00061\ \ \ \textcolor{keyword}{const}\ VectorTypeCopy\ copy(vec);}
+\DoxyCodeLine{00062\ \ \ }
+\DoxyCodeLine{00063\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00064\ \ \ \ \ CanAlign\ =\ (\ \ \ (int(VectorTypeCopyClean::Flags)\&\mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}})}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ||\ (int(internal::evaluator<VectorTypeCopyClean>::Alignment)>0)\ \textcolor{comment}{//\ FIXME\ Alignment)>0\ might\ not\ be\ enough}}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ )\ \&\&\ (blockSize*\textcolor{keyword}{sizeof}(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}})*2<EIGEN\_STACK\_ALLOCATION\_LIMIT)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (EIGEN\_MAX\_STATIC\_ALIGN\_BYTES>0)\ \textcolor{comment}{//\ if\ we\ cannot\ allocate\ on\ the\ stack,\ then\ let's\ not\ bother\ about\ this\ optimization}}
+\DoxyCodeLine{00068\ \ \ \};}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::conditional<CanAlign,\ Ref<const\ Matrix<Scalar,Dynamic,1,0,blockSize,1>,\ internal::evaluator<VectorTypeCopyClean>::Alignment>,}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ VectorTypeCopyClean::ConstSegmentReturnType>::type\ SegmentWrapper;}
+\DoxyCodeLine{00071\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ vec.size();}
+\DoxyCodeLine{00072\ \ \ }
+\DoxyCodeLine{00073\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ bi\ =\ internal::first\_default\_aligned(copy);}
+\DoxyCodeLine{00074\ \ \ \textcolor{keywordflow}{if}\ (bi>0)}
+\DoxyCodeLine{00075\ \ \ \ \ internal::stable\_norm\_kernel(copy.head(bi),\ ssq,\ scale,\ invScale);}
+\DoxyCodeLine{00076\ \ \ \textcolor{keywordflow}{for}\ (;\ bi<n;\ bi+=blockSize)}
+\DoxyCodeLine{00077\ \ \ \ \ internal::stable\_norm\_kernel(SegmentWrapper(copy.segment(bi,numext::mini(blockSize,\ n\ -\/\ bi))),\ ssq,\ scale,\ invScale);}
+\DoxyCodeLine{00078\ \}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorType>}
+\DoxyCodeLine{00081\ \textcolor{keyword}{typename}\ VectorType::RealScalar}
+\DoxyCodeLine{00082\ stable\_norm\_impl(\textcolor{keyword}{const}\ VectorType\ \&vec,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if<VectorType::IsVectorAtCompileTime>::type}}*\ =\ 0\ )}
+\DoxyCodeLine{00083\ \{}
+\DoxyCodeLine{00084\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00085\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00086\ }
+\DoxyCodeLine{00087\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ vec.size();}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \textcolor{keywordflow}{if}(n==1)}
+\DoxyCodeLine{00090\ \ \ \ \ \textcolor{keywordflow}{return}\ abs(vec.coeff(0));}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ VectorType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00093\ \ \ RealScalar\ scale(0);}
+\DoxyCodeLine{00094\ \ \ RealScalar\ invScale(1);}
+\DoxyCodeLine{00095\ \ \ RealScalar\ ssq(0);\ \textcolor{comment}{//\ sum\ of\ squares}}
+\DoxyCodeLine{00096\ }
+\DoxyCodeLine{00097\ \ \ stable\_norm\_impl\_inner\_step(vec,\ ssq,\ scale,\ invScale);}
+\DoxyCodeLine{00098\ \ \ }
+\DoxyCodeLine{00099\ \ \ \textcolor{keywordflow}{return}\ scale\ *\ sqrt(ssq);}
+\DoxyCodeLine{00100\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00103\ \textcolor{keyword}{typename}\ MatrixType::RealScalar}
+\DoxyCodeLine{00104\ stable\_norm\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\ \&mat,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if<!MatrixType::IsVectorAtCompileTime>::type}}*\ =\ 0\ )}
+\DoxyCodeLine{00105\ \{}
+\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00109\ \ \ RealScalar\ scale(0);}
+\DoxyCodeLine{00110\ \ \ RealScalar\ invScale(1);}
+\DoxyCodeLine{00111\ \ \ RealScalar\ ssq(0);\ \textcolor{comment}{//\ sum\ of\ squares}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<mat.outerSize();\ ++j)}
+\DoxyCodeLine{00114\ \ \ \ \ stable\_norm\_impl\_inner\_step(mat.innerVector(j),\ ssq,\ scale,\ invScale);}
+\DoxyCodeLine{00115\ \ \ \textcolor{keywordflow}{return}\ scale\ *\ sqrt(ssq);}
+\DoxyCodeLine{00116\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00119\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ NumTraits<typename\ traits<Derived>::Scalar>::Real}
+\DoxyCodeLine{00120\ blueNorm\_impl(\textcolor{keyword}{const}\ EigenBase<Derived>\&\ \_vec)}
+\DoxyCodeLine{00121\ \{}
+\DoxyCodeLine{00122\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Derived::RealScalar\ RealScalar;\ \ }
+\DoxyCodeLine{00123\ \ \ \textcolor{keyword}{using\ }std::pow;}
+\DoxyCodeLine{00124\ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00125\ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \textcolor{comment}{//\ This\ program\ calculates\ the\ machine-\/dependent\ constants}}
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//\ bl,\ b2,\ slm,\ s2m,\ relerr\ overfl}}
+\DoxyCodeLine{00129\ \ \ \textcolor{comment}{//\ from\ the\ "{}basic"{}\ machine-\/dependent\ numbers}}
+\DoxyCodeLine{00130\ \ \ \textcolor{comment}{//\ nbig,\ ibeta,\ it,\ iemin,\ iemax,\ rbig.}}
+\DoxyCodeLine{00131\ \ \ \textcolor{comment}{//\ The\ following\ define\ the\ basic\ machine-\/dependent\ constants.}}
+\DoxyCodeLine{00132\ \ \ \textcolor{comment}{//\ For\ portability,\ the\ PORT\ subprograms\ "{}ilmaeh"{}\ and\ "{}rlmach"{}}}
+\DoxyCodeLine{00133\ \ \ \textcolor{comment}{//\ are\ used.\ For\ any\ specific\ computer,\ each\ of\ the\ assignment}}
+\DoxyCodeLine{00134\ \ \ \textcolor{comment}{//\ statements\ can\ be\ replaced}}
+\DoxyCodeLine{00135\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ ibeta\ =\ std::numeric\_limits<RealScalar>::radix;\ \ \textcolor{comment}{//\ base\ for\ floating-\/point\ numbers}}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ it\ \ \ \ =\ NumTraits<RealScalar>::digits();\ \ \textcolor{comment}{//\ number\ of\ base-\/beta\ digits\ in\ mantissa}}
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iemin\ =\ NumTraits<RealScalar>::min\_exponent();\ \ \textcolor{comment}{//\ minimum\ exponent}}
+\DoxyCodeLine{00138\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ iemax\ =\ NumTraits<RealScalar>::max\_exponent();\ \ \textcolor{comment}{//\ maximum\ exponent}}
+\DoxyCodeLine{00139\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ rbig\ \ \ =\ NumTraits<RealScalar>::highest();\ \ \textcolor{comment}{//\ largest\ floating-\/point\ number}}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ b1\ \ \ \ \ =\ RealScalar(\mbox{\hyperlink{classEigen_1_1ArrayBase_acb769e1ab1d809abb77c7ab98021ad81}{pow}}(RealScalar(ibeta),RealScalar(-\/((1-\/iemin)/2))));\ \ \textcolor{comment}{//\ lower\ boundary\ of\ midrange}}
+\DoxyCodeLine{00141\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ b2\ \ \ \ \ =\ RealScalar(\mbox{\hyperlink{classEigen_1_1ArrayBase_acb769e1ab1d809abb77c7ab98021ad81}{pow}}(RealScalar(ibeta),RealScalar((iemax\ +\ 1\ -\/\ it)/2)));\ \ \textcolor{comment}{//\ upper\ boundary\ of\ midrange}}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ s1m\ \ \ \ =\ RealScalar(\mbox{\hyperlink{classEigen_1_1ArrayBase_acb769e1ab1d809abb77c7ab98021ad81}{pow}}(RealScalar(ibeta),RealScalar((2-\/iemin)/2)));\ \ \textcolor{comment}{//\ scaling\ factor\ for\ lower\ range}}
+\DoxyCodeLine{00143\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ s2m\ \ \ \ =\ RealScalar(\mbox{\hyperlink{classEigen_1_1ArrayBase_acb769e1ab1d809abb77c7ab98021ad81}{pow}}(RealScalar(ibeta),RealScalar(-\/\ ((iemax+it)/2))));\ \ \textcolor{comment}{//\ scaling\ factor\ for\ upper\ range}}
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ eps\ \ \ \ =\ RealScalar(\mbox{\hyperlink{classEigen_1_1ArrayBase_acb769e1ab1d809abb77c7ab98021ad81}{pow}}(\textcolor{keywordtype}{double}(ibeta),\ 1-\/it));}
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ RealScalar\ relerr\ =\ sqrt(eps);\ \ \textcolor{comment}{//\ tolerance\ for\ neglecting\ asml}}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \textcolor{keyword}{const}\ Derived\&\ vec(\_vec.derived());}
+\DoxyCodeLine{00148\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ vec.size();}
+\DoxyCodeLine{00149\ \ \ RealScalar\ ab2\ =\ b2\ /\ RealScalar(n);}
+\DoxyCodeLine{00150\ \ \ RealScalar\ asml\ =\ RealScalar(0);}
+\DoxyCodeLine{00151\ \ \ RealScalar\ amed\ =\ RealScalar(0);}
+\DoxyCodeLine{00152\ \ \ RealScalar\ abig\ =\ RealScalar(0);}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<vec.outerSize();\ ++j)}
+\DoxyCodeLine{00155\ \ \ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{typename}\ Derived::InnerIterator\ iter(vec,\ j);\ iter;\ ++iter)}
+\DoxyCodeLine{00157\ \ \ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ RealScalar\ ax\ =\ abs(iter.value());}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(ax\ >\ ab2)\ \ \ \ \ abig\ +=\ numext::abs2(ax*s2m);}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(ax\ <\ b1)\ asml\ +=\ numext::abs2(ax*s1m);}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ amed\ +=\ numext::abs2(ax);}
+\DoxyCodeLine{00162\ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \}}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{if}(amed!=amed)}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{keywordflow}{return}\ amed;\ \ \textcolor{comment}{//\ we\ got\ a\ NaN}}
+\DoxyCodeLine{00166\ \ \ \textcolor{keywordflow}{if}(abig\ >\ RealScalar(0))}
+\DoxyCodeLine{00167\ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ abig\ =\ sqrt(abig);}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{if}(abig\ >\ rbig)\ \textcolor{comment}{//\ overflow,\ or\ *this\ contains\ INF\ values}}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ abig;\ \ \textcolor{comment}{//\ return\ INF}}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{if}(amed\ >\ RealScalar(0))}
+\DoxyCodeLine{00172\ \ \ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ abig\ =\ abig/s2m;}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ amed\ =\ sqrt(amed);}
+\DoxyCodeLine{00175\ \ \ \ \ \}}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ abig/s2m;}
+\DoxyCodeLine{00178\ \ \ \}}
+\DoxyCodeLine{00179\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(asml\ >\ RealScalar(0))}
+\DoxyCodeLine{00180\ \ \ \{}
+\DoxyCodeLine{00181\ \ \ \ \ \textcolor{keywordflow}{if}\ (amed\ >\ RealScalar(0))}
+\DoxyCodeLine{00182\ \ \ \ \ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ abig\ =\ sqrt(amed);}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ amed\ =\ sqrt(asml)\ /\ s1m;}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ sqrt(asml)/s1m;}
+\DoxyCodeLine{00188\ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{keywordflow}{return}\ sqrt(amed);}
+\DoxyCodeLine{00191\ \ \ asml\ =\ numext::mini(abig,\ amed);}
+\DoxyCodeLine{00192\ \ \ abig\ =\ numext::maxi(abig,\ amed);}
+\DoxyCodeLine{00193\ \ \ \textcolor{keywordflow}{if}(asml\ <=\ abig*relerr)}
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keywordflow}{return}\ abig;}
+\DoxyCodeLine{00195\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{keywordflow}{return}\ abig\ *\ sqrt(RealScalar(1)\ +\ numext::abs2(asml/abig));}
+\DoxyCodeLine{00197\ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00200\ \textcolor{comment}{}}
+\DoxyCodeLine{00201\ \textcolor{comment}{/**\ \(\backslash\)returns\ the\ \(\backslash\)em\ l2\ norm\ of\ \(\backslash\)c\ *this\ avoiding\ underflow\ and\ overflow.}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ *\ This\ version\ use\ a\ blockwise\ two\ passes\ algorithm:}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ *\ \ 1\ -\/\ find\ the\ absolute\ largest\ coefficient\ \(\backslash\)c\ s}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ *\ \ 2\ -\/\ compute\ \(\backslash\)f\$\ s\ \(\backslash\)Vert\ \(\backslash\)frac\{*this\}\{s\}\ \(\backslash\)Vert\ \(\backslash\)f\$\ in\ a\ standard\ way}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00206\ \textcolor{comment}{\ \ *\ For\ architecture/scalar\ types\ supporting\ vectorization,\ this\ version}}
+\DoxyCodeLine{00207\ \textcolor{comment}{\ \ *\ is\ faster\ than\ blueNorm().\ Otherwise\ the\ blueNorm()\ is\ much\ faster.}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ norm(),\ blueNorm(),\ hypotNorm()}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00211\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00212\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ NumTraits<typename\ internal::traits<Derived>::Scalar>::Real}
+\DoxyCodeLine{00213\ \mbox{\hyperlink{classEigen_1_1MatrixBase_a624431d9543dacf9aef2bee325a0686f}{MatrixBase<Derived>::stableNorm}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00214\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{return}\ internal::stable\_norm\_impl(derived());}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ \textcolor{comment}{}}
+\DoxyCodeLine{00218\ \textcolor{comment}{/**\ \(\backslash\)returns\ the\ \(\backslash\)em\ l2\ norm\ of\ \(\backslash\)c\ *this\ using\ the\ Blue's\ algorithm.}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ *\ A\ Portable\ Fortran\ Program\ to\ Find\ the\ Euclidean\ Norm\ of\ a\ Vector,}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ *\ ACM\ TOMS,\ Vol\ 4,\ Issue\ 1,\ 1978.}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00222\ \textcolor{comment}{\ \ *\ For\ architecture/scalar\ types\ without\ vectorization,\ this\ version}}
+\DoxyCodeLine{00223\ \textcolor{comment}{\ \ *\ is\ much\ faster\ than\ stableNorm().\ Otherwise\ the\ stableNorm()\ is\ faster.}}
+\DoxyCodeLine{00224\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00225\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ norm(),\ stableNorm(),\ hypotNorm()}}
+\DoxyCodeLine{00226\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00227\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00228\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1NumTraits}{NumTraits<typename\ internal::traits<Derived>::Scalar}}>\mbox{\hyperlink{structEigen_1_1NumTraits}{::Real}}}
+\DoxyCodeLine{00229\ \mbox{\hyperlink{classEigen_1_1MatrixBase_a4a3ac99e4cd767a110c84421dda22ab1}{MatrixBase<Derived>::blueNorm}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00230\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00231\ \ \ \textcolor{keywordflow}{return}\ internal::blueNorm\_impl(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00232\ \}}
+\DoxyCodeLine{00233\ \textcolor{comment}{}}
+\DoxyCodeLine{00234\ \textcolor{comment}{/**\ \(\backslash\)returns\ the\ \(\backslash\)em\ l2\ norm\ of\ \(\backslash\)c\ *this\ avoiding\ undeflow\ and\ overflow.}}
+\DoxyCodeLine{00235\ \textcolor{comment}{\ \ *\ This\ version\ use\ a\ concatenation\ of\ hypot()\ calls,\ and\ it\ is\ very\ slow.}}
+\DoxyCodeLine{00236\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00237\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ norm(),\ stableNorm()}}
+\DoxyCodeLine{00238\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00239\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00240\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1NumTraits}{NumTraits<typename\ internal::traits<Derived>::Scalar}}>\mbox{\hyperlink{structEigen_1_1NumTraits}{::Real}}}
+\DoxyCodeLine{00241\ \mbox{\hyperlink{classEigen_1_1MatrixBase_a54e11547512ffc3b211cc0ee6caba98c}{MatrixBase<Derived>::hypotNorm}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00242\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00243\ \ \ \textcolor{keywordflow}{if}(size()==1)}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keywordflow}{return}\ numext::abs(coeff(0,0));}
+\DoxyCodeLine{00245\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordflow}{return}\ this-\/>\mbox{\hyperlink{classEigen_1_1MatrixBase_a8f2dbd5d9573c79c5dd356ddb29a0ee9}{cwiseAbs}}().redux(\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__hypot__op}{internal::scalar\_hypot\_op<RealScalar>}}());}
+\DoxyCodeLine{00247\ \}}
+\DoxyCodeLine{00248\ }
+\DoxyCodeLine{00249\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_STABLENORM\_H}}
+
+\end{DoxyCode}

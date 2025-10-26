@@ -1,0 +1,232 @@
+\doxysection{Generalized\+Self\+Adjoint\+Eigen\+Solver.\+h}
+\hypertarget{GeneralizedSelfAdjointEigenSolver_8h_source}{}\label{GeneralizedSelfAdjointEigenSolver_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/GeneralizedSelfAdjointEigenSolver.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Jitse\ Niesen\ <jitse@maths.leeds.ac.uk>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_GENERALIZEDSELFADJOINTEIGENSOLVER\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_GENERALIZEDSELFADJOINTEIGENSOLVER\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ "{}./Tridiagonalization.h"{}}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{}}
+\DoxyCodeLine{00018\ \textcolor{comment}{/**\ \(\backslash\)eigenvalues\_module\ \(\backslash\)ingroup\ Eigenvalues\_Module}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ GeneralizedSelfAdjointEigenSolver}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Computes\ eigenvalues\ and\ eigenvectors\ of\ the\ generalized\ selfadjoint\ eigen\ problem}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ matrix\ of\ which\ we\ are\ computing\ the}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ *\ eigendecomposition;\ this\ is\ expected\ to\ be\ an\ instantiation\ of\ the\ Matrix}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ *\ class\ template.}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ *\ This\ class\ solves\ the\ generalized\ eigenvalue\ problem}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ *\ \(\backslash\)f\$\ Av\ =\ \(\backslash\)lambda\ Bv\ \(\backslash\)f\$.\ In\ this\ case,\ the\ matrix\ \(\backslash\)f\$\ A\ \(\backslash\)f\$\ should\ be}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ *\ selfadjoint\ and\ the\ matrix\ \(\backslash\)f\$\ B\ \(\backslash\)f\$\ should\ be\ positive\ definite.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *\ Only\ the\ \(\backslash\)b\ lower\ \(\backslash\)b\ triangular\ \(\backslash\)b\ part\ of\ the\ input\ matrix\ is\ referenced.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ *\ Call\ the\ function\ compute()\ to\ compute\ the\ eigenvalues\ and\ eigenvectors\ of}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ a\ given\ matrix.\ Alternatively,\ you\ can\ use\ the}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ GeneralizedSelfAdjointEigenSolver(const\ MatrixType\&,\ const\ MatrixType\&,\ int)}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *\ constructor\ which\ computes\ the\ eigenvalues\ and\ eigenvectors\ at\ construction\ time.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ Once\ the\ eigenvalue\ and\ eigenvectors\ are\ computed,\ they\ can\ be\ retrieved\ with\ the\ eigenvalues()}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ and\ eigenvectors()\ functions.}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *\ The\ documentation\ for\ GeneralizedSelfAdjointEigenSolver(const\ MatrixType\&,\ const\ MatrixType\&,\ int)}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *\ contains\ an\ example\ of\ the\ typical\ use\ of\ this\ class.}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ SelfAdjointEigenSolver,\ class\ EigenSolver,\ class\ ComplexEigenSolver}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00047\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>}
+\DoxyCodeLine{00048\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a501effdbf722c0609ea05ff3fd4cc721}{GeneralizedSelfAdjointEigenSolver}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SelfAdjointEigenSolver_af3466b3809be4a7738d84493d80d4737}{SelfAdjointEigenSolver}}<\_MatrixType>}
+\DoxyCodeLine{00049\ \{}
+\DoxyCodeLine{00050\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SelfAdjointEigenSolver_af3466b3809be4a7738d84493d80d4737}{SelfAdjointEigenSolver<\_MatrixType>}}\ Base;}
+\DoxyCodeLine{00051\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00052\ }
+\DoxyCodeLine{00053\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00054\ \textcolor{comment}{}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Default\ constructor\ for\ fixed-\/size\ matrices.}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ default\ constructor\ is\ useful\ in\ cases\ in\ which\ the\ user\ intends\ to}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ \ \ \ \ *\ perform\ decompositions\ via\ compute().\ This\ constructor}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ \ \ \ \ *\ can\ only\ be\ used\ if\ \(\backslash\)p\ \_MatrixType\ is\ a\ fixed-\/size\ matrix;\ use}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ \ \ \ \ *\ GeneralizedSelfAdjointEigenSolver(Index)\ for\ dynamic-\/size\ matrices.}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00062\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a501effdbf722c0609ea05ff3fd4cc721}{GeneralizedSelfAdjointEigenSolver}}()\ :\ Base()\ \{\}}
+\DoxyCodeLine{00063\ \textcolor{comment}{}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor,\ pre-\/allocates\ memory\ for\ dynamic-\/size\ matrices.}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ \ size\ \ Positive\ integer,\ size\ of\ the\ matrix\ whose}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ \ \ *\ eigenvalues\ and\ eigenvectors\ will\ be\ computed.}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ constructor\ is\ useful\ for\ dynamic-\/size\ matrices,\ when\ the\ user}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ \ \ \ \ \ *\ intends\ to\ perform\ decompositions\ via\ compute().\ The\ \(\backslash\)p\ size}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ \ \ \ \ *\ parameter\ is\ only\ used\ as\ a\ hint.\ It\ is\ not\ an\ error\ to\ give\ a\ wrong}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)p\ size,\ but\ it\ may\ impair\ performance.}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute()\ for\ an\ example}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00076\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_aac849f01a8c6148c645acd10bd3a9b0e}{GeneralizedSelfAdjointEigenSolver}}(\mbox{\hyperlink{classEigen_1_1SelfAdjointEigenSolver_a8a59ab7734b6eae2754fd78bc7c3a360}{Index}}\ size)}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ \ \ :\ Base(size)}
+\DoxyCodeLine{00078\ \ \ \ \ \{\}}
+\DoxyCodeLine{00079\ \textcolor{comment}{}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor;\ computes\ generalized\ eigendecomposition\ of\ given\ matrix\ pencil.}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matA\ \ Selfadjoint\ matrix\ in\ matrix\ pencil.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Only\ the\ lower\ triangular\ part\ of\ the\ matrix\ is\ referenced.}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matB\ \ Positive-\/definite\ matrix\ in\ matrix\ pencil.}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Only\ the\ lower\ triangular\ part\ of\ the\ matrix\ is\ referenced.}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ options\ A\ or-\/ed\ set\ of\ flags\ \{\#ComputeEigenvectors,\#EigenvaluesOnly\}\ |\ \{\#Ax\_lBx,\#ABx\_lx,\#BAx\_lx\}.}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Default\ is\ \#ComputeEigenvectors|\#Ax\_lBx.}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ constructor\ calls\ compute(const\ MatrixType\&,\ const\ MatrixType\&,\ int)}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ eigenvalues\ and\ (if\ requested)\ the\ eigenvectors\ of\ the}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ \ \ *\ generalized\ eigenproblem\ \(\backslash\)f\$\ Ax\ =\ \(\backslash\)lambda\ B\ x\ \(\backslash\)f\$\ with\ \(\backslash\)a\ matA\ the}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ \ \ \ \ *\ selfadjoint\ matrix\ \(\backslash\)f\$\ A\ \(\backslash\)f\$\ and\ \(\backslash\)a\ matB\ the\ positive\ definite\ matrix}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ B\ \(\backslash\)f\$.\ Each\ eigenvector\ \(\backslash\)f\$\ x\ \(\backslash\)f\$\ satisfies\ the\ property}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ x\string^*\ B\ x\ =\ 1\ \(\backslash\)f\$.\ The\ eigenvectors\ are\ computed\ if}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)a\ options\ contains\ ComputeEigenvectors.}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ \ *\ In\ addition,\ the\ two\ following\ variants\ can\ be\ solved\ via\ \(\backslash\)p\ options:}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ \ *\ -\/\ \(\backslash\)c\ ABx\_lx:\ \(\backslash\)f\$\ ABx\ =\ \(\backslash\)lambda\ x\ \(\backslash\)f\$}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ \ \ *\ -\/\ \(\backslash\)c\ BAx\_lx:\ \(\backslash\)f\$\ BAx\ =\ \(\backslash\)lambda\ x\ \(\backslash\)f\$}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ SelfAdjointEigenSolver\_SelfAdjointEigenSolver\_MatrixType2.cpp}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ SelfAdjointEigenSolver\_SelfAdjointEigenSolver\_MatrixType2.out}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute(const\ MatrixType\&,\ const\ MatrixType\&,\ int)}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00106\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_addc0409c9cb1a5ac9cbbd00efe68908e}{GeneralizedSelfAdjointEigenSolver}}(\textcolor{keyword}{const}\ MatrixType\&\ matA,\ \textcolor{keyword}{const}\ MatrixType\&\ matB,}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ options\ =\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a7f7d17fba3c9bb92158e346d5979d0f4}{ComputeEigenvectors}}|\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a5eb11a88a4bd445f58f1b24598d3848f}{Ax\_lBx}})}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ :\ Base(matA.cols())}
+\DoxyCodeLine{00109\ \ \ \ \ \{}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a724764fe196612b752042692156ed023}{compute}}(matA,\ matB,\ options);}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ \textcolor{comment}{}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Computes\ generalized\ eigendecomposition\ of\ given\ matrix\ pencil.}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matA\ \ Selfadjoint\ matrix\ in\ matrix\ pencil.}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Only\ the\ lower\ triangular\ part\ of\ the\ matrix\ is\ referenced.}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matB\ \ Positive-\/definite\ matrix\ in\ matrix\ pencil.}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Only\ the\ lower\ triangular\ part\ of\ the\ matrix\ is\ referenced.}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ options\ A\ or-\/ed\ set\ of\ flags\ \{\#ComputeEigenvectors,\#EigenvaluesOnly\}\ |\ \{\#Ax\_lBx,\#ABx\_lx,\#BAx\_lx\}.}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Default\ is\ \#ComputeEigenvectors|\#Ax\_lBx.}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \ \ \ Reference\ to\ \(\backslash\)c\ *this}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ \ \ *\ According\ to\ \(\backslash\)p\ options,\ this\ function\ computes\ eigenvalues\ and\ (if\ requested)}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ eigenvectors\ of\ one\ of\ the\ following\ three\ generalized\ eigenproblems:}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ \ \ \ \ *\ -\/\ \(\backslash\)c\ Ax\_lBx:\ \(\backslash\)f\$\ Ax\ =\ \(\backslash\)lambda\ B\ x\ \(\backslash\)f\$}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ \ \ \ \ *\ -\/\ \(\backslash\)c\ ABx\_lx:\ \(\backslash\)f\$\ ABx\ =\ \(\backslash\)lambda\ x\ \(\backslash\)f\$}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ \ \ \ \ *\ -\/\ \(\backslash\)c\ BAx\_lx:\ \(\backslash\)f\$\ BAx\ =\ \(\backslash\)lambda\ x\ \(\backslash\)f\$}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ \ \ \ *\ with\ \(\backslash\)a\ matA\ the\ selfadjoint\ matrix\ \(\backslash\)f\$\ A\ \(\backslash\)f\$\ and\ \(\backslash\)a\ matB\ the\ positive\ definite}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ \ \ \ *\ matrix\ \(\backslash\)f\$\ B\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00131\ \textcolor{comment}{\ \ \ \ \ \ *\ In\ addition,\ each\ eigenvector\ \(\backslash\)f\$\ x\ \(\backslash\)f\$\ satisfies\ the\ property\ \(\backslash\)f\$\ x\string^*\ B\ x\ =\ 1\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ eigenvalues()\ function\ can\ be\ used\ to\ retrieve}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ eigenvalues.\ If\ \(\backslash\)p\ options\ contains\ ComputeEigenvectors,\ then\ the}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ \ \ \ \ *\ eigenvectors\ are\ also\ computed\ and\ can\ be\ retrieved\ by\ calling}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ \ \ \ \ \ *\ eigenvectors().}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ implementation\ uses\ LLT\ to\ compute\ the\ Cholesky\ decomposition}}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ B\ =\ LL\string^*\ \(\backslash\)f\$\ and\ computes\ the\ classical\ eigendecomposition}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ \ \ \ \ *\ of\ the\ selfadjoint\ matrix\ \(\backslash\)f\$\ L\string^\{-\/1\}\ A\ (L\string^*)\string^\{-\/1\}\ \(\backslash\)f\$\ if\ \(\backslash\)p\ options\ contains\ Ax\_lBx}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ \ \ \ *\ and\ of\ \(\backslash\)f\$\ L\string^\{*\}\ A\ L\ \(\backslash\)f\$\ otherwise.\ This\ solves\ the}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ \ \ \ \ *\ generalized\ eigenproblem,\ because\ any\ solution\ of\ the\ generalized}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ \ \ \ *\ eigenproblem\ \(\backslash\)f\$\ Ax\ =\ \(\backslash\)lambda\ B\ x\ \(\backslash\)f\$\ corresponds\ to\ a\ solution}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ L\string^\{-\/1\}\ A\ (L\string^*)\string^\{-\/1\}\ (L\string^*\ x)\ =\ \(\backslash\)lambda\ (L\string^*\ x)\ \(\backslash\)f\$\ of\ the}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ \ \ \ *\ eigenproblem\ for\ \(\backslash\)f\$\ L\string^\{-\/1\}\ A\ (L\string^*)\string^\{-\/1\}\ \(\backslash\)f\$.\ Similar\ statements}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ \ \ \ *\ can\ be\ made\ for\ the\ two\ other\ variants.}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ SelfAdjointEigenSolver\_compute\_MatrixType2.cpp}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ SelfAdjointEigenSolver\_compute\_MatrixType2.out}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ GeneralizedSelfAdjointEigenSolver(const\ MatrixType\&,\ const\ MatrixType\&,\ int)}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver}{GeneralizedSelfAdjointEigenSolver}}\&\ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a724764fe196612b752042692156ed023}{compute}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ matA,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ matB,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ options\ =\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a7f7d17fba3c9bb92158e346d5979d0f4}{ComputeEigenvectors}}|\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a5eb11a88a4bd445f58f1b24598d3848f}{Ax\_lBx}});}
+\DoxyCodeLine{00155\ }
+\DoxyCodeLine{00156\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00157\ }
+\DoxyCodeLine{00158\ \};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00162\ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a501effdbf722c0609ea05ff3fd4cc721}{GeneralizedSelfAdjointEigenSolver<MatrixType>}}\&\ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a724764fe196612b752042692156ed023}{GeneralizedSelfAdjointEigenSolver<MatrixType>::}}}
+\DoxyCodeLine{00163\ \mbox{\hyperlink{classEigen_1_1GeneralizedSelfAdjointEigenSolver_a724764fe196612b752042692156ed023}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ matA,\ \textcolor{keyword}{const}\ MatrixType\&\ matB,\ \textcolor{keywordtype}{int}\ options)}
+\DoxyCodeLine{00164\ \{}
+\DoxyCodeLine{00165\ \ \ eigen\_assert(matA.cols()==matA.rows()\ \&\&\ matB.rows()==matA.rows()\ \&\&\ matB.cols()==matB.rows());}
+\DoxyCodeLine{00166\ \ \ eigen\_assert((options\&\string~(EigVecMask|GenEigMask))==0}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \ \&\&\ (options\&EigVecMask)!=EigVecMask}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \&\&\ ((options\&GenEigMask)==0\ ||\ (options\&GenEigMask)==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a5eb11a88a4bd445f58f1b24598d3848f}{Ax\_lBx}}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ ||\ (options\&GenEigMask)==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a9a7d9813cec527e299a36b749b0f7e1e}{ABx\_lx}}\ ||\ (options\&GenEigMask)==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a9870817d373c41ba0dc7f6b5ab0895b8}{BAx\_lx}})}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \&\&\ \textcolor{stringliteral}{"{}invalid\ option\ parameter"{}});}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \textcolor{keywordtype}{bool}\ computeEigVecs\ =\ ((options\&EigVecMask)==0)\ ||\ ((options\&EigVecMask)==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a7f7d17fba3c9bb92158e346d5979d0f4}{ComputeEigenvectors}});}
+\DoxyCodeLine{00173\ }
+\DoxyCodeLine{00174\ \ \ \textcolor{comment}{//\ Compute\ the\ cholesky\ decomposition\ of\ matB\ =\ L\ L'\ =\ U'U}}
+\DoxyCodeLine{00175\ \ \ \mbox{\hyperlink{classEigen_1_1LLT}{LLT<MatrixType>}}\ cholB(matB);}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \textcolor{keywordtype}{int}\ type\ =\ (options\&GenEigMask);}
+\DoxyCodeLine{00178\ \ \ \textcolor{keywordflow}{if}(type==0)}
+\DoxyCodeLine{00179\ \ \ \ \ type\ =\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a5eb11a88a4bd445f58f1b24598d3848f}{Ax\_lBx}};}
+\DoxyCodeLine{00180\ }
+\DoxyCodeLine{00181\ \ \ \textcolor{keywordflow}{if}(type==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a5eb11a88a4bd445f58f1b24598d3848f}{Ax\_lBx}})}
+\DoxyCodeLine{00182\ \ \ \{}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{comment}{//\ compute\ C\ =\ inv(L)\ A\ inv(L')}}
+\DoxyCodeLine{00184\ \ \ \ \ MatrixType\ matC\ =\ matA.template\ selfadjointView<Lower>();}
+\DoxyCodeLine{00185\ \ \ \ \ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a7f4a3eedbf82e7ce2d6bf0dcd84cdfa3}{matrixL}}().template\ solveInPlace<OnTheLeft>(matC);}
+\DoxyCodeLine{00186\ \ \ \ \ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a18a390f085567e650e8345cc7e7c0df8}{matrixU}}().template\ solveInPlace<OnTheRight>(matC);}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SelfAdjointEigenSolver_aca7cecd3847bfea28e5984ab1c9e3921}{Base::compute}}(matC,\ computeEigVecs\ ?\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a7f7d17fba3c9bb92158e346d5979d0f4}{ComputeEigenvectors}}\ :\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9afd06633f270207c373875fd7ca03e906}{EigenvaluesOnly}}\ );}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ \textcolor{comment}{//\ transform\ back\ the\ eigen\ vectors:\ evecs\ =\ inv(U)\ *\ evecs}}
+\DoxyCodeLine{00191\ \ \ \ \ \textcolor{keywordflow}{if}(computeEigVecs)}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a18a390f085567e650e8345cc7e7c0df8}{matrixU}}().solveInPlace(Base::m\_eivec);}
+\DoxyCodeLine{00193\ \ \ \}}
+\DoxyCodeLine{00194\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(type==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a9a7d9813cec527e299a36b749b0f7e1e}{ABx\_lx}})}
+\DoxyCodeLine{00195\ \ \ \{}
+\DoxyCodeLine{00196\ \ \ \ \ \textcolor{comment}{//\ compute\ C\ =\ L'\ A\ L}}
+\DoxyCodeLine{00197\ \ \ \ \ MatrixType\ matC\ =\ matA.template\ selfadjointView<Lower>();}
+\DoxyCodeLine{00198\ \ \ \ \ matC\ =\ matC\ *\ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a7f4a3eedbf82e7ce2d6bf0dcd84cdfa3}{matrixL}}();}
+\DoxyCodeLine{00199\ \ \ \ \ matC\ =\ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a18a390f085567e650e8345cc7e7c0df8}{matrixU}}()\ *\ matC;}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SelfAdjointEigenSolver_aca7cecd3847bfea28e5984ab1c9e3921}{Base::compute}}(matC,\ computeEigVecs\ ?\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a7f7d17fba3c9bb92158e346d5979d0f4}{ComputeEigenvectors}}\ :\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9afd06633f270207c373875fd7ca03e906}{EigenvaluesOnly}});}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{comment}{//\ transform\ back\ the\ eigen\ vectors:\ evecs\ =\ inv(U)\ *\ evecs}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keywordflow}{if}(computeEigVecs)}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a18a390f085567e650e8345cc7e7c0df8}{matrixU}}().solveInPlace(Base::m\_eivec);}
+\DoxyCodeLine{00206\ \ \ \}}
+\DoxyCodeLine{00207\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(type==\mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a9870817d373c41ba0dc7f6b5ab0895b8}{BAx\_lx}})}
+\DoxyCodeLine{00208\ \ \ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \textcolor{comment}{//\ compute\ C\ =\ L'\ A\ L}}
+\DoxyCodeLine{00210\ \ \ \ \ MatrixType\ matC\ =\ matA.template\ selfadjointView<Lower>();}
+\DoxyCodeLine{00211\ \ \ \ \ matC\ =\ matC\ *\ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a7f4a3eedbf82e7ce2d6bf0dcd84cdfa3}{matrixL}}();}
+\DoxyCodeLine{00212\ \ \ \ \ matC\ =\ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a18a390f085567e650e8345cc7e7c0df8}{matrixU}}()\ *\ matC;}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SelfAdjointEigenSolver_aca7cecd3847bfea28e5984ab1c9e3921}{Base::compute}}(matC,\ computeEigVecs\ ?\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9a7f7d17fba3c9bb92158e346d5979d0f4}{ComputeEigenvectors}}\ :\ \mbox{\hyperlink{group__enums_ggae3e239fb70022eb8747994cf5d68b4a9afd06633f270207c373875fd7ca03e906}{EigenvaluesOnly}});}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ transform\ back\ the\ eigen\ vectors:\ evecs\ =\ L\ *\ evecs}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}(computeEigVecs)}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ Base::m\_eivec\ =\ cholB.\mbox{\hyperlink{classEigen_1_1LLT_a7f4a3eedbf82e7ce2d6bf0dcd84cdfa3}{matrixL}}()\ *\ Base::m\_eivec;}
+\DoxyCodeLine{00219\ \ \ \}}
+\DoxyCodeLine{00220\ }
+\DoxyCodeLine{00221\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00222\ \}}
+\DoxyCodeLine{00223\ }
+\DoxyCodeLine{00224\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00225\ }
+\DoxyCodeLine{00226\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_GENERALIZEDSELFADJOINTEIGENSOLVER\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,566 @@
+\doxysection{Tridiagonalization.\+h}
+\hypertarget{Tridiagonalization_8h_source}{}\label{Tridiagonalization_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/Tridiagonalization.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/Tridiagonalization.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Jitse\ Niesen\ <jitse@maths.leeds.ac.uk>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_TRIDIAGONALIZATION\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_TRIDIAGONALIZATION\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1TridiagonalizationMatrixTReturnType}{TridiagonalizationMatrixTReturnType}};}
+\DoxyCodeLine{00019\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00020\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{structEigen_1_1internal_1_1TridiagonalizationMatrixTReturnType}{TridiagonalizationMatrixTReturnType}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}>\ >}
+\DoxyCodeLine{00021\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<typename\ MatrixType::PlainObject>}
+\DoxyCodeLine{00022\ \{}
+\DoxyCodeLine{00023\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::PlainObject\ ReturnType;\ \textcolor{comment}{//\ FIXME\ shall\ it\ be\ a\ BandMatrix?}}
+\DoxyCodeLine{00024\ \ \ \textcolor{keyword}{enum}\ \{\ Flags\ =\ 0\ \};}
+\DoxyCodeLine{00025\ \};}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ CoeffVectorType>}
+\DoxyCodeLine{00028\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00029\ \textcolor{keywordtype}{void}\ tridiagonalization\_inplace(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ matA,\ CoeffVectorType\&\ hCoeffs);}
+\DoxyCodeLine{00030\ \}}
+\DoxyCodeLine{00031\ \textcolor{comment}{}}
+\DoxyCodeLine{00032\ \textcolor{comment}{/**\ \(\backslash\)eigenvalues\_module\ \(\backslash\)ingroup\ Eigenvalues\_Module}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ Tridiagonalization}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Tridiagonal\ decomposition\ of\ a\ selfadjoint\ matrix}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ matrix\ of\ which\ we\ are\ computing\ the}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ tridiagonal\ decomposition;\ this\ is\ expected\ to\ be\ an\ instantiation\ of\ the}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ Matrix\ class\ template.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *\ This\ class\ performs\ a\ tridiagonal\ decomposition\ of\ a\ selfadjoint\ matrix\ \(\backslash\)f\$\ A\ \(\backslash\)f\$\ such\ that:}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *\ \(\backslash\)f\$\ A\ =\ Q\ T\ Q\string^*\ \(\backslash\)f\$\ where\ \(\backslash\)f\$\ Q\ \(\backslash\)f\$\ is\ unitary\ and\ \(\backslash\)f\$\ T\ \(\backslash\)f\$\ a\ real\ symmetric\ tridiagonal\ matrix.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ *\ A\ tridiagonal\ matrix\ is\ a\ matrix\ which\ has\ nonzero\ elements\ only\ on\ the}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ *\ main\ diagonal\ and\ the\ first\ diagonal\ below\ and\ above\ it.\ The\ Hessenberg}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ *\ decomposition\ of\ a\ selfadjoint\ matrix\ is\ in\ fact\ a\ tridiagonal}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ *\ decomposition.\ This\ class\ is\ used\ in\ SelfAdjointEigenSolver\ to\ compute\ the}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ *\ eigenvalues\ and\ eigenvectors\ of\ a\ selfadjoint\ matrix.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ *\ Call\ the\ function\ compute()\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ *\ given\ matrix.\ Alternatively,\ you\ can\ use\ the\ Tridiagonalization(const\ MatrixType\&)}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ *\ constructor\ which\ computes\ the\ tridiagonal\ Schur\ decomposition\ at}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ *\ construction\ time.\ Once\ the\ decomposition\ is\ computed,\ you\ can\ use\ the}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ *\ matrixQ()\ and\ matrixT()\ functions\ to\ retrieve\ the\ matrices\ Q\ and\ T\ in\ the}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ *\ decomposition.}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ *\ The\ documentation\ of\ Tridiagonalization(const\ MatrixType\&)\ contains\ an}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ *\ example\ of\ the\ typical\ use\ of\ this\ class.}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ HessenbergDecomposition,\ class\ SelfAdjointEigenSolver}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00064\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1Tridiagonalization_a9ea2e6154bf35494ee68e037f0867cbd}{Tridiagonalization}}}
+\DoxyCodeLine{00065\ \{}
+\DoxyCodeLine{00066\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \textcolor{comment}{}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Synonym\ for\ the\ template\ parameter\ \(\backslash\)p\ \_MatrixType.\ */}}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_add0f4b2216d0ea8ee0f7d8525deaf0a9}{MatrixType}};}
+\DoxyCodeLine{00070\ }
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00072\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ NumTraits<Scalar>::Real\ RealScalar;}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a7bd1f9fccec1e93b77a2214b2d30aae9}{Index}};\ \textcolor{comment}{///<\ \(\backslash\)deprecated\ since\ Eigen\ 3.3}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00076\ \ \ \ \ \ \ Size\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00077\ \ \ \ \ \ \ SizeMinusOne\ =\ Size\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ (Size\ >\ 1\ ?\ Size\ -\/\ 1\ :\ 1),}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ Options\ =\ MatrixType::Options,}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ MaxSize\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ MaxSizeMinusOne\ =\ MaxSize\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ (MaxSize\ >\ 1\ ?\ MaxSize\ -\/\ 1\ :\ 1)}
+\DoxyCodeLine{00081\ \ \ \ \ \};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ SizeMinusOne,\ 1,\ Options\ \&\ \string~RowMajor,\ MaxSizeMinusOne,\ 1>}}\ CoeffVectorType;}
+\DoxyCodeLine{00084\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::plain\_col\_type<MatrixType,\ RealScalar>::type\ DiagonalType;}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<RealScalar,\ SizeMinusOne,\ 1,\ Options\ \&\ \string~RowMajor,\ MaxSizeMinusOne,\ 1>}}\ SubDiagonalType;}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::remove\_all<typename\ MatrixType::RealReturnType>::type\ MatrixTypeRealView;}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1TridiagonalizationMatrixTReturnType}{internal::TridiagonalizationMatrixTReturnType<MatrixTypeRealView>}}\ MatrixTReturnType;}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<NumTraits<Scalar>::IsComplex}},}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1add__const__on__value__type}{internal::add\_const\_on\_value\_type<typename\ Diagonal<const\ MatrixType>::RealReturnType}}>::type,}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Diagonal}{Diagonal<const\ MatrixType>}}}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ \ \ \ \ >::type\ DiagonalReturnType;}
+\DoxyCodeLine{00093\ }
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{internal::conditional<NumTraits<Scalar>::IsComplex}},}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1add__const__on__value__type}{internal::add\_const\_on\_value\_type}}<\textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1Diagonal}{Diagonal}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}},\ -\/1>::RealReturnType>::type,}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Diagonal}{Diagonal}}<\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}},\ -\/1>}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ \ \ \ \ >::type\ SubDiagonalReturnType;}
+\DoxyCodeLine{00098\ \textcolor{comment}{}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Return\ type\ of\ matrixQ()\ */}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1HouseholderSequence}{HouseholderSequence<MatrixType,typename\ internal::remove\_all<typename\ CoeffVectorType::ConjugateReturnType>::type}}>\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_af322315c8bea9990152c9d09bfa2a69f}{HouseholderSequenceType}};}
+\DoxyCodeLine{00101\ \textcolor{comment}{}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Default\ constructor.}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ \ size\ \ Positive\ integer,\ size\ of\ the\ matrix\ whose\ tridiagonal}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ \ \ *\ decomposition\ will\ be\ computed.}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ default\ constructor\ is\ useful\ in\ cases\ in\ which\ the\ user\ intends\ to}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ \ \ \ \ *\ perform\ decompositions\ via\ compute().\ \ The\ \(\backslash\)p\ size\ parameter\ is\ only}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ \ \ \ *\ used\ as\ a\ hint.\ It\ is\ not\ an\ error\ to\ give\ a\ wrong\ \(\backslash\)p\ size,\ but\ it\ may}}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ \ \ \ \ \ *\ impair\ performance.}}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute()\ for\ an\ example.}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00114\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a9ea2e6154bf35494ee68e037f0867cbd}{Tridiagonalization}}(\mbox{\hyperlink{classEigen_1_1Tridiagonalization_a7bd1f9fccec1e93b77a2214b2d30aae9}{Index}}\ size\ =\ Size==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ 2\ :\ Size)}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ :\ m\_matrix(size,size),}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ m\_hCoeffs(size\ >\ 1\ ?\ size-\/1\ :\ 1),}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \ \ m\_isInitialized(false)}
+\DoxyCodeLine{00118\ \ \ \ \ \{\}}
+\DoxyCodeLine{00119\ \textcolor{comment}{}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor;\ computes\ tridiagonal\ decomposition\ of\ given\ matrix.}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matrix\ \ Selfadjoint\ matrix\ whose\ tridiagonal\ decomposition}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ \ \ \ *\ is\ to\ be\ computed.}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ constructor\ calls\ compute()\ to\ compute\ the\ tridiagonal\ decomposition.}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Tridiagonalization\_Tridiagonalization\_MatrixType.cpp}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Tridiagonalization\_Tridiagonalization\_MatrixType.out}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ InputType>}
+\DoxyCodeLine{00131\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a05406b7df9a92fdcba72d31443f67a98}{Tridiagonalization}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase<InputType>}}\&\ matrix)}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ :\ m\_matrix(matrix.derived()),}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ m\_hCoeffs(matrix.cols()\ >\ 1\ ?\ matrix.cols()-\/1\ :\ 1),}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ m\_isInitialized(false)}
+\DoxyCodeLine{00135\ \ \ \ \ \{}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ internal::tridiagonalization\_inplace(m\_matrix,\ m\_hCoeffs);}
+\DoxyCodeLine{00137\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00138\ \ \ \ \ \}}
+\DoxyCodeLine{00139\ \textcolor{comment}{}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Computes\ tridiagonal\ decomposition\ of\ given\ matrix.}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ matrix\ \ Selfadjoint\ matrix\ whose\ tridiagonal\ decomposition}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ \ \ \ *\ is\ to\ be\ computed.}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \ \ \ Reference\ to\ \(\backslash\)c\ *this}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ tridiagonal\ decomposition\ is\ computed\ by\ bringing\ the\ columns\ of}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ matrix\ successively\ in\ the\ required\ form\ using\ Householder}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ \ \ \ *\ reflections.\ The\ cost\ is\ \(\backslash\)f\$\ 4n\string^3/3\ \(\backslash\)f\$\ flops,\ where\ \(\backslash\)f\$\ n\ \(\backslash\)f\$\ denotes}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ size\ of\ the\ given\ matrix.}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ method\ reuses\ of\ the\ allocated\ data\ in\ the\ Tridiagonalization}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ \ \ \ \ *\ object,\ if\ the\ size\ of\ the\ matrix\ does\ not\ change.}}
+\DoxyCodeLine{00153\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00154\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Tridiagonalization\_compute.cpp}}
+\DoxyCodeLine{00155\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Tridiagonalization\_compute.out}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00157\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ InputType>}
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a9ea2e6154bf35494ee68e037f0867cbd}{Tridiagonalization}}\&\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a96235cebcba541bbfea1717d8cd34273}{compute}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase<InputType>}}\&\ matrix)}
+\DoxyCodeLine{00159\ \ \ \ \ \{}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ m\_matrix\ =\ matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_ab4cf3e6bb046a94a46b69b857bd3dbc9}{derived}}();}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ m\_hCoeffs.resize(matrix.\mbox{\hyperlink{structEigen_1_1EigenBase_af1d12fdb3361e150427e1fd94ebb1f14}{rows}}()-\/1,\ 1);}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ internal::tridiagonalization\_inplace(m\_matrix,\ m\_hCoeffs);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \textcolor{comment}{}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ Householder\ coefficients.}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ const\ reference\ to\ the\ vector\ of\ Householder\ coefficients}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ Tridiagonalization(const\ MatrixType\&)\ or}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called\ before}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ Householder\ coefficients\ allow\ the\ reconstruction\ of\ the\ matrix}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)f\$\ Q\ \(\backslash\)f\$\ in\ the\ tridiagonal\ decomposition\ from\ the\ packed\ data.}}
+\DoxyCodeLine{00177\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Tridiagonalization\_householderCoefficients.cpp}}
+\DoxyCodeLine{00179\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Tridiagonalization\_householderCoefficients.out}}
+\DoxyCodeLine{00180\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ packedMatrix(),\ \(\backslash\)ref\ Householder\_Module\ "{}Householder\ module"{}}}
+\DoxyCodeLine{00182\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keyword}{inline}\ CoeffVectorType\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_ac95b4e43dcf6c3c5074b8bea4fc67887}{householderCoefficients}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00184\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Tridiagonalization\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_hCoeffs;}
+\DoxyCodeLine{00187\ \ \ \ \ \}}
+\DoxyCodeLine{00188\ \textcolor{comment}{}}
+\DoxyCodeLine{00189\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ internal\ representation\ of\ the\ decomposition}}
+\DoxyCodeLine{00190\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00191\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ const\ reference\ to\ a\ matrix\ with\ the\ internal\ representation}}
+\DoxyCodeLine{00192\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ of\ the\ decomposition.}}
+\DoxyCodeLine{00193\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00194\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ Tridiagonalization(const\ MatrixType\&)\ or}}
+\DoxyCodeLine{00195\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called\ before}}
+\DoxyCodeLine{00196\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ returned\ matrix\ contains\ the\ following\ information:}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ \ \ *\ \ -\/\ the\ strict\ upper\ triangular\ part\ is\ equal\ to\ the\ input\ matrix\ A.}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ \ \ \ *\ \ -\/\ the\ diagonal\ and\ lower\ sub-\/diagonal\ represent\ the\ real\ tridiagonal}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ symmetric\ matrix\ T.}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ \ \ \ *\ \ -\/\ the\ rest\ of\ the\ lower\ part\ contains\ the\ Householder\ vectors\ that,}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ combined\ with\ Householder\ coefficients\ returned\ by}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ householderCoefficients(),\ allows\ to\ reconstruct\ the\ matrix\ Q\ as}}
+\DoxyCodeLine{00205\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ Q\ =\ H\_\{N-\/1\}\ \(\backslash\)ldots\ H\_1\ H\_0\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00206\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ Here,\ the\ matrices\ \(\backslash\)f\$\ H\_i\ \(\backslash\)f\$\ are\ the\ Householder\ transformations}}
+\DoxyCodeLine{00207\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ H\_i\ =\ (I\ -\/\ h\_i\ v\_i\ v\_i\string^T)\ \(\backslash\)f\$}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ where\ \(\backslash\)f\$\ h\_i\ \(\backslash\)f\$\ is\ the\ \(\backslash\)f\$\ i\ \(\backslash\)f\$th\ Householder\ coefficient\ and}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \(\backslash\)f\$\ v\_i\ \(\backslash\)f\$\ is\ the\ Householder\ vector\ defined\ by}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ v\_i\ =\ [\ 0,\ \(\backslash\)ldots,\ 0,\ 1,\ M(i+2,i),\ \(\backslash\)ldots,\ M(N-\/1,i)\ ]\string^T\ \(\backslash\)f\$}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ with\ M\ the\ matrix\ returned\ by\ this\ function.}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ \ \ \ \ *\ See\ LAPACK\ for\ further\ details\ on\ this\ packed\ storage.}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Tridiagonalization\_packedMatrix.cpp}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Tridiagonalization\_packedMatrix.out}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ householderCoefficients()}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_add0f4b2216d0ea8ee0f7d8525deaf0a9}{MatrixType}}\&\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a9508afdb1c2000c901e235355a856622}{packedMatrix}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00221\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Tridiagonalization\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_matrix;}
+\DoxyCodeLine{00224\ \ \ \ \ \}}
+\DoxyCodeLine{00225\ \textcolor{comment}{}}
+\DoxyCodeLine{00226\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ unitary\ matrix\ Q\ in\ the\ decomposition}}
+\DoxyCodeLine{00227\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ object\ representing\ the\ matrix\ Q}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ Tridiagonalization(const\ MatrixType\&)\ or}}
+\DoxyCodeLine{00231\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called\ before}}
+\DoxyCodeLine{00232\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00233\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00234\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ function\ returns\ a\ light-\/weight\ object\ of\ template\ class}}
+\DoxyCodeLine{00235\ \textcolor{comment}{\ \ \ \ \ \ *\ HouseholderSequence.\ You\ can\ either\ apply\ it\ directly\ to\ a\ matrix\ or}}
+\DoxyCodeLine{00236\ \textcolor{comment}{\ \ \ \ \ \ *\ you\ can\ convert\ it\ to\ a\ matrix\ of\ type\ \#MatrixType.}}
+\DoxyCodeLine{00237\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00238\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Tridiagonalization(const\ MatrixType\&)\ for\ an\ example,}}
+\DoxyCodeLine{00239\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ matrixT(),\ class\ HouseholderSequence}}
+\DoxyCodeLine{00240\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00241\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_af322315c8bea9990152c9d09bfa2a69f}{HouseholderSequenceType}}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a000f7392eda930576ffd2af1fae54af2}{matrixQ}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00242\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Tridiagonalization\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_af322315c8bea9990152c9d09bfa2a69f}{HouseholderSequenceType}}(m\_matrix,\ m\_hCoeffs.conjugate())}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ \ .setLength(m\_matrix.rows()\ -\/\ 1)}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \ .setShift(1);}
+\DoxyCodeLine{00247\ \ \ \ \ \}}
+\DoxyCodeLine{00248\ \textcolor{comment}{}}
+\DoxyCodeLine{00249\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ an\ expression\ of\ the\ tridiagonal\ matrix\ T\ in\ the\ decomposition}}
+\DoxyCodeLine{00250\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00251\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ expression\ object\ representing\ the\ matrix\ T}}
+\DoxyCodeLine{00252\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ Tridiagonalization(const\ MatrixType\&)\ or}}
+\DoxyCodeLine{00254\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called\ before}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00256\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00257\ \textcolor{comment}{\ \ \ \ \ \ *\ Currently,\ this\ function\ can\ be\ used\ to\ extract\ the\ matrix\ T\ from\ internal}}
+\DoxyCodeLine{00258\ \textcolor{comment}{\ \ \ \ \ \ *\ data\ and\ copy\ it\ to\ a\ dense\ matrix\ object.\ In\ most\ cases,\ it\ may\ be}}
+\DoxyCodeLine{00259\ \textcolor{comment}{\ \ \ \ \ \ *\ sufficient\ to\ directly\ use\ the\ packed\ matrix\ or\ the\ vector\ expressions}}
+\DoxyCodeLine{00260\ \textcolor{comment}{\ \ \ \ \ \ *\ returned\ by\ diagonal()\ and\ subDiagonal()\ instead\ of\ creating\ a\ new}}
+\DoxyCodeLine{00261\ \textcolor{comment}{\ \ \ \ \ \ *\ dense\ copy\ matrix\ with\ this\ function.}}
+\DoxyCodeLine{00262\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00263\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Tridiagonalization(const\ MatrixType\&)\ for\ an\ example,}}
+\DoxyCodeLine{00264\ \textcolor{comment}{\ \ \ \ \ \ *\ matrixQ(),\ packedMatrix(),\ diagonal(),\ subDiagonal()}}
+\DoxyCodeLine{00265\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00266\ \ \ \ \ MatrixTReturnType\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a6eb5ef94b8b9bb013c0e69b6df56d0df}{matrixT}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00267\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00268\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Tridiagonalization\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ MatrixTReturnType(m\_matrix.real());}
+\DoxyCodeLine{00270\ \ \ \ \ \}}
+\DoxyCodeLine{00271\ \textcolor{comment}{}}
+\DoxyCodeLine{00272\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ diagonal\ of\ the\ tridiagonal\ matrix\ T\ in\ the\ decomposition.}}
+\DoxyCodeLine{00273\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00274\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ expression\ representing\ the\ diagonal\ of\ T}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00276\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ Tridiagonalization(const\ MatrixType\&)\ or}}
+\DoxyCodeLine{00277\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called\ before}}
+\DoxyCodeLine{00278\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00279\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00280\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Tridiagonalization\_diagonal.cpp}}
+\DoxyCodeLine{00281\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Tridiagonalization\_diagonal.out}}
+\DoxyCodeLine{00282\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ matrixT(),\ subDiagonal()}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00285\ \ \ \ \ DiagonalReturnType\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a0b7ff4860aa6f7c0761b1059c012fd8e}{diagonal}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00286\ \textcolor{comment}{}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Returns\ the\ subdiagonal\ of\ the\ tridiagonal\ matrix\ T\ in\ the\ decomposition.}}
+\DoxyCodeLine{00288\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00289\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ expression\ representing\ the\ subdiagonal\ of\ T}}
+\DoxyCodeLine{00290\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00291\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)pre\ Either\ the\ constructor\ Tridiagonalization(const\ MatrixType\&)\ or}}
+\DoxyCodeLine{00292\ \textcolor{comment}{\ \ \ \ \ \ *\ the\ member\ function\ compute(const\ MatrixType\&)\ has\ been\ called\ before}}
+\DoxyCodeLine{00293\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ compute\ the\ tridiagonal\ decomposition\ of\ a\ matrix.}}
+\DoxyCodeLine{00294\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00295\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ diagonal()\ for\ an\ example,\ matrixT()}}
+\DoxyCodeLine{00296\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00297\ \ \ \ \ SubDiagonalReturnType\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_ac423dbb91157c159bdcb4b5a8371232e}{subDiagonal}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_add0f4b2216d0ea8ee0f7d8525deaf0a9}{MatrixType}}\ m\_matrix;}
+\DoxyCodeLine{00302\ \ \ \ \ CoeffVectorType\ m\_hCoeffs;}
+\DoxyCodeLine{00303\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_isInitialized;}
+\DoxyCodeLine{00304\ \};}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00307\ \textcolor{keyword}{typename}\ Tridiagonalization<MatrixType>::DiagonalReturnType}
+\DoxyCodeLine{00308\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a0b7ff4860aa6f7c0761b1059c012fd8e}{Tridiagonalization<MatrixType>::diagonal}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00309\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00310\ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Tridiagonalization\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00311\ \ \ \textcolor{keywordflow}{return}\ m\_matrix.diagonal().real();}
+\DoxyCodeLine{00312\ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00315\ \textcolor{keyword}{typename}\ Tridiagonalization<MatrixType>::SubDiagonalReturnType}
+\DoxyCodeLine{00316\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_ac423dbb91157c159bdcb4b5a8371232e}{Tridiagonalization<MatrixType>::subDiagonal}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00317\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00318\ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Tridiagonalization\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00319\ \ \ \textcolor{keywordflow}{return}\ m\_matrix.template\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_a0b7ff4860aa6f7c0761b1059c012fd8e}{diagonal}}<-\/1>().real();}
+\DoxyCodeLine{00320\ \}}
+\DoxyCodeLine{00321\ }
+\DoxyCodeLine{00322\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00323\ \textcolor{comment}{}}
+\DoxyCodeLine{00324\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00325\ \textcolor{comment}{\ \ *\ Performs\ a\ tridiagonal\ decomposition\ of\ the\ selfadjoint\ matrix\ \(\backslash\)a\ matA\ in-\/place.}}
+\DoxyCodeLine{00326\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00327\ \textcolor{comment}{\ \ *\ \(\backslash\)param[in,out]\ matA\ On\ input\ the\ selfadjoint\ matrix.\ Only\ the\ \(\backslash\)b\ lower\ triangular\ part\ is\ referenced.}}
+\DoxyCodeLine{00328\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ On\ output,\ the\ strict\ upper\ part\ is\ left\ unchanged,\ and\ the\ lower\ triangular\ part}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ represents\ the\ T\ and\ Q\ matrices\ in\ packed\ format\ has\ detailed\ below.}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ \ *\ \(\backslash\)param[out]\ \ \ \ hCoeffs\ returned\ Householder\ coefficients\ (see\ below)}}
+\DoxyCodeLine{00331\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00332\ \textcolor{comment}{\ \ *\ On\ output,\ the\ tridiagonal\ selfadjoint\ matrix\ T\ is\ stored\ in\ the\ diagonal}}
+\DoxyCodeLine{00333\ \textcolor{comment}{\ \ *\ and\ lower\ sub-\/diagonal\ of\ the\ matrix\ \(\backslash\)a\ matA.}}
+\DoxyCodeLine{00334\ \textcolor{comment}{\ \ *\ The\ unitary\ matrix\ Q\ is\ represented\ in\ a\ compact\ way\ as\ a\ product\ of}}
+\DoxyCodeLine{00335\ \textcolor{comment}{\ \ *\ Householder\ reflectors\ \(\backslash\)f\$\ H\_i\ \(\backslash\)f\$\ such\ that:}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ Q\ =\ H\_\{N-\/1\}\ \(\backslash\)ldots\ H\_1\ H\_0\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00337\ \textcolor{comment}{\ \ *\ The\ Householder\ reflectors\ are\ defined\ as}}
+\DoxyCodeLine{00338\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ H\_i\ =\ (I\ -\/\ h\_i\ v\_i\ v\_i\string^T)\ \(\backslash\)f\$}}
+\DoxyCodeLine{00339\ \textcolor{comment}{\ \ *\ where\ \(\backslash\)f\$\ h\_i\ =\ hCoeffs[i]\(\backslash\)f\$\ is\ the\ \(\backslash\)f\$\ i\ \(\backslash\)f\$th\ Householder\ coefficient\ and}}
+\DoxyCodeLine{00340\ \textcolor{comment}{\ \ *\ \(\backslash\)f\$\ v\_i\ \(\backslash\)f\$\ is\ the\ Householder\ vector\ defined\ by}}
+\DoxyCodeLine{00341\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \(\backslash\)f\$\ v\_i\ =\ [\ 0,\ \(\backslash\)ldots,\ 0,\ 1,\ matA(i+2,i),\ \(\backslash\)ldots,\ matA(N-\/1,i)\ ]\string^T\ \(\backslash\)f\$.}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ *\ Implemented\ from\ Golub's\ "{}Matrix\ Computations"{},\ algorithm\ 8.3.1.}}
+\DoxyCodeLine{00344\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ Tridiagonalization::packedMatrix()}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00347\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ CoeffVectorType>}
+\DoxyCodeLine{00348\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00349\ \textcolor{keywordtype}{void}\ tridiagonalization\_inplace(\mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\&\ matA,\ CoeffVectorType\&\ hCoeffs)}
+\DoxyCodeLine{00350\ \{}
+\DoxyCodeLine{00351\ \ \ \textcolor{keyword}{using\ }numext::conj;}
+\DoxyCodeLine{00352\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}};}
+\DoxyCodeLine{00353\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00354\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ matA.rows();}
+\DoxyCodeLine{00355\ \ \ eigen\_assert(n==matA.cols());}
+\DoxyCodeLine{00356\ \ \ eigen\_assert(n==hCoeffs.size()+1\ ||\ n==1);}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i<n-\/1;\ ++i)}
+\DoxyCodeLine{00359\ \ \ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ remainingSize\ =\ n-\/i-\/1;}
+\DoxyCodeLine{00361\ \ \ \ \ RealScalar\ beta;}
+\DoxyCodeLine{00362\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ h;}
+\DoxyCodeLine{00363\ \ \ \ \ matA.col(i).tail(remainingSize).makeHouseholderInPlace(h,\ beta);}
+\DoxyCodeLine{00364\ }
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{comment}{//\ Apply\ similarity\ transformation\ to\ remaining\ columns,}}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{comment}{//\ i.e.,\ A\ =\ H\ A\ H'\ where\ H\ =\ I\ -\/\ h\ v\ v'\ and\ v\ =\ matA.col(i).tail(n-\/i-\/1)}}
+\DoxyCodeLine{00367\ \ \ \ \ matA.col(i).coeffRef(i+1)\ =\ 1;}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \ \ \ hCoeffs.tail(n-\/i-\/1).noalias()\ =\ (matA.bottomRightCorner(remainingSize,remainingSize).\textcolor{keyword}{template}\ selfadjointView<Lower>()}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ (conj(h)\ *\ matA.col(i).tail(remainingSize)));}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \ \ \ \ hCoeffs.tail(n-\/i-\/1)\ +=\ (conj(h)*RealScalar(-\/0.5)*(hCoeffs.tail(remainingSize).dot(matA.col(i).tail(remainingSize))))\ *\ matA.col(i).tail(n-\/i-\/1);}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \ \ \ \ matA.bottomRightCorner(remainingSize,\ remainingSize).template\ selfadjointView<Lower>()}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ .rankUpdate(matA.col(i).tail(remainingSize),\ hCoeffs.tail(remainingSize),\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(-\/1));}
+\DoxyCodeLine{00376\ }
+\DoxyCodeLine{00377\ \ \ \ \ matA.col(i).coeffRef(i+1)\ =\ beta;}
+\DoxyCodeLine{00378\ \ \ \ \ hCoeffs.coeffRef(i)\ =\ h;}
+\DoxyCodeLine{00379\ \ \ \}}
+\DoxyCodeLine{00380\ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \textcolor{comment}{//\ forward\ declaration,\ implementation\ at\ the\ end\ of\ this\ file}}
+\DoxyCodeLine{00383\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ Size=MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ IsComplex=NumTraits<typename\ MatrixType::Scalar>::IsComplex>}
+\DoxyCodeLine{00386\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1tridiagonalization__inplace__selector}{tridiagonalization\_inplace\_selector}};}
+\DoxyCodeLine{00387\ \textcolor{comment}{}}
+\DoxyCodeLine{00388\ \textcolor{comment}{/**\ \(\backslash\)brief\ Performs\ a\ full\ tridiagonalization\ in\ place}}
+\DoxyCodeLine{00389\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00390\ \textcolor{comment}{\ \ *\ \(\backslash\)param[in,out]\ \ mat\ \ On\ input,\ the\ selfadjoint\ matrix\ whose\ tridiagonal}}
+\DoxyCodeLine{00391\ \textcolor{comment}{\ \ *\ \ \ \ decomposition\ is\ to\ be\ computed.\ Only\ the\ lower\ triangular\ part\ referenced.}}
+\DoxyCodeLine{00392\ \textcolor{comment}{\ \ *\ \ \ \ The\ rest\ is\ left\ unchanged.\ On\ output,\ the\ orthogonal\ matrix\ Q}}
+\DoxyCodeLine{00393\ \textcolor{comment}{\ \ *\ \ \ \ in\ the\ decomposition\ if\ \(\backslash\)p\ extractQ\ is\ true.}}
+\DoxyCodeLine{00394\ \textcolor{comment}{\ \ *\ \(\backslash\)param[out]\ \ diag\ \ The\ diagonal\ of\ the\ tridiagonal\ matrix\ T\ in\ the}}
+\DoxyCodeLine{00395\ \textcolor{comment}{\ \ *\ \ \ \ decomposition.}}
+\DoxyCodeLine{00396\ \textcolor{comment}{\ \ *\ \(\backslash\)param[out]\ \ subdiag\ \ The\ subdiagonal\ of\ the\ tridiagonal\ matrix\ T\ in}}
+\DoxyCodeLine{00397\ \textcolor{comment}{\ \ *\ \ \ \ the\ decomposition.}}
+\DoxyCodeLine{00398\ \textcolor{comment}{\ \ *\ \(\backslash\)param[in]\ \ extractQ\ \ If\ true,\ the\ orthogonal\ matrix\ Q\ in\ the}}
+\DoxyCodeLine{00399\ \textcolor{comment}{\ \ *\ \ \ \ decomposition\ is\ computed\ and\ stored\ in\ \(\backslash\)p\ mat.}}
+\DoxyCodeLine{00400\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00401\ \textcolor{comment}{\ \ *\ Computes\ the\ tridiagonal\ decomposition\ of\ the\ selfadjoint\ matrix\ \(\backslash\)p\ mat\ in\ place}}
+\DoxyCodeLine{00402\ \textcolor{comment}{\ \ *\ such\ that\ \(\backslash\)f\$\ mat\ =\ Q\ T\ Q\string^*\ \(\backslash\)f\$\ where\ \(\backslash\)f\$\ Q\ \(\backslash\)f\$\ is\ unitary\ and\ \(\backslash\)f\$\ T\ \(\backslash\)f\$\ a\ real}}
+\DoxyCodeLine{00403\ \textcolor{comment}{\ \ *\ symmetric\ tridiagonal\ matrix.}}
+\DoxyCodeLine{00404\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00405\ \textcolor{comment}{\ \ *\ The\ tridiagonal\ matrix\ T\ is\ passed\ to\ the\ output\ parameters\ \(\backslash\)p\ diag\ and\ \(\backslash\)p\ subdiag.\ If}}
+\DoxyCodeLine{00406\ \textcolor{comment}{\ \ *\ \(\backslash\)p\ extractQ\ is\ true,\ then\ the\ orthogonal\ matrix\ Q\ is\ passed\ to\ \(\backslash\)p\ mat.\ Otherwise\ the\ lower}}
+\DoxyCodeLine{00407\ \textcolor{comment}{\ \ *\ part\ of\ the\ matrix\ \(\backslash\)p\ mat\ is\ destroyed.}}
+\DoxyCodeLine{00408\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00409\ \textcolor{comment}{\ \ *\ The\ vectors\ \(\backslash\)p\ diag\ and\ \(\backslash\)p\ subdiag\ are\ not\ resized.\ The\ function}}
+\DoxyCodeLine{00410\ \textcolor{comment}{\ \ *\ assumes\ that\ they\ are\ already\ of\ the\ correct\ size.\ The\ length\ of\ the}}
+\DoxyCodeLine{00411\ \textcolor{comment}{\ \ *\ vector\ \(\backslash\)p\ diag\ should\ equal\ the\ number\ of\ rows\ in\ \(\backslash\)p\ mat,\ and\ the}}
+\DoxyCodeLine{00412\ \textcolor{comment}{\ \ *\ length\ of\ the\ vector\ \(\backslash\)p\ subdiag\ should\ be\ one\ left.}}
+\DoxyCodeLine{00413\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00414\ \textcolor{comment}{\ \ *\ This\ implementation\ contains\ an\ optimized\ path\ for\ 3-\/by-\/3\ matrices}}
+\DoxyCodeLine{00415\ \textcolor{comment}{\ \ *\ which\ is\ especially\ useful\ for\ plane\ fitting.}}
+\DoxyCodeLine{00416\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00417\ \textcolor{comment}{\ \ *\ \(\backslash\)note\ Currently,\ it\ requires\ two\ temporary\ vectors\ to\ hold\ the\ intermediate}}
+\DoxyCodeLine{00418\ \textcolor{comment}{\ \ *\ Householder\ coefficients,\ and\ to\ reconstruct\ the\ matrix\ Q\ from\ the\ Householder}}
+\DoxyCodeLine{00419\ \textcolor{comment}{\ \ *\ reflectors.}}
+\DoxyCodeLine{00420\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00421\ \textcolor{comment}{\ \ *\ Example\ (this\ uses\ the\ same\ matrix\ as\ the\ example\ in}}
+\DoxyCodeLine{00422\ \textcolor{comment}{\ \ *\ \ \ \ Tridiagonalization::Tridiagonalization(const\ MatrixType\&)):}}
+\DoxyCodeLine{00423\ \textcolor{comment}{\ \ *\ \ \ \ \(\backslash\)include\ Tridiagonalization\_decomposeInPlace.cpp}}
+\DoxyCodeLine{00424\ \textcolor{comment}{\ \ *\ Output:\ \(\backslash\)verbinclude\ Tridiagonalization\_decomposeInPlace.out}}
+\DoxyCodeLine{00425\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00426\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ Tridiagonalization}}
+\DoxyCodeLine{00427\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00428\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ DiagonalType,\ \textcolor{keyword}{typename}\ SubDiagonalType,\ \textcolor{keyword}{typename}\ CoeffVectorType>}
+\DoxyCodeLine{00429\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00430\ \textcolor{keywordtype}{void}\ tridiagonalization\_inplace(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ mat,\ DiagonalType\&\ diag,\ SubDiagonalType\&\ subdiag,}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ CoeffVectorType\&\ hcoeffs,\ \textcolor{keywordtype}{bool}\ extractQ)}
+\DoxyCodeLine{00432\ \{}
+\DoxyCodeLine{00433\ \ \ eigen\_assert(mat.cols()==mat.rows()\ \&\&\ diag.size()==mat.rows()\ \&\&\ subdiag.size()==mat.rows()-\/1);}
+\DoxyCodeLine{00434\ \ \ tridiagonalization\_inplace\_selector<MatrixType>::run(mat,\ diag,\ subdiag,\ hcoeffs,\ extractQ);}
+\DoxyCodeLine{00435\ \}}
+\DoxyCodeLine{00436\ \textcolor{comment}{}}
+\DoxyCodeLine{00437\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00438\ \textcolor{comment}{\ \ *\ General\ full\ tridiagonalization}}
+\DoxyCodeLine{00439\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00440\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{int}\ Size,\ \textcolor{keywordtype}{bool}\ IsComplex>}
+\DoxyCodeLine{00441\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1tridiagonalization__inplace__selector}{tridiagonalization\_inplace\_selector}}}
+\DoxyCodeLine{00442\ \{}
+\DoxyCodeLine{00443\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1Tridiagonalization_af322315c8bea9990152c9d09bfa2a69f}{Tridiagonalization<MatrixType>::HouseholderSequenceType}}\ HouseholderSequenceType;}
+\DoxyCodeLine{00444\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DiagonalType,\ \textcolor{keyword}{typename}\ SubDiagonalType,\ \textcolor{keyword}{typename}\ CoeffVectorType>}
+\DoxyCodeLine{00445\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ run(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ mat,\ DiagonalType\&\ diag,\ SubDiagonalType\&\ subdiag,\ CoeffVectorType\&\ hCoeffs,\ \textcolor{keywordtype}{bool}\ extractQ)}
+\DoxyCodeLine{00447\ \ \ \{}
+\DoxyCodeLine{00448\ \ \ \ \ tridiagonalization\_inplace(mat,\ hCoeffs);}
+\DoxyCodeLine{00449\ \ \ \ \ diag\ =\ mat.diagonal().real();}
+\DoxyCodeLine{00450\ \ \ \ \ subdiag\ =\ mat.template\ diagonal<-\/1>().real();}
+\DoxyCodeLine{00451\ \ \ \ \ \textcolor{keywordflow}{if}(extractQ)}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ mat\ =\ HouseholderSequenceType(mat,\ hCoeffs.conjugate())}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \ \ \ \ .setLength(mat.rows()\ -\/\ 1)}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \ \ \ \ .setShift(1);}
+\DoxyCodeLine{00455\ \ \ \}}
+\DoxyCodeLine{00456\ \};}
+\DoxyCodeLine{00457\ \textcolor{comment}{}}
+\DoxyCodeLine{00458\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00459\ \textcolor{comment}{\ \ *\ Specialization\ for\ 3x3\ real\ matrices.}}
+\DoxyCodeLine{00460\ \textcolor{comment}{\ \ *\ Especially\ useful\ for\ plane\ fitting.}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00462\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00463\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1tridiagonalization__inplace__selector}{tridiagonalization\_inplace\_selector}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},3,false>}
+\DoxyCodeLine{00464\ \{}
+\DoxyCodeLine{00465\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00466\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DiagonalType,\ \textcolor{keyword}{typename}\ SubDiagonalType,\ \textcolor{keyword}{typename}\ CoeffVectorType>}
+\DoxyCodeLine{00469\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ mat,\ DiagonalType\&\ diag,\ SubDiagonalType\&\ subdiag,\ CoeffVectorType\&,\ \textcolor{keywordtype}{bool}\ extractQ)}
+\DoxyCodeLine{00470\ \ \ \{}
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keyword}{const}\ RealScalar\ tol\ =\ (std::numeric\_limits<RealScalar>::min)();}
+\DoxyCodeLine{00473\ \ \ \ \ diag[0]\ =\ mat(0,0);}
+\DoxyCodeLine{00474\ \ \ \ \ RealScalar\ v1norm2\ =\ numext::abs2(mat(2,0));}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordflow}{if}(v1norm2\ <=\ tol)}
+\DoxyCodeLine{00476\ \ \ \ \ \{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ diag[1]\ =\ mat(1,1);}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ diag[2]\ =\ mat(2,2);}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ subdiag[0]\ =\ mat(1,0);}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ subdiag[1]\ =\ mat(2,1);}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (extractQ)}
+\DoxyCodeLine{00482\ \ \ \ \ \ \ \ \ mat.setIdentity();}
+\DoxyCodeLine{00483\ \ \ \ \ \}}
+\DoxyCodeLine{00484\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00485\ \ \ \ \ \{}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ RealScalar\ beta\ =\ sqrt(numext::abs2(mat(1,0))\ +\ v1norm2);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ RealScalar\ invBeta\ =\ RealScalar(1)/beta;}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ Scalar\ m01\ =\ mat(1,0)\ *\ invBeta;}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ Scalar\ m02\ =\ mat(2,0)\ *\ invBeta;}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ Scalar\ q\ =\ RealScalar(2)*m01*mat(2,1)\ +\ m02*(mat(2,2)\ -\/\ mat(1,1));}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ diag[1]\ =\ mat(1,1)\ +\ m02*q;}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ diag[2]\ =\ mat(2,2)\ -\/\ m02*q;}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ subdiag[0]\ =\ beta;}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ subdiag[1]\ =\ mat(2,1)\ -\/\ m01\ *\ q;}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (extractQ)}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ mat\ <<\ 1,\ \ \ 0,\ \ \ \ 0,}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,\ m01,\ \ m02,}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0,\ m02,\ -\/m01;}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00501\ \ \ \ \ \}}
+\DoxyCodeLine{00502\ \ \ \}}
+\DoxyCodeLine{00503\ \};}
+\DoxyCodeLine{00504\ \textcolor{comment}{}}
+\DoxyCodeLine{00505\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00506\ \textcolor{comment}{\ \ *\ Trivial\ specialization\ for\ 1x1\ matrices}}
+\DoxyCodeLine{00507\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00508\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keywordtype}{bool}\ IsComplex>}
+\DoxyCodeLine{00509\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1tridiagonalization__inplace__selector}{tridiagonalization\_inplace\_selector}}<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}},1,IsComplex>}
+\DoxyCodeLine{00510\ \{}
+\DoxyCodeLine{00511\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00512\ }
+\DoxyCodeLine{00513\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DiagonalType,\ \textcolor{keyword}{typename}\ SubDiagonalType,\ \textcolor{keyword}{typename}\ CoeffVectorType>}
+\DoxyCodeLine{00514\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00515\ \ \ \textcolor{keywordtype}{void}\ run(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ mat,\ DiagonalType\&\ diag,\ SubDiagonalType\&,\ CoeffVectorType\&,\ \textcolor{keywordtype}{bool}\ extractQ)}
+\DoxyCodeLine{00516\ \ \ \{}
+\DoxyCodeLine{00517\ \ \ \ \ diag(0,0)\ =\ numext::real(mat(0,0));}
+\DoxyCodeLine{00518\ \ \ \ \ \textcolor{keywordflow}{if}(extractQ)}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ mat(0,0)\ =\ Scalar(1);}
+\DoxyCodeLine{00520\ \ \ \}}
+\DoxyCodeLine{00521\ \};}
+\DoxyCodeLine{00522\ \textcolor{comment}{}}
+\DoxyCodeLine{00523\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00524\ \textcolor{comment}{\ \ *\ \(\backslash\)eigenvalues\_module\ \(\backslash\)ingroup\ Eigenvalues\_Module}}
+\DoxyCodeLine{00525\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00526\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Expression\ type\ for\ return\ value\ of\ Tridiagonalization::matrixT()}}
+\DoxyCodeLine{00527\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00528\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ MatrixType\ type\ of\ underlying\ dense\ matrix}}
+\DoxyCodeLine{00529\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00530\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1TridiagonalizationMatrixTReturnType_ac49f3c4df8b40dfa002c6e04e3d1b97f}{TridiagonalizationMatrixTReturnType}}}
+\DoxyCodeLine{00531\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1ReturnByValue}{ReturnByValue}}<TridiagonalizationMatrixTReturnType<MatrixType>\ >}
+\DoxyCodeLine{00532\ \{}
+\DoxyCodeLine{00533\ \ \ \textcolor{keyword}{public}:\textcolor{comment}{}}
+\DoxyCodeLine{00534\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructor.}}
+\DoxyCodeLine{00535\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00536\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)param[in]\ mat\ The\ underlying\ dense\ matrix}}
+\DoxyCodeLine{00537\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00538\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1TridiagonalizationMatrixTReturnType_ac49f3c4df8b40dfa002c6e04e3d1b97f}{TridiagonalizationMatrixTReturnType}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ mat)\ :\ m\_matrix(mat)\ \{\ \}}
+\DoxyCodeLine{00539\ }
+\DoxyCodeLine{00540\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ ResultType>}
+\DoxyCodeLine{00541\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ evalTo(ResultType\&\ result)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00542\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ result.setZero();}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ result.template\ diagonal<1>()\ =\ m\_matrix.template\ diagonal<-\/1>().conjugate();}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ result.diagonal()\ =\ m\_matrix.diagonal();}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ result.template\ diagonal<-\/1>()\ =\ m\_matrix.template\ diagonal<-\/1>();}
+\DoxyCodeLine{00547\ \ \ \ \ \}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_matrix.rows();\ \}}
+\DoxyCodeLine{00550\ \ \ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_matrix.cols();\ \}}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00553\ \ \ \ \ \textcolor{keyword}{typename}\ MatrixType::Nested\ m\_matrix;}
+\DoxyCodeLine{00554\ \};}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00559\ }
+\DoxyCodeLine{00560\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_TRIDIAGONALIZATION\_H}}
+
+\end{DoxyCode}

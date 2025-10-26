@@ -1,0 +1,116 @@
+\doxysection{Block\+Householder.\+h}
+\hypertarget{BlockHouseholder_8h_source}{}\label{BlockHouseholder_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Householder/BlockHouseholder.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Householder/BlockHouseholder.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Vincent\ Lejeune}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_BLOCK\_HOUSEHOLDER\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_BLOCK\_HOUSEHOLDER\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ This\ file\ contains\ some\ helper\ function\ to\ deal\ with\ block\ householder\ reflectors}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00019\ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00020\ \textcolor{comment}{/**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ template<typename\ TriangularFactorType,typename\ VectorsType,typename\ CoeffsType>}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ void\ make\_block\_householder\_triangular\_factor(TriangularFactorType\&\ triFactor,\ const\ VectorsType\&\ vectors,\ const\ CoeffsType\&\ hCoeffs)}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \{}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ typedef\ typename\ VectorsType::Scalar\ Scalar;}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ \ const\ Index\ nbVecs\ =\ vectors.cols();}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ eigen\_assert(triFactor.rows()\ ==\ nbVecs\ \&\&\ triFactor.cols()\ ==\ nbVecs\ \&\&\ vectors.rows()>=nbVecs);}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ }}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ for(Index\ i\ =\ 0;\ i\ <\ nbVecs;\ i++)}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ \{}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \ \ Index\ rs\ =\ vectors.rows()\ -\/\ i;}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ \ \ //\ Warning,\ note\ that\ hCoeffs\ may\ alias\ with\ vectors.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ \ \ //\ It\ is\ then\ necessary\ to\ copy\ it\ before\ modifying\ vectors(i,i).\ }}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ \ \ \ \ typename\ CoeffsType::Scalar\ h\ =\ hCoeffs(i);}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ \ \ //\ This\ hack\ permits\ to\ pass\ trough\ nested\ Block<>\ and\ Transpose<>\ expressions.}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ \ \ Scalar\ *Vii\_ptr\ =\ const\_cast<Scalar*>(vectors.data()\ +\ vectors.outerStride()*i\ +\ vectors.innerStride()*i);}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ \ \ Scalar\ Vii\ =\ *Vii\_ptr;}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ \ \ *Vii\_ptr\ =\ Scalar(1);}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ \ \ triFactor.col(i).head(i).noalias()\ =\ -\/h\ *\ vectors.block(i,\ 0,\ rs,\ i).adjoint()}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ vectors.col(i).tail(rs);}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ \ *Vii\_ptr\ =\ Vii;}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ \ \ \ \ //\ FIXME\ add\ .noalias()\ once\ the\ triangular\ product\ can\ work\ inplace}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ \ \ triFactor.col(i).head(i)\ =\ triFactor.block(0,0,i,i).template\ triangularView<Upper>()}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ triFactor.col(i).head(i);}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ triFactor(i,i)\ =\ hCoeffs(i);}}
+\DoxyCodeLine{00045\ \textcolor{comment}{//\ \ \ \}}}
+\DoxyCodeLine{00046\ \textcolor{comment}{//\ \}}}
+\DoxyCodeLine{00047\ \textcolor{comment}{}}
+\DoxyCodeLine{00048\ \textcolor{comment}{/**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00049\ \textcolor{comment}{//\ This\ variant\ avoid\ modifications\ in\ vectors}}
+\DoxyCodeLine{00050\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ TriangularFactorType,\textcolor{keyword}{typename}\ VectorsType,\textcolor{keyword}{typename}\ CoeffsType>}
+\DoxyCodeLine{00051\ \textcolor{keywordtype}{void}\ make\_block\_householder\_triangular\_factor(TriangularFactorType\&\ triFactor,\ \textcolor{keyword}{const}\ VectorsType\&\ vectors,\ \textcolor{keyword}{const}\ CoeffsType\&\ hCoeffs)}
+\DoxyCodeLine{00052\ \{}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nbVecs\ =\ vectors.cols();}
+\DoxyCodeLine{00054\ \ \ eigen\_assert(triFactor.rows()\ ==\ nbVecs\ \&\&\ triFactor.cols()\ ==\ nbVecs\ \&\&\ vectors.rows()>=nbVecs);}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ nbVecs-\/1;\ i\ >=0\ ;\ -\/-\/i)}
+\DoxyCodeLine{00057\ \ \ \{}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rs\ =\ vectors.rows()\ -\/\ i\ -\/\ 1;}
+\DoxyCodeLine{00059\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rt\ =\ nbVecs-\/i-\/1;}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keywordflow}{if}(rt>0)}
+\DoxyCodeLine{00062\ \ \ \ \ \{}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ triFactor.row(i).tail(rt).noalias()\ =\ -\/hCoeffs(i)\ *\ vectors.col(i).tail(rs).adjoint()}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ vectors.bottomRightCorner(rs,\ rt).template\ triangularView<UnitLower>();}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME\ use\ the\ following\ line\ with\ .noalias()\ once\ the\ triangular\ product\ can\ work\ inplace}}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \textcolor{comment}{//\ triFactor.row(i).tail(rt)\ =\ triFactor.row(i).tail(rt)\ *\ triFactor.bottomRightCorner(rt,rt).template\ triangularView<Upper>();}}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=nbVecs-\/1;\ j>i;\ -\/-\/j)}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ TriangularFactorType::Scalar\ z\ =\ triFactor(i,j);}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ triFactor(i,j)\ =\ z\ *\ triFactor(j,j);}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(nbVecs-\/j-\/1>0)}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \ \ \ \ triFactor.row(i).tail(nbVecs-\/j-\/1)\ +=\ z\ *\ triFactor.row(j).tail(nbVecs-\/j-\/1);}
+\DoxyCodeLine{00074\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00075\ \ \ \ \ \ \ }
+\DoxyCodeLine{00076\ \ \ \ \ \}}
+\DoxyCodeLine{00077\ \ \ \ \ triFactor(i,i)\ =\ hCoeffs(i);}
+\DoxyCodeLine{00078\ \ \ \}}
+\DoxyCodeLine{00079\ \}}
+\DoxyCodeLine{00080\ \textcolor{comment}{}}
+\DoxyCodeLine{00081\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ *\ if\ forward\ then\ perform\ \ \ mat\ =\ H0\ *\ H1\ *\ H2\ *\ mat}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ *\ otherwise\ perform\ \ \ \ \ \ \ \ \ mat\ =\ H2\ *\ H1\ *\ H0\ *\ mat}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00085\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType,\textcolor{keyword}{typename}\ VectorsType,\textcolor{keyword}{typename}\ CoeffsType>}
+\DoxyCodeLine{00086\ \textcolor{keywordtype}{void}\ apply\_block\_householder\_on\_the\_left(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}\&\ mat,\ \textcolor{keyword}{const}\ VectorsType\&\ vectors,\ \textcolor{keyword}{const}\ CoeffsType\&\ hCoeffs,\ \textcolor{keywordtype}{bool}\ forward)}
+\DoxyCodeLine{00087\ \{}
+\DoxyCodeLine{00088\ \ \ \textcolor{keyword}{enum}\ \{\ TFactorSize\ =\ MatrixType::ColsAtCompileTime\ \};}
+\DoxyCodeLine{00089\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nbVecs\ =\ vectors.cols();}
+\DoxyCodeLine{00090\ \ \ Matrix<typename\ MatrixType::Scalar,\ TFactorSize,\ TFactorSize,\ RowMajor>\ T(nbVecs,nbVecs);}
+\DoxyCodeLine{00091\ \ \ }
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordflow}{if}(forward)\ make\_block\_householder\_triangular\_factor(T,\ vectors,\ hCoeffs);}
+\DoxyCodeLine{00093\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ make\_block\_householder\_triangular\_factor(T,\ vectors,\ hCoeffs.conjugate());\ \ }
+\DoxyCodeLine{00094\ \ \ \textcolor{keyword}{const}\ TriangularView<const\ VectorsType,\ UnitLower>\ V(vectors);}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \ \ \textcolor{comment}{//\ A\ -\/=\ V\ T\ V\string^*\ A}}
+\DoxyCodeLine{00097\ \ \ Matrix<\textcolor{keyword}{typename}\ MatrixType::Scalar,VectorsType::ColsAtCompileTime,MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ (VectorsType::MaxColsAtCompileTime==1\ \&\&\ MatrixType::MaxColsAtCompileTime!=1)?\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}:\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}},}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ VectorsType::MaxColsAtCompileTime,\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}}::MaxColsAtCompileTime>\ tmp\ =\ V.adjoint()\ *\ mat;}
+\DoxyCodeLine{00100\ \ \ \textcolor{comment}{//\ FIXME\ add\ .noalias()\ once\ the\ triangular\ product\ can\ work\ inplace}}
+\DoxyCodeLine{00101\ \ \ \textcolor{keywordflow}{if}(forward)\ tmp\ =\ T.template\ triangularView<Upper>()\ \ \ \ \ \ \ \ \ \ \ *\ tmp;}
+\DoxyCodeLine{00102\ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ tmp\ =\ T.template\ triangularView<Upper>().adjoint()\ *\ tmp;}
+\DoxyCodeLine{00103\ \ \ mat.noalias()\ -\/=\ V\ *\ tmp;}
+\DoxyCodeLine{00104\ \}}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_BLOCK\_HOUSEHOLDER\_H}}
+
+\end{DoxyCode}
