@@ -22,9 +22,9 @@ constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
 
 
-// Hardware Abstraction max size paramiters
+// Hardware Abstraction max size parameters
 constexpr uint8_t MAX_PYRO_NUM = 10;
-constexpr uint8_t MAX_VOLTAGE_SENSOR_NUM = 10;
+constexpr uint8_t MAX_VOLTAGE_SENSOR_NUM = 5;
 constexpr uint8_t MAX_BAROMETER_NUM = 4;
 constexpr uint8_t MAX_ACCELEROMETER_NUM = 4;
 constexpr uint8_t MAX_MAGNETOMETER_NUM = 4;
@@ -48,6 +48,13 @@ struct Vector3D_s {
     float x; ///< X axis
     float y; ///< Y axis
     float z; ///< Z axis
+};
+
+struct Quaternion_s {
+    float x;
+    float y;
+    float z;
+    float w;
 };
 
 /**
@@ -80,13 +87,6 @@ struct State1D_s {
     float velocityMS;
     float accelerationMSS;
     float unfilteredNoOffsetAltitudeM;
-};
-
-struct Quaternion_s {
-    float x;
-    float y;
-    float z;
-    float w;
 };
 
 struct Orientation_s {
