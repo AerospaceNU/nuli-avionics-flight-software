@@ -1,5 +1,5 @@
 #include "Configuration.h"
-#include "HardwareAbstraction.h"
+#include "../HardwareAbstraction.h"
 #include "util/CRC.h"
 
 constexpr ConfigurationID_t Configuration::REQUIRED_CONFIGS[];

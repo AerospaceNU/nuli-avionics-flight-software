@@ -1,5 +1,5 @@
+#include "Arduino.h"
 #include "Avionics.h"
-#include <Arduino.h>
 #include "pinmaps/SillyGoosePinmap.h"
 #include "util/Timer.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
@@ -16,18 +16,17 @@
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoSimulationParser.h"
 #include "core/HardwareAbstraction.h"
-#include "core/Configuration.h"
-#include "core/ConfigurationCliBinding.h"
-#include "core/FlightStateDeterminer.h"
+#include "core/configuration/Configuration.h"
+#include "core/configuration/ConfigurationCliBinding.h"
+#include "core/state_estimation/FlightStateDeterminer.h"
 #include "core/IndicatorManager.h"
 #include "core/BasicLogger.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/IntegratedParser.h"
-#include "core/filters/OrientationEstimator.h"
-#include "core/filters/StateEstimatorBasic6D.h"
-#include "core/filters/StateEstimator1D.h"
+#include "core/state_estimation/OrientationEstimator.h"
+#include "core/state_estimation/StateEstimatorBasic6D.h"
+#include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
-
 
 // @todo Configuration min/max value checks
 // @todo Kalman gains
@@ -38,7 +37,7 @@
 // @todo Make it clear how Pyro.fireFor() works: it's currently handled in hardware.readSensors(), which is weird
 // @todo disable write in flash driver
 // @todo fix low pass implementation
-
+// @todo review boot flight detection
 
 // clang-format off
 struct SillyGooseLogData {
@@ -57,7 +56,7 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90().rotateX90().inverse();
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM20602Sensor icm20602(&imuRotation);
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
@@ -101,6 +100,9 @@ ConfigurationCliBindings<DROGUE_DELAY_c,
                          BOARD_NAME_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
+SimpleFlag resetBoard("--reset", "Send start", true, 255, []() {
+    NVIC_SystemReset();
+});
 SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
     serialDebug.message("Firing drogue");
@@ -111,6 +113,7 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
@@ -120,10 +123,10 @@ void setup() {
     led.setOutputPercent(6.0); // Lower the LED Power
 
     // Setup Hardware
-    const int16_t framID = hardware.appendFramMemory(&fram);
-    const int16_t flashID = hardware.appendFlashMemory(&flash);
-    const int16_t drogueID = hardware.appendPyro(&droguePyro);
-    const int16_t mainID = hardware.appendPyro(&mainPyro);
+    int16_t framID = hardware.appendFramMemory(&fram);
+    int16_t flashID = hardware.appendFlashMemory(&flash);
+    int16_t drogueID = hardware.appendPyro(&droguePyro);
+    int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendBarometer(&barometer);
     hardware.appendGenericSensor(&icm20602);
@@ -138,6 +141,7 @@ void setup() {
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
     configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
     cliParser.addFlagGroup(testfireGroup);
+    cliParser.addFlagGroup(resetBoardGroup);
     cliParser.setup(&serialReader, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);

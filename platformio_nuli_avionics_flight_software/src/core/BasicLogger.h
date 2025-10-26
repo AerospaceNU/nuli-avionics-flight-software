@@ -3,7 +3,7 @@
 
 #include "Avionics.h"
 #include "HardwareAbstraction.h"
-#include "Configuration.h"
+#include "configuration/Configuration.h"
 #include "cli/Parser.h"
 
 template <typename LogDataStruct>

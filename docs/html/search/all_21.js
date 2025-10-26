@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['_7ecustomcsvparser_0',['~CustomCsvParser',['../classCustomCsvParser.html#a7dbb61c4b4ee35ca5f33b9e55098181b',1,'CustomCsvParser']]],
-  ['_7eparser_1',['~Parser',['../classParser.html#a95734193a58a199b4c6d820a6a730c42',1,'Parser']]]
+  ['z_0',['z',['../structVector3D__s.html#a739a412350d6df90a793938e02eb1f25',1,'Vector3D_s']]]
 ];

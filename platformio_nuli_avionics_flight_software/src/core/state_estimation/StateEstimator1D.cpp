@@ -1,4 +1,4 @@
-#include "StateEstimator1D.h"
+#include "core/state_estimation/StateEstimator1D.h"
 #include "ConstantsUnits.h"
 #include "core/generic_hardware/Accelerometer.h"
 #include "core/generic_hardware/Barometer.h"
@@ -26,9 +26,9 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
         m_groundTemperature.set(m_hardware->getBarometer(0)->getTemperatureK());
     }
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
-    const float pressurePa = getPressurePa();
-    const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
-    const float accelerationMSS = getAccelerationMSS(flightState);
+    float pressurePa = getPressurePa();
+    float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
+    float accelerationMSS = getAccelerationMSS(flightState);
 
     if (flightState == PRE_FLIGHT) {
         updateBoardOrientationReference(timestamp);
@@ -43,9 +43,9 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
     // @todo update covariances with velocity
 
     m_kalmanFilter.predict();
-    m_kalmanFilter.altitudeAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
+    m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
 
-    m_currentState1D.altitudeM = m_kalmanFilter.getAltitude();
+    m_currentState1D.altitudeM = m_kalmanFilter.getPosition();
     m_currentState1D.velocityMS = m_kalmanFilter.getVelocity();
     m_currentState1D.accelerationMSS = m_kalmanFilter.getAcceleration();
     m_currentState1D.unfilteredNoOffsetAltitudeM = altitudeRawM;

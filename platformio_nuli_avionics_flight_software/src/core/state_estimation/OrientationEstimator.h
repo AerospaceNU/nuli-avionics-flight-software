@@ -2,12 +2,12 @@
 #define ORIENTATIONESTIMATOR_H
 
 #include "../../Avionics.h"
-#include "../Configuration.h"
+#include "../configuration/Configuration.h"
 #include "../../ConstantsUnits.h"
 #include "../generic_hardware/Accelerometer.h"
 #include "../generic_hardware/Gyroscope.h"
 #include "../transform/Quaternion.h"
-#include "LowPass.h"
+#include "../filters/LowPass.h"
 #include "util/Timer.h"
 
 class OrientationEstimator {

@@ -3,9 +3,9 @@
 
 #include "Avionics.h"
 #include "ConfigurationRegistryWraper.h"
-#include "HardwareAbstraction.h"
-#include "generic_hardware/FramMemory.h"
-#include "generic_hardware/DebugStream.h"
+#include "../HardwareAbstraction.h"
+#include "../generic_hardware/FramMemory.h"
+#include "../generic_hardware/DebugStream.h"
 
 /**
  * @struct BaseConfigurationData_s

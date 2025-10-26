@@ -24,7 +24,7 @@ public:
         va_start(args, fmt);
         vformat(fmt, args);
         va_end(args);
-        write("\r\n");
+        write("\n");
     }
 
     void warn(const char* fmt, ...) {
@@ -33,7 +33,7 @@ public:
         va_start(args, fmt);
         vformat(fmt, args);
         va_end(args);
-        write("\r\n");
+        write("\n");
     }
 
     void error(const char* fmt, ...) {
@@ -42,7 +42,7 @@ public:
         va_start(args, fmt);
         vformat(fmt, args);
         va_end(args);
-        write("\r\n");
+        write("\n");
     }
 
     void debug(const char* fmt, ...) {
@@ -51,7 +51,7 @@ public:
         va_start(args, fmt);
         vformat(fmt, args);
         va_end(args);
-        write("\r\n");
+        write("\n");
     }
 
 
@@ -60,7 +60,7 @@ public:
         va_start(args, fmt);
         vformat(fmt, args);
         va_end(args);
-        write("\r\n");
+        write("\n");
     }
 
 protected:

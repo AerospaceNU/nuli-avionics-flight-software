@@ -2,21 +2,7 @@
 #define DESKTOP_HARDWAREMANAGER_H
 
 #include "Avionics.h"
-#include "generic_hardware/GenericSensor.h"
-#include "generic_hardware/Barometer.h"
-#include "generic_hardware/Accelerometer.h"
-#include "generic_hardware/GPS.h"
-#include "generic_hardware/Gyroscope.h"
-#include "generic_hardware/Magnetometer.h"
-#include "generic_hardware/Pyro.h"
-#include "generic_hardware/FlashMemory.h"
-#include "generic_hardware/RadioLink.h"
-#include "generic_hardware/SystemClock.h"
-#include "generic_hardware/DebugStream.h"
-#include "generic_hardware/VoltageSensor.h"
-#include "generic_hardware/FramMemory.h"
-#include "generic_hardware/Indicator.h"
-
+#include "generic_hardware/GenericHardware.h"
 
 /**
  * This macro generates three methods for a given type of hardware:
@@ -98,8 +84,6 @@ public:
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
 private:
-    Timestamp_s getTimestamp() const;
-
     uint32_t m_loopTime = 10;
     uint32_t m_loopDtMs = 0; ///< Tracks the loop execution time
     uint32_t m_currentLoopTimestampMs = 0; ///< Tracks the start time of each loop
