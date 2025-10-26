@@ -28,15 +28,12 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
-// @todo Configuration min/max value checks
 // @todo Kalman gains
 // @todo Offload -> simulation data pipeline
-// @todo Use temperature in altitude calcs Update: THIS WORKS! but need to do cleanly
-// @todo Have barometer re-init code
+// @todo Have barometer re-init in code
 // @todo handle log overflow
-// @todo Make it clear how Pyro.fireFor() works: it's currently handled in hardware.readSensors(), which is weird
 // @todo disable write in flash driver
-// @todo fix low pass implementation
+// @todo fix low pass implementation with dt included
 // @todo review boot flight detection
 
 // clang-format off
@@ -162,6 +159,7 @@ void loop() {
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
     hardware.readSensors();
+    hardware.runPyros();
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {

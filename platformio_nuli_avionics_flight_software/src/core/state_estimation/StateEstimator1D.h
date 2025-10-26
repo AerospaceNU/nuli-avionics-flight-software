@@ -28,6 +28,9 @@ private:
 
     void updateGroundElevationReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
 
+    void updateGroundTemperatureReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
+
+
     void updateBoardOrientationReference(const Timestamp_s &timestamp);
 
     State1D_s m_currentState1D = {};
@@ -42,11 +45,12 @@ private:
 
     float m_lastPressure = Constants::ATMOSPHERIC_PRESSURE_PA;
 
+    LowPass m_groundTemperatureReferenceLowPass{0.01};
 
     bool m_reInitializeKalman = true;
     bool m_needNewGroundReference = true;
-    LowPass m_lowPass{0.01};
-    Alarm m_groundReferenceTimer;
+    LowPass m_groundElevationReferenceLowPass{0.01};
+    Alarm m_groundElevationReferenceTimer;
 
     LowPass m_lowPassAX{0.01};
     LowPass m_lowPassAY{0.01};

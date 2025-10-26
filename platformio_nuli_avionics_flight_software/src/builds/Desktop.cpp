@@ -14,7 +14,7 @@ AVIONICS_DESKTOP_MAIN
 #include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
 
-
+// Desktop sim specific stuff
 constexpr float FCB_V0_ACCEL_SCALE_FACTOR = 0.0071784678f;
 constexpr float FCB_V0_GYRO_SCALE_FACTOR = 0.0012217305f;
 CSVReader csvReader;

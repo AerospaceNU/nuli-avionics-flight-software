@@ -17,14 +17,10 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
 
     // Trigger both alarms immediately, required for them to initialize
     m_boardOrientationReferenceTimer.startAlarm(0, 0);
-    m_groundReferenceTimer.startAlarm(0, 0);
+    m_groundElevationReferenceTimer.startAlarm(0, 0);
 }
 
 State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
-    // @todo implement more cleanly. Do you use the current temp or the ground temperature
-    if (std::abs(m_groundTemperature.get() - m_hardware->getBarometer(0)->getTemperatureK()) > 1.0f) {
-        m_groundTemperature.set(m_hardware->getBarometer(0)->getTemperatureK());
-    }
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     float pressurePa = getPressurePa();
     float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
@@ -103,19 +99,23 @@ float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) con
 void StateEstimator1D::reset() {
     m_reInitializeKalman = true;
     m_needNewGroundReference = true;
-    m_lowPass.reset();
+    m_groundElevationReferenceLowPass.reset();
 }
 
 void StateEstimator1D::updateGroundElevationReference(const float unfilteredAltitudeM, const Timestamp_s& timestamp) {
     // Ground elevation
-    m_lowPass.update(unfilteredAltitudeM);
-    if (m_needNewGroundReference || m_groundReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
-        m_groundReferenceTimer.startAlarm(timestamp.runtime_ms, 1000);
-        if (m_needNewGroundReference || abs(m_groundElevation.get() - m_lowPass.value()) > 2.0f) {
+    m_groundTemperatureReferenceLowPass.update(m_hardware->getBarometer(0)->getTemperatureK());
+    m_groundElevationReferenceLowPass.update(unfilteredAltitudeM);
+    if (m_needNewGroundReference || m_groundElevationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
+        m_groundElevationReferenceTimer.startAlarm(timestamp.runtime_ms, 1000);
+        bool groundElevationChanged = abs(m_groundElevation.get() - m_groundElevationReferenceLowPass.value()) > 2.0f;
+        bool groundTemperatureChanged = abs(m_groundTemperature.get() - m_groundTemperatureReferenceLowPass.value()) > 2.0f;
+        if (m_needNewGroundReference || groundElevationChanged || groundTemperatureChanged) {
             m_needNewGroundReference = false;
             m_reInitializeKalman = true;
-            m_groundElevation.set(m_lowPass.value());
-            m_hardware->getDebugStream()->message("Ground elevation set to %f", m_groundElevation.get());
+            m_groundElevation.set(m_groundElevationReferenceLowPass.value());
+            m_groundTemperature.set(m_groundTemperatureReferenceLowPass.value());
+            m_hardware->getDebugStream()->message("Ground elevation set to %f, %f", m_groundElevation.get(), m_groundTemperature.get());
         }
     }
 }

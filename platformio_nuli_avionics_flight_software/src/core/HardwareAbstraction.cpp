@@ -42,6 +42,10 @@ void HardwareAbstraction::readSensors() const {
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->read();
 }
 
+void HardwareAbstraction::runPyros() const {
+    for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->run();
+}
+
 void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
     const double delay = 1000.0 / loopRate;
     m_loopTime = std::lround(delay);

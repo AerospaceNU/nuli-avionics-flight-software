@@ -17,12 +17,15 @@ void ArduinoPyro::read() {
     } else {
         m_hasContinuity = m_continuityValue >= m_continuityThreshold;
     }
+}
 
+void ArduinoPyro::run() {
     if (m_timedFireAlarm.isInitialized() && m_timedFireAlarm.isAlarmFinished(millis())) {
         disable();
         m_timedFireAlarm.reset();
     }
 }
+
 
 bool ArduinoPyro::hasContinuity() const {
     return m_hasContinuity;

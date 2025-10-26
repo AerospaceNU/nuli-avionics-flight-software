@@ -34,6 +34,9 @@ public:
      * @details Can use either analog or digital input
      */
     void read() override;
+
+    void run() override;
+
     /**
      * @brief Returns if the channel has pyro continuity
      * @return If there is continuity

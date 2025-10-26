@@ -55,6 +55,8 @@ public:
      */
     void readSensors() const;
 
+    void runPyros() const;
+
     Timestamp_s enforceLoopTime();
 
     uint32_t getTargetLoopTimeMs() const;

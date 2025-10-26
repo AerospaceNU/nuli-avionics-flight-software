@@ -15,13 +15,15 @@ public:
      * @brief Initializes the pyro
      * @details Sets up the input/output pins
      */
-    void setup(DebugStream *debugStream) override {}
+    void setup(DebugStream* debugStream) override {}
 
     /**
      * @brief Reads in the continuity state
      * @details Can use either analog or digital input
      */
     void read() override {}
+
+    virtual void run() {};
 
     /**
      * @brief Returns if the channel has pyro continuity
