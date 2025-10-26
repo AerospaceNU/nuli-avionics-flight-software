@@ -16,6 +16,9 @@ AVIONICS_DESKTOP_MAIN
 #include "core/filters/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
+
+constexpr float FCB_V0_ACCEL_SCALE_FACTOR = 0.0071784678f;
+constexpr float FCB_V0_GYRO_SCALE_FACTOR = 0.0012217305f;
 CSVReader csvReader;
 
 // Hardware
@@ -40,6 +43,7 @@ Configuration configuration({desktopRequiredConfigs, Configuration::REQUIRED_CON
 ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
 
 void setup() {
+    // Setup sim input/output
     csvReader.setup("../simulation/data/Avionics Flight Data - 2023-04-15-beanboozler-output-FCB.csv");
     debug.outputToFile("../simulation/output.txt");
 
@@ -73,10 +77,10 @@ void loop() {
     hardware.readSensors();
 
     // Read in the .csv data
-    csvReader.interpolateNext(state.timestamp.runtime_ms);
+    csvReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
     barometer.inject((csvReader.getKey<float>("baro1_temp") - 32) * 5.0f / 9.0f + 273.15f, 0, csvReader.getKey<float>("baro1_pres") * 101325);
-    accelerometer.inject({csvReader.getKey<float>("imu1_accel_x") / 128.0f, csvReader.getKey<float>("imu1_accel_y") / 128.0f, csvReader.getKey<float>("imu1_accel_z") / 128.0f}, 0);
-    gyroscope.inject({csvReader.getKey<float>("imu1_gyro_x") / 128.0f, csvReader.getKey<float>("imu1_gyro_y") / 128.0f, csvReader.getKey<float>("imu1_gyro_z") / 128.0f}, 0);
+    accelerometer.inject({csvReader.getKey<float>("imu1_accel_x") * FCB_V0_ACCEL_SCALE_FACTOR, csvReader.getKey<float>("imu1_accel_y") * FCB_V0_ACCEL_SCALE_FACTOR, csvReader.getKey<float>("imu1_accel_z") * FCB_V0_ACCEL_SCALE_FACTOR}, 0);
+    gyroscope.inject({csvReader.getKey<float>("imu1_gyro_x") * FCB_V0_GYRO_SCALE_FACTOR, csvReader.getKey<float>("imu1_gyro_y") * FCB_V0_GYRO_SCALE_FACTOR, csvReader.getKey<float>("imu1_gyro_z") * FCB_V0_GYRO_SCALE_FACTOR}, 0);
 
     // Determine state
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
@@ -91,7 +95,7 @@ void loop() {
     configuration.pushUpdatesToMemory();
 
     // Print out current values
-    debug.message("%d\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%d",
+    debug.message("%d\t%.4f\t%.1f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.2f\t%.2f\t%.4f\t%.2f\t%d",
                   state.timestamp.runtime_ms,
                   barometer.getPressurePa(), barometer.getTemperatureK(),
                   accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
