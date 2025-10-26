@@ -84,7 +84,7 @@ public:
 
     void logMessage(const char* str) {
         m_dataStruct.id = 0x03;
-        memcpy(&m_dataStruct.data, str, min(sizeof(LogDataStruct), strlen(str) + 1));
+        memcpy(&m_dataStruct.data, str, std::min(sizeof(LogDataStruct), strlen(str) + 1));
         ((char*)(&m_dataStruct.data))[sizeof(LogDataStruct) - 1] = '\0'; // Ensure null termination
         m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
         m_logWriteIndex++;

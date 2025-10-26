@@ -20,7 +20,11 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_groundReferenceTimer.startAlarm(0, 0);
 }
 
-State1D_s StateEstimator1D::loopOnce(const Timestamp_s& timestamp, const FlightState_e& flightState) {
+State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
+    // @todo implement more cleanly. Do you use the current temp or the ground temperature
+    if (std::abs(m_groundTemperature.get() - m_hardware->getBarometer(0)->getTemperatureK()) > 1.0f) {
+        m_groundTemperature.set(m_hardware->getBarometer(0)->getTemperatureK());
+    }
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     const float pressurePa = getPressurePa();
     const float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
@@ -77,17 +81,17 @@ float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) con
     if ((flightState == PRE_FLIGHT || flightState == ASCENT) && m_hardware->getNumAccelerometers() > 0) {
         switch (m_boardOrientation.get()) {
         case POS_X:
-            return m_hardware->getAccelerometer(0)->getAccelerationsMSS().x - float(Constants::G_EARTH_MSS);
+            return m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor().x - float(Constants::G_EARTH_MSS);
         case NEG_X:
-            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().x - float(Constants::G_EARTH_MSS);
+            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor().x - float(Constants::G_EARTH_MSS);
         case POS_Y:
-            return m_hardware->getAccelerometer(0)->getAccelerationsMSS().y - float(Constants::G_EARTH_MSS);
+            return m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor().y - float(Constants::G_EARTH_MSS);
         case NEG_Y:
-            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().y - float(Constants::G_EARTH_MSS);
+            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor().y - float(Constants::G_EARTH_MSS);
         case POS_Z:
-            return m_hardware->getAccelerometer(0)->getAccelerationsMSS().z - float(Constants::G_EARTH_MSS);
+            return m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor().z - float(Constants::G_EARTH_MSS);
         case NEG_Z:
-            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS().z - float(Constants::G_EARTH_MSS);
+            return -m_hardware->getAccelerometer(0)->getAccelerationsMSS_sensor().z - float(Constants::G_EARTH_MSS);
         case ERROR_AXIS_DIRECTION:
         default:
             return 0;
@@ -118,7 +122,7 @@ void StateEstimator1D::updateGroundElevationReference(const float unfilteredAlti
 
 void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timestamp) {
     if (m_hardware->getNumAccelerometers() < 1) return;
-    Vector3D_s accelerations = m_hardware->getAccelerometer(0)->getAccelerationsMSS();
+    Vector3D_s accelerations = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
     m_lowPassAX.update(accelerations.x);
     m_lowPassAY.update(accelerations.y);
     m_lowPassAZ.update(accelerations.z);

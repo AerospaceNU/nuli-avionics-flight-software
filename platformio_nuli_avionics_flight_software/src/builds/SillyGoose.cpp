@@ -23,15 +23,21 @@
 #include "core/BasicLogger.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/IntegratedParser.h"
+#include "core/filters/OrientationEstimator.h"
 #include "core/filters/StateEstimatorBasic6D.h"
 #include "core/filters/StateEstimator1D.h"
+#include "core/transform/DiscreteRotation.h"
+
 
 // @todo Configuration min/max value checks
 // @todo Kalman gains
 // @todo Offload -> simulation data pipeline
-// @todo Use temperature in altitude calcs
+// @todo Use temperature in altitude calcs Update: THIS WORKS! but need to do cleanly
 // @todo Have barometer re-init code
 // @todo handle log overflow
+// @todo Make it clear how Pyro.fireFor() works: it's currently handled in hardware.readSensors(), which is weird
+// @todo disable write in flash driver
+// @todo fix low pass implementation
 
 
 // clang-format off
@@ -51,7 +57,8 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-ICM20602Sensor icm20602;
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90().rotateX90().inverse();
+ICM20602Sensor icm20602(&imuRotation);
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
@@ -64,6 +71,7 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
+OrientationEstimator orientationEstimator;
 StateEstimatorBasic6D stateEstimatorBasic6D;
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(true);
@@ -72,7 +80,13 @@ ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
-Configuration configuration({sillyGooseRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS});
+Configuration configuration({
+        sillyGooseRequiredConfigs,
+        Configuration::REQUIRED_CONFIGS,
+        FlightStateDeterminer::REQUIRED_CONFIGS,
+        StateEstimator1D::REQUIRED_CONFIGS,
+        OrientationEstimator::REQUIRED_CONFIGS
+    });
 // Locally used configuration data
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
@@ -97,7 +111,6 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
-
 
 void setup() {
     // Initialize
@@ -127,6 +140,7 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     cliParser.setup(&serialReader, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
+    orientationEstimator.setup(&hardware, &configuration);
     stateEstimatorBasic6D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
@@ -154,9 +168,10 @@ void loop() {
     }
 
     // Determine state
-    state.state1D = stateEstimator1D.loopOnce(state.timestamp, flightStateDeterminer.getFlightState());
-    state.flightState = flightStateDeterminer.loopOnce(state.timestamp, state.state1D);
-    state.state6D = stateEstimatorBasic6D.loopOnce(state.timestamp, state.state1D, state.flightState);
+    // state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
+    state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
+    // state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
+    state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
@@ -196,8 +211,9 @@ void loop() {
     // Run logging
     logger.log({
             state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
-            icm20602.getAccelerometer()->getAccelerationsMSS().x, icm20602.getAccelerometer()->getAccelerationsMSS().y, icm20602.getAccelerometer()->getAccelerationsMSS().z,
-            icm20602.getGyroscope()->getVelocitiesRadS().x, icm20602.getGyroscope()->getVelocitiesRadS().y, icm20602.getGyroscope()->getVelocitiesRadS().z, icm20602.getGyroscope()->getTemperatureK(),
+            icm20602.getAccelerometer()->getAccelerationsMSS_sensor().x, icm20602.getAccelerometer()->getAccelerationsMSS_sensor().y, icm20602.getAccelerometer()->getAccelerationsMSS_sensor().z,
+            icm20602.getGyroscope()->getVelocitiesRadS_raw().x, icm20602.getGyroscope()->getVelocitiesRadS_raw().y, icm20602.getGyroscope()->getVelocitiesRadS_raw().z,
+            icm20602.getGyroscope()->getTemperatureK(),
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
             droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
         });

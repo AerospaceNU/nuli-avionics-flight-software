@@ -5,7 +5,11 @@
 #ifndef ALTITUDE_KF_H
 #define ALTITUDE_KF_H
 
+#ifdef PLATFORMIO
 #include "ArduinoEigenDense.h"
+#else
+#include "Eigen/Dense"
+#endif
 
 float altitudeFromPressure(float pressure_pa);
 
@@ -39,6 +43,8 @@ public:
     void accelerationDataUpdate(float acceleration);
 
     void altitudeAndAccelerationDataUpdate(float altitude, float acceleration);
+
+    void velocityAndAccelerationDataUpdate(float velocity, float acceleration);
 
     void allDataUpdate(float altitude, float velocity, float acceleration);
 

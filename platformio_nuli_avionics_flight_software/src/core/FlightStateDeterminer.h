@@ -12,7 +12,7 @@ public:
 
     void setup(Configuration* configuration);
 
-    FlightState_e loopOnce(const Timestamp_s& timestamp, const State1D_s& state1D);
+    FlightState_e update(const Timestamp_s& timestamp, const State1D_s& state1D);
 
     FlightState_e getFlightState() const;
 

@@ -6,6 +6,7 @@
 #include "../../core/generic_hardware/Accelerometer.h"
 #include "../../core/generic_hardware/Gyroscope.h"
 #include "../../core/generic_hardware/Magnetometer.h"
+#include "core/transform/Vector3DTransform.h"
 
 
 /**
@@ -15,10 +16,11 @@
  */
 class ICM20602Sensor final : public GenericSensor {
 public:
+    // ICM20602Sensor
     /**
      * @brief Creates a ICM 20602
      */
-    explicit ICM20602Sensor();
+    explicit ICM20602Sensor(const Vector3DTransform *transform);
 
     /**
      * @brief Initializes the sensor

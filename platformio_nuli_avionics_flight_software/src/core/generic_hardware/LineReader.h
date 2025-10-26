@@ -5,9 +5,9 @@ class LineReader {
 public:
     virtual ~LineReader() = default;
 
-    virtual bool readLine();
+    virtual bool readLine() = 0;
 
-    virtual char *getLine();
+    virtual char* getLine() = 0;
 };
 
 #endif //LINEREADER_H

@@ -14,7 +14,9 @@ class DebugStream {
 public:
     virtual ~DebugStream() = default;
 
-    virtual void setup() = 0;
+    virtual void setup() {
+
+    }
 
     void message(const char* fmt, ...) {
         write("MSG:\t");

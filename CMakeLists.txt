@@ -4,25 +4,29 @@ project(desktop)
 set(CMAKE_CXX_STANDARD 20)
 
 # ========Desktop configuration========
-#include_directories(platformio_nuli_avionics_flight_software/include)
-#set(desktopSimFiles platformio_nuli_avionics_flight_software/src/builds/desktop.cpp
-#        platformio_nuli_avionics_flight_software/src/drivers/desktop/CustomCsvParser.cpp
-#        platformio_nuli_avionics_flight_software/src/drivers/desktop/AprsModulationDesktop.cpp
-#        platformio_nuli_avionics_flight_software/src/core/AvionicsCore.cpp
-#        platformio_nuli_avionics_flight_software/src/core/Configuration.cpp
-#        platformio_nuli_avionics_flight_software/src/core/HardwareAbstraction.cpp
-#        platformio_nuli_avionics_flight_software/src/core/Logger.cpp
-#        platformio_nuli_avionics_flight_software/src/drivers/arduino/USLI2025Payload.cpp
-#        platformio_nuli_avionics_flight_software/src/core/cli/Parser.cpp
-#        platformio_nuli_avionics_flight_software/src/core/cli/Parser.tpp
-#        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.cpp
-#        platformio_nuli_avionics_flight_software/src/core/cli/BaseFlag.tpp
-#        platformio_nuli_avionics_flight_software/src/core/cli/SimpleFlag.cpp
-#        platformio_nuli_avionics_flight_software/src/core/cli/ArgumentFlag.tpp
-#)
-#
-#add_executable(desktop ${desktopSimFiles})
+include_directories(platformio_nuli_avionics_flight_software/include)
+include_directories(platformio_nuli_avionics_flight_software/lib)
+include_directories(platformio_nuli_avionics_flight_software/src)
 
+
+# Collect all source files recursively in drivers/desktop and core
+file(GLOB_RECURSE desktop_driver_sources
+        platformio_nuli_avionics_flight_software/src/drivers/desktop/*.cpp
+)
+
+file(GLOB_RECURSE core_sources
+        platformio_nuli_avionics_flight_software/src/core/*.cpp
+        platformio_nuli_avionics_flight_software/src/core/*.tpp
+)
+
+set(desktopSimFiles
+        platformio_nuli_avionics_flight_software/src/builds/desktop.cpp
+        ${desktop_driver_sources}
+        ${core_sources}
+)
+
+# Create the desktop executable
+add_executable(desktop ${desktopSimFiles})
 
 
 # ========Doxygen Build Configuration========
