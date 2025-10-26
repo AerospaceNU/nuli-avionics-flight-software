@@ -1,6 +1,9 @@
 var searchData=
 [
-  ['windows_0',['Windows',['../index.html#autotoc_md27',1,'']]],
-  ['windows_20macos_1',['Windows/MacOS',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md18',1,'']]],
-  ['works_20as_20string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_2',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]]
+  ['variables_0',['Variables',['../index.html#autotoc_md36',1,'']]],
+  ['vector3d_5fs_1',['Vector3D_s',['../structVector3D__s.html',1,'']]],
+  ['vector3dtransform_2',['Vector3DTransform',['../classVector3DTransform.html',1,'']]],
+  ['verify_3',['verify',['../classArgumentFlag.html#aa17253953981a7736b5cb0639ae16c52',1,'ArgumentFlag::verify()'],['../classBaseFlag.html#a0e6f89a30132e9321e5740cc13f88f7b',1,'BaseFlag::verify()'],['../classSimpleFlag.html#a58c584905e7c7292f5750c8c44c815a1',1,'SimpleFlag::verify()']]],
+  ['volatileconfigurationmemory_4',['VolatileConfigurationMemory',['../classVolatileConfigurationMemory.html',1,'']]],
+  ['voltagesensor_5',['VoltageSensor',['../classVoltageSensor.html',1,'']]]
 ];

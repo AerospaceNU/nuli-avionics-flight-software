@@ -9,7 +9,7 @@ var searchData=
   ['desktopserialreader_6',['DesktopSerialReader',['../classDesktopSerialReader.html',1,'']]],
   ['desktopsystemclock_7',['DesktopSystemClock',['../classDesktopSystemClock.html',1,'']]],
   ['disable_8',['disable',['../classPyro.html#a45629dccafea40d1131d9cdc6ade2743',1,'Pyro::disable()'],['../classArduinoPyro.html#a575fb26d0c937a3de5ba030e7b82ccb0',1,'ArduinoPyro::disable()']]],
-  ['discreterotation_9',['DiscreteRotation',['../classDiscreteRotation.html',1,'']]],
+  ['discreterotation_9',['DiscreteRotation',['../classDiscreteRotation.html',1,'DiscreteRotation'],['../classDiscreteRotation.html#aecdb538e2363d66dd2d75363f524d1f0',1,'DiscreteRotation::DiscreteRotation()']]],
   ['do_20the_20following_3a_10',['DO THE FOLLOWING:',['../index.html#autotoc_md32',1,'']]],
   ['doxygen_11',['Doxygen',['../index.html#autotoc_md30',1,'4. Doxygen'],['../index.html#autotoc_md35',1,'Doxygen']]],
   ['dummysystemclock_12',['DummySystemClock',['../classDummySystemClock.html',1,'']]]

@@ -1,4 +1,5 @@
 var searchData=
 [
-  ['y_0',['y',['../structVector3D__s.html#a802fd385e17ca81e64237a4a712b2e06',1,'Vector3D_s::y'],['../classEigen_1_1QuaternionBase.html#a77a62575ed017e4086145714db4e6502',1,'Eigen::QuaternionBase::y() const'],['../classEigen_1_1QuaternionBase.html#aa4bf2ff0e4aa4b57d1d16ce21d17066f',1,'Eigen::QuaternionBase::y()'],['../classEigen_1_1Translation.html#a8fa354dd285528cc48555054ccbd7e4c',1,'Eigen::Translation::y() const'],['../classEigen_1_1Translation.html#a7c4412e7cbb3bd8de411f6d2a1dcb192',1,'Eigen::Translation::y()']]]
+  ['_7ecustomcsvparser_0',['~CustomCsvParser',['../classCustomCsvParser.html#a7dbb61c4b4ee35ca5f33b9e55098181b',1,'CustomCsvParser']]],
+  ['_7eparser_1',['~Parser',['../classParser.html#a95734193a58a199b4c6d820a6a730c42',1,'Parser']]]
 ];

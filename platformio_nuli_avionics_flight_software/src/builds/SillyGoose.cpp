@@ -37,7 +37,7 @@
 // @todo Make it clear how Pyro.fireFor() works: it's currently handled in hardware.readSensors(), which is weird
 // @todo disable write in flash driver
 // @todo fix low pass implementation
-
+// @todo review boot flight detection
 
 // clang-format off
 struct SillyGooseLogData {
@@ -100,6 +100,9 @@ ConfigurationCliBindings<DROGUE_DELAY_c,
                          BOARD_NAME_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
+SimpleFlag resetBoard("--reset", "Send start", true, 255, []() {
+    NVIC_SystemReset();
+});
 SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
     serialDebug.message("Firing drogue");
@@ -110,6 +113,7 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     mainPyro.fireFor(pyroFireDuration.get());
 });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
@@ -119,10 +123,10 @@ void setup() {
     led.setOutputPercent(6.0); // Lower the LED Power
 
     // Setup Hardware
-    const int16_t framID = hardware.appendFramMemory(&fram);
-    const int16_t flashID = hardware.appendFlashMemory(&flash);
-    const int16_t drogueID = hardware.appendPyro(&droguePyro);
-    const int16_t mainID = hardware.appendPyro(&mainPyro);
+    int16_t framID = hardware.appendFramMemory(&fram);
+    int16_t flashID = hardware.appendFlashMemory(&flash);
+    int16_t drogueID = hardware.appendPyro(&droguePyro);
+    int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendBarometer(&barometer);
     hardware.appendGenericSensor(&icm20602);
@@ -137,6 +141,7 @@ void setup() {
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
     configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
     cliParser.addFlagGroup(testfireGroup);
+    cliParser.addFlagGroup(resetBoardGroup);
     cliParser.setup(&serialReader, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
