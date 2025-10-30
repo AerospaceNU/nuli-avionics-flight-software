@@ -10,13 +10,24 @@
  */
 
 // Define state transition paramiters
-constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0;
+/**
+ * Acceleration threshold design:
+ *      - Rockets must have a thrust to weight ratio of at least 3 (4+ is ideal). F = thrust force, r = ratio:
+ *          - F = rmg, F - mg = ma, rmg - mg = ma, a = (r - 1)g
+ *      - Worst case (lowest) acceleration: a = (3-1)g = ~20 m/ss
+ *      - This is not very high, and can be easily achieved by shaking the device
+ */
+// Launch detection
+constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0; ///, FCB used 20 m/s^2. This
 constexpr float LAUNCH_ALTITUDE_THRESHOLD_M = 100.0;
 constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
+// Apogee detection
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
+// Landing detection
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
+// On boot state detection
 constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
 constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;

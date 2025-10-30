@@ -45,8 +45,8 @@ struct SillyGooseLogData {
     int32_t flightState;
     bool drogueContinuity, drogueFired, mainContinuity, mainFired;
 } remove_struct_padding;
-#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatterVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
+#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
 // clang-format on
 
 // Hardware
@@ -67,8 +67,6 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
-OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimatorBasic6D;
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(true);
 IndicatorManager indicatorManager;
@@ -141,8 +139,6 @@ void setup() {
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.setup(&serialReader, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
-    orientationEstimator.setup(&hardware, &configuration);
-    stateEstimatorBasic6D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
@@ -161,6 +157,7 @@ void loop() {
     hardware.readSensors();
     hardware.runPyros();
 
+
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
         float simData[5];
@@ -170,9 +167,7 @@ void loop() {
     }
 
     // Determine state
-    // state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    // state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // State machine to determine when to do what
