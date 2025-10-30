@@ -115,7 +115,7 @@ void setup() {
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>("SillyGoose");
-    led.setOutputPercent(6.0); // Lower the LED Power
+    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0); // Lower the LED Power
 
     // Setup Hardware
     int16_t framID = hardware.appendFramMemory(&fram);
@@ -172,6 +172,9 @@ void loop() {
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
+        // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
+        if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
+        // Set default log rate
         logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);

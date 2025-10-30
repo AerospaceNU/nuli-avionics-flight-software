@@ -26,6 +26,7 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
 }
 
 FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const State1D_s& state1D) {
+    m_stateTransitionTick = false;
     if (getFlightState() == PRE_FLIGHT) {
         if (hasLaunched(timestamp, state1D)) {
             setFlightState(timestamp, ASCENT);
@@ -115,6 +116,7 @@ FlightState_e FlightStateDeterminer::getFlightState() const {
 
 
 void FlightStateDeterminer::setFlightState(const Timestamp_s& timestamp, const FlightState_e& flightState) {
+    m_stateTransitionTick = true;
     m_flightState.set(flightState);
     m_stateStopWatch.startWatch(timestamp.runtime_ms);
 }
@@ -122,3 +124,8 @@ void FlightStateDeterminer::setFlightState(const Timestamp_s& timestamp, const F
 const StopWatch* FlightStateDeterminer::getStateTimer() const {
     return &m_stateStopWatch;
 }
+
+bool FlightStateDeterminer::isStateTransitionTick() const {
+    return m_stateTransitionTick;
+}
+

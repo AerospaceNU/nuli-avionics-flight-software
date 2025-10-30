@@ -20,12 +20,16 @@ public:
 
     const StopWatch* getStateTimer() const;
 
+    bool isStateTransitionTick() const;
+
 private:
     bool hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D);
 
     bool apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D);
 
     bool hasLanded(const Timestamp_s& timestamp, const State1D_s& state1D);
+
+    bool m_stateTransitionTick = false;
 
     ConfigurationData<int32_t> m_flightState;
     Configuration* m_configuration = nullptr;
