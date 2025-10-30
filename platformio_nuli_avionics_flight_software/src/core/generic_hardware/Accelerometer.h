@@ -3,6 +3,7 @@
 
 #include <Avionics.h>
 #include "GenericSensor.h"
+#include "../transform/Vector3DTransform.h"
 
 /**
  * @class Accelerometer
@@ -11,6 +12,8 @@
  */
 class Accelerometer : public GenericSensor {
 public:
+    explicit Accelerometer(const Vector3DTransform *transform) : m_transform(transform) {};
+
     /**
      * @brief Injects sensor data directly
      * @details If a sensor can't be directly read from, you can inject data directly to the class
@@ -18,16 +21,25 @@ public:
      * @param temperatureK Temperature in kelvin
      */
     void inject(const Vector3D_s& accelerationsMSS, const float temperatureK) {
-        m_accelerationsMSS = accelerationsMSS;
+        m_accelerationsMSS_sensor = accelerationsMSS;
         m_temperatureK = temperatureK;
+        m_accelerationsMSS_board = m_transform->transform(m_accelerationsMSS_sensor);
     }
 
     /**
      * @brief Gets the Accelerations
-     * @return Accelerations in m/s^2
+     * @return Accelerations in m/s^2 in the sensor frame
      */
-    Vector3D_s getAccelerationsMSS() const {
-        return m_accelerationsMSS;
+    Vector3D_s getAccelerationsMSS_sensor() const {
+        return m_accelerationsMSS_sensor;
+    }
+
+    /**
+     * @brief Gets the Accelerations
+     * @return Accelerations in m/s^2 in the board frame
+     */
+    Vector3D_s getAccelerationsMSS_board() const {
+        return m_accelerationsMSS_board;
     }
 
     /**
@@ -47,7 +59,10 @@ public:
     }
 
 protected:
-    Vector3D_s m_accelerationsMSS = {}; ///< Sensor data vector
+    const Vector3DTransform *m_transform;
+    Vector3D_s m_accelerationsMSS_sensor = {}; ///< Sensor data vector
+    Vector3D_s m_accelerationsMSS_board = {}; ///< Sensor data vector
+
     float m_temperatureK = 0; ///< Sensor temperature
     float m_fullScaleMSS = 0; ///< Sensor full scale reading
 };

@@ -1,5 +1,3 @@
-
-
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
 
@@ -7,26 +5,43 @@
 #include "ConstantsUnits.h"
 #include "core/generic_hardware/DebugStream.h"
 #include <iostream>
+#include <fstream>
+#include <string>
 
-class DesktopDebug : public DebugStream {
+class DesktopDebug final : public DebugStream {
 public:
+    DesktopDebug() = default;
 
-    void setup() override {
-
+    ~DesktopDebug() override {
+        if (fileStream.is_open()) {
+            fileStream.close();
+        }
     }
 
-    void print(const char* str) override {
-        std::cout << (str);
+    // Optional setup to enable logging to file
+    bool outputToFile(const std::string& path) {
+        fileStream.open(path, std::ios::out);
+        return fileStream.is_open();
     }
 
-    void print(int64_t num) override {
-        std::cout << (num);
+    size_t write(const void* buffer, const size_t size) override {
+        const char* data = static_cast<const char*>(buffer);
+
+        // Write to console
+        std::cout.write(data, size);
+        std::cout.flush();
+
+        // Write to file if setup was called
+        if (fileStream.is_open()) {
+            fileStream.write(data, size);
+            fileStream.flush();
+        }
+
+        return size;
     }
 
-    void print(double num) override {
-        std::cout << (num);
-    }
+private:
+    std::ofstream fileStream;
 };
 
-
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
+#endif // PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H

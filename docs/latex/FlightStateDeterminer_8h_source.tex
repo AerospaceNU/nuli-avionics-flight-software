@@ -1,14 +1,14 @@
 \doxysection{Flight\+State\+Determiner.\+h}
-\hypertarget{FlightStateDeterminer_8h_source}{}\label{FlightStateDeterminer_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/FlightStateDeterminer.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/FlightStateDeterminer.h}}
+\hypertarget{FlightStateDeterminer_8h_source}{}\label{FlightStateDeterminer_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/state\_estimation/FlightStateDeterminer.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/src/core/state\_estimation/FlightStateDeterminer.h}}
 
 \begin{DoxyCode}{0}
 \DoxyCodeLine{00001\ \textcolor{preprocessor}{\#ifndef\ FLIGHT\_STATEMACHINE\_H}}
 \DoxyCodeLine{00002\ \textcolor{preprocessor}{\#define\ FLIGHT\_STATEMACHINE\_H}}
 \DoxyCodeLine{00003\ }
 \DoxyCodeLine{00004\ \textcolor{preprocessor}{\#include\ "{}\mbox{\hyperlink{Avionics_8h}{Avionics.h}}"{}}}
-\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}Configuration.h"{}}}
+\DoxyCodeLine{00005\ \textcolor{preprocessor}{\#include\ "{}../configuration/Configuration.h"{}}}
 \DoxyCodeLine{00006\ \textcolor{preprocessor}{\#include\ "{}core/filters/LowPass.h"{}}}
-\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}util/Debounce.h"{}}}
+\DoxyCodeLine{00007\ \textcolor{preprocessor}{\#include\ "{}util/Timer.h"{}}}
 \DoxyCodeLine{00008\ }
 \DoxyCodeLine{00009\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classFlightStateDeterminer}{FlightStateDeterminer}}\ \{}
 \DoxyCodeLine{00010\ \textcolor{keyword}{public}:}
@@ -16,13 +16,13 @@
 \DoxyCodeLine{00012\ }
 \DoxyCodeLine{00013\ \ \ \ \ \textcolor{keywordtype}{void}\ setup(\mbox{\hyperlink{classConfiguration}{Configuration}}*\ configuration);}
 \DoxyCodeLine{00014\ }
-\DoxyCodeLine{00015\ \ \ \ \ FlightState\_e\ loopOnce(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\&\ state1D);}
+\DoxyCodeLine{00015\ \ \ \ \ FlightState\_e\ update(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\&\ state1D);}
 \DoxyCodeLine{00016\ }
 \DoxyCodeLine{00017\ \ \ \ \ FlightState\_e\ getFlightState()\ \textcolor{keyword}{const};}
 \DoxyCodeLine{00018\ }
 \DoxyCodeLine{00019\ \ \ \ \ \textcolor{keywordtype}{void}\ setFlightState(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp,\ \textcolor{keyword}{const}\ FlightState\_e\&\ flightState);}
 \DoxyCodeLine{00020\ }
-\DoxyCodeLine{00021\ \ \ \ \ uint32\_t\ getStateStartTime()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classStopWatch}{StopWatch}}*\ getStateTimer()\ \textcolor{keyword}{const};}
 \DoxyCodeLine{00022\ }
 \DoxyCodeLine{00023\ \textcolor{keyword}{private}:}
 \DoxyCodeLine{00024\ \ \ \ \ \textcolor{keywordtype}{bool}\ hasLaunched(\textcolor{keyword}{const}\ \mbox{\hyperlink{structTimestamp__s}{Timestamp\_s}}\&\ timestamp,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structState1D__s}{State1D\_s}}\&\ state1D);}
@@ -35,14 +35,20 @@
 \DoxyCodeLine{00031\ \ \ \ \ \mbox{\hyperlink{classConfiguration}{Configuration}}*\ m\_configuration\ =\ \textcolor{keyword}{nullptr};}
 \DoxyCodeLine{00032\ }
 \DoxyCodeLine{00033\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_landingDetectionReferenceAltitude\ =\ 0;}
-\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_maxAltitude\ =\ 0;}
-\DoxyCodeLine{00035\ \ \ \ \ uint32\_t\ m\_flightStateStartTime\ =\ 0;}
-\DoxyCodeLine{00036\ }
-\DoxyCodeLine{00037\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ launchDebounce\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(LAUNCH\_DEBOUNCE\_TIMER\_MS);}
-\DoxyCodeLine{00038\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ apogeeDebounce\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(APOGEE\_DEBOUNCE\_TIMER\_MS);}
-\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ landingDebounce\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(LANDING\_DEBOUNCE\_TIMER\_MS);}
-\DoxyCodeLine{00040\ \};}
+\DoxyCodeLine{00034\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_maxAltitude\ =\ -\/999999999.0f;}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \ \ \ \ \mbox{\hyperlink{classStopWatch}{StopWatch}}\ m\_stateStopWatch;}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ m\_launchDebounce\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(LAUNCH\_DEBOUNCE\_TIMER\_MS);}
+\DoxyCodeLine{00039\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ m\_apogeeDebounce\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(APOGEE\_DEBOUNCE\_TIMER\_MS);}
+\DoxyCodeLine{00040\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ m\_landingDebounce\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(LANDING\_DEBOUNCE\_TIMER\_MS);}
 \DoxyCodeLine{00041\ }
-\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//FLIGHT\_STATEMACHINE\_H}}
+\DoxyCodeLine{00042\ \ \ \ \ \mbox{\hyperlink{classDebounce}{Debounce}}\ m\_unknownStateTimer\ =\ \mbox{\hyperlink{classDebounce}{Debounce}}(UNKNOWN\_STATE\_TIMER\_MS);}
+\DoxyCodeLine{00043\ \ \ \ \ \mbox{\hyperlink{classLowPass}{LowPass}}\ m\_unknownStateVelocityLowPass\{0.1\};}
+\DoxyCodeLine{00044\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_unknownStateMaximumAltitude\ =\ -\/999999999.0f;}
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordtype}{float}\ m\_unknownStateMinimumAltitude\ =\ 99999999.0f;}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//FLIGHT\_STATEMACHINE\_H}}
 
 \end{DoxyCode}

@@ -33,6 +33,9 @@ uint8_t readRegister(uint8_t address, uint8_t reg) {
     return Wire.read();
 }
 
+ICM20602Sensor::ICM20602Sensor(const Vector3DTransform* transform): m_accelerometer(transform), m_gyroscope(transform) {}
+
+
 void ICM20602Sensor::readAccelAndGyroBatch() {
     Wire.beginTransmission(ICM20602_ADDR);
     Wire.write(ACCEL_XOUT_H); // 0x2D
@@ -85,10 +88,6 @@ void initICM20602() {
     gyroScaleFactor = 16.4;
 }
 
-
-ICM20602Sensor::ICM20602Sensor() = default;
-
-
 void ICM20602Sensor::setup(DebugStream* debugStream) {
     Wire.begin();
     Wire.setClock(400000);
@@ -107,7 +106,7 @@ void ICM20602Sensor::setup(DebugStream* debugStream) {
 void ICM20602Sensor::read() {
     readAccelAndGyroBatch();
 
-    float temperature_K = (((float) tempRaw / 326.8) + 25.0) + Units::C_TO_K;
+    float temperature_K = (((float)tempRaw / 326.8) + 25.0) + Units::C_TO_K;
 
     // Convert accelerometer data to g
     const float accelX_g = (float)accelData[0] / accelScaleFactor;

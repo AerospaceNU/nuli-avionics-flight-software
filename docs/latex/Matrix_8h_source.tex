@@ -1,0 +1,584 @@
+\doxysection{Matrix.\+h}
+\hypertarget{Matrix_8h_source}{}\label{Matrix_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Matrix.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Matrix.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2006-\/2010\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2009\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_MATRIX\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_MATRIX\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Rows,\ \textcolor{keywordtype}{int}\ \_Cols,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keywordtype}{int}\ \_MaxRows,\ \textcolor{keywordtype}{int}\ \_MaxCols>}
+\DoxyCodeLine{00018\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>\ >}
+\DoxyCodeLine{00019\ \{}
+\DoxyCodeLine{00020\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00021\ \ \ \textcolor{keyword}{enum}\ \{\ size\ =\ internal::size\_at\_compile\_time<\_Rows,\_Cols>::ret\ \};}
+\DoxyCodeLine{00022\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ find\_best\_packet<\_Scalar,size>::type\ PacketScalar;}
+\DoxyCodeLine{00023\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00024\ \ \ \ \ \ \ row\_major\_bit\ =\ \_Options\&\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}\ ?\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}\ :\ 0,}
+\DoxyCodeLine{00025\ \ \ \ \ \ \ is\_dynamic\_size\_storage\ =\ \_MaxRows==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ||\ \_MaxCols==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00026\ \ \ \ \ \ \ max\_size\ =\ is\_dynamic\_size\_storage\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ \_MaxRows*\_MaxCols,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ default\_alignment\ =\ compute\_default\_alignment<\_Scalar,max\_size>::value,}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ actual\_alignment\ =\ ((\_Options\&\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a56908522e51443a0aa0567f879c2e78a}{DontAlign}})==0)\ ?\ default\_alignment\ :\ 0,}
+\DoxyCodeLine{00029\ \ \ \ \ \ \ required\_alignment\ =\ unpacket\_traits<PacketScalar>::alignment,}
+\DoxyCodeLine{00030\ \ \ \ \ \ \ packet\_access\_bit\ =\ (packet\_traits<\_Scalar>::Vectorizable\ \&\&\ (EIGEN\_UNALIGNED\_VECTORIZE\ ||\ (actual\_alignment>=required\_alignment)))\ ?\ \mbox{\hyperlink{group__flags_ga1a306a438e1ab074e8be59512e887b9f}{PacketAccessBit}}\ :\ 0}
+\DoxyCodeLine{00031\ \ \ \ \ \};}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00034\ \ \ \textcolor{keyword}{typedef}\ \_Scalar\ Scalar;}
+\DoxyCodeLine{00035\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Dense}{Dense}}\ StorageKind;}
+\DoxyCodeLine{00036\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ StorageIndex;}
+\DoxyCodeLine{00037\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}\ XprKind;}
+\DoxyCodeLine{00038\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00039\ \ \ \ \ RowsAtCompileTime\ =\ \_Rows,}
+\DoxyCodeLine{00040\ \ \ \ \ ColsAtCompileTime\ =\ \_Cols,}
+\DoxyCodeLine{00041\ \ \ \ \ MaxRowsAtCompileTime\ =\ \_MaxRows,}
+\DoxyCodeLine{00042\ \ \ \ \ MaxColsAtCompileTime\ =\ \_MaxCols,}
+\DoxyCodeLine{00043\ \ \ \ \ Flags\ =\ compute\_matrix\_flags<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>::ret,}
+\DoxyCodeLine{00044\ \ \ \ \ Options\ =\ \_Options,}
+\DoxyCodeLine{00045\ \ \ \ \ InnerStrideAtCompileTime\ =\ 1,}
+\DoxyCodeLine{00046\ \ \ \ \ OuterStrideAtCompileTime\ =\ (Options\&\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}})\ ?\ ColsAtCompileTime\ :\ RowsAtCompileTime,}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{comment}{//\ FIXME,\ the\ following\ flag\ in\ only\ used\ to\ define\ NeedsToAlign\ in\ PlainObjectBase}}
+\DoxyCodeLine{00049\ \ \ \ \ EvaluatorFlags\ =\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}}\ |\ \mbox{\hyperlink{group__flags_gabf1e9d0516a933445a4c307ad8f14915}{DirectAccessBit}}\ |\ packet\_access\_bit\ |\ row\_major\_bit,}
+\DoxyCodeLine{00050\ \ \ \ \ Alignment\ =\ actual\_alignment}
+\DoxyCodeLine{00051\ \ \ \};}
+\DoxyCodeLine{00052\ \};}
+\DoxyCodeLine{00053\ \}}
+\DoxyCodeLine{00054\ \textcolor{comment}{}}
+\DoxyCodeLine{00055\ \textcolor{comment}{/**\ \(\backslash\)class\ Matrix}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ The\ matrix\ class,\ also\ used\ for\ vectors\ and\ row-\/vectors}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ *\ The\ \%Matrix\ class\ is\ the\ work-\/horse\ for\ all\ \(\backslash\)em\ dense\ (\(\backslash\)ref\ dense\ "{}note"{})\ matrices\ and\ vectors\ within\ Eigen.}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ *\ Vectors\ are\ matrices\ with\ one\ column,\ and\ row-\/vectors\ are\ matrices\ with\ one\ row.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ *\ The\ \%Matrix\ class\ encompasses\ \(\backslash\)em\ both\ fixed-\/size\ and\ dynamic-\/size\ objects\ (\(\backslash\)ref\ fixedsize\ "{}note"{}).}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ *\ The\ first\ three\ template\ parameters\ are\ required:}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Scalar\ Numeric\ type,\ e.g.\ float,\ double,\ int\ or\ std::complex<float>.}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ User\ defined\ scalar\ types\ are\ supported\ as\ well\ (see\ \(\backslash\)ref\ user\_defined\_scalars\ "{}here"{}).}}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Rows\ Number\ of\ rows,\ or\ \(\backslash\)b\ Dynamic}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Cols\ Number\ of\ columns,\ or\ \(\backslash\)b\ Dynamic}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ *\ The\ remaining\ template\ parameters\ are\ optional\ -\/-\/\ in\ most\ cases\ you\ don't\ have\ to\ worry\ about\ them.}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Options\ A\ combination\ of\ either\ \(\backslash\)b\ \#RowMajor\ or\ \(\backslash\)b\ \#ColMajor,\ and\ of\ either}}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)b\ \#AutoAlign\ or\ \(\backslash\)b\ \#DontAlign.}}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ The\ former\ controls\ \(\backslash\)ref\ TopicStorageOrders\ "{}storage\ order"{},\ and\ defaults\ to\ column-\/major.\ The\ latter\ controls\ alignment,\ which\ is\ required}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ for\ vectorization.\ It\ defaults\ to\ aligning\ matrices\ except\ for\ fixed\ sizes\ that\ aren't\ a\ multiple\ of\ the\ packet\ size.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MaxRows\ Maximum\ number\ of\ rows.\ Defaults\ to\ \(\backslash\)a\ \_Rows\ (\(\backslash\)ref\ maxrows\ "{}note"{}).}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MaxCols\ Maximum\ number\ of\ columns.\ Defaults\ to\ \(\backslash\)a\ \_Cols\ (\(\backslash\)ref\ maxrows\ "{}note"{}).}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ *\ Eigen\ provides\ a\ number\ of\ typedefs\ covering\ the\ usual\ cases.\ Here\ are\ some\ examples:}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ Matrix2d\ is\ a\ 2x2\ square\ matrix\ of\ doubles\ (\(\backslash\)c\ Matrix<double,\ 2,\ 2>)}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ Vector4f\ is\ a\ vector\ of\ 4\ floats\ (\(\backslash\)c\ Matrix<float,\ 4,\ 1>)}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ RowVector3i\ is\ a\ row-\/vector\ of\ 3\ ints\ (\(\backslash\)c\ Matrix<int,\ 1,\ 3>)}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ MatrixXf\ is\ a\ dynamic-\/size\ matrix\ of\ floats\ (\(\backslash\)c\ Matrix<float,\ Dynamic,\ Dynamic>)}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ VectorXf\ is\ a\ dynamic-\/size\ vector\ of\ floats\ (\(\backslash\)c\ Matrix<float,\ Dynamic,\ 1>)}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ Matrix2Xf\ is\ a\ partially\ fixed-\/size\ (dynamic-\/size)\ matrix\ of\ floats\ (\(\backslash\)c\ Matrix<float,\ 2,\ Dynamic>)}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ *\ \(\backslash\)li\ \(\backslash\)c\ MatrixX3d\ is\ a\ partially\ dynamic-\/size\ (fixed-\/size)\ matrix\ of\ double\ (\(\backslash\)c\ Matrix<double,\ Dynamic,\ 3>)}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ *\ See\ \(\backslash\)link\ matrixtypedefs\ this\ page\ \(\backslash\)endlink\ for\ a\ complete\ list\ of\ predefined\ \(\backslash\)em\ \%Matrix\ and\ \(\backslash\)em\ Vector\ typedefs.}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ *\ You\ can\ access\ elements\ of\ vectors\ and\ matrices\ using\ normal\ subscripting:}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ *\ Eigen::VectorXd\ v(10);}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ *\ v[0]\ =\ 0.1;}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ *\ v[1]\ =\ 0.2;}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ *\ v(0)\ =\ 0.3;}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ *\ v(1)\ =\ 0.4;}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ *\ Eigen::MatrixXi\ m(10,\ 10);}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ \ *\ m(0,\ 1)\ =\ 1;}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ *\ m(0,\ 2)\ =\ 2;}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ *\ m(0,\ 3)\ =\ 3;}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ *\ This\ class\ can\ be\ extended\ with\ the\ help\ of\ the\ plugin\ mechanism\ described\ on\ the\ page}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ *\ \(\backslash\)ref\ TopicCustomizing\_Plugins\ by\ defining\ the\ preprocessor\ symbol\ \(\backslash\)c\ EIGEN\_MATRIX\_PLUGIN.}}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ \ *\ <i><b>Some\ notes:</b></i>}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ *\ <dl>}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ *\ <dt><b>\(\backslash\)anchor\ dense\ Dense\ versus\ sparse:</b></dt>}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ *\ <dd>This\ \%Matrix\ class\ handles\ dense,\ not\ sparse\ matrices\ and\ vectors.\ For\ sparse\ matrices\ and\ vectors,\ see\ the\ Sparse\ module.}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ *\ Dense\ matrices\ and\ vectors\ are\ plain\ usual\ arrays\ of\ coefficients.\ All\ the\ coefficients\ are\ stored,\ in\ an\ ordinary\ contiguous\ array.}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ *\ This\ is\ unlike\ Sparse\ matrices\ and\ vectors\ where\ the\ coefficients\ are\ stored\ as\ a\ list\ of\ nonzero\ coefficients.</dd>}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ *\ <dt><b>\(\backslash\)anchor\ fixedsize\ Fixed-\/size\ versus\ dynamic-\/size:</b></dt>}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ *\ <dd>Fixed-\/size\ means\ that\ the\ numbers\ of\ rows\ and\ columns\ are\ known\ are\ compile-\/time.\ In\ this\ case,\ Eigen\ allocates\ the\ array}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ *\ of\ coefficients\ as\ a\ fixed-\/size\ array,\ as\ a\ class\ member.\ This\ makes\ sense\ for\ very\ small\ matrices,\ typically\ up\ to\ 4x4,\ sometimes\ up}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ *\ to\ 16x16.\ Larger\ matrices\ should\ be\ declared\ as\ dynamic-\/size\ even\ if\ one\ happens\ to\ know\ their\ size\ at\ compile-\/time.}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ *\ Dynamic-\/size\ means\ that\ the\ numbers\ of\ rows\ or\ columns\ are\ not\ necessarily\ known\ at\ compile-\/time.\ In\ this\ case\ they\ are\ runtime}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ *\ variables,\ and\ the\ array\ of\ coefficients\ is\ allocated\ dynamically\ on\ the\ heap.}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ *\ Note\ that\ \(\backslash\)em\ dense\ matrices,\ be\ they\ Fixed-\/size\ or\ Dynamic-\/size,\ <em>do\ not</em>\ expand\ dynamically\ in\ the\ sense\ of\ a\ std::map.}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ *\ If\ you\ want\ this\ behavior,\ see\ the\ Sparse\ module.</dd>}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00131\ \textcolor{comment}{\ \ *\ <dt><b>\(\backslash\)anchor\ maxrows\ \_MaxRows\ and\ \_MaxCols:</b></dt>}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ *\ <dd>In\ most\ cases,\ one\ just\ leaves\ these\ parameters\ to\ the\ default\ values.}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ \ *\ These\ parameters\ mean\ the\ maximum\ size\ of\ rows\ and\ columns\ that\ the\ matrix\ may\ have.\ They\ are\ useful\ in\ cases}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ *\ when\ the\ exact\ numbers\ of\ rows\ and\ columns\ are\ not\ known\ are\ compile-\/time,\ but\ it\ is\ known\ at\ compile-\/time\ that\ they\ cannot}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ *\ exceed\ a\ certain\ value.\ This\ happens\ when\ taking\ dynamic-\/size\ blocks\ inside\ fixed-\/size\ matrices:\ in\ this\ case\ \_MaxRows\ and\ \_MaxCols}}
+\DoxyCodeLine{00136\ \textcolor{comment}{\ \ *\ are\ the\ dimensions\ of\ the\ original\ matrix,\ while\ \_Rows\ and\ \_Cols\ are\ Dynamic.</dd>}}
+\DoxyCodeLine{00137\ \textcolor{comment}{\ \ *\ </dl>}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ *\ <i><b>ABI\ and\ storage\ layout</b></i>}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ *\ The\ table\ below\ summarizes\ the\ ABI\ of\ some\ possible\ Matrix\ instances\ which\ is\ fixed\ thorough\ the\ lifetime\ of\ Eigen\ 3.}}
+\DoxyCodeLine{00142\ \textcolor{comment}{\ \ *\ <table\ \ class="{}manual"{}>}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ *\ <tr><th>Matrix\ type</th><th>Equivalent\ C\ structure</th></tr>}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ *\ <tr><td>\(\backslash\)code\ Matrix<T,Dynamic,Dynamic>\ \(\backslash\)endcode</td><td>\(\backslash\)code}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ *\ struct\ \{}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ *\ \ \ T\ *data;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ with\ (size\_t(data)\%EIGEN\_MAX\_ALIGN\_BYTES)==0}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ *\ \ \ Eigen::Index\ rows,\ cols;}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ *\ \ \};}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode</td></tr>}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ *\ <tr\ class="{}alt"{}><td>\(\backslash\)code}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ \ *\ Matrix<T,Dynamic,1>}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ *\ Matrix<T,1,Dynamic>\ \(\backslash\)endcode</td><td>\(\backslash\)code}}
+\DoxyCodeLine{00153\ \textcolor{comment}{\ \ *\ struct\ \{}}
+\DoxyCodeLine{00154\ \textcolor{comment}{\ \ *\ \ \ T\ *data;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ //\ with\ (size\_t(data)\%EIGEN\_MAX\_ALIGN\_BYTES)==0}}
+\DoxyCodeLine{00155\ \textcolor{comment}{\ \ *\ \ \ Eigen::Index\ size;}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ *\ \ \};}}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode</td></tr>}}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ *\ <tr><td>\(\backslash\)code\ Matrix<T,Rows,Cols>\ \(\backslash\)endcode</td><td>\(\backslash\)code}}
+\DoxyCodeLine{00159\ \textcolor{comment}{\ \ *\ struct\ \{}}
+\DoxyCodeLine{00160\ \textcolor{comment}{\ \ *\ \ \ T\ data[Rows*Cols];\ \ \ \ \ \ \ \ //\ with\ (size\_t(data)\%A(Rows*Cols*sizeof(T)))==0}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ *\ \ \};}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode</td></tr>}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ *\ <tr\ class="{}alt"{}><td>\(\backslash\)code\ Matrix<T,Dynamic,Dynamic,0,MaxRows,MaxCols>\ \(\backslash\)endcode</td><td>\(\backslash\)code}}
+\DoxyCodeLine{00164\ \textcolor{comment}{\ \ *\ struct\ \{}}
+\DoxyCodeLine{00165\ \textcolor{comment}{\ \ *\ \ \ T\ data[MaxRows*MaxCols];\ \ //\ with\ (size\_t(data)\%A(MaxRows*MaxCols*sizeof(T)))==0}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ *\ \ \ Eigen::Index\ rows,\ cols;}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ *\ \ \};}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode</td></tr>}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ *\ </table>}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ *\ Note\ that\ in\ this\ table\ Rows,\ Cols,\ MaxRows\ and\ MaxCols\ are\ all\ positive\ integers.\ A(S)\ is\ defined\ to\ the\ largest\ possible\ power-\/of-\/two}}
+\DoxyCodeLine{00171\ \textcolor{comment}{\ \ *\ smaller\ to\ EIGEN\_MAX\_STATIC\_ALIGN\_BYTES.}}
+\DoxyCodeLine{00172\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ *\ \(\backslash\)see\ MatrixBase\ for\ the\ majority\ of\ the\ API\ methods\ for\ matrices,\ \(\backslash\)ref\ TopicClassHierarchy,}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ *\ \(\backslash\)ref\ TopicStorageOrders}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Rows,\ \textcolor{keywordtype}{int}\ \_Cols,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keywordtype}{int}\ \_MaxRows,\ \textcolor{keywordtype}{int}\ \_MaxCols>}
+\DoxyCodeLine{00178\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}}
+\DoxyCodeLine{00179\ \ \ :\ \textcolor{keyword}{public}\ PlainObjectBase<Matrix<\_Scalar,\ \_Rows,\ \_Cols,\ \_Options,\ \_MaxRows,\ \_MaxCols>\ >}
+\DoxyCodeLine{00180\ \{}
+\DoxyCodeLine{00181\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00182\ \textcolor{comment}{}}
+\DoxyCodeLine{00183\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Base\ class\ typedef.}}
+\DoxyCodeLine{00184\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ PlainObjectBase}}
+\DoxyCodeLine{00185\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keyword}{typedef}\ PlainObjectBase<Matrix>\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}};}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ Options\ =\ \_Options\ \};}
+\DoxyCodeLine{00189\ }
+\DoxyCodeLine{00190\ \ \ \ \ EIGEN\_DENSE\_PUBLIC\_INTERFACE(\mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}})}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::PlainObject\ PlainObject;}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \textcolor{keyword}{using\ }Base::base;}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keyword}{using\ }\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ad6ab241435124b11a3921df752d28daf}{Base::coeffRef}};}
+\DoxyCodeLine{00196\ \textcolor{comment}{}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)brief\ Assigns\ matrices\ to\ each\ other.}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)note\ This\ is\ a\ special\ case\ of\ the\ templated\ operator=.\ Its\ purpose\ is}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ \ \ \ \ *\ to\ prevent\ a\ default\ operator=\ from\ hiding\ the\ templated\ operator=.}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)callgraph}}
+\DoxyCodeLine{00204\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00205\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00206\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\ \mbox{\hyperlink{classEigen_1_1Matrix_a5112d4c541bcd4a27d33734d7044e5f3}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\ other)}
+\DoxyCodeLine{00207\ \ \ \ \ \{}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1PlainObjectBase_ae6ea682fcdd15f8d93913c7b8b88557a}{Base::\_set}}(other);}
+\DoxyCodeLine{00209\ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \textcolor{comment}{}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)brief\ Copies\ the\ value\ of\ the\ expression\ \(\backslash\)a\ other\ into\ \(\backslash\)c\ *this\ with\ automatic\ resizing.}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ \ \ \ \ \ *\ *this\ might\ be\ resized\ to\ match\ the\ dimensions\ of\ \(\backslash\)a\ other.\ If\ *this\ was\ a\ null\ matrix\ (not\ already\ initialized),}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ \ \ \ \ *\ it\ will\ be\ initialized.}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ \ \ \ \ *\ Note\ that\ copying\ a\ row-\/vector\ into\ a\ vector\ (and\ conversely)\ is\ allowed.}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ resizing,\ if\ any,\ is\ then\ done\ in\ the\ appropriate\ way\ so\ that\ row-\/vectors}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ \ \ \ \ *\ remain\ row-\/vectors\ and\ vectors\ remain\ vectors.}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00222\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00223\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}\&\ \mbox{\hyperlink{classEigen_1_1Matrix_a5112d4c541bcd4a27d33734d7044e5f3}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1DenseBase}{DenseBase<OtherDerived>}}\&\ other)}
+\DoxyCodeLine{00224\ \ \ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1PlainObjectBase_ae6ea682fcdd15f8d93913c7b8b88557a}{Base::\_set}}(other);}
+\DoxyCodeLine{00226\ \ \ \ \ \}}
+\DoxyCodeLine{00227\ \textcolor{comment}{}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)brief\ Copies\ the\ generic\ expression\ \(\backslash\)a\ other\ into\ *this.}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)copydetails\ DenseBase::operator=(const\ EigenBase<OtherDerived>\ \&other)}}
+\DoxyCodeLine{00231\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00232\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00233\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00234\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\ \mbox{\hyperlink{classEigen_1_1Matrix_a781ddaa7c399f2ea5ad2e6b343e61cea}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase<OtherDerived>}}\ \&other)}
+\DoxyCodeLine{00235\ \ \ \ \ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1PlainObjectBase_a8b9fead6af283323206409388ae6f0ff}{Base::operator=}}(other);}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00240\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00241\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}\&\ \mbox{\hyperlink{classEigen_1_1Matrix_a5112d4c541bcd4a27d33734d7044e5f3}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1ReturnByValue}{ReturnByValue<OtherDerived>}}\&\ func)}
+\DoxyCodeLine{00242\ \ \ \ \ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1PlainObjectBase_a8b9fead6af283323206409388ae6f0ff}{Base::operator=}}(func);}
+\DoxyCodeLine{00244\ \ \ \ \ \}}
+\DoxyCodeLine{00245\ \textcolor{comment}{}}
+\DoxyCodeLine{00246\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Default\ constructor.}}
+\DoxyCodeLine{00247\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00248\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ fixed-\/size\ matrices,\ does\ nothing.}}
+\DoxyCodeLine{00249\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00250\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ dynamic-\/size\ matrices,\ creates\ an\ empty\ matrix\ of\ size\ 0.\ Does\ not\ allocate\ any\ array.\ Such\ a\ matrix}}
+\DoxyCodeLine{00251\ \textcolor{comment}{\ \ \ \ \ \ *\ is\ called\ a\ null\ matrix.\ This\ constructor\ is\ the\ unique\ way\ to\ create\ null\ matrices:\ resizing}}
+\DoxyCodeLine{00252\ \textcolor{comment}{\ \ \ \ \ \ *\ a\ matrix\ to\ 0\ is\ not\ supported.}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00254\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ resize(Index,Index)}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00256\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00257\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}()\ :\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}}()}
+\DoxyCodeLine{00258\ \ \ \ \ \{}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ Base::\_check\_template\_params();}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ EIGEN\_INITIALIZE\_COEFFS\_IF\_THAT\_OPTION\_IS\_ENABLED}
+\DoxyCodeLine{00261\ \ \ \ \ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{comment}{//\ FIXME\ is\ it\ still\ needed}}
+\DoxyCodeLine{00264\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\mbox{\hyperlink{structEigen_1_1internal_1_1constructor__without__unaligned__array__assert}{internal::constructor\_without\_unaligned\_array\_assert}})}
+\DoxyCodeLine{00266\ \ \ \ \ \ \ :\ \mbox{\hyperlink{classEigen_1_1CwiseBinaryOpImpl}{Base}}(internal::constructor\_without\_unaligned\_array\_assert())}
+\DoxyCodeLine{00267\ \ \ \ \ \{\ Base::\_check\_template\_params();\ EIGEN\_INITIALIZE\_COEFFS\_IF\_THAT\_OPTION\_IS\_ENABLED\ \}}
+\DoxyCodeLine{00268\ }
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\#if\ EIGEN\_HAS\_RVALUE\_REFERENCES}}
+\DoxyCodeLine{00270\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00271\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\&\ other)\ EIGEN\_NOEXCEPT\_IF(std::is\_nothrow\_move\_constructible<Scalar>::value)}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ :\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}}(std::move(other))}
+\DoxyCodeLine{00273\ \ \ \ \ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ Base::\_check\_template\_params();}
+\DoxyCodeLine{00275\ \ \ \ \ \}}
+\DoxyCodeLine{00276\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00277\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\ \mbox{\hyperlink{classEigen_1_1Matrix_a5112d4c541bcd4a27d33734d7044e5f3}{operator=}}(\mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\&\ other)\ EIGEN\_NOEXCEPT\_IF(std::is\_nothrow\_move\_assignable<Scalar>::value)}
+\DoxyCodeLine{00278\ \ \ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1PlainObjectBase_a8b9fead6af283323206409388ae6f0ff}{Base::operator=}}(std::move(other));}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00281\ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{preprocessor}{\#if\ EIGEN\_HAS\_CXX11}\textcolor{comment}{}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Construct\ a\ row\ of\ column\ vector\ with\ fixed\ size\ from\ an\ arbitrary\ number\ of\ coefficients.\ \(\backslash\)cpp11}}
+\DoxyCodeLine{00286\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)only\_for\_vectors}}
+\DoxyCodeLine{00288\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00289\ \textcolor{comment}{\ \ \ \ \ *\ This\ constructor\ is\ for\ 1D\ array\ or\ vectors\ with\ more\ than\ 4\ coefficients.}}
+\DoxyCodeLine{00290\ \textcolor{comment}{\ \ \ \ \ *\ There\ exists\ C++98\ analogue\ constructors\ for\ fixed-\/size\ array/vector\ having\ 1,\ 2,\ 3,\ or\ 4\ coefficients.}}
+\DoxyCodeLine{00291\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00292\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)warning\ To\ construct\ a\ column\ (resp.\ row)\ vector\ of\ fixed\ length,\ the\ number\ of\ values\ passed\ to\ this}}
+\DoxyCodeLine{00293\ \textcolor{comment}{\ \ \ \ \ *\ constructor\ must\ match\ the\ the\ fixed\ number\ of\ rows\ (resp.\ columns)\ of\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00294\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00295\ \textcolor{comment}{\ \ \ \ \ *\ Example:\ \(\backslash\)include\ Matrix\_variadic\_ctor\_cxx11.cpp}}
+\DoxyCodeLine{00296\ \textcolor{comment}{\ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Matrix\_variadic\_ctor\_cxx11.out}}
+\DoxyCodeLine{00297\ \textcolor{comment}{\ \ \ \ \ *}}
+\DoxyCodeLine{00298\ \textcolor{comment}{\ \ \ \ \ *\ \(\backslash\)sa\ Matrix(const\ std::initializer\_list<std::initializer\_list<Scalar>>\&)}}
+\DoxyCodeLine{00299\ \textcolor{comment}{\ \ \ \ \ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}...\ ArgTypes>}
+\DoxyCodeLine{00301\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00302\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ Scalar\&\ a0,\ \textcolor{keyword}{const}\ Scalar\&\ a1,\ \textcolor{keyword}{const}\ Scalar\&\ a2,\ \ \textcolor{keyword}{const}\ Scalar\&\ a3,\ \textcolor{keyword}{const}\ ArgTypes\&...\ args)}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ :\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}}(a0,\ a1,\ a2,\ a3,\ args...)\ \{\}}
+\DoxyCodeLine{00304\ \textcolor{comment}{}}
+\DoxyCodeLine{00305\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ a\ Matrix\ and\ initializes\ it\ from\ the\ coefficients\ given\ as\ initializer-\/lists\ grouped\ by\ row.\ \(\backslash\)cpp11}}
+\DoxyCodeLine{00306\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)anchor\ matrix\_constructor\_initializer\_list}}
+\DoxyCodeLine{00308\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00309\ \textcolor{comment}{\ \ \ \ \ \ *\ In\ the\ general\ case,\ the\ constructor\ takes\ a\ list\ of\ rows,\ each\ row\ being\ represented\ as\ a\ list\ of\ coefficients:}}
+\DoxyCodeLine{00310\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00311\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Matrix\_initializer\_list\_23\_cxx11.cpp}}
+\DoxyCodeLine{00312\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Matrix\_initializer\_list\_23\_cxx11.out}}
+\DoxyCodeLine{00313\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00314\ \textcolor{comment}{\ \ \ \ \ \ *\ Each\ of\ the\ inner\ initializer\ lists\ must\ contain\ the\ exact\ same\ number\ of\ elements,\ otherwise\ an\ assertion\ is\ triggered.}}
+\DoxyCodeLine{00315\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00316\ \textcolor{comment}{\ \ \ \ \ \ *\ In\ the\ case\ of\ a\ compile-\/time\ column\ vector,\ implicit\ transposition\ from\ a\ single\ row\ is\ allowed.}}
+\DoxyCodeLine{00317\ \textcolor{comment}{\ \ \ \ \ \ *\ Therefore\ <code>VectorXd\{\{1,2,3,4,5\}\}</code>\ is\ legal\ and\ the\ more\ verbose\ syntax}}
+\DoxyCodeLine{00318\ \textcolor{comment}{\ \ \ \ \ \ *\ <code>RowVectorXd\{\{1\},\{2\},\{3\},\{4\},\{5\}\}</code>\ can\ be\ avoided:}}
+\DoxyCodeLine{00319\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00320\ \textcolor{comment}{\ \ \ \ \ \ *\ Example:\ \(\backslash\)include\ Matrix\_initializer\_list\_vector\_cxx11.cpp}}
+\DoxyCodeLine{00321\ \textcolor{comment}{\ \ \ \ \ \ *\ Output:\ \(\backslash\)verbinclude\ Matrix\_initializer\_list\_vector\_cxx11.out}}
+\DoxyCodeLine{00322\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00323\ \textcolor{comment}{\ \ \ \ \ \ *\ In\ the\ case\ of\ fixed-\/sized\ matrices,\ the\ initializer\ list\ sizes\ must\ exactly\ match\ the\ matrix\ sizes,}}
+\DoxyCodeLine{00324\ \textcolor{comment}{\ \ \ \ \ \ *\ and\ implicit\ transposition\ is\ allowed\ for\ compile-\/time\ vectors\ only.}}
+\DoxyCodeLine{00325\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00326\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Matrix(const\ Scalar\&\ a0,\ const\ Scalar\&\ a1,\ const\ Scalar\&\ a2,\ \ const\ Scalar\&\ a3,\ const\ ArgTypes\&...\ args)}}
+\DoxyCodeLine{00327\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00328\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keyword}{explicit}\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ std::initializer\_list<std::initializer\_list<Scalar>>\&\ list)\ :\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}}(list)\ \{\}}
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ end\ EIGEN\_HAS\_CXX11}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \ \ \ \ \textcolor{comment}{//\ This\ constructor\ is\ for\ both\ 1x1\ matrices\ and\ dynamic\ vectors}}
+\DoxyCodeLine{00335\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00336\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00337\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ T\&\ x)}
+\DoxyCodeLine{00338\ \ \ \ \ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ Base::\_check\_template\_params();}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ Base::template\ \_init1<T>(x);}
+\DoxyCodeLine{00341\ \ \ \ \ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T0,\ \textcolor{keyword}{typename}\ T1>}
+\DoxyCodeLine{00344\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00345\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ T0\&\ x,\ \textcolor{keyword}{const}\ T1\&\ y)}
+\DoxyCodeLine{00346\ \ \ \ \ \{}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ Base::\_check\_template\_params();}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ Base::template\ \_init2<T0,T1>(x,\ y);}
+\DoxyCodeLine{00349\ \ \ \ \ \}}
+\DoxyCodeLine{00350\ }
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\#else}\textcolor{comment}{}}
+\DoxyCodeLine{00353\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ a\ fixed-\/sized\ matrix\ initialized\ with\ coefficients\ starting\ at\ \(\backslash\)a\ data\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00354\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00355\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ Scalar\ *\mbox{\hyperlink{classEigen_1_1PlainObjectBase_a322d4d48cc285b60e0dff100db522342}{data}});}
+\DoxyCodeLine{00356\ \textcolor{comment}{}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ a\ vector\ or\ row-\/vector\ with\ given\ dimension.\ \(\backslash\)only\_for\_vectors}}
+\DoxyCodeLine{00358\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ is\ useful\ for\ dynamic-\/size\ vectors.\ For\ fixed-\/size\ vectors,}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ \ \ \ \ *\ it\ is\ redundant\ to\ pass\ these\ parameters,\ so\ one\ should\ use\ the\ default\ constructor}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ \ \ \ \ *\ Matrix()\ instead.}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00363\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)warning\ This\ constructor\ is\ disabled\ for\ fixed-\/size\ \(\backslash\)c\ 1x1\ matrices.\ For\ instance,}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ \ \ \ \ *\ calling\ Matrix<double,1,1>(1)\ will\ call\ the\ initialization\ constructor:\ Matrix(const\ Scalar\&).}}
+\DoxyCodeLine{00365\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ fixed-\/size\ \(\backslash\)c\ 1x1\ matrices\ it\ is\ therefore\ recommended\ to\ use\ the\ default}}
+\DoxyCodeLine{00366\ \textcolor{comment}{\ \ \ \ \ \ *\ constructor\ Matrix()\ instead,\ especially\ when\ using\ one\ of\ the\ non\ standard}}
+\DoxyCodeLine{00367\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)c\ EIGEN\_INITIALIZE\_MATRICES\_BY\_\{ZERO,\(\backslash\)c\ NAN\}\ macros\ (see\ \(\backslash\)ref\ TopicPreprocessorDirectives).}}
+\DoxyCodeLine{00368\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00369\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dim);\textcolor{comment}{}}
+\DoxyCodeLine{00370\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ an\ initialized\ 1x1\ matrix\ with\ the\ given\ coefficient}}
+\DoxyCodeLine{00371\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Matrix(const\ Scalar\&,\ const\ Scalar\&,\ const\ Scalar\&,\ \ const\ Scalar\&,\ const\ ArgTypes\&...)\ */}}
+\DoxyCodeLine{00372\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ Scalar\&\ x);\textcolor{comment}{}}
+\DoxyCodeLine{00373\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ an\ uninitialized\ matrix\ with\ \(\backslash\)a\ rows\ rows\ and\ \(\backslash\)a\ cols\ columns.}}
+\DoxyCodeLine{00374\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00375\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ is\ useful\ for\ dynamic-\/size\ matrices.\ For\ fixed-\/size\ matrices,}}
+\DoxyCodeLine{00376\ \textcolor{comment}{\ \ \ \ \ \ *\ it\ is\ redundant\ to\ pass\ these\ parameters,\ so\ one\ should\ use\ the\ default\ constructor}}
+\DoxyCodeLine{00377\ \textcolor{comment}{\ \ \ \ \ \ *\ Matrix()\ instead.}}
+\DoxyCodeLine{00378\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00379\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)warning\ This\ constructor\ is\ disabled\ for\ fixed-\/size\ \(\backslash\)c\ 1x2\ and\ \(\backslash\)c\ 2x1\ vectors.\ For\ instance,}}
+\DoxyCodeLine{00380\ \textcolor{comment}{\ \ \ \ \ \ *\ calling\ Matrix2f(2,1)\ will\ call\ the\ initialization\ constructor:\ Matrix(const\ Scalar\&\ x,\ const\ Scalar\&\ y).}}
+\DoxyCodeLine{00381\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ fixed-\/size\ \(\backslash\)c\ 1x2\ or\ \(\backslash\)c\ 2x1\ vectors\ it\ is\ therefore\ recommended\ to\ use\ the\ default}}
+\DoxyCodeLine{00382\ \textcolor{comment}{\ \ \ \ \ \ *\ constructor\ Matrix()\ instead,\ especially\ when\ using\ one\ of\ the\ non\ standard}}
+\DoxyCodeLine{00383\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)c\ EIGEN\_INITIALIZE\_MATRICES\_BY\_\{ZERO,\(\backslash\)c\ NAN\}\ macros\ (see\ \(\backslash\)ref\ TopicPreprocessorDirectives).}}
+\DoxyCodeLine{00384\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00385\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00386\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols);}
+\DoxyCodeLine{00387\ \textcolor{comment}{}}
+\DoxyCodeLine{00388\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ an\ initialized\ 2D\ vector\ with\ given\ coefficients}}
+\DoxyCodeLine{00389\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Matrix(const\ Scalar\&,\ const\ Scalar\&,\ const\ Scalar\&,\ \ const\ Scalar\&,\ const\ ArgTypes\&...)\ */}}
+\DoxyCodeLine{00390\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}(\textcolor{keyword}{const}\ Scalar\&\ x,\ \textcolor{keyword}{const}\ Scalar\&\ y);}
+\DoxyCodeLine{00391\ \textcolor{preprocessor}{\ \ \ \ \#endif\ \ }\textcolor{comment}{//\ end\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00392\ \textcolor{comment}{}}
+\DoxyCodeLine{00393\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ an\ initialized\ 3D\ vector\ with\ given\ coefficients}}
+\DoxyCodeLine{00394\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Matrix(const\ Scalar\&,\ const\ Scalar\&,\ const\ Scalar\&,\ \ const\ Scalar\&,\ const\ ArgTypes\&...)}}
+\DoxyCodeLine{00395\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00396\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00397\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_a0a422e4c801e859d47226c348c482cb5}{Matrix}}(\textcolor{keyword}{const}\ Scalar\&\ x,\ \textcolor{keyword}{const}\ Scalar\&\ y,\ \textcolor{keyword}{const}\ Scalar\&\ z)}
+\DoxyCodeLine{00398\ \ \ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ Base::\_check\_template\_params();}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT\_VECTOR\_SPECIFIC\_SIZE(\mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}},\ 3)}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ m\_storage.data()[0]\ =\ x;}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ m\_storage.data()[1]\ =\ y;}
+\DoxyCodeLine{00403\ \ \ \ \ \ \ m\_storage.data()[2]\ =\ z;}
+\DoxyCodeLine{00404\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00405\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Constructs\ an\ initialized\ 4D\ vector\ with\ given\ coefficients}}
+\DoxyCodeLine{00406\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ Matrix(const\ Scalar\&,\ const\ Scalar\&,\ const\ Scalar\&,\ \ const\ Scalar\&,\ const\ ArgTypes\&...)}}
+\DoxyCodeLine{00407\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00408\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00409\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_afe8c7913883c78db58f15e22103f93a2}{Matrix}}(\textcolor{keyword}{const}\ Scalar\&\ x,\ \textcolor{keyword}{const}\ Scalar\&\ y,\ \textcolor{keyword}{const}\ Scalar\&\ z,\ \textcolor{keyword}{const}\ Scalar\&\ w)}
+\DoxyCodeLine{00410\ \ \ \ \ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ Base::\_check\_template\_params();}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT\_VECTOR\_SPECIFIC\_SIZE(\mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}},\ 4)}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ m\_storage.data()[0]\ =\ x;}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ m\_storage.data()[1]\ =\ y;}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ m\_storage.data()[2]\ =\ z;}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ m\_storage.data()[3]\ =\ w;}
+\DoxyCodeLine{00417\ \ \ \ \ \}}
+\DoxyCodeLine{00418\ }
+\DoxyCodeLine{00419\ \textcolor{comment}{}}
+\DoxyCodeLine{00420\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Copy\ constructor\ */}}
+\DoxyCodeLine{00421\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00422\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_aea16cba266274974c729c98e8567f41d}{Matrix}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\ other)\ :\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}}(other)}
+\DoxyCodeLine{00423\ \ \ \ \ \{\ \}}
+\DoxyCodeLine{00424\ \textcolor{comment}{}}
+\DoxyCodeLine{00425\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Copy\ constructor\ for\ generic\ expressions.}}
+\DoxyCodeLine{00426\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ MatrixBase::operator=(const\ EigenBase<OtherDerived>\&)}}
+\DoxyCodeLine{00427\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00428\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00429\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00430\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Matrix_ae4bcda7578de9624709cbfa8d3ddd9d9}{Matrix}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1EigenBase}{EigenBase<OtherDerived>}}\ \&other)}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ :\ \mbox{\hyperlink{classEigen_1_1Matrix_a9f405923954599ec7a71ee6bad2c53f1}{Base}}(other.derived())}
+\DoxyCodeLine{00432\ \ \ \ \ \{\ \}}
+\DoxyCodeLine{00433\ }
+\DoxyCodeLine{00434\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00435\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ innerStride()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ 1;\ \}}
+\DoxyCodeLine{00436\ \ \ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outerStride()\ const\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ this-\/>innerSize();\ \}}
+\DoxyCodeLine{00438\ \textcolor{comment}{}}
+\DoxyCodeLine{00439\ \textcolor{comment}{\ \ \ \ ///////////\ Geometry\ module\ ///////////}}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00442\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1Matrix_ae714ec2f92b13d808c336faf185e5893}{Matrix}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1RotationBase}{RotationBase<OtherDerived,ColsAtCompileTime>}}\&\ r);}
+\DoxyCodeLine{00444\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00445\ \ \ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00446\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix_a11f852d66fa55b2aed12aa22da807a6b}{Matrix}}\&\ \mbox{\hyperlink{classEigen_1_1Matrix_a5112d4c541bcd4a27d33734d7044e5f3}{operator=}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1RotationBase}{RotationBase<OtherDerived,ColsAtCompileTime>}}\&\ r);}
+\DoxyCodeLine{00447\ }
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{comment}{//\ allow\ to\ extend\ Matrix\ outside\ Eigen}}
+\DoxyCodeLine{00449\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ EIGEN\_MATRIX\_PLUGIN}}
+\DoxyCodeLine{00450\ \textcolor{preprocessor}{\ \ \ \ \#include\ EIGEN\_MATRIX\_PLUGIN}}
+\DoxyCodeLine{00451\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Derived,\ \textcolor{keyword}{typename}\ OtherDerived,\ \textcolor{keywordtype}{bool}\ IsVector>}
+\DoxyCodeLine{00455\ \ \ \ \ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1conservative__resize__like__impl}{internal::conservative\_resize\_like\_impl}};}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_storage;}
+\DoxyCodeLine{00458\ \};}
+\DoxyCodeLine{00459\ \textcolor{comment}{}}
+\DoxyCodeLine{00460\ \textcolor{comment}{/**\ \(\backslash\)defgroup\ matrixtypedefs\ Global\ matrix\ typedefs}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00462\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00463\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00464\ \textcolor{comment}{\ \ *\ \%Eigen\ defines\ several\ typedef\ shortcuts\ for\ most\ common\ matrix\ and\ vector\ types.}}
+\DoxyCodeLine{00465\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00466\ \textcolor{comment}{\ \ *\ The\ general\ patterns\ are\ the\ following:}}
+\DoxyCodeLine{00467\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00468\ \textcolor{comment}{\ \ *\ \(\backslash\)c\ MatrixSizeType\ where\ \(\backslash\)c\ Size\ can\ be\ \(\backslash\)c\ 2,\(\backslash\)c\ 3,\(\backslash\)c\ 4\ for\ fixed\ size\ square\ matrices\ or\ \(\backslash\)c\ X\ for\ dynamic\ size,}}
+\DoxyCodeLine{00469\ \textcolor{comment}{\ \ *\ and\ where\ \(\backslash\)c\ Type\ can\ be\ \(\backslash\)c\ i\ for\ integer,\ \(\backslash\)c\ f\ for\ float,\ \(\backslash\)c\ d\ for\ double,\ \(\backslash\)c\ cf\ for\ complex\ float,\ \(\backslash\)c\ cd}}
+\DoxyCodeLine{00470\ \textcolor{comment}{\ \ *\ for\ complex\ double.}}
+\DoxyCodeLine{00471\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00472\ \textcolor{comment}{\ \ *\ For\ example,\ \(\backslash\)c\ Matrix3d\ is\ a\ fixed-\/size\ 3x3\ matrix\ type\ of\ doubles,\ and\ \(\backslash\)c\ MatrixXf\ is\ a\ dynamic-\/size\ matrix\ of\ floats.}}
+\DoxyCodeLine{00473\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00474\ \textcolor{comment}{\ \ *\ There\ are\ also\ \(\backslash\)c\ VectorSizeType\ and\ \(\backslash\)c\ RowVectorSizeType\ which\ are\ self-\/explanatory.\ For\ example,\ \(\backslash\)c\ Vector4cf\ is}}
+\DoxyCodeLine{00475\ \textcolor{comment}{\ \ *\ a\ fixed-\/size\ vector\ of\ 4\ complex\ floats.}}
+\DoxyCodeLine{00476\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00477\ \textcolor{comment}{\ \ *\ With\ \(\backslash\)cpp11,\ template\ alias\ are\ also\ defined\ for\ common\ sizes.}}
+\DoxyCodeLine{00478\ \textcolor{comment}{\ \ *\ They\ follow\ the\ same\ pattern\ as\ above\ except\ that\ the\ scalar\ type\ suffix\ is\ replaced\ by\ a}}
+\DoxyCodeLine{00479\ \textcolor{comment}{\ \ *\ template\ parameter,\ i.e.:}}
+\DoxyCodeLine{00480\ \textcolor{comment}{\ \ *\ \ \ -\/\ \`{}MatrixSize<Type>`\ where\ \`{}Size`\ can\ be\ \(\backslash\)c\ 2,\(\backslash\)c\ 3,\(\backslash\)c\ 4\ for\ fixed\ size\ square\ matrices\ or\ \(\backslash\)c\ X\ for\ dynamic\ size.}}
+\DoxyCodeLine{00481\ \textcolor{comment}{\ \ *\ \ \ -\/\ \`{}MatrixXSize<Type>`\ and\ \`{}MatrixSizeX<Type>`\ where\ \`{}Size`\ can\ be\ \(\backslash\)c\ 2,\(\backslash\)c\ 3,\(\backslash\)c\ 4\ for\ hybrid\ dynamic/fixed\ matrices.}}
+\DoxyCodeLine{00482\ \textcolor{comment}{\ \ *\ \ \ -\/\ \`{}VectorSize<Type>`\ and\ \`{}RowVectorSize<Type>`\ for\ column\ and\ row\ vectors.}}
+\DoxyCodeLine{00483\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00484\ \textcolor{comment}{\ \ *\ With\ \(\backslash\)cpp11,\ you\ can\ also\ use\ fully\ generic\ column\ and\ row\ vector\ types:\ \`{}Vector<Type,Size>`\ and\ \`{}RowVector<Type,Size>`.}}
+\DoxyCodeLine{00485\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00486\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ Matrix}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00488\ }
+\DoxyCodeLine{00489\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ Size,\ SizeSuffix)\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00490\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00491\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)noop\ \ \ \ \ \ \ \ \ \ \ \ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00492\ \textcolor{preprocessor}{typedef\ Matrix<Type,\ Size,\ Size>\ Matrix\#\#SizeSuffix\#\#TypeSuffix;\ \ \(\backslash\)}}
+\DoxyCodeLine{00493\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00494\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)noop\ \ \ \ \ \ \ \ \ \ \ \ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00495\ \textcolor{preprocessor}{typedef\ Matrix<Type,\ Size,\ 1>\ \ \ \ Vector\#\#SizeSuffix\#\#TypeSuffix;\ \ \(\backslash\)}}
+\DoxyCodeLine{00496\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00497\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)noop\ \ \ \ \ \ \ \ \ \ \ \ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00498\ \textcolor{preprocessor}{typedef\ Matrix<Type,\ 1,\ Size>\ \ \ \ RowVector\#\#SizeSuffix\#\#TypeSuffix;}}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_FIXED\_TYPEDEFS(Type,\ TypeSuffix,\ Size)\ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00501\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00502\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)noop\ \ \ \ \ \ \ \ \ \ \ \ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00503\ \textcolor{preprocessor}{typedef\ Matrix<Type,\ Size,\ Dynamic>\ Matrix\#\#Size\#\#X\#\#TypeSuffix;\ \ \(\backslash\)}}
+\DoxyCodeLine{00504\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00505\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)noop\ \ \ \ \ \ \ \ \ \ \ \ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00506\ \textcolor{preprocessor}{typedef\ Matrix<Type,\ Dynamic,\ Size>\ Matrix\#\#X\#\#Size\#\#TypeSuffix;}}
+\DoxyCodeLine{00507\ }
+\DoxyCodeLine{00508\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(Type,\ TypeSuffix)\ \(\backslash\)}}
+\DoxyCodeLine{00509\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 2,\ 2)\ \(\backslash\)}}
+\DoxyCodeLine{00510\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 3,\ 3)\ \(\backslash\)}}
+\DoxyCodeLine{00511\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 4,\ 4)\ \(\backslash\)}}
+\DoxyCodeLine{00512\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ Dynamic,\ X)\ \(\backslash\)}}
+\DoxyCodeLine{00513\ \textcolor{preprocessor}{EIGEN\_MAKE\_FIXED\_TYPEDEFS(Type,\ TypeSuffix,\ 2)\ \(\backslash\)}}
+\DoxyCodeLine{00514\ \textcolor{preprocessor}{EIGEN\_MAKE\_FIXED\_TYPEDEFS(Type,\ TypeSuffix,\ 3)\ \(\backslash\)}}
+\DoxyCodeLine{00515\ \textcolor{preprocessor}{EIGEN\_MAKE\_FIXED\_TYPEDEFS(Type,\ TypeSuffix,\ 4)}}
+\DoxyCodeLine{00516\ }
+\DoxyCodeLine{00517\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(\textcolor{keywordtype}{int},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i)}
+\DoxyCodeLine{00518\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(\textcolor{keywordtype}{float},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ f)}
+\DoxyCodeLine{00519\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(\textcolor{keywordtype}{double},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d)}
+\DoxyCodeLine{00520\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(std::complex<float>,\ \ cf)}
+\DoxyCodeLine{00521\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(std::complex<double>,\ cd)}
+\DoxyCodeLine{00522\ }
+\DoxyCodeLine{00523\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES}}
+\DoxyCodeLine{00524\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_TYPEDEFS}}
+\DoxyCodeLine{00525\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_FIXED\_TYPEDEFS}}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \textcolor{preprocessor}{\#if\ EIGEN\_HAS\_CXX11}}
+\DoxyCodeLine{00528\ }
+\DoxyCodeLine{00529\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_TYPEDEFS(Size,\ SizeSuffix)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00530\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00531\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00532\ \textcolor{preprocessor}{template\ <typename\ Type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00533\ \textcolor{preprocessor}{using\ Matrix\#\#SizeSuffix\ =\ Matrix<Type,\ Size,\ Size>;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00534\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00535\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00536\ \textcolor{preprocessor}{template\ <typename\ Type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00537\ \textcolor{preprocessor}{using\ Vector\#\#SizeSuffix\ =\ Matrix<Type,\ Size,\ 1>;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00538\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00539\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00540\ \textcolor{preprocessor}{template\ <typename\ Type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00541\ \textcolor{preprocessor}{using\ RowVector\#\#SizeSuffix\ =\ Matrix<Type,\ 1,\ Size>;}}
+\DoxyCodeLine{00542\ }
+\DoxyCodeLine{00543\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_FIXED\_TYPEDEFS(Size)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00544\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00545\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{template\ <typename\ Type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00547\ \textcolor{preprocessor}{using\ Matrix\#\#Size\#\#X\ =\ Matrix<Type,\ Size,\ Dynamic>;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00548\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00549\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{template\ <typename\ Type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00551\ \textcolor{preprocessor}{using\ Matrix\#\#X\#\#Size\ =\ Matrix<Type,\ Dynamic,\ Size>;}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ EIGEN\_MAKE\_TYPEDEFS(2,\ 2)}
+\DoxyCodeLine{00554\ EIGEN\_MAKE\_TYPEDEFS(3,\ 3)}
+\DoxyCodeLine{00555\ EIGEN\_MAKE\_TYPEDEFS(4,\ 4)}
+\DoxyCodeLine{00556\ EIGEN\_MAKE\_TYPEDEFS(\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},\ X)}
+\DoxyCodeLine{00557\ EIGEN\_MAKE\_FIXED\_TYPEDEFS(2)}
+\DoxyCodeLine{00558\ EIGEN\_MAKE\_FIXED\_TYPEDEFS(3)}
+\DoxyCodeLine{00559\ EIGEN\_MAKE\_FIXED\_TYPEDEFS(4)}
+\DoxyCodeLine{00560\ \textcolor{comment}{}}
+\DoxyCodeLine{00561\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs}}
+\DoxyCodeLine{00562\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}}
+\DoxyCodeLine{00563\ template\ <typename\ Type,\ \textcolor{keywordtype}{int}\ Size>}
+\DoxyCodeLine{00564\ using\ Vector\ =\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<Type,\ Size,\ 1>;}
+\DoxyCodeLine{00565\ \textcolor{comment}{}}
+\DoxyCodeLine{00566\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ matrixtypedefs}}
+\DoxyCodeLine{00567\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ \(\backslash\)cpp11\ */}}
+\DoxyCodeLine{00568\ template\ <typename\ Type,\ \textcolor{keywordtype}{int}\ Size>}
+\DoxyCodeLine{00569\ using\ RowVector\ =\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix}}<Type,\ 1,\ Size>;}
+\DoxyCodeLine{00570\ }
+\DoxyCodeLine{00571\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_TYPEDEFS}}
+\DoxyCodeLine{00572\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_FIXED\_TYPEDEFS}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_HAS\_CXX11}}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00577\ }
+\DoxyCodeLine{00578\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_MATRIX\_H}}
+
+\end{DoxyCode}

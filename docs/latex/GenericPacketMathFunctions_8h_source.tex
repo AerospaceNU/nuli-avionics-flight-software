@@ -1,0 +1,1668 @@
+\doxysection{Generic\+Packet\+Math\+Functions.\+h}
+\hypertarget{GenericPacketMathFunctions_8h_source}{}\label{GenericPacketMathFunctions_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/Default/GenericPacketMathFunctions.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/Default/GenericPacketMathFunctions.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2007\ Julien\ Pommier}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Pedro\ Gonnet\ (pedro.gonnet@gmail.com)}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Copyright\ (C)\ 2009-\/2019\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{/*\ The\ exp\ and\ log\ functions\ of\ this\ file\ initially\ come\ from}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ Julien\ Pommier's\ sse\ math\ library:\ http://gruntthepeon.free.fr/ssemath/}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_ARCH\_GENERIC\_PACKET\_MATH\_FUNCTIONS\_H}}
+\DoxyCodeLine{00017\ \textcolor{preprocessor}{\#define\ EIGEN\_ARCH\_GENERIC\_PACKET\_MATH\_FUNCTIONS\_H}}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00020\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ Creates\ a\ Scalar\ integer\ type\ with\ same\ bit-\/width.}}
+\DoxyCodeLine{00023\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1make__integer}{make\_integer}};}
+\DoxyCodeLine{00024\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1make__integer}{make\_integer}}<float>\ \ \ \ \{\ \textcolor{keyword}{typedef}\ numext::int32\_t\ type;\ \};}
+\DoxyCodeLine{00025\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1make__integer}{make\_integer}}<double>\ \ \ \{\ \textcolor{keyword}{typedef}\ numext::int64\_t\ type;\ \};}
+\DoxyCodeLine{00026\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1make__integer}{make\_integer}}<\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}>\ \ \ \ \ \{\ \textcolor{keyword}{typedef}\ numext::int16\_t\ type;\ \};}
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1make__integer}{make\_integer}}<\mbox{\hyperlink{structEigen_1_1bfloat16}{bfloat16}}>\ \{\ \textcolor{keyword}{typedef}\ numext::int16\_t\ type;\ \};}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_STRONG\_INLINE\ EIGEN\_DEVICE\_FUNC\ \ }
+\DoxyCodeLine{00030\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pfrexp\_generic\_get\_biased\_exponent(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00031\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00032\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::integer\_packet}}\ PacketI;}
+\DoxyCodeLine{00033\ \ \ \textcolor{keyword}{enum}\ \{\ mantissa\_bits\ =\ numext::numeric\_limits<Scalar>::digits\ -\/\ 1\};}
+\DoxyCodeLine{00034\ \ \ \textcolor{keywordflow}{return}\ pcast<PacketI,\ Packet>(plogical\_shift\_right<mantissa\_bits>(preinterpret<PacketI>(pabs(a))));}
+\DoxyCodeLine{00035\ \}}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ Safely\ applies\ frexp,\ correctly\ handles\ denormals.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ Assumes\ IEEE\ floating\ point\ format.}}
+\DoxyCodeLine{00039\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_STRONG\_INLINE\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00040\ Packet\ pfrexp\_generic(\textcolor{keyword}{const}\ Packet\&\ a,\ Packet\&\ exponent)\ \{}
+\DoxyCodeLine{00041\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ Scalar;}
+\DoxyCodeLine{00042\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ make\_unsigned<typename\ make\_integer<Scalar>::type>::type\ ScalarUI;}
+\DoxyCodeLine{00043\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ TotalBits\ =\ \textcolor{keyword}{sizeof}(Scalar)\ *\ CHAR\_BIT,}
+\DoxyCodeLine{00045\ \ \ \ \ MantissaBits\ =\ numext::numeric\_limits<Scalar>::digits\ -\/\ 1,}
+\DoxyCodeLine{00046\ \ \ \ \ ExponentBits\ =\ \textcolor{keywordtype}{int}(TotalBits)\ -\/\ int(MantissaBits)\ -\/\ 1}
+\DoxyCodeLine{00047\ \ \ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ EIGEN\_CONSTEXPR\ ScalarUI\ scalar\_sign\_mantissa\_mask\ =\ }
+\DoxyCodeLine{00050\ \ \ \ \ \ \ \string~(((ScalarUI(1)\ <<\ int(ExponentBits))\ -\/\ ScalarUI(1))\ <<\ int(MantissaBits));\ \textcolor{comment}{//\ \string~0x7f800000}}
+\DoxyCodeLine{00051\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ sign\_mantissa\_mask\ =\ pset1frombits<Packet>(\textcolor{keyword}{static\_cast<}ScalarUI\textcolor{keyword}{>}(scalar\_sign\_mantissa\_mask));\ }
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ =\ pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(0.5));}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ zero\ =\ pzero(a);}
+\DoxyCodeLine{00054\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ normal\_min\ =\ pset1<Packet>((numext::numeric\_limits<Scalar>::min)());\ \textcolor{comment}{//\ Minimum\ normal\ value,\ 2\string^-\/126}}
+\DoxyCodeLine{00055\ \ \ }
+\DoxyCodeLine{00056\ \ \ \textcolor{comment}{//\ To\ handle\ denormals,\ normalize\ by\ multiplying\ by\ 2\string^(int(MantissaBits)+1).}}
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ is\_denormal\ =\ pcmp\_lt(pabs(a),\ normal\_min);}
+\DoxyCodeLine{00058\ \ \ EIGEN\_CONSTEXPR\ ScalarUI\ scalar\_normalization\_offset\ =\ ScalarUI(\textcolor{keywordtype}{int}(MantissaBits)\ +\ 1);\ \textcolor{comment}{//\ 24}}
+\DoxyCodeLine{00059\ \ \ \textcolor{comment}{//\ The\ following\ cannot\ be\ constexpr\ because\ bfloat16(uint16\_t)\ is\ not\ constexpr.}}
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ scalar\_normalization\_factor\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(ScalarUI(1)\ <<\ \textcolor{keywordtype}{int}(scalar\_normalization\_offset));\ \textcolor{comment}{//\ 2\string^24}}
+\DoxyCodeLine{00061\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ normalization\_factor\ =\ pset1<Packet>(scalar\_normalization\_factor);\ \ }
+\DoxyCodeLine{00062\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ normalized\_a\ =\ pselect(is\_denormal,\ pmul(a,\ normalization\_factor),\ a);}
+\DoxyCodeLine{00063\ \ \ }
+\DoxyCodeLine{00064\ \ \ \textcolor{comment}{//\ Determine\ exponent\ offset:\ -\/126\ if\ normal,\ -\/126-\/24\ if\ denormal}}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ scalar\_exponent\_offset\ =\ -\/\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}((ScalarUI(1)<<(\textcolor{keywordtype}{int}(ExponentBits)-\/1))\ -\/\ ScalarUI(2));\ \textcolor{comment}{//\ -\/126}}
+\DoxyCodeLine{00066\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ exponent\_offset\ =\ pset1<Packet>(scalar\_exponent\_offset);}
+\DoxyCodeLine{00067\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ normalization\_offset\ =\ pset1<Packet>(-\/\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(scalar\_normalization\_offset));\ \textcolor{comment}{//\ -\/24}}
+\DoxyCodeLine{00068\ \ \ exponent\_offset\ =\ pselect(is\_denormal,\ padd(exponent\_offset,\ normalization\_offset),\ exponent\_offset);}
+\DoxyCodeLine{00069\ \ \ }
+\DoxyCodeLine{00070\ \ \ \textcolor{comment}{//\ Determine\ exponent\ and\ mantissa\ from\ normalized\_a.}}
+\DoxyCodeLine{00071\ \ \ exponent\ =\ pfrexp\_generic\_get\_biased\_exponent(normalized\_a);}
+\DoxyCodeLine{00072\ \ \ \textcolor{comment}{//\ Zero,\ Inf\ and\ NaN\ return\ 'a'\ unmodified,\ exponent\ is\ zero}}
+\DoxyCodeLine{00073\ \ \ \textcolor{comment}{//\ (technically\ the\ exponent\ is\ unspecified\ for\ inf/NaN,\ but\ GCC/Clang\ set\ it\ to\ zero)}}
+\DoxyCodeLine{00074\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ scalar\_non\_finite\_exponent\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}((ScalarUI(1)\ <<\ \textcolor{keywordtype}{int}(ExponentBits))\ -\/\ ScalarUI(1));\ \ \textcolor{comment}{//\ 255}}
+\DoxyCodeLine{00075\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ non\_finite\_exponent\ =\ pset1<Packet>(scalar\_non\_finite\_exponent);}
+\DoxyCodeLine{00076\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ is\_zero\_or\_not\_finite\ =\ por(pcmp\_eq(a,\ zero),\ pcmp\_eq(exponent,\ non\_finite\_exponent));}
+\DoxyCodeLine{00077\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ m\ =\ pselect(is\_zero\_or\_not\_finite,\ a,\ por(pand(normalized\_a,\ sign\_mantissa\_mask),\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}));}
+\DoxyCodeLine{00078\ \ \ exponent\ =\ pselect(is\_zero\_or\_not\_finite,\ zero,\ padd(exponent,\ exponent\_offset));\ \ }
+\DoxyCodeLine{00079\ \ \ \textcolor{keywordflow}{return}\ m;}
+\DoxyCodeLine{00080\ \}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \textcolor{comment}{//\ Safely\ applies\ ldexp,\ correctly\ handles\ overflows,\ underflows\ and\ denormals.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{//\ Assumes\ IEEE\ floating\ point\ format.}}
+\DoxyCodeLine{00084\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_STRONG\_INLINE\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00085\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pldexp\_generic(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ exponent)\ \{}
+\DoxyCodeLine{00086\ \ \ \textcolor{comment}{//\ We\ want\ to\ return\ a\ *\ 2\string^exponent,\ allowing\ for\ all\ possible\ integer}}
+\DoxyCodeLine{00087\ \ \ \textcolor{comment}{//\ exponents\ without\ overflowing\ or\ underflowing\ in\ intermediate}}
+\DoxyCodeLine{00088\ \ \ \textcolor{comment}{//\ computations.}}
+\DoxyCodeLine{00089\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00090\ \ \ \textcolor{comment}{//\ Since\ 'a'\ and\ the\ output\ can\ be\ denormal,\ the\ maximum\ range\ of\ 'exponent'}}
+\DoxyCodeLine{00091\ \ \ \textcolor{comment}{//\ to\ consider\ for\ a\ float\ is:}}
+\DoxyCodeLine{00092\ \ \ \textcolor{comment}{//\ \ \ -\/255-\/23\ -\/>\ 255+23}}
+\DoxyCodeLine{00093\ \ \ \textcolor{comment}{//\ Below\ -\/278\ any\ finite\ float\ 'a'\ will\ become\ zero,\ and\ above\ +278\ any}}
+\DoxyCodeLine{00094\ \ \ \textcolor{comment}{//\ finite\ float\ will\ become\ inf,\ including\ when\ 'a'\ is\ the\ smallest\ possible\ }}
+\DoxyCodeLine{00095\ \ \ \textcolor{comment}{//\ denormal.}}
+\DoxyCodeLine{00096\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00097\ \ \ \textcolor{comment}{//\ Unfortunately,\ 2\string^(278)\ cannot\ be\ represented\ using\ either\ one\ or\ two}}
+\DoxyCodeLine{00098\ \ \ \textcolor{comment}{//\ finite\ normal\ floats,\ so\ we\ must\ split\ the\ scale\ factor\ into\ at\ least}}
+\DoxyCodeLine{00099\ \ \ \textcolor{comment}{//\ three\ parts.\ It\ turns\ out\ to\ be\ faster\ to\ split\ 'exponent'\ into\ four}}
+\DoxyCodeLine{00100\ \ \ \textcolor{comment}{//\ factors,\ since\ [exponent>>2]\ is\ much\ faster\ to\ compute\ that\ [exponent/3].}}
+\DoxyCodeLine{00101\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00102\ \ \ \textcolor{comment}{//\ Set\ e\ =\ min(max(exponent,\ -\/278),\ 278);}}
+\DoxyCodeLine{00103\ \ \ \textcolor{comment}{//\ \ \ \ \ b\ =\ floor(e/4);}}
+\DoxyCodeLine{00104\ \ \ \textcolor{comment}{//\ \ \ out\ =\ ((((a\ *\ 2\string^(b))\ *\ 2\string^(b))\ *\ 2\string^(b))\ *\ 2\string^(e-\/3*b))}}
+\DoxyCodeLine{00105\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00106\ \ \ \textcolor{comment}{//\ This\ will\ avoid\ any\ intermediate\ overflows\ and\ correctly\ handle\ 0,\ inf,}}
+\DoxyCodeLine{00107\ \ \ \textcolor{comment}{//\ NaN\ cases.}}
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::integer\_packet}}\ PacketI;}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<PacketI>::type\ ScalarI;}
+\DoxyCodeLine{00111\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00112\ \ \ \ \ TotalBits\ =\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}})\ *\ CHAR\_BIT,}
+\DoxyCodeLine{00113\ \ \ \ \ MantissaBits\ =\ numext::numeric\_limits<Scalar>::digits\ -\/\ 1,}
+\DoxyCodeLine{00114\ \ \ \ \ ExponentBits\ =\ \textcolor{keywordtype}{int}(TotalBits)\ -\/\ int(MantissaBits)\ -\/\ 1}
+\DoxyCodeLine{00115\ \ \ \};}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ max\_exponent\ =\ pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}((ScalarI(1)<<\textcolor{keywordtype}{int}(ExponentBits))\ +\ ScalarI(\textcolor{keywordtype}{int}(MantissaBits)\ -\/\ 1)));\ \ \textcolor{comment}{//\ 278}}
+\DoxyCodeLine{00118\ \ \ \textcolor{keyword}{const}\ PacketI\ bias\ =\ pset1<PacketI>((ScalarI(1)<<(\textcolor{keywordtype}{int}(ExponentBits)-\/1))\ -\/\ ScalarI(1));\ \ \textcolor{comment}{//\ 127}}
+\DoxyCodeLine{00119\ \ \ \textcolor{keyword}{const}\ PacketI\ e\ =\ pcast<Packet,\ PacketI>(pmin(pmax(exponent,\ pnegate(max\_exponent)),\ max\_exponent));}
+\DoxyCodeLine{00120\ \ \ PacketI\ b\ =\ parithmetic\_shift\_right<2>(e);\ \textcolor{comment}{//\ floor(e/4);}}
+\DoxyCodeLine{00121\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ c\ =\ preinterpret<Packet>(plogical\_shift\_left<\textcolor{keywordtype}{int}(MantissaBits)>(padd(b,\ bias)));\ \ \textcolor{comment}{//\ 2\string^b}}
+\DoxyCodeLine{00122\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ out\ =\ pmul(pmul(pmul(a,\ c),\ c),\ c);\ \ \textcolor{comment}{//\ a\ *\ 2\string^(3b)}}
+\DoxyCodeLine{00123\ \ \ b\ =\ psub(psub(psub(e,\ b),\ b),\ b);\ \textcolor{comment}{//\ e\ -\/\ 3b}}
+\DoxyCodeLine{00124\ \ \ c\ =\ preinterpret<Packet>(plogical\_shift\_left<\textcolor{keywordtype}{int}(MantissaBits)>(padd(b,\ bias)));\ \ \textcolor{comment}{//\ 2\string^(e-\/3*b)}}
+\DoxyCodeLine{00125\ \ \ out\ =\ pmul(out,\ c);}
+\DoxyCodeLine{00126\ \ \ \textcolor{keywordflow}{return}\ out;}
+\DoxyCodeLine{00127\ \}}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \textcolor{comment}{//\ Explicitly\ multiplies\ }}
+\DoxyCodeLine{00130\ \textcolor{comment}{//\ \ \ \ a\ *\ (2\string^e)}}
+\DoxyCodeLine{00131\ \textcolor{comment}{//\ clamping\ e\ to\ the\ range}}
+\DoxyCodeLine{00132\ \textcolor{comment}{//\ [NumTraits<Scalar>::min\_exponent()-\/2,\ NumTraits<Scalar>::max\_exponent()]}}
+\DoxyCodeLine{00133\ \textcolor{comment}{//}}
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ This\ is\ approx\ 7x\ faster\ than\ pldexp\_impl,\ but\ will\ prematurely\ over/underflow}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ if\ 2\string^e\ doesn't\ fit\ into\ a\ normal\ floating-\/point\ Scalar.}}
+\DoxyCodeLine{00136\ \textcolor{comment}{//}}
+\DoxyCodeLine{00137\ \textcolor{comment}{//\ Assumes\ IEEE\ floating\ point\ format}}
+\DoxyCodeLine{00138\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00139\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pldexp__fast__impl}{pldexp\_fast\_impl}}\ \{}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::integer\_packet}}\ PacketI;}
+\DoxyCodeLine{00141\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ Scalar;}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<PacketI>::type\ ScalarI;}
+\DoxyCodeLine{00143\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00144\ \ \ \ \ TotalBits\ =\ \textcolor{keyword}{sizeof}(Scalar)\ *\ CHAR\_BIT,}
+\DoxyCodeLine{00145\ \ \ \ \ MantissaBits\ =\ numext::numeric\_limits<Scalar>::digits\ -\/\ 1,}
+\DoxyCodeLine{00146\ \ \ \ \ ExponentBits\ =\ \textcolor{keywordtype}{int}(TotalBits)\ -\/\ int(MantissaBits)\ -\/\ 1}
+\DoxyCodeLine{00147\ \ \ \};}
+\DoxyCodeLine{00148\ \ \ }
+\DoxyCodeLine{00149\ \ \ \textcolor{keyword}{static}\ EIGEN\_STRONG\_INLINE\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00150\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ exponent)\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ bias\ =\ pset1<Packet>(Scalar((ScalarI(1)<<(\textcolor{keywordtype}{int}(ExponentBits)-\/1))\ -\/\ ScalarI(1)));\ \ \textcolor{comment}{//\ 127}}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ limit\ =\ pset1<Packet>(Scalar((ScalarI(1)<<\textcolor{keywordtype}{int}(ExponentBits))\ -\/\ ScalarI(1)));\ \ \ \ \ \textcolor{comment}{//\ 255}}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{comment}{//\ restrict\ biased\ exponent\ between\ 0\ and\ 255\ for\ float.}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{const}\ PacketI\ e\ =\ pcast<Packet,\ PacketI>(pmin(pmax(padd(exponent,\ bias),\ pzero(limit)),\ limit));\ \textcolor{comment}{//\ exponent\ +\ 127}}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{comment}{//\ return\ a\ *\ (2\string^e)}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{keywordflow}{return}\ pmul(a,\ preinterpret<Packet>(plogical\_shift\_left<\textcolor{keywordtype}{int}(MantissaBits)>(e)));}
+\DoxyCodeLine{00157\ \ \ \}}
+\DoxyCodeLine{00158\ \};}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \textcolor{comment}{//\ Natural\ or\ base\ 2\ logarithm.}}
+\DoxyCodeLine{00161\ \textcolor{comment}{//\ Computes\ log(x)\ as\ log(2\string^e\ *\ m)\ =\ C*e\ +\ log(m),\ where\ the\ constant\ C\ =log(2)}}
+\DoxyCodeLine{00162\ \textcolor{comment}{//\ and\ m\ is\ in\ the\ range\ [sqrt(1/2),sqrt(2)).\ In\ this\ range,\ the\ logarithm\ can}}
+\DoxyCodeLine{00163\ \textcolor{comment}{//\ be\ easily\ approximated\ by\ a\ polynomial\ centered\ on\ m=1\ for\ stability.}}
+\DoxyCodeLine{00164\ \textcolor{comment}{//\ TODO(gonnet):\ Further\ reduce\ the\ interval\ allowing\ for\ lower-\/degree}}
+\DoxyCodeLine{00165\ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ polynomial\ interpolants\ -\/>\ ...\ -\/>\ profit!}}
+\DoxyCodeLine{00166\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{bool}\ base2>}
+\DoxyCodeLine{00167\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00168\ EIGEN\_UNUSED}
+\DoxyCodeLine{00169\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog\_impl\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00170\ \{}
+\DoxyCodeLine{00171\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\ =\ \_x;}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_1\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ pset1<Packet>(1.0f);}
+\DoxyCodeLine{00174\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_neg\_half\ \ \ \ \ \ \ =\ pset1<Packet>(-\/0.5f);}
+\DoxyCodeLine{00175\ \ \ \textcolor{comment}{//\ The\ smallest\ non\ denormalized\ float\ number.}}
+\DoxyCodeLine{00176\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_min\_norm\_pos\ \ \ =\ pset1frombits<Packet>(\ 0x00800000u);}
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_minus\_inf\ \ \ \ \ \ =\ pset1frombits<Packet>(\ 0xff800000u);}
+\DoxyCodeLine{00178\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_pos\_inf\ \ \ \ \ \ \ \ =\ pset1frombits<Packet>(\ 0x7f800000u);}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \textcolor{comment}{//\ Polynomial\ coefficients.}}
+\DoxyCodeLine{00181\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_SQRTHF\ =\ pset1<Packet>(0.707106781186547524f);}
+\DoxyCodeLine{00182\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p0\ =\ pset1<Packet>(7.0376836292E-\/2f);}
+\DoxyCodeLine{00183\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p1\ =\ pset1<Packet>(-\/1.1514610310E-\/1f);}
+\DoxyCodeLine{00184\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p2\ =\ pset1<Packet>(1.1676998740E-\/1f);}
+\DoxyCodeLine{00185\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p3\ =\ pset1<Packet>(-\/1.2420140846E-\/1f);}
+\DoxyCodeLine{00186\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p4\ =\ pset1<Packet>(+1.4249322787E-\/1f);}
+\DoxyCodeLine{00187\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p5\ =\ pset1<Packet>(-\/1.6668057665E-\/1f);}
+\DoxyCodeLine{00188\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p6\ =\ pset1<Packet>(+2.0000714765E-\/1f);}
+\DoxyCodeLine{00189\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p7\ =\ pset1<Packet>(-\/2.4999993993E-\/1f);}
+\DoxyCodeLine{00190\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p8\ =\ pset1<Packet>(+3.3333331174E-\/1f);}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \textcolor{comment}{//\ Truncate\ input\ values\ to\ the\ minimum\ positive\ normal.}}
+\DoxyCodeLine{00193\ \ \ x\ =\ pmax(x,\ cst\_min\_norm\_pos);}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ e;}
+\DoxyCodeLine{00196\ \ \ \textcolor{comment}{//\ extract\ significant\ in\ the\ range\ [0.5,1)\ and\ exponent}}
+\DoxyCodeLine{00197\ \ \ x\ =\ pfrexp(x,e);}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \textcolor{comment}{//\ part2:\ Shift\ the\ inputs\ from\ the\ range\ [0.5,1)\ to\ [sqrt(1/2),sqrt(2))}}
+\DoxyCodeLine{00200\ \ \ \textcolor{comment}{//\ and\ shift\ by\ -\/1.\ The\ values\ are\ then\ centered\ around\ 0,\ which\ improves}}
+\DoxyCodeLine{00201\ \ \ \textcolor{comment}{//\ the\ stability\ of\ the\ polynomial\ evaluation.}}
+\DoxyCodeLine{00202\ \ \ \textcolor{comment}{//\ \ \ if(\ x\ <\ SQRTHF\ )\ \{}}
+\DoxyCodeLine{00203\ \ \ \textcolor{comment}{//\ \ \ \ \ e\ -\/=\ 1;}}
+\DoxyCodeLine{00204\ \ \ \textcolor{comment}{//\ \ \ \ \ x\ =\ x\ +\ x\ -\/\ 1.0;}}
+\DoxyCodeLine{00205\ \ \ \textcolor{comment}{//\ \ \ \}\ else\ \{\ x\ =\ x\ -\/\ 1.0;\ \}}}
+\DoxyCodeLine{00206\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ mask\ =\ pcmp\_lt(x,\ cst\_cephes\_SQRTHF);}
+\DoxyCodeLine{00207\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ tmp\ =\ pand(x,\ mask);}
+\DoxyCodeLine{00208\ \ \ x\ =\ psub(x,\ cst\_1);}
+\DoxyCodeLine{00209\ \ \ e\ =\ psub(e,\ pand(cst\_1,\ mask));}
+\DoxyCodeLine{00210\ \ \ x\ =\ padd(x,\ tmp);}
+\DoxyCodeLine{00211\ }
+\DoxyCodeLine{00212\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,\ x);}
+\DoxyCodeLine{00213\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x3\ =\ pmul(x2,\ x);}
+\DoxyCodeLine{00214\ }
+\DoxyCodeLine{00215\ \ \ \textcolor{comment}{//\ Evaluate\ the\ polynomial\ approximant\ of\ degree\ 8\ in\ three\ parts,\ probably}}
+\DoxyCodeLine{00216\ \ \ \textcolor{comment}{//\ to\ improve\ instruction-\/level\ parallelism.}}
+\DoxyCodeLine{00217\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y,\ y1,\ y2;}
+\DoxyCodeLine{00218\ \ \ y\ \ =\ pmadd(cst\_cephes\_log\_p0,\ x,\ cst\_cephes\_log\_p1);}
+\DoxyCodeLine{00219\ \ \ y1\ =\ pmadd(cst\_cephes\_log\_p3,\ x,\ cst\_cephes\_log\_p4);}
+\DoxyCodeLine{00220\ \ \ y2\ =\ pmadd(cst\_cephes\_log\_p6,\ x,\ cst\_cephes\_log\_p7);}
+\DoxyCodeLine{00221\ \ \ y\ \ =\ pmadd(y,\ x,\ cst\_cephes\_log\_p2);}
+\DoxyCodeLine{00222\ \ \ y1\ =\ pmadd(y1,\ x,\ cst\_cephes\_log\_p5);}
+\DoxyCodeLine{00223\ \ \ y2\ =\ pmadd(y2,\ x,\ cst\_cephes\_log\_p8);}
+\DoxyCodeLine{00224\ \ \ y\ \ =\ pmadd(y,\ x3,\ y1);}
+\DoxyCodeLine{00225\ \ \ y\ \ =\ pmadd(y,\ x3,\ y2);}
+\DoxyCodeLine{00226\ \ \ y\ \ =\ pmul(y,\ x3);}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ y\ =\ pmadd(cst\_neg\_half,\ x2,\ y);}
+\DoxyCodeLine{00229\ \ \ x\ =\ padd(x,\ y);}
+\DoxyCodeLine{00230\ }
+\DoxyCodeLine{00231\ \ \ \textcolor{comment}{//\ Add\ the\ logarithm\ of\ the\ exponent\ back\ to\ the\ result\ of\ the\ interpolation.}}
+\DoxyCodeLine{00232\ \ \ \textcolor{keywordflow}{if}\ (base2)\ \{}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_log2e\ =\ pset1<Packet>(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(EIGEN\_LOG2E));}
+\DoxyCodeLine{00234\ \ \ \ \ x\ =\ pmadd(x,\ cst\_log2e,\ e);}
+\DoxyCodeLine{00235\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00236\ \ \ \ \ \textcolor{keyword}{const}\ Packet\ cst\_ln2\ =\ pset1<Packet>(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(EIGEN\_LN2));}
+\DoxyCodeLine{00237\ \ \ \ \ x\ =\ pmadd(e,\ cst\_ln2,\ x);}
+\DoxyCodeLine{00238\ \ \ \}}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ Packet\ invalid\_mask\ =\ pcmp\_lt\_or\_nan(\_x,\ pzero(\_x));}
+\DoxyCodeLine{00241\ \ \ Packet\ iszero\_mask\ \ =\ pcmp\_eq(\_x,pzero(\_x));}
+\DoxyCodeLine{00242\ \ \ Packet\ pos\_inf\_mask\ =\ pcmp\_eq(\_x,cst\_pos\_inf);}
+\DoxyCodeLine{00243\ \ \ \textcolor{comment}{//\ Filter\ out\ invalid\ inputs,\ i.e.:}}
+\DoxyCodeLine{00244\ \ \ \textcolor{comment}{//\ \ -\/\ negative\ arg\ will\ be\ NAN}}
+\DoxyCodeLine{00245\ \ \ \textcolor{comment}{//\ \ -\/\ 0\ will\ be\ -\/INF}}
+\DoxyCodeLine{00246\ \ \ \textcolor{comment}{//\ \ -\/\ +INF\ will\ be\ +INF}}
+\DoxyCodeLine{00247\ \ \ \textcolor{keywordflow}{return}\ pselect(iszero\_mask,\ cst\_minus\_inf,}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ por(pselect(pos\_inf\_mask,cst\_pos\_inf,x),\ invalid\_mask));}
+\DoxyCodeLine{00249\ \}}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00252\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00253\ EIGEN\_UNUSED}
+\DoxyCodeLine{00254\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00255\ \{}
+\DoxyCodeLine{00256\ \ \ \textcolor{keywordflow}{return}\ plog\_impl\_float<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},\ \textcolor{comment}{/*\ base2\ */}\ \textcolor{keyword}{false}>(\_x);}
+\DoxyCodeLine{00257\ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00260\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00261\ EIGEN\_UNUSED}
+\DoxyCodeLine{00262\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog2\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00263\ \{}
+\DoxyCodeLine{00264\ \ \ \textcolor{keywordflow}{return}\ plog\_impl\_float<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},\ \textcolor{comment}{/*\ base2\ */}\ \textcolor{keyword}{true}>(\_x);}
+\DoxyCodeLine{00265\ \}}
+\DoxyCodeLine{00266\ }
+\DoxyCodeLine{00267\ \textcolor{comment}{/*\ Returns\ the\ base\ e\ (2.718...)\ or\ base\ 2\ logarithm\ of\ x.}}
+\DoxyCodeLine{00268\ \textcolor{comment}{\ *\ The\ argument\ is\ separated\ into\ its\ exponent\ and\ fractional\ parts.}}
+\DoxyCodeLine{00269\ \textcolor{comment}{\ *\ The\ logarithm\ of\ the\ fraction\ in\ the\ interval\ [sqrt(1/2),\ sqrt(2)],}}
+\DoxyCodeLine{00270\ \textcolor{comment}{\ *\ is\ approximated\ by}}
+\DoxyCodeLine{00271\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00272\ \textcolor{comment}{\ *\ \ \ \ \ log(1+x)\ =\ x\ -\/\ 0.5\ x**2\ +\ x**3\ P(x)/Q(x).}}
+\DoxyCodeLine{00273\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00274\ \textcolor{comment}{\ *\ for\ more\ detail\ see:\ http://www.netlib.org/cephes/}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00276\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{bool}\ base2>}
+\DoxyCodeLine{00277\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00278\ EIGEN\_UNUSED}
+\DoxyCodeLine{00279\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog\_impl\_double(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00280\ \{}
+\DoxyCodeLine{00281\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\ =\ \_x;}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_1\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ pset1<Packet>(1.0);}
+\DoxyCodeLine{00284\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_neg\_half\ \ \ \ \ \ \ =\ pset1<Packet>(-\/0.5);}
+\DoxyCodeLine{00285\ \ \ \textcolor{comment}{//\ The\ smallest\ non\ denormalized\ double.}}
+\DoxyCodeLine{00286\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_min\_norm\_pos\ \ \ =\ pset1frombits<Packet>(\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(0x0010000000000000ull));}
+\DoxyCodeLine{00287\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_minus\_inf\ \ \ \ \ \ =\ pset1frombits<Packet>(\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(0xfff0000000000000ull));}
+\DoxyCodeLine{00288\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_pos\_inf\ \ \ \ \ \ \ \ =\ pset1frombits<Packet>(\ \textcolor{keyword}{static\_cast<}uint64\_t\textcolor{keyword}{>}(0x7ff0000000000000ull));}
+\DoxyCodeLine{00289\ }
+\DoxyCodeLine{00290\ }
+\DoxyCodeLine{00291\ \ \textcolor{comment}{//\ Polynomial\ Coefficients\ for\ log(1+x)\ =\ x\ -\/\ x**2/2\ +\ x**3\ P(x)/Q(x)}}
+\DoxyCodeLine{00292\ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 1/sqrt(2)\ <=\ x\ <\ sqrt(2)}}
+\DoxyCodeLine{00293\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_SQRTHF\ =\ pset1<Packet>(0.70710678118654752440E0);}
+\DoxyCodeLine{00294\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p0\ =\ pset1<Packet>(1.01875663804580931796E-\/4);}
+\DoxyCodeLine{00295\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p1\ =\ pset1<Packet>(4.97494994976747001425E-\/1);}
+\DoxyCodeLine{00296\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p2\ =\ pset1<Packet>(4.70579119878881725854E0);}
+\DoxyCodeLine{00297\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p3\ =\ pset1<Packet>(1.44989225341610930846E1);}
+\DoxyCodeLine{00298\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p4\ =\ pset1<Packet>(1.79368678507819816313E1);}
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_p5\ =\ pset1<Packet>(7.70838733755885391666E0);}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_q0\ =\ pset1<Packet>(1.0);}
+\DoxyCodeLine{00302\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_q1\ =\ pset1<Packet>(1.12873587189167450590E1);}
+\DoxyCodeLine{00303\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_q2\ =\ pset1<Packet>(4.52279145837532221105E1);}
+\DoxyCodeLine{00304\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_q3\ =\ pset1<Packet>(8.29875266912776603211E1);}
+\DoxyCodeLine{00305\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_q4\ =\ pset1<Packet>(7.11544750618563894466E1);}
+\DoxyCodeLine{00306\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_log\_q5\ =\ pset1<Packet>(2.31251620126765340583E1);}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \ \ \textcolor{comment}{//\ Truncate\ input\ values\ to\ the\ minimum\ positive\ normal.}}
+\DoxyCodeLine{00309\ \ \ x\ =\ pmax(x,\ cst\_min\_norm\_pos);}
+\DoxyCodeLine{00310\ }
+\DoxyCodeLine{00311\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ e;}
+\DoxyCodeLine{00312\ \ \ \textcolor{comment}{//\ extract\ significant\ in\ the\ range\ [0.5,1)\ and\ exponent}}
+\DoxyCodeLine{00313\ \ \ x\ =\ pfrexp(x,e);}
+\DoxyCodeLine{00314\ \ \ }
+\DoxyCodeLine{00315\ \ \ \textcolor{comment}{//\ Shift\ the\ inputs\ from\ the\ range\ [0.5,1)\ to\ [sqrt(1/2),sqrt(2))}}
+\DoxyCodeLine{00316\ \ \ \textcolor{comment}{//\ and\ shift\ by\ -\/1.\ The\ values\ are\ then\ centered\ around\ 0,\ which\ improves}}
+\DoxyCodeLine{00317\ \ \ \textcolor{comment}{//\ the\ stability\ of\ the\ polynomial\ evaluation.}}
+\DoxyCodeLine{00318\ \ \ \textcolor{comment}{//\ \ \ if(\ x\ <\ SQRTHF\ )\ \{}}
+\DoxyCodeLine{00319\ \ \ \textcolor{comment}{//\ \ \ \ \ e\ -\/=\ 1;}}
+\DoxyCodeLine{00320\ \ \ \textcolor{comment}{//\ \ \ \ \ x\ =\ x\ +\ x\ -\/\ 1.0;}}
+\DoxyCodeLine{00321\ \ \ \textcolor{comment}{//\ \ \ \}\ else\ \{\ x\ =\ x\ -\/\ 1.0;\ \}}}
+\DoxyCodeLine{00322\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ mask\ =\ pcmp\_lt(x,\ cst\_cephes\_SQRTHF);}
+\DoxyCodeLine{00323\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ tmp\ =\ pand(x,\ mask);}
+\DoxyCodeLine{00324\ \ \ x\ =\ psub(x,\ cst\_1);}
+\DoxyCodeLine{00325\ \ \ e\ =\ psub(e,\ pand(cst\_1,\ mask));}
+\DoxyCodeLine{00326\ \ \ x\ =\ padd(x,\ tmp);}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,\ x);}
+\DoxyCodeLine{00329\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x3\ =\ pmul(x2,\ x);}
+\DoxyCodeLine{00330\ }
+\DoxyCodeLine{00331\ \ \ \textcolor{comment}{//\ Evaluate\ the\ polynomial\ approximant\ ,\ probably\ to\ improve\ instruction-\/level\ parallelism.}}
+\DoxyCodeLine{00332\ \ \ \textcolor{comment}{//\ y\ =\ x\ -\/\ 0.5*x\string^2\ +\ x\string^3\ *\ polevl(\ x,\ P,\ 5\ )\ /\ p1evl(\ x,\ Q,\ 5\ )\ );}}
+\DoxyCodeLine{00333\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y,\ y1,\ y\_;}
+\DoxyCodeLine{00334\ \ \ y\ \ =\ pmadd(cst\_cephes\_log\_p0,\ x,\ cst\_cephes\_log\_p1);}
+\DoxyCodeLine{00335\ \ \ y1\ =\ pmadd(cst\_cephes\_log\_p3,\ x,\ cst\_cephes\_log\_p4);}
+\DoxyCodeLine{00336\ \ \ y\ \ =\ pmadd(y,\ x,\ cst\_cephes\_log\_p2);}
+\DoxyCodeLine{00337\ \ \ y1\ =\ pmadd(y1,\ x,\ cst\_cephes\_log\_p5);}
+\DoxyCodeLine{00338\ \ \ y\_\ =\ pmadd(y,\ x3,\ y1);}
+\DoxyCodeLine{00339\ }
+\DoxyCodeLine{00340\ \ \ y\ \ =\ pmadd(cst\_cephes\_log\_q0,\ x,\ cst\_cephes\_log\_q1);}
+\DoxyCodeLine{00341\ \ \ y1\ =\ pmadd(cst\_cephes\_log\_q3,\ x,\ cst\_cephes\_log\_q4);}
+\DoxyCodeLine{00342\ \ \ y\ \ =\ pmadd(y,\ x,\ cst\_cephes\_log\_q2);}
+\DoxyCodeLine{00343\ \ \ y1\ =\ pmadd(y1,\ x,\ cst\_cephes\_log\_q5);}
+\DoxyCodeLine{00344\ \ \ y\ \ =\ pmadd(y,\ x3,\ y1);}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ y\_\ =\ pmul(y\_,\ x3);}
+\DoxyCodeLine{00347\ \ \ y\ \ =\ pdiv(y\_,\ y);}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ y\ =\ pmadd(cst\_neg\_half,\ x2,\ y);}
+\DoxyCodeLine{00350\ \ \ x\ =\ padd(x,\ y);}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \textcolor{comment}{//\ Add\ the\ logarithm\ of\ the\ exponent\ back\ to\ the\ result\ of\ the\ interpolation.}}
+\DoxyCodeLine{00353\ \ \ \textcolor{keywordflow}{if}\ (base2)\ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_log2e\ =\ pset1<Packet>(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(EIGEN\_LOG2E));}
+\DoxyCodeLine{00355\ \ \ \ \ x\ =\ pmadd(x,\ cst\_log2e,\ e);}
+\DoxyCodeLine{00356\ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_ln2\ =\ pset1<Packet>(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(EIGEN\_LN2));}
+\DoxyCodeLine{00358\ \ \ \ \ x\ =\ pmadd(e,\ cst\_ln2,\ x);}
+\DoxyCodeLine{00359\ \ \ \}}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ invalid\_mask\ =\ pcmp\_lt\_or\_nan(\_x,\ pzero(\_x));}
+\DoxyCodeLine{00362\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ iszero\_mask\ \ =\ pcmp\_eq(\_x,pzero(\_x));}
+\DoxyCodeLine{00363\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pos\_inf\_mask\ =\ pcmp\_eq(\_x,cst\_pos\_inf);}
+\DoxyCodeLine{00364\ \ \ \textcolor{comment}{//\ Filter\ out\ invalid\ inputs,\ i.e.:}}
+\DoxyCodeLine{00365\ \ \ \textcolor{comment}{//\ \ -\/\ negative\ arg\ will\ be\ NAN}}
+\DoxyCodeLine{00366\ \ \ \textcolor{comment}{//\ \ -\/\ 0\ will\ be\ -\/INF}}
+\DoxyCodeLine{00367\ \ \ \textcolor{comment}{//\ \ -\/\ +INF\ will\ be\ +INF}}
+\DoxyCodeLine{00368\ \ \ \textcolor{keywordflow}{return}\ pselect(iszero\_mask,\ cst\_minus\_inf,}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ por(pselect(pos\_inf\_mask,cst\_pos\_inf,x),\ invalid\_mask));}
+\DoxyCodeLine{00370\ \}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00373\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00374\ EIGEN\_UNUSED}
+\DoxyCodeLine{00375\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog\_double(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00376\ \{}
+\DoxyCodeLine{00377\ \ \ \textcolor{keywordflow}{return}\ plog\_impl\_double<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},\ \textcolor{comment}{/*\ base2\ */}\ \textcolor{keyword}{false}>(\_x);}
+\DoxyCodeLine{00378\ \}}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00381\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00382\ EIGEN\_UNUSED}
+\DoxyCodeLine{00383\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog2\_double(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00384\ \{}
+\DoxyCodeLine{00385\ \ \ \textcolor{keywordflow}{return}\ plog\_impl\_double<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},\ \textcolor{comment}{/*\ base2\ */}\ \textcolor{keyword}{true}>(\_x);}
+\DoxyCodeLine{00386\ \}}
+\DoxyCodeLine{00387\ \textcolor{comment}{}}
+\DoxyCodeLine{00388\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ log(1\ +\ x)\ computed\ using\ W.\ Kahan's\ formula.}}
+\DoxyCodeLine{00389\ \textcolor{comment}{\ \ \ \ See:\ http://www.plunk.org/\string~hatch/rightway.php}}
+\DoxyCodeLine{00390\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00391\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00392\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ generic\_plog1p(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)}
+\DoxyCodeLine{00393\ \{}
+\DoxyCodeLine{00394\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ ScalarType;}
+\DoxyCodeLine{00395\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\ =\ pset1<Packet>(ScalarType(1));}
+\DoxyCodeLine{00396\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ xp1\ =\ padd(x,\ one);}
+\DoxyCodeLine{00397\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ small\_mask\ =\ pcmp\_eq(xp1,\ one);}
+\DoxyCodeLine{00398\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ log1\ =\ plog(xp1);}
+\DoxyCodeLine{00399\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ inf\_mask\ =\ pcmp\_eq(xp1,\ log1);}
+\DoxyCodeLine{00400\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ log\_large\ =\ pmul(x,\ pdiv(log1,\ psub(xp1,\ one)));}
+\DoxyCodeLine{00401\ \ \ \textcolor{keywordflow}{return}\ pselect(por(small\_mask,\ inf\_mask),\ x,\ log\_large);}
+\DoxyCodeLine{00402\ \}}
+\DoxyCodeLine{00403\ \textcolor{comment}{}}
+\DoxyCodeLine{00404\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ exp(x)-\/1\ computed\ using\ W.\ Kahan's\ formula.}}
+\DoxyCodeLine{00405\ \textcolor{comment}{\ \ \ \ See:\ http://www.plunk.org/\string~hatch/rightway.php}}
+\DoxyCodeLine{00406\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00407\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00408\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ generic\_expm1(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)}
+\DoxyCodeLine{00409\ \{}
+\DoxyCodeLine{00410\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ ScalarType;}
+\DoxyCodeLine{00411\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\ =\ pset1<Packet>(ScalarType(1));}
+\DoxyCodeLine{00412\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ neg\_one\ =\ pset1<Packet>(ScalarType(-\/1));}
+\DoxyCodeLine{00413\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ u\ =\ pexp(x);}
+\DoxyCodeLine{00414\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\_mask\ =\ pcmp\_eq(u,\ one);}
+\DoxyCodeLine{00415\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ u\_minus\_one\ =\ psub(u,\ one);}
+\DoxyCodeLine{00416\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ neg\_one\_mask\ =\ pcmp\_eq(u\_minus\_one,\ neg\_one);}
+\DoxyCodeLine{00417\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ logu\ =\ plog(u);}
+\DoxyCodeLine{00418\ \ \ \textcolor{comment}{//\ The\ following\ comparison\ is\ to\ catch\ the\ case\ where}}
+\DoxyCodeLine{00419\ \ \ \textcolor{comment}{//\ exp(x)\ =\ +inf.\ It\ is\ written\ in\ this\ way\ to\ avoid\ having}}
+\DoxyCodeLine{00420\ \ \ \textcolor{comment}{//\ to\ form\ the\ constant\ +inf,\ which\ depends\ on\ the\ packet}}
+\DoxyCodeLine{00421\ \ \ \textcolor{comment}{//\ type.}}
+\DoxyCodeLine{00422\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pos\_inf\_mask\ =\ pcmp\_eq(logu,\ u);}
+\DoxyCodeLine{00423\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ expm1\ =\ pmul(u\_minus\_one,\ pdiv(x,\ logu));}
+\DoxyCodeLine{00424\ \ \ expm1\ =\ pselect(pos\_inf\_mask,\ u,\ expm1);}
+\DoxyCodeLine{00425\ \ \ \textcolor{keywordflow}{return}\ pselect(one\_mask,}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ x,}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(neg\_one\_mask,}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ neg\_one,}
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ expm1));}
+\DoxyCodeLine{00430\ \}}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \textcolor{comment}{//\ Exponential\ function.\ Works\ by\ writing\ "{}x\ =\ m*log(2)\ +\ r"{}\ where}}
+\DoxyCodeLine{00434\ \textcolor{comment}{//\ "{}m\ =\ floor(x/log(2)+1/2)"{}\ and\ "{}r"{}\ is\ the\ remainder.\ The\ result\ is\ then}}
+\DoxyCodeLine{00435\ \textcolor{comment}{//\ "{}exp(x)\ =\ 2\string^m*exp(r)"{}\ where\ exp(r)\ is\ in\ the\ range\ [-\/1,1).}}
+\DoxyCodeLine{00436\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00437\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00438\ EIGEN\_UNUSED}
+\DoxyCodeLine{00439\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pexp\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00440\ \{}
+\DoxyCodeLine{00441\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_1\ \ \ \ \ \ =\ pset1<Packet>(1.0f);}
+\DoxyCodeLine{00442\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_half\ \ \ =\ pset1<Packet>(0.5f);}
+\DoxyCodeLine{00443\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_exp\_hi\ =\ pset1<Packet>(\ 88.723f);}
+\DoxyCodeLine{00444\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_exp\_lo\ =\ pset1<Packet>(-\/88.723f);}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_LOG2EF\ =\ pset1<Packet>(1.44269504088896341f);}
+\DoxyCodeLine{00447\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p0\ =\ pset1<Packet>(1.9875691500E-\/4f);}
+\DoxyCodeLine{00448\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p1\ =\ pset1<Packet>(1.3981999507E-\/3f);}
+\DoxyCodeLine{00449\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p2\ =\ pset1<Packet>(8.3334519073E-\/3f);}
+\DoxyCodeLine{00450\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p3\ =\ pset1<Packet>(4.1665795894E-\/2f);}
+\DoxyCodeLine{00451\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p4\ =\ pset1<Packet>(1.6666665459E-\/1f);}
+\DoxyCodeLine{00452\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p5\ =\ pset1<Packet>(5.0000001201E-\/1f);}
+\DoxyCodeLine{00453\ }
+\DoxyCodeLine{00454\ \ \ \textcolor{comment}{//\ Clamp\ x.}}
+\DoxyCodeLine{00455\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\ =\ pmax(pmin(\_x,\ cst\_exp\_hi),\ cst\_exp\_lo);}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ \ \ \textcolor{comment}{//\ Express\ exp(x)\ as\ exp(m*ln(2)\ +\ r),\ start\ by\ extracting}}
+\DoxyCodeLine{00458\ \ \ \textcolor{comment}{//\ m\ =\ floor(x/ln(2)\ +\ 0.5).}}
+\DoxyCodeLine{00459\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ m\ =\ pfloor(pmadd(x,\ cst\_cephes\_LOG2EF,\ cst\_half));}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \textcolor{comment}{//\ Get\ r\ =\ x\ -\/\ m*ln(2).\ If\ no\ FMA\ instructions\ are\ available,\ m*ln(2)\ is}}
+\DoxyCodeLine{00462\ \ \ \textcolor{comment}{//\ subtracted\ out\ in\ two\ parts,\ m*C1+m*C2\ =\ m*ln(2),\ to\ avoid\ accumulating}}
+\DoxyCodeLine{00463\ \ \ \textcolor{comment}{//\ truncation\ errors.}}
+\DoxyCodeLine{00464\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_C1\ =\ pset1<Packet>(-\/0.693359375f);}
+\DoxyCodeLine{00465\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_C2\ =\ pset1<Packet>(2.12194440e-\/4f);}
+\DoxyCodeLine{00466\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\ =\ pmadd(m,\ cst\_cephes\_exp\_C1,\ x);}
+\DoxyCodeLine{00467\ \ \ r\ =\ pmadd(m,\ cst\_cephes\_exp\_C2,\ r);}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r2\ =\ pmul(r,\ r);}
+\DoxyCodeLine{00470\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r3\ =\ pmul(r2,\ r);}
+\DoxyCodeLine{00471\ }
+\DoxyCodeLine{00472\ \ \ \textcolor{comment}{//\ Evaluate\ the\ polynomial\ approximant,improved\ by\ instruction-\/level\ parallelism.}}
+\DoxyCodeLine{00473\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y,\ y1,\ y2;}
+\DoxyCodeLine{00474\ \ \ y\ \ =\ pmadd(cst\_cephes\_exp\_p0,\ r,\ cst\_cephes\_exp\_p1);}
+\DoxyCodeLine{00475\ \ \ y1\ =\ pmadd(cst\_cephes\_exp\_p3,\ r,\ cst\_cephes\_exp\_p4);}
+\DoxyCodeLine{00476\ \ \ y2\ =\ padd(r,\ cst\_1);}
+\DoxyCodeLine{00477\ \ \ y\ \ =\ pmadd(y,\ r,\ cst\_cephes\_exp\_p2);}
+\DoxyCodeLine{00478\ \ \ y1\ =\ pmadd(y1,\ r,\ cst\_cephes\_exp\_p5);}
+\DoxyCodeLine{00479\ \ \ y\ \ =\ pmadd(y,\ r3,\ y1);}
+\DoxyCodeLine{00480\ \ \ y\ \ =\ pmadd(y,\ r2,\ y2);}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \textcolor{comment}{//\ Return\ 2\string^m\ *\ exp(r).}}
+\DoxyCodeLine{00483\ \ \ \textcolor{comment}{//\ TODO:\ replace\ pldexp\ with\ faster\ implementation\ since\ y\ in\ [-\/1,\ 1).}}
+\DoxyCodeLine{00484\ \ \ \textcolor{keywordflow}{return}\ pmax(pldexp(y,m),\ \_x);}
+\DoxyCodeLine{00485\ \}}
+\DoxyCodeLine{00486\ }
+\DoxyCodeLine{00487\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00488\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00489\ EIGEN\_UNUSED}
+\DoxyCodeLine{00490\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pexp\_double(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \_x)}
+\DoxyCodeLine{00491\ \{}
+\DoxyCodeLine{00492\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\ =\ \_x;}
+\DoxyCodeLine{00493\ }
+\DoxyCodeLine{00494\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_1\ =\ pset1<Packet>(1.0);}
+\DoxyCodeLine{00495\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_2\ =\ pset1<Packet>(2.0);}
+\DoxyCodeLine{00496\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_half\ =\ pset1<Packet>(0.5);}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_exp\_hi\ =\ pset1<Packet>(709.784);}
+\DoxyCodeLine{00499\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_exp\_lo\ =\ pset1<Packet>(-\/709.784);}
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_LOG2EF\ =\ pset1<Packet>(1.4426950408889634073599);}
+\DoxyCodeLine{00502\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p0\ =\ pset1<Packet>(1.26177193074810590878e-\/4);}
+\DoxyCodeLine{00503\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p1\ =\ pset1<Packet>(3.02994407707441961300e-\/2);}
+\DoxyCodeLine{00504\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_p2\ =\ pset1<Packet>(9.99999999999999999910e-\/1);}
+\DoxyCodeLine{00505\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_q0\ =\ pset1<Packet>(3.00198505138664455042e-\/6);}
+\DoxyCodeLine{00506\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_q1\ =\ pset1<Packet>(2.52448340349684104192e-\/3);}
+\DoxyCodeLine{00507\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_q2\ =\ pset1<Packet>(2.27265548208155028766e-\/1);}
+\DoxyCodeLine{00508\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_q3\ =\ pset1<Packet>(2.00000000000000000009e0);}
+\DoxyCodeLine{00509\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_C1\ =\ pset1<Packet>(0.693145751953125);}
+\DoxyCodeLine{00510\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_cephes\_exp\_C2\ =\ pset1<Packet>(1.42860682030941723212e-\/6);}
+\DoxyCodeLine{00511\ }
+\DoxyCodeLine{00512\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ tmp,\ fx;}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \ \ \textcolor{comment}{//\ clamp\ x}}
+\DoxyCodeLine{00515\ \ \ x\ =\ pmax(pmin(x,\ cst\_exp\_hi),\ cst\_exp\_lo);}
+\DoxyCodeLine{00516\ \ \ \textcolor{comment}{//\ Express\ exp(x)\ as\ exp(g\ +\ n*log(2)).}}
+\DoxyCodeLine{00517\ \ \ fx\ =\ pmadd(cst\_cephes\_LOG2EF,\ x,\ cst\_half);}
+\DoxyCodeLine{00518\ }
+\DoxyCodeLine{00519\ \ \ \textcolor{comment}{//\ Get\ the\ integer\ modulus\ of\ log(2),\ i.e.\ the\ "{}n"{}\ described\ above.}}
+\DoxyCodeLine{00520\ \ \ fx\ =\ pfloor(fx);}
+\DoxyCodeLine{00521\ }
+\DoxyCodeLine{00522\ \ \ \textcolor{comment}{//\ Get\ the\ remainder\ modulo\ log(2),\ i.e.\ the\ "{}g"{}\ described\ above.\ Subtract}}
+\DoxyCodeLine{00523\ \ \ \textcolor{comment}{//\ n*log(2)\ out\ in\ two\ steps,\ i.e.\ n*C1\ +\ n*C2,\ C1+C2=log2\ to\ get\ the\ last}}
+\DoxyCodeLine{00524\ \ \ \textcolor{comment}{//\ digits\ right.}}
+\DoxyCodeLine{00525\ \ \ tmp\ =\ pmul(fx,\ cst\_cephes\_exp\_C1);}
+\DoxyCodeLine{00526\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ z\ =\ pmul(fx,\ cst\_cephes\_exp\_C2);}
+\DoxyCodeLine{00527\ \ \ x\ =\ psub(x,\ tmp);}
+\DoxyCodeLine{00528\ \ \ x\ =\ psub(x,\ z);}
+\DoxyCodeLine{00529\ }
+\DoxyCodeLine{00530\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,\ x);}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \ \ \textcolor{comment}{//\ Evaluate\ the\ numerator\ polynomial\ of\ the\ rational\ interpolant.}}
+\DoxyCodeLine{00533\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ px\ =\ cst\_cephes\_exp\_p0;}
+\DoxyCodeLine{00534\ \ \ px\ =\ pmadd(px,\ x2,\ cst\_cephes\_exp\_p1);}
+\DoxyCodeLine{00535\ \ \ px\ =\ pmadd(px,\ x2,\ cst\_cephes\_exp\_p2);}
+\DoxyCodeLine{00536\ \ \ px\ =\ pmul(px,\ x);}
+\DoxyCodeLine{00537\ }
+\DoxyCodeLine{00538\ \ \ \textcolor{comment}{//\ Evaluate\ the\ denominator\ polynomial\ of\ the\ rational\ interpolant.}}
+\DoxyCodeLine{00539\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ qx\ =\ cst\_cephes\_exp\_q0;}
+\DoxyCodeLine{00540\ \ \ qx\ =\ pmadd(qx,\ x2,\ cst\_cephes\_exp\_q1);}
+\DoxyCodeLine{00541\ \ \ qx\ =\ pmadd(qx,\ x2,\ cst\_cephes\_exp\_q2);}
+\DoxyCodeLine{00542\ \ \ qx\ =\ pmadd(qx,\ x2,\ cst\_cephes\_exp\_q3);}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \ \ \textcolor{comment}{//\ I\ don't\ really\ get\ this\ bit,\ copied\ from\ the\ SSE2\ routines,\ so...}}
+\DoxyCodeLine{00545\ \ \ \textcolor{comment}{//\ TODO(gonnet):\ Figure\ out\ what\ is\ going\ on\ here,\ perhaps\ find\ a\ better}}
+\DoxyCodeLine{00546\ \ \ \textcolor{comment}{//\ rational\ interpolant?}}
+\DoxyCodeLine{00547\ \ \ x\ =\ pdiv(px,\ psub(qx,\ px));}
+\DoxyCodeLine{00548\ \ \ x\ =\ pmadd(cst\_2,\ x,\ cst\_1);}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ \ \ \textcolor{comment}{//\ Construct\ the\ result\ 2\string^n\ *\ exp(g)\ =\ e\ *\ x.\ The\ max\ is\ used\ to\ catch}}
+\DoxyCodeLine{00551\ \ \ \textcolor{comment}{//\ non-\/finite\ values\ in\ the\ input.}}
+\DoxyCodeLine{00552\ \ \ \textcolor{comment}{//\ TODO:\ replace\ pldexp\ with\ faster\ implementation\ since\ x\ in\ [-\/1,\ 1).}}
+\DoxyCodeLine{00553\ \ \ \textcolor{keywordflow}{return}\ pmax(pldexp(x,fx),\ \_x);}
+\DoxyCodeLine{00554\ \}}
+\DoxyCodeLine{00555\ }
+\DoxyCodeLine{00556\ \textcolor{comment}{//\ The\ following\ code\ is\ inspired\ by\ the\ following\ stack-\/overflow\ answer:}}
+\DoxyCodeLine{00557\ \textcolor{comment}{//\ \ \ https://stackoverflow.com/questions/30463616/payne-\/hanek-\/algorithm-\/implementation-\/in-\/c/30465751\#30465751}}
+\DoxyCodeLine{00558\ \textcolor{comment}{//\ It\ has\ been\ largely\ optimized:}}
+\DoxyCodeLine{00559\ \textcolor{comment}{//\ \ -\/\ By-\/pass\ calls\ to\ frexp.}}
+\DoxyCodeLine{00560\ \textcolor{comment}{//\ \ -\/\ Aligned\ loads\ of\ required\ 96\ bits\ of\ 2/pi.\ This\ is\ accomplished\ by}}
+\DoxyCodeLine{00561\ \textcolor{comment}{//\ \ \ \ (1)\ balancing\ the\ mantissa\ and\ exponent\ to\ the\ required\ bits\ of\ 2/pi\ are}}
+\DoxyCodeLine{00562\ \textcolor{comment}{//\ \ \ \ aligned\ on\ 8-\/bits,\ and\ (2)\ replicating\ the\ storage\ of\ the\ bits\ of\ 2/pi.}}
+\DoxyCodeLine{00563\ \textcolor{comment}{//\ \ -\/\ Avoid\ a\ branch\ in\ rounding\ and\ extraction\ of\ the\ remaining\ fractional\ part.}}
+\DoxyCodeLine{00564\ \textcolor{comment}{//\ Overall,\ I\ measured\ a\ speed\ up\ higher\ than\ x2\ on\ x86-\/64.}}
+\DoxyCodeLine{00565\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{float}\ trig\_reduce\_huge\ (\textcolor{keywordtype}{float}\ xf,\ \textcolor{keywordtype}{int}\ *quadrant)}
+\DoxyCodeLine{00566\ \{}
+\DoxyCodeLine{00567\ \ \ \textcolor{keyword}{using\ }Eigen::numext::int32\_t;}
+\DoxyCodeLine{00568\ \ \ \textcolor{keyword}{using\ }Eigen::numext::uint32\_t;}
+\DoxyCodeLine{00569\ \ \ \textcolor{keyword}{using\ }Eigen::numext::int64\_t;}
+\DoxyCodeLine{00570\ \ \ \textcolor{keyword}{using\ }Eigen::numext::uint64\_t;}
+\DoxyCodeLine{00571\ }
+\DoxyCodeLine{00572\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ pio2\_62\ =\ 3.4061215800865545e-\/19;\ \ \ \ \textcolor{comment}{//\ pi/2\ *\ 2\string^-\/62}}
+\DoxyCodeLine{00573\ \ \ \textcolor{keyword}{const}\ uint64\_t\ zero\_dot\_five\ =\ uint64\_t(1)\ <<\ 61;\ \textcolor{comment}{//\ 0.5\ in\ 2.62-\/bit\ fixed-\/point\ foramt}}
+\DoxyCodeLine{00574\ }
+\DoxyCodeLine{00575\ \ \ \textcolor{comment}{//\ 192\ bits\ of\ 2/pi\ for\ Payne-\/Hanek\ reduction}}
+\DoxyCodeLine{00576\ \ \ \textcolor{comment}{//\ Bits\ are\ introduced\ by\ packet\ of\ 8\ to\ enable\ aligned\ reads.}}
+\DoxyCodeLine{00577\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ uint32\_t\ two\_over\_pi\ []\ =\ }
+\DoxyCodeLine{00578\ \ \ \{}
+\DoxyCodeLine{00579\ \ \ \ \ 0x00000028,\ 0x000028be,\ 0x0028be60,\ 0x28be60db,}
+\DoxyCodeLine{00580\ \ \ \ \ 0xbe60db93,\ 0x60db9391,\ 0xdb939105,\ 0x9391054a,}
+\DoxyCodeLine{00581\ \ \ \ \ 0x91054a7f,\ 0x054a7f09,\ 0x4a7f09d5,\ 0x7f09d5f4,}
+\DoxyCodeLine{00582\ \ \ \ \ 0x09d5f47d,\ 0xd5f47d4d,\ 0xf47d4d37,\ 0x7d4d3770,}
+\DoxyCodeLine{00583\ \ \ \ \ 0x4d377036,\ 0x377036d8,\ 0x7036d8a5,\ 0x36d8a566,}
+\DoxyCodeLine{00584\ \ \ \ \ 0xd8a5664f,\ 0xa5664f10,\ 0x664f10e4,\ 0x4f10e410,}
+\DoxyCodeLine{00585\ \ \ \ \ 0x10e41000,\ 0xe4100000}
+\DoxyCodeLine{00586\ \ \ \};}
+\DoxyCodeLine{00587\ \ \ }
+\DoxyCodeLine{00588\ \ \ uint32\_t\ xi\ =\ numext::bit\_cast<uint32\_t>(xf);}
+\DoxyCodeLine{00589\ \ \ \textcolor{comment}{//\ Below,\ -\/118\ =\ -\/126\ +\ 8.}}
+\DoxyCodeLine{00590\ \ \ \textcolor{comment}{//\ \ \ -\/126\ is\ to\ get\ the\ exponent,}}
+\DoxyCodeLine{00591\ \ \ \textcolor{comment}{//\ \ \ +8\ is\ to\ enable\ alignment\ of\ 2/pi's\ bits\ on\ 8\ bits.}}
+\DoxyCodeLine{00592\ \ \ \textcolor{comment}{//\ This\ is\ possible\ because\ the\ fractional\ part\ of\ x\ as\ only\ 24\ meaningful\ bits.}}
+\DoxyCodeLine{00593\ \ \ uint32\_t\ e\ =\ (xi\ >>\ 23)\ -\/\ 118;}
+\DoxyCodeLine{00594\ \ \ \textcolor{comment}{//\ Extract\ the\ mantissa\ and\ shift\ it\ to\ align\ it\ wrt\ the\ exponent}}
+\DoxyCodeLine{00595\ \ \ xi\ =\ ((xi\ \&\ 0x007fffffu)|\ 0x00800000u)\ <<\ (e\ \&\ 0x7);}
+\DoxyCodeLine{00596\ }
+\DoxyCodeLine{00597\ \ \ uint32\_t\ i\ =\ e\ >>\ 3;}
+\DoxyCodeLine{00598\ \ \ uint32\_t\ twoopi\_1\ \ =\ two\_over\_pi[i-\/1];}
+\DoxyCodeLine{00599\ \ \ uint32\_t\ twoopi\_2\ \ =\ two\_over\_pi[i+3];}
+\DoxyCodeLine{00600\ \ \ uint32\_t\ twoopi\_3\ \ =\ two\_over\_pi[i+7];}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \textcolor{comment}{//\ Compute\ x\ *\ 2/pi\ in\ 2.62-\/bit\ fixed-\/point\ format.}}
+\DoxyCodeLine{00603\ \ \ uint64\_t\ p;}
+\DoxyCodeLine{00604\ \ \ p\ =\ uint64\_t(xi)\ *\ twoopi\_3;}
+\DoxyCodeLine{00605\ \ \ p\ =\ uint64\_t(xi)\ *\ twoopi\_2\ +\ (p\ >>\ 32);}
+\DoxyCodeLine{00606\ \ \ p\ =\ (uint64\_t(xi\ *\ twoopi\_1)\ <<\ 32)\ +\ p;}
+\DoxyCodeLine{00607\ }
+\DoxyCodeLine{00608\ \ \ \textcolor{comment}{//\ Round\ to\ nearest:\ add\ 0.5\ and\ extract\ integral\ part.}}
+\DoxyCodeLine{00609\ \ \ uint64\_t\ q\ =\ (p\ +\ zero\_dot\_five)\ >>\ 62;}
+\DoxyCodeLine{00610\ \ \ *quadrant\ =\ int(q);}
+\DoxyCodeLine{00611\ \ \ \textcolor{comment}{//\ Now\ it\ remains\ to\ compute\ "{}r\ =\ x\ -\/\ q*pi/2"{}\ with\ high\ accuracy,}}
+\DoxyCodeLine{00612\ \ \ \textcolor{comment}{//\ since\ we\ have\ p=x/(pi/2)\ with\ high\ accuracy,\ we\ can\ more\ efficiently\ compute\ r\ as:}}
+\DoxyCodeLine{00613\ \ \ \textcolor{comment}{//\ \ \ r\ =\ (p-\/q)*pi/2,}}
+\DoxyCodeLine{00614\ \ \ \textcolor{comment}{//\ where\ the\ product\ can\ be\ be\ carried\ out\ with\ sufficient\ accuracy\ using\ double\ precision.}}
+\DoxyCodeLine{00615\ \ \ p\ -\/=\ q<<62;}
+\DoxyCodeLine{00616\ \ \ \textcolor{keywordflow}{return}\ float(\textcolor{keywordtype}{double}(int64\_t(p))\ *\ pio2\_62);}
+\DoxyCodeLine{00617\ \}}
+\DoxyCodeLine{00618\ }
+\DoxyCodeLine{00619\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ ComputeSine,\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00620\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00621\ EIGEN\_UNUSED}
+\DoxyCodeLine{00622\ \textcolor{preprocessor}{\#if\ EIGEN\_GNUC\_AT\_LEAST(4,4)\ \&\&\ EIGEN\_COMP\_GNUC\_STRICT}}
+\DoxyCodeLine{00623\ \_\_attribute\_\_((optimize(\textcolor{stringliteral}{"{}-\/fno-\/unsafe-\/math-\/optimizations"{}})))}
+\DoxyCodeLine{00624\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00625\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ psincos\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \_x)}
+\DoxyCodeLine{00626\ \{}
+\DoxyCodeLine{00627\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::integer\_packet}}\ PacketI;}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \ cst\_2oPI\ \ \ \ \ \ \ \ \ \ \ \ =\ pset1<Packet>(0.636619746685028076171875f);\ \textcolor{comment}{//\ 2/PI}}
+\DoxyCodeLine{00630\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \ cst\_rounding\_magic\ \ =\ pset1<Packet>(12582912);\ \textcolor{comment}{//\ 2\string^23\ for\ rounding}}
+\DoxyCodeLine{00631\ \ \ \textcolor{keyword}{const}\ PacketI\ csti\_1\ \ \ \ \ \ \ \ \ \ \ \ \ \ =\ pset1<PacketI>(1);}
+\DoxyCodeLine{00632\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \ cst\_sign\_mask\ \ \ \ \ \ \ =\ pset1frombits<Packet>(0x80000000u);}
+\DoxyCodeLine{00633\ }
+\DoxyCodeLine{00634\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\ =\ pabs(\_x);}
+\DoxyCodeLine{00635\ }
+\DoxyCodeLine{00636\ \ \ \textcolor{comment}{//\ Scale\ x\ by\ 2/Pi\ to\ find\ x's\ octant.}}
+\DoxyCodeLine{00637\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y\ =\ pmul(x,\ cst\_2oPI);}
+\DoxyCodeLine{00638\ }
+\DoxyCodeLine{00639\ \ \ \textcolor{comment}{//\ Rounding\ trick:}}
+\DoxyCodeLine{00640\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y\_round\ =\ padd(y,\ cst\_rounding\_magic);}
+\DoxyCodeLine{00641\ \ \ EIGEN\_OPTIMIZATION\_BARRIER(y\_round)}
+\DoxyCodeLine{00642\ \ \ PacketI\ y\_int\ =\ preinterpret<PacketI>(y\_round);\ \textcolor{comment}{//\ last\ 23\ digits\ represent\ integer\ (if\ abs(x)<2\string^24)}}
+\DoxyCodeLine{00643\ \ \ y\ =\ psub(y\_round,\ cst\_rounding\_magic);\ \textcolor{comment}{//\ nearest\ integer\ to\ x*4/pi}}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ \ \ \textcolor{comment}{//\ Subtract\ y\ *\ Pi/2\ to\ reduce\ x\ to\ the\ interval\ -\/Pi/4\ <=\ x\ <=\ +Pi/4}}
+\DoxyCodeLine{00646\ \ \ \textcolor{comment}{//\ using\ "{}Extended\ precision\ modular\ arithmetic"{}}}
+\DoxyCodeLine{00647\ \textcolor{preprocessor}{\ \ \#if\ defined(EIGEN\_VECTORIZE\_FMA)}}
+\DoxyCodeLine{00648\ \ \ \textcolor{comment}{//\ This\ version\ requires\ true\ FMA\ for\ high\ accuracy.}}
+\DoxyCodeLine{00649\ \ \ \textcolor{comment}{//\ It\ provides\ a\ max\ error\ of\ 1ULP\ up\ to\ (with\ absolute\_error\ <\ 5.9605e-\/08):}}
+\DoxyCodeLine{00650\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ huge\_th\ =\ ComputeSine\ ?\ 117435.992f\ :\ 71476.0625f;}
+\DoxyCodeLine{00651\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(-\/1.57079601287841796875f),\ x);}
+\DoxyCodeLine{00652\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(-\/3.1391647326017846353352069854736328125e-\/07f),\ x);}
+\DoxyCodeLine{00653\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(-\/5.390302529957764765544681040410068817436695098876953125e-\/15f),\ x);}
+\DoxyCodeLine{00654\ \textcolor{preprocessor}{\ \ \#else}}
+\DoxyCodeLine{00655\ \ \ \textcolor{comment}{//\ Without\ true\ FMA,\ the\ previous\ set\ of\ coefficients\ maintain\ 1ULP\ accuracy}}
+\DoxyCodeLine{00656\ \ \ \textcolor{comment}{//\ up\ to\ x<15.7\ (for\ sin),\ but\ accuracy\ is\ immediately\ lost\ for\ x>15.7.}}
+\DoxyCodeLine{00657\ \ \ \textcolor{comment}{//\ We\ thus\ use\ one\ more\ iteration\ to\ maintain\ 2ULPs\ up\ to\ reasonably\ large\ inputs.}}
+\DoxyCodeLine{00658\ }
+\DoxyCodeLine{00659\ \ \ \textcolor{comment}{//\ The\ following\ set\ of\ coefficients\ maintain\ 1ULP\ up\ to\ 9.43\ and\ 14.16\ for\ sin\ and\ cos\ respectively.}}
+\DoxyCodeLine{00660\ \ \ \textcolor{comment}{//\ and\ 2\ ULP\ up\ to:}}
+\DoxyCodeLine{00661\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ huge\_th\ =\ ComputeSine\ ?\ 25966.f\ :\ 18838.f;}
+\DoxyCodeLine{00662\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(-\/1.5703125),\ x);\ \textcolor{comment}{//\ =\ 0xbfc90000}}
+\DoxyCodeLine{00663\ \ \ EIGEN\_OPTIMIZATION\_BARRIER(x)}
+\DoxyCodeLine{00664\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(-\/0.000483989715576171875),\ x);\ \textcolor{comment}{//\ =\ 0xb9fdc000}}
+\DoxyCodeLine{00665\ \ \ EIGEN\_OPTIMIZATION\_BARRIER(x)}
+\DoxyCodeLine{00666\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(1.62865035235881805419921875e-\/07),\ x);\ \textcolor{comment}{//\ =\ 0x342ee000}}
+\DoxyCodeLine{00667\ \ \ x\ =\ pmadd(y,\ pset1<Packet>(5.5644315544167710640977020375430583953857421875e-\/11),\ x);\ \textcolor{comment}{//\ =\ 0x2e74b9ee}}
+\DoxyCodeLine{00668\ }
+\DoxyCodeLine{00669\ \ \ \textcolor{comment}{//\ For\ the\ record,\ the\ following\ set\ of\ coefficients\ maintain\ 2ULP\ up}}
+\DoxyCodeLine{00670\ \ \ \textcolor{comment}{//\ to\ a\ slightly\ larger\ range:}}
+\DoxyCodeLine{00671\ \ \ \textcolor{comment}{//\ const\ float\ huge\_th\ =\ ComputeSine\ ?\ 51981.f\ :\ 39086.125f;}}
+\DoxyCodeLine{00672\ \ \ \textcolor{comment}{//\ but\ it\ slightly\ fails\ to\ maintain\ 1ULP\ for\ two\ values\ of\ sin\ below\ pi.}}
+\DoxyCodeLine{00673\ \ \ \textcolor{comment}{//\ x\ =\ pmadd(y,\ pset1<Packet>(-\/3.140625/2.),\ x);}}
+\DoxyCodeLine{00674\ \ \ \textcolor{comment}{//\ x\ =\ pmadd(y,\ pset1<Packet>(-\/0.00048351287841796875),\ x);}}
+\DoxyCodeLine{00675\ \ \ \textcolor{comment}{//\ x\ =\ pmadd(y,\ pset1<Packet>(-\/3.13855707645416259765625e-\/07),\ x);}}
+\DoxyCodeLine{00676\ \ \ \textcolor{comment}{//\ x\ =\ pmadd(y,\ pset1<Packet>(-\/6.0771006282767103812147979624569416046142578125e-\/11),\ x);}}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \ \textcolor{comment}{//\ For\ the\ record,\ with\ only\ 3\ iterations\ it\ is\ possible\ to\ maintain}}
+\DoxyCodeLine{00679\ \ \ \textcolor{comment}{//\ 1\ ULP\ up\ to\ 3PI\ (maybe\ more)\ and\ 2ULP\ up\ to\ 255.}}
+\DoxyCodeLine{00680\ \ \ \textcolor{comment}{//\ The\ coefficients\ are:\ 0xbfc90f80,\ 0xb7354480,\ 0x2e74b9ee}}
+\DoxyCodeLine{00681\ \textcolor{preprocessor}{\ \ \#endif}}
+\DoxyCodeLine{00682\ }
+\DoxyCodeLine{00683\ \ \ \textcolor{keywordflow}{if}(predux\_any(pcmp\_le(pset1<Packet>(huge\_th),pabs(\_x))))}
+\DoxyCodeLine{00684\ \ \ \{}
+\DoxyCodeLine{00685\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ PacketSize\ =\ unpacket\_traits<Packet>::size;}
+\DoxyCodeLine{00686\ \ \ \ \ EIGEN\_ALIGN\_TO\_BOUNDARY(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}))\ \textcolor{keywordtype}{float}\ vals[PacketSize];}
+\DoxyCodeLine{00687\ \ \ \ \ EIGEN\_ALIGN\_TO\_BOUNDARY(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}))\ \textcolor{keywordtype}{float}\ x\_cpy[PacketSize];}
+\DoxyCodeLine{00688\ \ \ \ \ EIGEN\_ALIGN\_TO\_BOUNDARY(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}))\ \textcolor{keywordtype}{int}\ y\_int2[PacketSize];}
+\DoxyCodeLine{00689\ \ \ \ \ pstoreu(vals,\ pabs(\_x));}
+\DoxyCodeLine{00690\ \ \ \ \ pstoreu(x\_cpy,\ x);}
+\DoxyCodeLine{00691\ \ \ \ \ pstoreu(y\_int2,\ y\_int);}
+\DoxyCodeLine{00692\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{int}\ k=0;\ k<PacketSize;++k)}
+\DoxyCodeLine{00693\ \ \ \ \ \{}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ \textcolor{keywordtype}{float}\ val\ =\ vals[k];}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(val>=huge\_th\ \&\&\ (numext::isfinite)(val))}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \ \ x\_cpy[k]\ =\ trig\_reduce\_huge(val,\&y\_int2[k]);}
+\DoxyCodeLine{00697\ \ \ \ \ \}}
+\DoxyCodeLine{00698\ \ \ \ \ x\ =\ ploadu<Packet>(x\_cpy);}
+\DoxyCodeLine{00699\ \ \ \ \ y\_int\ =\ ploadu<PacketI>(y\_int2);}
+\DoxyCodeLine{00700\ \ \ \}}
+\DoxyCodeLine{00701\ }
+\DoxyCodeLine{00702\ \ \ \textcolor{comment}{//\ Compute\ the\ sign\ to\ apply\ to\ the\ polynomial.}}
+\DoxyCodeLine{00703\ \ \ \textcolor{comment}{//\ sin:\ sign\ =\ second\_bit(y\_int)\ xor\ signbit(\_x)}}
+\DoxyCodeLine{00704\ \ \ \textcolor{comment}{//\ cos:\ sign\ =\ second\_bit(y\_int+1)}}
+\DoxyCodeLine{00705\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ sign\_bit\ =\ ComputeSine\ ?\ pxor(\_x,\ preinterpret<Packet>(plogical\_shift\_left<30>(y\_int)))}
+\DoxyCodeLine{00706\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ preinterpret<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}>(plogical\_shift\_left<30>(padd(y\_int,csti\_1)));}
+\DoxyCodeLine{00707\ \ \ sign\_bit\ =\ pand(sign\_bit,\ cst\_sign\_mask);\ \textcolor{comment}{//\ clear\ all\ but\ left\ most\ bit}}
+\DoxyCodeLine{00708\ }
+\DoxyCodeLine{00709\ \ \ \textcolor{comment}{//\ Get\ the\ polynomial\ selection\ mask\ from\ the\ second\ bit\ of\ y\_int}}
+\DoxyCodeLine{00710\ \ \ \textcolor{comment}{//\ We'll\ calculate\ both\ (sin\ and\ cos)\ polynomials\ and\ then\ select\ from\ the\ two.}}
+\DoxyCodeLine{00711\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ poly\_mask\ =\ preinterpret<Packet>(pcmp\_eq(pand(y\_int,\ csti\_1),\ pzero(y\_int)));}
+\DoxyCodeLine{00712\ }
+\DoxyCodeLine{00713\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,x);}
+\DoxyCodeLine{00714\ }
+\DoxyCodeLine{00715\ \ \ \textcolor{comment}{//\ Evaluate\ the\ cos(x)\ polynomial.\ (-\/Pi/4\ <=\ x\ <=\ Pi/4)}}
+\DoxyCodeLine{00716\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y1\ =\ \ \ \ \ \ \ \ pset1<Packet>(2.4372266125283204019069671630859375e-\/05f);}
+\DoxyCodeLine{00717\ \ \ y1\ =\ pmadd(y1,\ x2,\ pset1<Packet>(-\/0.00138865201734006404876708984375f\ \ \ \ \ ));}
+\DoxyCodeLine{00718\ \ \ y1\ =\ pmadd(y1,\ x2,\ pset1<Packet>(0.041666619479656219482421875f\ \ \ \ \ \ \ \ \ \ \ ));}
+\DoxyCodeLine{00719\ \ \ y1\ =\ pmadd(y1,\ x2,\ pset1<Packet>(-\/0.5f));}
+\DoxyCodeLine{00720\ \ \ y1\ =\ pmadd(y1,\ x2,\ pset1<Packet>(1.f));}
+\DoxyCodeLine{00721\ }
+\DoxyCodeLine{00722\ \ \ \textcolor{comment}{//\ Evaluate\ the\ sin(x)\ polynomial.\ (Pi/4\ <=\ x\ <=\ Pi/4)}}
+\DoxyCodeLine{00723\ \ \ \textcolor{comment}{//\ octave/matlab\ code\ to\ compute\ those\ coefficients:}}
+\DoxyCodeLine{00724\ \ \ \textcolor{comment}{//\ \ \ \ x\ =\ (0:0.0001:pi/4)';}}
+\DoxyCodeLine{00725\ \ \ \textcolor{comment}{//\ \ \ \ A\ =\ [x.\string^3\ x.\string^5\ x.\string^7];}}
+\DoxyCodeLine{00726\ \ \ \textcolor{comment}{//\ \ \ \ w\ =\ ((1.-\/(x/(pi/4)).\string^2).\string^5)*2000+1;\ \ \ \ \ \ \ \ \ \#\ weights\ trading\ relative\ accuracy}}
+\DoxyCodeLine{00727\ \ \ \textcolor{comment}{//\ \ \ \ c\ =\ (A'*diag(w)*A)\(\backslash\)(A'*diag(w)*(sin(x)-\/x));\ \#\ weighted\ LS,\ linear\ coeff\ forced\ to\ 1}}
+\DoxyCodeLine{00728\ \ \ \textcolor{comment}{//\ \ \ \ printf('\%.64f\(\backslash\)n\ \%.64f\(\backslash\)n\%.64f\(\backslash\)n',\ c(3),\ c(2),\ c(1))}}
+\DoxyCodeLine{00729\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00730\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ y2\ =\ \ \ \ \ \ \ \ pset1<Packet>(-\/0.0001959234114083702898469196984621021329076029360294342041015625f);}
+\DoxyCodeLine{00731\ \ \ y2\ =\ pmadd(y2,\ x2,\ pset1<Packet>(\ 0.0083326873655616851693794799871284340042620897293090820312500000f));}
+\DoxyCodeLine{00732\ \ \ y2\ =\ pmadd(y2,\ x2,\ pset1<Packet>(-\/0.1666666203982298255503735617821803316473960876464843750000000000f));}
+\DoxyCodeLine{00733\ \ \ y2\ =\ pmul(y2,\ x2);}
+\DoxyCodeLine{00734\ \ \ y2\ =\ pmadd(y2,\ x,\ x);}
+\DoxyCodeLine{00735\ }
+\DoxyCodeLine{00736\ \ \ \textcolor{comment}{//\ Select\ the\ correct\ result\ from\ the\ two\ polynomials.}}
+\DoxyCodeLine{00737\ \ \ y\ =\ ComputeSine\ ?\ pselect(poly\_mask,y2,y1)}
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ pselect(poly\_mask,y1,y2);}
+\DoxyCodeLine{00739\ }
+\DoxyCodeLine{00740\ \ \ \textcolor{comment}{//\ Update\ the\ sign\ and\ filter\ huge\ inputs}}
+\DoxyCodeLine{00741\ \ \ \textcolor{keywordflow}{return}\ pxor(y,\ sign\_bit);}
+\DoxyCodeLine{00742\ \}}
+\DoxyCodeLine{00743\ }
+\DoxyCodeLine{00744\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00745\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00746\ EIGEN\_UNUSED}
+\DoxyCodeLine{00747\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ psin\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)}
+\DoxyCodeLine{00748\ \{}
+\DoxyCodeLine{00749\ \ \ \textcolor{keywordflow}{return}\ psincos\_float<true>(x);}
+\DoxyCodeLine{00750\ \}}
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00753\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00754\ EIGEN\_UNUSED}
+\DoxyCodeLine{00755\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pcos\_float(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)}
+\DoxyCodeLine{00756\ \{}
+\DoxyCodeLine{00757\ \ \ \textcolor{keywordflow}{return}\ psincos\_float<false>(x);}
+\DoxyCodeLine{00758\ \}}
+\DoxyCodeLine{00759\ }
+\DoxyCodeLine{00760\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00761\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00762\ EIGEN\_UNUSED\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pdiv\_complex(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y)\ \{}
+\DoxyCodeLine{00763\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::as\_real}}\ RealPacket;}
+\DoxyCodeLine{00764\ \ \ \textcolor{comment}{//\ In\ the\ following\ we\ annotate\ the\ code\ for\ the\ case\ where\ the\ inputs}}
+\DoxyCodeLine{00765\ \ \ \textcolor{comment}{//\ are\ a\ pair\ length-\/2\ SIMD\ vectors\ representing\ a\ single\ pair\ of\ complex}}
+\DoxyCodeLine{00766\ \ \ \textcolor{comment}{//\ numbers\ x\ =\ a\ +\ i*b,\ y\ =\ c\ +\ i*d.}}
+\DoxyCodeLine{00767\ \ \ \textcolor{keyword}{const}\ RealPacket\ y\_abs\ =\ pabs(y.v);\ \ \textcolor{comment}{//\ |c|,\ |d|}}
+\DoxyCodeLine{00768\ \ \ \textcolor{keyword}{const}\ RealPacket\ y\_abs\_flip\ =\ pcplxflip(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(y\_abs)).v;\ \textcolor{comment}{//\ |d|,\ |c|}}
+\DoxyCodeLine{00769\ \ \ \textcolor{keyword}{const}\ RealPacket\ y\_max\ =\ pmax(y\_abs,\ y\_abs\_flip);\ \textcolor{comment}{//\ max(|c|,\ |d|),\ max(|c|,\ |d|)}}
+\DoxyCodeLine{00770\ \ \ \textcolor{keyword}{const}\ RealPacket\ y\_scaled\ =\ pdiv(y.v,\ y\_max);\ \ \textcolor{comment}{//\ c\ /\ max(|c|,\ |d|),\ d\ /\ max(|c|,\ |d|)}}
+\DoxyCodeLine{00771\ \ \ \textcolor{comment}{//\ Compute\ scaled\ denominator.}}
+\DoxyCodeLine{00772\ \ \ \textcolor{keyword}{const}\ RealPacket\ y\_scaled\_sq\ =\ pmul(y\_scaled,\ y\_scaled);\ \textcolor{comment}{//\ c'**2,\ d'**2}}
+\DoxyCodeLine{00773\ \ \ \textcolor{keyword}{const}\ RealPacket\ denom\ =\ padd(y\_scaled\_sq,\ pcplxflip(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(y\_scaled\_sq)).v);}
+\DoxyCodeLine{00774\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ result\_scaled\ =\ pmul(x,\ pconj(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(y\_scaled)));\ \ \textcolor{comment}{//\ a\ *\ c'\ +\ b\ *\ d',\ -\/a\ *\ d\ +\ b\ *\ c}}
+\DoxyCodeLine{00775\ \ \ \textcolor{comment}{//\ Divide\ elementwise\ by\ denom.}}
+\DoxyCodeLine{00776\ \ \ result\_scaled\ =\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(pdiv(result\_scaled.v,\ denom));}
+\DoxyCodeLine{00777\ \ \ \textcolor{comment}{//\ Rescale\ result}}
+\DoxyCodeLine{00778\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(pdiv(result\_scaled.v,\ y\_max));}
+\DoxyCodeLine{00779\ \}}
+\DoxyCodeLine{00780\ }
+\DoxyCodeLine{00781\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00782\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00783\ EIGEN\_UNUSED}
+\DoxyCodeLine{00784\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ psqrt\_complex(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00785\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00786\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Scalar::value\_type\ RealScalar;}
+\DoxyCodeLine{00787\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::as\_real}}\ RealPacket;}
+\DoxyCodeLine{00788\ }
+\DoxyCodeLine{00789\ \ \ \textcolor{comment}{//\ Computes\ the\ principal\ sqrt\ of\ the\ complex\ numbers\ in\ the\ input.}}
+\DoxyCodeLine{00790\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00791\ \ \ \textcolor{comment}{//\ For\ example,\ for\ packets\ containing\ 2\ complex\ numbers\ stored\ in\ interleaved\ format}}
+\DoxyCodeLine{00792\ \ \ \textcolor{comment}{//\ \ \ \ a\ =\ [a0,\ a1]\ =\ [x0,\ y0,\ x1,\ y1],}}
+\DoxyCodeLine{00793\ \ \ \textcolor{comment}{//\ where\ x0\ =\ real(a0),\ y0\ =\ imag(a0)\ etc.,\ this\ function\ returns}}
+\DoxyCodeLine{00794\ \ \ \textcolor{comment}{//\ \ \ \ b\ =\ [b0,\ b1]\ =\ [u0,\ v0,\ u1,\ v1],}}
+\DoxyCodeLine{00795\ \ \ \textcolor{comment}{//\ such\ that\ b0\string^2\ =\ a0,\ b1\string^2\ =\ a1.}}
+\DoxyCodeLine{00796\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00797\ \ \ \textcolor{comment}{//\ To\ derive\ the\ formula\ for\ the\ complex\ square\ roots,\ let's\ consider\ the\ equation\ for}}
+\DoxyCodeLine{00798\ \ \ \textcolor{comment}{//\ a\ single\ complex\ square\ root\ of\ the\ number\ x\ +\ i*y.\ We\ want\ to\ find\ real\ numbers}}
+\DoxyCodeLine{00799\ \ \ \textcolor{comment}{//\ u\ and\ v\ such\ that}}
+\DoxyCodeLine{00800\ \ \ \textcolor{comment}{//\ \ \ \ (u\ +\ i*v)\string^2\ =\ x\ +\ i*y\ \ <=>}}
+\DoxyCodeLine{00801\ \ \ \textcolor{comment}{//\ \ \ \ u\string^2\ -\/\ v\string^2\ +\ i*2*u*v\ =\ x\ +\ i*v.}}
+\DoxyCodeLine{00802\ \ \ \textcolor{comment}{//\ By\ equating\ the\ real\ and\ imaginary\ parts\ we\ get:}}
+\DoxyCodeLine{00803\ \ \ \textcolor{comment}{//\ \ \ \ u\string^2\ -\/\ v\string^2\ =\ x}}
+\DoxyCodeLine{00804\ \ \ \textcolor{comment}{//\ \ \ \ 2*u*v\ =\ y.}}
+\DoxyCodeLine{00805\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00806\ \ \ \textcolor{comment}{//\ For\ x\ >=\ 0,\ this\ has\ the\ numerically\ stable\ solution}}
+\DoxyCodeLine{00807\ \ \ \textcolor{comment}{//\ \ \ \ u\ =\ sqrt(0.5\ *\ (x\ +\ sqrt(x\string^2\ +\ y\string^2)))}}
+\DoxyCodeLine{00808\ \ \ \textcolor{comment}{//\ \ \ \ v\ =\ 0.5\ *\ (y\ /\ u)}}
+\DoxyCodeLine{00809\ \ \ \textcolor{comment}{//\ and\ for\ x\ <\ 0,}}
+\DoxyCodeLine{00810\ \ \ \textcolor{comment}{//\ \ \ \ v\ =\ sign(y)\ *\ sqrt(0.5\ *\ (-\/x\ +\ sqrt(x\string^2\ +\ y\string^2)))}}
+\DoxyCodeLine{00811\ \ \ \textcolor{comment}{//\ \ \ \ u\ =\ 0.5\ *\ (y\ /\ v)}}
+\DoxyCodeLine{00812\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00813\ \ \ \textcolor{comment}{//\ \ To\ avoid\ unnecessary\ over-\/\ and\ underflow,\ we\ compute\ sqrt(x\string^2\ +\ y\string^2)\ as}}
+\DoxyCodeLine{00814\ \ \ \textcolor{comment}{//\ \ \ \ \ l\ =\ max(|x|,\ |y|)\ *\ sqrt(1\ +\ (min(|x|,\ |y|)\ /\ max(|x|,\ |y|))\string^2)\ ,}}
+\DoxyCodeLine{00815\ }
+\DoxyCodeLine{00816\ \ \ \textcolor{comment}{//\ In\ the\ following,\ without\ lack\ of\ generality,\ we\ have\ annotated\ the\ code,\ assuming}}
+\DoxyCodeLine{00817\ \ \ \textcolor{comment}{//\ that\ the\ input\ is\ a\ packet\ of\ 2\ complex\ numbers.}}
+\DoxyCodeLine{00818\ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00819\ \ \ \textcolor{comment}{//\ Step\ 1.\ Compute\ l\ =\ [l0,\ l0,\ l1,\ l1],\ where}}
+\DoxyCodeLine{00820\ \ \ \textcolor{comment}{//\ \ \ \ l0\ =\ sqrt(x0\string^2\ +\ y0\string^2),\ \ l1\ =\ sqrt(x1\string^2\ +\ y1\string^2)}}
+\DoxyCodeLine{00821\ \ \ \textcolor{comment}{//\ To\ avoid\ over-\/\ and\ underflow,\ we\ use\ the\ stable\ formula\ for\ each\ hypotenuse}}
+\DoxyCodeLine{00822\ \ \ \textcolor{comment}{//\ \ \ \ l0\ =\ (min0\ ==\ 0\ ?\ max0\ :\ max0\ *\ sqrt(1\ +\ (min0/max0)**2)),}}
+\DoxyCodeLine{00823\ \ \ \textcolor{comment}{//\ where\ max0\ =\ max(|x0|,\ |y0|),\ min0\ =\ min(|x0|,\ |y0|),\ and\ similarly\ for\ l1.}}
+\DoxyCodeLine{00824\ }
+\DoxyCodeLine{00825\ \ \ RealPacket\ a\_abs\ =\ pabs(a.v);\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ [|x0|,\ |y0|,\ |x1|,\ |y1|]}}
+\DoxyCodeLine{00826\ \ \ RealPacket\ a\_abs\_flip\ =\ pcplxflip(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(a\_abs)).v;\ \textcolor{comment}{//\ [|y0|,\ |x0|,\ |y1|,\ |x1|]}}
+\DoxyCodeLine{00827\ \ \ RealPacket\ a\_max\ =\ pmax(a\_abs,\ a\_abs\_flip);}
+\DoxyCodeLine{00828\ \ \ RealPacket\ a\_min\ =\ pmin(a\_abs,\ a\_abs\_flip);}
+\DoxyCodeLine{00829\ \ \ RealPacket\ a\_min\_zero\_mask\ =\ pcmp\_eq(a\_min,\ pzero(a\_min));}
+\DoxyCodeLine{00830\ \ \ RealPacket\ a\_max\_zero\_mask\ =\ pcmp\_eq(a\_max,\ pzero(a\_max));}
+\DoxyCodeLine{00831\ \ \ RealPacket\ r\ =\ pdiv(a\_min,\ a\_max);}
+\DoxyCodeLine{00832\ \ \ \textcolor{keyword}{const}\ RealPacket\ cst\_one\ \ =\ pset1<RealPacket>(RealScalar(1));}
+\DoxyCodeLine{00833\ \ \ RealPacket\ l\ =\ pmul(a\_max,\ psqrt(padd(cst\_one,\ pmul(r,\ r))));\ \ \textcolor{comment}{//\ [l0,\ l0,\ l1,\ l1]}}
+\DoxyCodeLine{00834\ \ \ \textcolor{comment}{//\ Set\ l\ to\ a\_max\ if\ a\_min\ is\ zero.}}
+\DoxyCodeLine{00835\ \ \ l\ =\ pselect(a\_min\_zero\_mask,\ a\_max,\ l);}
+\DoxyCodeLine{00836\ }
+\DoxyCodeLine{00837\ \ \ \textcolor{comment}{//\ Step\ 2.\ Compute\ [rho0,\ *,\ rho1,\ *],\ where}}
+\DoxyCodeLine{00838\ \ \ \textcolor{comment}{//\ rho0\ =\ sqrt(0.5\ *\ (l0\ +\ |x0|)),\ rho1\ =\ \ sqrt(0.5\ *\ (l1\ +\ |x1|))}}
+\DoxyCodeLine{00839\ \ \ \textcolor{comment}{//\ We\ don't\ care\ about\ the\ imaginary\ parts\ computed\ here.\ They\ will\ be\ overwritten\ later.}}
+\DoxyCodeLine{00840\ \ \ \textcolor{keyword}{const}\ RealPacket\ cst\_half\ =\ pset1<RealPacket>(RealScalar(0.5));}
+\DoxyCodeLine{00841\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ rho;}
+\DoxyCodeLine{00842\ \ \ rho.v\ =\ psqrt(pmul(cst\_half,\ padd(a\_abs,\ l)));}
+\DoxyCodeLine{00843\ }
+\DoxyCodeLine{00844\ \ \ \textcolor{comment}{//\ Step\ 3.\ Compute\ [rho0,\ eta0,\ rho1,\ eta1],\ where}}
+\DoxyCodeLine{00845\ \ \ \textcolor{comment}{//\ eta0\ =\ (y0\ /\ l0)\ /\ 2,\ and\ eta1\ =\ (y1\ /\ l1)\ /\ 2.}}
+\DoxyCodeLine{00846\ \ \ \textcolor{comment}{//\ set\ eta\ =\ 0\ of\ input\ is\ 0\ +\ i0.}}
+\DoxyCodeLine{00847\ \ \ RealPacket\ eta\ =\ pandnot(pmul(cst\_half,\ pdiv(a.v,\ pcplxflip(rho).v)),\ a\_max\_zero\_mask);}
+\DoxyCodeLine{00848\ \ \ RealPacket\ real\_mask\ =\ peven\_mask(a.v);}
+\DoxyCodeLine{00849\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ positive\_real\_result;}
+\DoxyCodeLine{00850\ \ \ \textcolor{comment}{//\ Compute\ result\ for\ inputs\ with\ positive\ real\ part.}}
+\DoxyCodeLine{00851\ \ \ positive\_real\_result.v\ =\ pselect(real\_mask,\ rho.v,\ eta);}
+\DoxyCodeLine{00852\ }
+\DoxyCodeLine{00853\ \ \ \textcolor{comment}{//\ Step\ 4.\ Compute\ solution\ for\ inputs\ with\ negative\ real\ part:}}
+\DoxyCodeLine{00854\ \ \ \textcolor{comment}{//\ \ \ \ \ \ \ \ \ [|eta0|,\ sign(y0)*rho0,\ |eta1|,\ sign(y1)*rho1]}}
+\DoxyCodeLine{00855\ \ \ \textcolor{keyword}{const}\ RealScalar\ neg\_zero\ =\ RealScalar(numext::bit\_cast<float>(0x80000000u));}
+\DoxyCodeLine{00856\ \ \ \textcolor{keyword}{const}\ RealPacket\ cst\_imag\_sign\_mask\ =\ pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(RealScalar(0.0),\ neg\_zero)).v;}
+\DoxyCodeLine{00857\ \ \ RealPacket\ imag\_signs\ =\ pand(a.v,\ cst\_imag\_sign\_mask);}
+\DoxyCodeLine{00858\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ negative\_real\_result;}
+\DoxyCodeLine{00859\ \ \ \textcolor{comment}{//\ Notice\ that\ rho\ is\ positive,\ so\ taking\ it's\ absolute\ value\ is\ a\ noop.}}
+\DoxyCodeLine{00860\ \ \ negative\_real\_result.v\ =\ por(pabs(pcplxflip(positive\_real\_result).v),\ imag\_signs);}
+\DoxyCodeLine{00861\ }
+\DoxyCodeLine{00862\ \ \ \textcolor{comment}{//\ Step\ 5.\ Select\ solution\ branch\ based\ on\ the\ sign\ of\ the\ real\ parts.}}
+\DoxyCodeLine{00863\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ negative\_real\_mask;}
+\DoxyCodeLine{00864\ \ \ negative\_real\_mask.v\ =\ pcmp\_lt(pand(real\_mask,\ a.v),\ pzero(a.v));}
+\DoxyCodeLine{00865\ \ \ negative\_real\_mask.v\ =\ por(negative\_real\_mask.v,\ pcplxflip(negative\_real\_mask).v);}
+\DoxyCodeLine{00866\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ result\ =\ pselect(negative\_real\_mask,\ negative\_real\_result,\ positive\_real\_result);}
+\DoxyCodeLine{00867\ }
+\DoxyCodeLine{00868\ \ \ \textcolor{comment}{//\ Step\ 6.\ Handle\ special\ cases\ for\ infinities:}}
+\DoxyCodeLine{00869\ \ \ \textcolor{comment}{//\ *\ If\ z\ is\ (x,+∞),\ the\ result\ is\ (+∞,+∞)\ even\ if\ x\ is\ NaN}}
+\DoxyCodeLine{00870\ \ \ \textcolor{comment}{//\ *\ If\ z\ is\ (x,-\/∞),\ the\ result\ is\ (+∞,-\/∞)\ even\ if\ x\ is\ NaN}}
+\DoxyCodeLine{00871\ \ \ \textcolor{comment}{//\ *\ If\ z\ is\ (-\/∞,y),\ the\ result\ is\ (0*|y|,+∞)\ for\ finite\ or\ NaN\ y}}
+\DoxyCodeLine{00872\ \ \ \textcolor{comment}{//\ *\ If\ z\ is\ (+∞,y),\ the\ result\ is\ (+∞,0*|y|)\ for\ finite\ or\ NaN\ y}}
+\DoxyCodeLine{00873\ \ \ \textcolor{keyword}{const}\ RealPacket\ cst\_pos\_inf\ =\ pset1<RealPacket>(NumTraits<RealScalar>::infinity());}
+\DoxyCodeLine{00874\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ is\_inf;}
+\DoxyCodeLine{00875\ \ \ is\_inf.v\ =\ pcmp\_eq(a\_abs,\ cst\_pos\_inf);}
+\DoxyCodeLine{00876\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ is\_real\_inf;}
+\DoxyCodeLine{00877\ \ \ is\_real\_inf.v\ =\ pand(is\_inf.v,\ real\_mask);}
+\DoxyCodeLine{00878\ \ \ is\_real\_inf\ =\ por(is\_real\_inf,\ pcplxflip(is\_real\_inf));}
+\DoxyCodeLine{00879\ \ \ \textcolor{comment}{//\ prepare\ packet\ of\ (+∞,0*|y|)\ or\ (0*|y|,+∞),\ depending\ on\ the\ sign\ of\ the\ infinite\ real\ part.}}
+\DoxyCodeLine{00880\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ real\_inf\_result;}
+\DoxyCodeLine{00881\ \ \ real\_inf\_result.v\ =\ pmul(a\_abs,\ pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(RealScalar(1.0),\ RealScalar(0.0))).v);}
+\DoxyCodeLine{00882\ \ \ real\_inf\_result.v\ =\ pselect(negative\_real\_mask.v,\ pcplxflip(real\_inf\_result).v,\ real\_inf\_result.v);}
+\DoxyCodeLine{00883\ \ \ \textcolor{comment}{//\ prepare\ packet\ of\ (+∞,+∞)\ or\ (+∞,-\/∞),\ depending\ on\ the\ sign\ of\ the\ infinite\ imaginary\ part.}}
+\DoxyCodeLine{00884\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ is\_imag\_inf;}
+\DoxyCodeLine{00885\ \ \ is\_imag\_inf.v\ =\ pandnot(is\_inf.v,\ real\_mask);}
+\DoxyCodeLine{00886\ \ \ is\_imag\_inf\ =\ por(is\_imag\_inf,\ pcplxflip(is\_imag\_inf));}
+\DoxyCodeLine{00887\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ imag\_inf\_result;}
+\DoxyCodeLine{00888\ \ \ imag\_inf\_result.v\ =\ por(pand(cst\_pos\_inf,\ real\_mask),\ pandnot(a.v,\ real\_mask));}
+\DoxyCodeLine{00889\ }
+\DoxyCodeLine{00890\ \ \ \textcolor{keywordflow}{return}\ \ pselect(is\_imag\_inf,\ imag\_inf\_result,}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(is\_real\_inf,\ real\_inf\_result,result));}
+\DoxyCodeLine{00892\ \}}
+\DoxyCodeLine{00893\ }
+\DoxyCodeLine{00894\ \textcolor{comment}{//\ TODO(rmlarsen):\ The\ following\ set\ of\ utilities\ for\ double\ word\ arithmetic}}
+\DoxyCodeLine{00895\ \textcolor{comment}{//\ should\ perhaps\ be\ refactored\ as\ a\ separate\ file,\ since\ it\ would\ be\ generally}}
+\DoxyCodeLine{00896\ \textcolor{comment}{//\ useful\ for\ special\ function\ implementation\ etc.\ Writing\ the\ algorithms\ in}}
+\DoxyCodeLine{00897\ \textcolor{comment}{//\ terms\ if\ a\ double\ word\ type\ would\ also\ make\ the\ code\ more\ readable.}}
+\DoxyCodeLine{00898\ }
+\DoxyCodeLine{00899\ \textcolor{comment}{//\ This\ function\ splits\ x\ into\ the\ nearest\ integer\ n\ and\ fractional\ part\ r,}}
+\DoxyCodeLine{00900\ \textcolor{comment}{//\ such\ that\ x\ =\ n\ +\ r\ holds\ exactly.}}
+\DoxyCodeLine{00901\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00902\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00903\ \textcolor{keywordtype}{void}\ absolute\_split(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ n,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ r)\ \{}
+\DoxyCodeLine{00904\ \ \ n\ =\ pround(x);}
+\DoxyCodeLine{00905\ \ \ r\ =\ psub(x,\ n);}
+\DoxyCodeLine{00906\ \}}
+\DoxyCodeLine{00907\ }
+\DoxyCodeLine{00908\ \textcolor{comment}{//\ This\ function\ computes\ the\ sum\ \{s,\ r\},\ such\ that\ x\ +\ y\ =\ s\_hi\ +\ s\_lo}}
+\DoxyCodeLine{00909\ \textcolor{comment}{//\ holds\ exactly,\ and\ s\_hi\ =\ fl(x+y),\ if\ |x|\ >=\ |y|.}}
+\DoxyCodeLine{00910\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00911\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00912\ \textcolor{keywordtype}{void}\ fast\_twosum(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_lo)\ \{}
+\DoxyCodeLine{00913\ \ \ s\_hi\ =\ padd(x,\ y);}
+\DoxyCodeLine{00914\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t\ =\ psub(s\_hi,\ x);}
+\DoxyCodeLine{00915\ \ \ s\_lo\ =\ psub(y,\ t);}
+\DoxyCodeLine{00916\ \}}
+\DoxyCodeLine{00917\ }
+\DoxyCodeLine{00918\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00919\ \textcolor{comment}{//\ This\ function\ implements\ the\ extended\ precision\ product\ of}}
+\DoxyCodeLine{00920\ \textcolor{comment}{//\ a\ pair\ of\ floating\ point\ numbers.\ Given\ \{x,\ y\},\ it\ computes\ the\ pair}}
+\DoxyCodeLine{00921\ \textcolor{comment}{//\ \{p\_hi,\ p\_lo\}\ such\ that\ x\ *\ y\ =\ p\_hi\ +\ p\_lo\ holds\ exactly\ and}}
+\DoxyCodeLine{00922\ \textcolor{comment}{//\ p\_hi\ =\ fl(x\ *\ y).}}
+\DoxyCodeLine{00923\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00924\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00925\ \textcolor{keywordtype}{void}\ twoprod(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y,}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_lo)\ \{}
+\DoxyCodeLine{00927\ \ \ p\_hi\ =\ pmul(x,\ y);}
+\DoxyCodeLine{00928\ \ \ p\_lo\ =\ pmadd(x,\ y,\ pnegate(p\_hi));}
+\DoxyCodeLine{00929\ \}}
+\DoxyCodeLine{00930\ }
+\DoxyCodeLine{00931\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00932\ }
+\DoxyCodeLine{00933\ \textcolor{comment}{//\ This\ function\ implements\ the\ Veltkamp\ splitting.\ Given\ a\ floating\ point}}
+\DoxyCodeLine{00934\ \textcolor{comment}{//\ number\ x\ it\ returns\ the\ pair\ \{x\_hi,\ x\_lo\}\ such\ that\ x\_hi\ +\ x\_lo\ =\ x\ holds}}
+\DoxyCodeLine{00935\ \textcolor{comment}{//\ exactly\ and\ that\ half\ of\ the\ significant\ of\ x\ fits\ in\ x\_hi.}}
+\DoxyCodeLine{00936\ \textcolor{comment}{//\ This\ is\ Algorithm\ 3\ from\ Jean-\/Michel\ Muller,\ "{}Elementary\ Functions"{},}}
+\DoxyCodeLine{00937\ \textcolor{comment}{//\ 3rd\ edition,\ Birkh\(\backslash\)"{}auser,\ 2016.}}
+\DoxyCodeLine{00938\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00939\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00940\ \textcolor{keywordtype}{void}\ veltkamp\_splitting(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_lo)\ \{}
+\DoxyCodeLine{00941\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00942\ \ \ EIGEN\_CONSTEXPR\ \textcolor{keywordtype}{int}\ shift\ =\ (NumTraits<Scalar>::digits()\ +\ 1)\ /\ 2;}
+\DoxyCodeLine{00943\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ shift\_scale\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(uint64\_t(1)\ <<\ shift);\ \ \textcolor{comment}{//\ Scalar\ constructor\ not\ necessarily\ constexpr.}}
+\DoxyCodeLine{00944\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ gamma\ =\ pmul(pset1<Packet>(shift\_scale\ +\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1)),\ x);}
+\DoxyCodeLine{00945\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ rho\ =\ psub(x,\ gamma);}
+\DoxyCodeLine{00946\ \ \ x\_hi\ =\ padd(rho,\ gamma);}
+\DoxyCodeLine{00947\ \ \ x\_lo\ =\ psub(x,\ x\_hi);}
+\DoxyCodeLine{00948\ \}}
+\DoxyCodeLine{00949\ }
+\DoxyCodeLine{00950\ \textcolor{comment}{//\ This\ function\ implements\ Dekker's\ algorithm\ for\ products\ x\ *\ y.}}
+\DoxyCodeLine{00951\ \textcolor{comment}{//\ Given\ floating\ point\ numbers\ \{x,\ y\}\ computes\ the\ pair}}
+\DoxyCodeLine{00952\ \textcolor{comment}{//\ \{p\_hi,\ p\_lo\}\ such\ that\ x\ *\ y\ =\ p\_hi\ +\ p\_lo\ holds\ exactly\ and}}
+\DoxyCodeLine{00953\ \textcolor{comment}{//\ p\_hi\ =\ fl(x\ *\ y).}}
+\DoxyCodeLine{00954\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00955\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00956\ \textcolor{keywordtype}{void}\ twoprod(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y,}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_lo)\ \{}
+\DoxyCodeLine{00958\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\_hi,\ x\_lo,\ y\_hi,\ y\_lo;}
+\DoxyCodeLine{00959\ \ \ veltkamp\_splitting(x,\ x\_hi,\ x\_lo);}
+\DoxyCodeLine{00960\ \ \ veltkamp\_splitting(y,\ y\_hi,\ y\_lo);}
+\DoxyCodeLine{00961\ }
+\DoxyCodeLine{00962\ \ \ p\_hi\ =\ pmul(x,\ y);}
+\DoxyCodeLine{00963\ \ \ p\_lo\ =\ pmadd(x\_hi,\ y\_hi,\ pnegate(p\_hi));}
+\DoxyCodeLine{00964\ \ \ p\_lo\ =\ pmadd(x\_hi,\ y\_lo,\ p\_lo);}
+\DoxyCodeLine{00965\ \ \ p\_lo\ =\ pmadd(x\_lo,\ y\_hi,\ p\_lo);}
+\DoxyCodeLine{00966\ \ \ p\_lo\ =\ pmadd(x\_lo,\ y\_lo,\ p\_lo);}
+\DoxyCodeLine{00967\ \}}
+\DoxyCodeLine{00968\ }
+\DoxyCodeLine{00969\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ EIGEN\_VECTORIZE\_FMA}}
+\DoxyCodeLine{00970\ }
+\DoxyCodeLine{00971\ }
+\DoxyCodeLine{00972\ \textcolor{comment}{//\ This\ function\ implements\ Dekker's\ algorithm\ for\ the\ addition}}
+\DoxyCodeLine{00973\ \textcolor{comment}{//\ of\ two\ double\ word\ numbers\ represented\ by\ \{x\_hi,\ x\_lo\}\ and\ \{y\_hi,\ y\_lo\}.}}
+\DoxyCodeLine{00974\ \textcolor{comment}{//\ It\ returns\ the\ result\ as\ a\ pair\ \{s\_hi,\ s\_lo\}\ such\ that}}
+\DoxyCodeLine{00975\ \textcolor{comment}{//\ x\_hi\ +\ x\_lo\ +\ y\_hi\ +\ y\_lo\ =\ s\_hi\ +\ s\_lo\ holds\ exactly.}}
+\DoxyCodeLine{00976\ \textcolor{comment}{//\ This\ is\ Algorithm\ 5\ from\ Jean-\/Michel\ Muller,\ "{}Elementary\ Functions"{},}}
+\DoxyCodeLine{00977\ \textcolor{comment}{//\ 3rd\ edition,\ Birkh\(\backslash\)"{}auser,\ 2016.}}
+\DoxyCodeLine{00978\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00979\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00980\ \ \ \textcolor{keywordtype}{void}\ twosum(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_lo,}
+\DoxyCodeLine{00981\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_lo,}
+\DoxyCodeLine{00982\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_lo)\ \{}
+\DoxyCodeLine{00983\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\_greater\_mask\ =\ pcmp\_lt(pabs(y\_hi),\ pabs(x\_hi));}
+\DoxyCodeLine{00984\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\_hi\_1,\ r\_lo\_1;}
+\DoxyCodeLine{00985\ \ \ fast\_twosum(x\_hi,\ y\_hi,r\_hi\_1,\ r\_lo\_1);}
+\DoxyCodeLine{00986\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\_hi\_2,\ r\_lo\_2;}
+\DoxyCodeLine{00987\ \ \ fast\_twosum(y\_hi,\ x\_hi,r\_hi\_2,\ r\_lo\_2);}
+\DoxyCodeLine{00988\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\_hi\ =\ pselect(x\_greater\_mask,\ r\_hi\_1,\ r\_hi\_2);}
+\DoxyCodeLine{00989\ }
+\DoxyCodeLine{00990\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ s1\ =\ padd(padd(y\_lo,\ r\_lo\_1),\ x\_lo);}
+\DoxyCodeLine{00991\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ s2\ =\ padd(padd(x\_lo,\ r\_lo\_2),\ y\_lo);}
+\DoxyCodeLine{00992\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ s\ =\ pselect(x\_greater\_mask,\ s1,\ s2);}
+\DoxyCodeLine{00993\ }
+\DoxyCodeLine{00994\ \ \ fast\_twosum(r\_hi,\ s,\ s\_hi,\ s\_lo);}
+\DoxyCodeLine{00995\ \}}
+\DoxyCodeLine{00996\ }
+\DoxyCodeLine{00997\ \textcolor{comment}{//\ This\ is\ a\ version\ of\ twosum\ for\ double\ word\ numbers,}}
+\DoxyCodeLine{00998\ \textcolor{comment}{//\ which\ assumes\ that\ |x\_hi|\ >=\ |y\_hi|.}}
+\DoxyCodeLine{00999\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01000\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01001\ \ \ \textcolor{keywordtype}{void}\ fast\_twosum(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_lo,}
+\DoxyCodeLine{01002\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_lo,}
+\DoxyCodeLine{01003\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_lo)\ \{}
+\DoxyCodeLine{01004\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\_hi,\ r\_lo;}
+\DoxyCodeLine{01005\ \ \ fast\_twosum(x\_hi,\ y\_hi,\ r\_hi,\ r\_lo);}
+\DoxyCodeLine{01006\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ s\ =\ padd(padd(y\_lo,\ r\_lo),\ x\_lo);}
+\DoxyCodeLine{01007\ \ \ fast\_twosum(r\_hi,\ s,\ s\_hi,\ s\_lo);}
+\DoxyCodeLine{01008\ \}}
+\DoxyCodeLine{01009\ }
+\DoxyCodeLine{01010\ \textcolor{comment}{//\ This\ is\ a\ version\ of\ twosum\ for\ adding\ a\ floating\ point\ number\ x\ to}}
+\DoxyCodeLine{01011\ \textcolor{comment}{//\ double\ word\ number\ \{y\_hi,\ y\_lo\}\ number,\ with\ the\ assumption}}
+\DoxyCodeLine{01012\ \textcolor{comment}{//\ that\ |x|\ >=\ |y\_hi|.}}
+\DoxyCodeLine{01013\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01014\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01015\ \textcolor{keywordtype}{void}\ fast\_twosum(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,}
+\DoxyCodeLine{01016\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_lo,}
+\DoxyCodeLine{01017\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ s\_lo)\ \{}
+\DoxyCodeLine{01018\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\_hi,\ r\_lo;}
+\DoxyCodeLine{01019\ \ \ fast\_twosum(x,\ y\_hi,\ r\_hi,\ r\_lo);}
+\DoxyCodeLine{01020\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ s\ =\ padd(y\_lo,\ r\_lo);}
+\DoxyCodeLine{01021\ \ \ fast\_twosum(r\_hi,\ s,\ s\_hi,\ s\_lo);}
+\DoxyCodeLine{01022\ \}}
+\DoxyCodeLine{01023\ }
+\DoxyCodeLine{01024\ \textcolor{comment}{//\ This\ function\ implements\ the\ multiplication\ of\ a\ double\ word}}
+\DoxyCodeLine{01025\ \textcolor{comment}{//\ number\ represented\ by\ \{x\_hi,\ x\_lo\}\ by\ a\ floating\ point\ number\ y.}}
+\DoxyCodeLine{01026\ \textcolor{comment}{//\ It\ returns\ the\ result\ as\ a\ pair\ \{p\_hi,\ p\_lo\}\ such\ that}}
+\DoxyCodeLine{01027\ \textcolor{comment}{//\ (x\_hi\ +\ x\_lo)\ *\ y\ =\ p\_hi\ +\ p\_lo\ hold\ with\ a\ relative\ error}}
+\DoxyCodeLine{01028\ \textcolor{comment}{//\ of\ less\ than\ 2*2\string^\{-\/2p\},\ where\ p\ is\ the\ number\ of\ significand\ bit}}
+\DoxyCodeLine{01029\ \textcolor{comment}{//\ in\ the\ floating\ point\ type.}}
+\DoxyCodeLine{01030\ \textcolor{comment}{//\ This\ is\ Algorithm\ 7\ from\ Jean-\/Michel\ Muller,\ "{}Elementary\ Functions"{},}}
+\DoxyCodeLine{01031\ \textcolor{comment}{//\ 3rd\ edition,\ Birkh\(\backslash\)"{}auser,\ 2016.}}
+\DoxyCodeLine{01032\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01033\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01034\ \textcolor{keywordtype}{void}\ twoprod(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_lo,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y,}
+\DoxyCodeLine{01035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_lo)\ \{}
+\DoxyCodeLine{01036\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ c\_hi,\ c\_lo1;}
+\DoxyCodeLine{01037\ \ \ twoprod(x\_hi,\ y,\ c\_hi,\ c\_lo1);}
+\DoxyCodeLine{01038\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ c\_lo2\ =\ pmul(x\_lo,\ y);}
+\DoxyCodeLine{01039\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t\_hi,\ t\_lo1;}
+\DoxyCodeLine{01040\ \ \ fast\_twosum(c\_hi,\ c\_lo2,\ t\_hi,\ t\_lo1);}
+\DoxyCodeLine{01041\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t\_lo2\ =\ padd(t\_lo1,\ c\_lo1);}
+\DoxyCodeLine{01042\ \ \ fast\_twosum(t\_hi,\ t\_lo2,\ p\_hi,\ p\_lo);}
+\DoxyCodeLine{01043\ \}}
+\DoxyCodeLine{01044\ }
+\DoxyCodeLine{01045\ \textcolor{comment}{//\ This\ function\ implements\ the\ multiplication\ of\ two\ double\ word}}
+\DoxyCodeLine{01046\ \textcolor{comment}{//\ numbers\ represented\ by\ \{x\_hi,\ x\_lo\}\ and\ \{y\_hi,\ y\_lo\}.}}
+\DoxyCodeLine{01047\ \textcolor{comment}{//\ It\ returns\ the\ result\ as\ a\ pair\ \{p\_hi,\ p\_lo\}\ such\ that}}
+\DoxyCodeLine{01048\ \textcolor{comment}{//\ (x\_hi\ +\ x\_lo)\ *\ (y\_hi\ +\ y\_lo)\ =\ p\_hi\ +\ p\_lo\ holds\ with\ a\ relative\ error}}
+\DoxyCodeLine{01049\ \textcolor{comment}{//\ of\ less\ than\ 2*2\string^\{-\/2p\},\ where\ p\ is\ the\ number\ of\ significand\ bit}}
+\DoxyCodeLine{01050\ \textcolor{comment}{//\ in\ the\ floating\ point\ type.}}
+\DoxyCodeLine{01051\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01052\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01053\ \textcolor{keywordtype}{void}\ twoprod(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x\_lo,}
+\DoxyCodeLine{01054\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_hi,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y\_lo,}
+\DoxyCodeLine{01055\ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ p\_lo)\ \{}
+\DoxyCodeLine{01056\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_hi\_hi,\ p\_hi\_lo;}
+\DoxyCodeLine{01057\ \ \ twoprod(x\_hi,\ x\_lo,\ y\_hi,\ p\_hi\_hi,\ p\_hi\_lo);}
+\DoxyCodeLine{01058\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_lo\_hi,\ p\_lo\_lo;}
+\DoxyCodeLine{01059\ \ \ twoprod(x\_hi,\ x\_lo,\ y\_lo,\ p\_lo\_hi,\ p\_lo\_lo);}
+\DoxyCodeLine{01060\ \ \ fast\_twosum(p\_hi\_hi,\ p\_hi\_lo,\ p\_lo\_hi,\ p\_lo\_lo,\ p\_hi,\ p\_lo);}
+\DoxyCodeLine{01061\ \}}
+\DoxyCodeLine{01062\ }
+\DoxyCodeLine{01063\ \textcolor{comment}{//\ This\ function\ computes\ the\ reciprocal\ of\ a\ floating\ point\ number}}
+\DoxyCodeLine{01064\ \textcolor{comment}{//\ with\ extra\ precision\ and\ returns\ the\ result\ as\ a\ double\ word.}}
+\DoxyCodeLine{01065\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01066\ \textcolor{keywordtype}{void}\ doubleword\_reciprocal(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ recip\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ recip\_lo)\ \{}
+\DoxyCodeLine{01067\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{01068\ \ \ \textcolor{comment}{//\ 1.\ Approximate\ the\ reciprocal\ as\ the\ reciprocal\ of\ the\ high\ order\ element.}}
+\DoxyCodeLine{01069\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ approx\_recip\ =\ prsqrt(x);}
+\DoxyCodeLine{01070\ \ \ approx\_recip\ =\ pmul(approx\_recip,\ approx\_recip);}
+\DoxyCodeLine{01071\ }
+\DoxyCodeLine{01072\ \ \ \textcolor{comment}{//\ 2.\ Run\ one\ step\ of\ Newton-\/Raphson\ iteration\ in\ double\ word\ arithmetic}}
+\DoxyCodeLine{01073\ \ \ \textcolor{comment}{//\ to\ get\ the\ bottom\ half.\ The\ NR\ iteration\ for\ reciprocal\ of\ 'a'\ is}}
+\DoxyCodeLine{01074\ \ \ \textcolor{comment}{//\ \ \ \ x\_\{i+1\}\ =\ x\_i\ *\ (2\ -\/\ a\ *\ x\_i)}}
+\DoxyCodeLine{01075\ }
+\DoxyCodeLine{01076\ \ \ \textcolor{comment}{//\ -\/a*x\_i}}
+\DoxyCodeLine{01077\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t1\_hi,\ t1\_lo;}
+\DoxyCodeLine{01078\ \ \ twoprod(pnegate(x),\ approx\_recip,\ t1\_hi,\ t1\_lo);}
+\DoxyCodeLine{01079\ \ \ \textcolor{comment}{//\ 2\ -\/\ a*x\_i}}
+\DoxyCodeLine{01080\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t2\_hi,\ t2\_lo;}
+\DoxyCodeLine{01081\ \ \ fast\_twosum(pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(2)),\ t1\_hi,\ t2\_hi,\ t2\_lo);}
+\DoxyCodeLine{01082\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t3\_hi,\ t3\_lo;}
+\DoxyCodeLine{01083\ \ \ fast\_twosum(t2\_hi,\ padd(t2\_lo,\ t1\_lo),\ t3\_hi,\ t3\_lo);}
+\DoxyCodeLine{01084\ \ \ \textcolor{comment}{//\ x\_i\ *\ (2\ -\/\ a\ *\ x\_i)}}
+\DoxyCodeLine{01085\ \ \ twoprod(t3\_hi,\ t3\_lo,\ approx\_recip,\ recip\_hi,\ recip\_lo);}
+\DoxyCodeLine{01086\ \}}
+\DoxyCodeLine{01087\ }
+\DoxyCodeLine{01088\ }
+\DoxyCodeLine{01089\ \textcolor{comment}{//\ This\ function\ computes\ log2(x)\ and\ returns\ the\ result\ as\ a\ double\ word.}}
+\DoxyCodeLine{01090\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{01091\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1accurate__log2}{accurate\_log2}}\ \{}
+\DoxyCodeLine{01092\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01093\ \ \ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01094\ \ \ \textcolor{keywordtype}{void}\ operator()(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ log2\_x\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ log2\_x\_lo)\ \{}
+\DoxyCodeLine{01095\ \ \ \ \ log2\_x\_hi\ =\ plog2(x);}
+\DoxyCodeLine{01096\ \ \ \ \ log2\_x\_lo\ =\ pzero(x);}
+\DoxyCodeLine{01097\ \ \ \}}
+\DoxyCodeLine{01098\ \};}
+\DoxyCodeLine{01099\ }
+\DoxyCodeLine{01100\ \textcolor{comment}{//\ This\ specialization\ uses\ a\ more\ accurate\ algorithm\ to\ compute\ log2(x)\ for}}
+\DoxyCodeLine{01101\ \textcolor{comment}{//\ floats\ in\ [1/sqrt(2);sqrt(2)]\ with\ a\ relative\ accuracy\ of\ \string~6.42e-\/10.}}
+\DoxyCodeLine{01102\ \textcolor{comment}{//\ This\ additional\ accuracy\ is\ needed\ to\ counter\ the\ error-\/magnification}}
+\DoxyCodeLine{01103\ \textcolor{comment}{//\ inherent\ in\ multiplying\ by\ a\ potentially\ large\ exponent\ in\ pow(x,y).}}
+\DoxyCodeLine{01104\ \textcolor{comment}{//\ The\ minimax\ polynomial\ used\ was\ calculated\ using\ the\ Sollya\ tool.}}
+\DoxyCodeLine{01105\ \textcolor{comment}{//\ See\ sollya.org.}}
+\DoxyCodeLine{01106\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01107\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1accurate__log2}{accurate\_log2}}<float>\ \{}
+\DoxyCodeLine{01108\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01109\ \ \ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01110\ \ \ \textcolor{keywordtype}{void}\ operator()(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ z,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ log2\_x\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ log2\_x\_lo)\ \{}
+\DoxyCodeLine{01111\ \ \ \ \ \textcolor{comment}{//\ The\ function\ log(1+x)/x\ is\ approximated\ in\ the\ interval}}
+\DoxyCodeLine{01112\ \ \ \ \ \textcolor{comment}{//\ [1/sqrt(2)-\/1;sqrt(2)-\/1]\ by\ a\ degree\ 10\ polynomial\ of\ the\ form}}
+\DoxyCodeLine{01113\ \ \ \ \ \textcolor{comment}{//\ \ Q(x)\ =\ (C0\ +\ x\ *\ (C1\ +\ x\ *\ (C2\ +\ x\ *\ (C3\ +\ x\ *\ P(x))))),}}
+\DoxyCodeLine{01114\ \ \ \ \ \textcolor{comment}{//\ where\ the\ degree\ 6\ polynomial\ P(x)\ is\ evaluated\ in\ single\ precision,}}
+\DoxyCodeLine{01115\ \ \ \ \ \textcolor{comment}{//\ while\ the\ remaining\ 4\ terms\ of\ Q(x),\ as\ well\ as\ the\ final\ multiplication\ by\ x}}
+\DoxyCodeLine{01116\ \ \ \ \ \textcolor{comment}{//\ to\ reconstruct\ log(1+x)\ are\ evaluated\ in\ extra\ precision\ using}}
+\DoxyCodeLine{01117\ \ \ \ \ \textcolor{comment}{//\ double\ word\ arithmetic.\ C0\ through\ C3\ are\ extra\ precise\ constants}}
+\DoxyCodeLine{01118\ \ \ \ \ \textcolor{comment}{//\ stored\ as\ double\ words.}}
+\DoxyCodeLine{01119\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01120\ \ \ \ \ \textcolor{comment}{//\ The\ polynomial\ coefficients\ were\ calculated\ using\ Sollya\ commands:}}
+\DoxyCodeLine{01121\ \ \ \ \ \textcolor{comment}{//\ >\ n\ =\ 10;}}
+\DoxyCodeLine{01122\ \ \ \ \ \textcolor{comment}{//\ >\ f\ =\ log2(1+x)/x;}}
+\DoxyCodeLine{01123\ \ \ \ \ \textcolor{comment}{//\ >\ interval\ =\ [sqrt(0.5)-\/1;sqrt(2)-\/1];}}
+\DoxyCodeLine{01124\ \ \ \ \ \textcolor{comment}{//\ >\ p\ =\ fpminimax(f,n,[|double,double,double,double,single...|],interval,relative,floating);}}
+\DoxyCodeLine{01125\ \ \ \ \ }
+\DoxyCodeLine{01126\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p6\ =\ pset1<Packet>(\ 9.703654795885e-\/2f);}
+\DoxyCodeLine{01127\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p5\ =\ pset1<Packet>(-\/0.1690667718648f);}
+\DoxyCodeLine{01128\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p4\ =\ pset1<Packet>(\ 0.1720575392246f);}
+\DoxyCodeLine{01129\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p3\ =\ pset1<Packet>(-\/0.1789081543684f);}
+\DoxyCodeLine{01130\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p2\ =\ pset1<Packet>(\ 0.2050433009862f);}
+\DoxyCodeLine{01131\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p1\ =\ pset1<Packet>(-\/0.2404672354459f);}
+\DoxyCodeLine{01132\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p0\ =\ pset1<Packet>(\ 0.2885761857032f);}
+\DoxyCodeLine{01133\ }
+\DoxyCodeLine{01134\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C3\_hi\ =\ pset1<Packet>(-\/0.360674142838f);}
+\DoxyCodeLine{01135\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C3\_lo\ =\ pset1<Packet>(-\/6.13283912543e-\/09f);}
+\DoxyCodeLine{01136\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C2\_hi\ =\ pset1<Packet>(0.480897903442f);}
+\DoxyCodeLine{01137\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C2\_lo\ =\ pset1<Packet>(-\/1.44861207474e-\/08f);}
+\DoxyCodeLine{01138\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C1\_hi\ =\ pset1<Packet>(-\/0.721347510815f);}
+\DoxyCodeLine{01139\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C1\_lo\ =\ pset1<Packet>(-\/4.84483164698e-\/09f);}
+\DoxyCodeLine{01140\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C0\_hi\ =\ pset1<Packet>(1.44269502163f);}
+\DoxyCodeLine{01141\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C0\_lo\ =\ pset1<Packet>(2.01711713999e-\/08f);}
+\DoxyCodeLine{01142\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\ =\ pset1<Packet>(1.0f);}
+\DoxyCodeLine{01143\ }
+\DoxyCodeLine{01144\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x\ =\ psub(z,\ one);}
+\DoxyCodeLine{01145\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ P(x)\ in\ working\ precision.}}
+\DoxyCodeLine{01146\ \ \ \ \ \textcolor{comment}{//\ We\ evaluate\ it\ in\ multiple\ parts\ to\ improve\ instruction\ level}}
+\DoxyCodeLine{01147\ \ \ \ \ \textcolor{comment}{//\ parallelism.}}
+\DoxyCodeLine{01148\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,x);}
+\DoxyCodeLine{01149\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_even\ =\ pmadd(p6,\ x2,\ p4);}
+\DoxyCodeLine{01150\ \ \ \ \ p\_even\ =\ pmadd(p\_even,\ x2,\ p2);}
+\DoxyCodeLine{01151\ \ \ \ \ p\_even\ =\ pmadd(p\_even,\ x2,\ p0);}
+\DoxyCodeLine{01152\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_odd\ =\ pmadd(p5,\ x2,\ p3);}
+\DoxyCodeLine{01153\ \ \ \ \ p\_odd\ =\ pmadd(p\_odd,\ x2,\ p1);}
+\DoxyCodeLine{01154\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\ =\ pmadd(p\_odd,\ x,\ p\_even);}
+\DoxyCodeLine{01155\ }
+\DoxyCodeLine{01156\ \ \ \ \ \textcolor{comment}{//\ Now\ evaluate\ the\ low-\/order\ tems\ of\ Q(x)\ in\ double\ word\ precision.}}
+\DoxyCodeLine{01157\ \ \ \ \ \textcolor{comment}{//\ In\ the\ following,\ due\ to\ the\ alternating\ signs\ and\ the\ fact\ that}}
+\DoxyCodeLine{01158\ \ \ \ \ \textcolor{comment}{//\ |x|\ <\ sqrt(2)-\/1,\ we\ can\ assume\ that\ |C*\_hi|\ >=\ q\_i,\ and\ use}}
+\DoxyCodeLine{01159\ \ \ \ \ \textcolor{comment}{//\ fast\_twosum\ instead\ of\ the\ slower\ twosum.}}
+\DoxyCodeLine{01160\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q\_hi,\ q\_lo;}
+\DoxyCodeLine{01161\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ t\_hi,\ t\_lo;}
+\DoxyCodeLine{01162\ \ \ \ \ \textcolor{comment}{//\ C3\ +\ x\ *\ p(x)}}
+\DoxyCodeLine{01163\ \ \ \ \ twoprod(p,\ x,\ t\_hi,\ t\_lo);}
+\DoxyCodeLine{01164\ \ \ \ \ fast\_twosum(C3\_hi,\ C3\_lo,\ t\_hi,\ t\_lo,\ q\_hi,\ q\_lo);}
+\DoxyCodeLine{01165\ \ \ \ \ \textcolor{comment}{//\ C2\ +\ x\ *\ p(x)}}
+\DoxyCodeLine{01166\ \ \ \ \ twoprod(q\_hi,\ q\_lo,\ x,\ t\_hi,\ t\_lo);}
+\DoxyCodeLine{01167\ \ \ \ \ fast\_twosum(C2\_hi,\ C2\_lo,\ t\_hi,\ t\_lo,\ q\_hi,\ q\_lo);}
+\DoxyCodeLine{01168\ \ \ \ \ \textcolor{comment}{//\ C1\ +\ x\ *\ p(x)}}
+\DoxyCodeLine{01169\ \ \ \ \ twoprod(q\_hi,\ q\_lo,\ x,\ t\_hi,\ t\_lo);}
+\DoxyCodeLine{01170\ \ \ \ \ fast\_twosum(C1\_hi,\ C1\_lo,\ t\_hi,\ t\_lo,\ q\_hi,\ q\_lo);}
+\DoxyCodeLine{01171\ \ \ \ \ \textcolor{comment}{//\ C0\ +\ x\ *\ p(x)}}
+\DoxyCodeLine{01172\ \ \ \ \ twoprod(q\_hi,\ q\_lo,\ x,\ t\_hi,\ t\_lo);}
+\DoxyCodeLine{01173\ \ \ \ \ fast\_twosum(C0\_hi,\ C0\_lo,\ t\_hi,\ t\_lo,\ q\_hi,\ q\_lo);}
+\DoxyCodeLine{01174\ }
+\DoxyCodeLine{01175\ \ \ \ \ \textcolor{comment}{//\ log(z)\ \string~=\ x\ *\ Q(x)}}
+\DoxyCodeLine{01176\ \ \ \ \ twoprod(q\_hi,\ q\_lo,\ x,\ log2\_x\_hi,\ log2\_x\_lo);}
+\DoxyCodeLine{01177\ \ \ \}}
+\DoxyCodeLine{01178\ \};}
+\DoxyCodeLine{01179\ }
+\DoxyCodeLine{01180\ \textcolor{comment}{//\ This\ specialization\ uses\ a\ more\ accurate\ algorithm\ to\ compute\ log2(x)\ for}}
+\DoxyCodeLine{01181\ \textcolor{comment}{//\ floats\ in\ [1/sqrt(2);sqrt(2)]\ with\ a\ relative\ accuracy\ of\ \string~1.27e-\/18.}}
+\DoxyCodeLine{01182\ \textcolor{comment}{//\ This\ additional\ accuracy\ is\ needed\ to\ counter\ the\ error-\/magnification}}
+\DoxyCodeLine{01183\ \textcolor{comment}{//\ inherent\ in\ multiplying\ by\ a\ potentially\ large\ exponent\ in\ pow(x,y).}}
+\DoxyCodeLine{01184\ \textcolor{comment}{//\ The\ minimax\ polynomial\ used\ was\ calculated\ using\ the\ Sollya\ tool.}}
+\DoxyCodeLine{01185\ \textcolor{comment}{//\ See\ sollya.org.}}
+\DoxyCodeLine{01186\ }
+\DoxyCodeLine{01187\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01188\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1accurate__log2}{accurate\_log2}}<double>\ \{}
+\DoxyCodeLine{01189\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01190\ \ \ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01191\ \ \ \textcolor{keywordtype}{void}\ operator()(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ log2\_x\_hi,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ log2\_x\_lo)\ \{}
+\DoxyCodeLine{01192\ \ \ \ \ \textcolor{comment}{//\ We\ use\ a\ transformation\ of\ variables:}}
+\DoxyCodeLine{01193\ \ \ \ \ \textcolor{comment}{//\ \ \ \ r\ =\ c\ *\ (x-\/1)\ /\ (x+1),}}
+\DoxyCodeLine{01194\ \ \ \ \ \textcolor{comment}{//\ such\ that}}
+\DoxyCodeLine{01195\ \ \ \ \ \textcolor{comment}{//\ \ \ \ log2(x)\ =\ log2((1\ +\ r/c)\ /\ (1\ -\/\ r/c))\ =\ f(r).}}
+\DoxyCodeLine{01196\ \ \ \ \ \textcolor{comment}{//\ The\ function\ f(r)\ can\ be\ approximated\ well\ using\ an\ odd\ polynomial}}
+\DoxyCodeLine{01197\ \ \ \ \ \textcolor{comment}{//\ of\ the\ form}}
+\DoxyCodeLine{01198\ \ \ \ \ \textcolor{comment}{//\ \ \ P(r)\ =\ ((Q(r\string^2)\ *\ r\string^2\ +\ C)\ *\ r\string^2\ +\ 1)\ *\ r,}}
+\DoxyCodeLine{01199\ \ \ \ \ \textcolor{comment}{//\ For\ the\ implementation\ of\ log2<double>\ here,\ Q\ is\ of\ degree\ 6\ with}}
+\DoxyCodeLine{01200\ \ \ \ \ \textcolor{comment}{//\ coefficient\ represented\ in\ working\ precision\ (double),\ while\ C\ is\ a}}
+\DoxyCodeLine{01201\ \ \ \ \ \textcolor{comment}{//\ constant\ represented\ in\ extra\ precision\ as\ a\ double\ word\ to\ achieve}}
+\DoxyCodeLine{01202\ \ \ \ \ \textcolor{comment}{//\ full\ accuracy.}}
+\DoxyCodeLine{01203\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01204\ \ \ \ \ \textcolor{comment}{//\ The\ polynomial\ coefficients\ were\ computed\ by\ the\ Sollya\ script:}}
+\DoxyCodeLine{01205\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01206\ \ \ \ \ \textcolor{comment}{//\ c\ =\ 2\ /\ log(2);}}
+\DoxyCodeLine{01207\ \ \ \ \ \textcolor{comment}{//\ trans\ =\ c\ *\ (x-\/1)/(x+1);}}
+\DoxyCodeLine{01208\ \ \ \ \ \textcolor{comment}{//\ itrans\ =\ (1+x/c)/(1-\/x/c);}}
+\DoxyCodeLine{01209\ \ \ \ \ \textcolor{comment}{//\ interval=[trans(sqrt(0.5));\ trans(sqrt(2))];}}
+\DoxyCodeLine{01210\ \ \ \ \ \textcolor{comment}{//\ print(interval);}}
+\DoxyCodeLine{01211\ \ \ \ \ \textcolor{comment}{//\ f\ =\ log2(itrans(x));}}
+\DoxyCodeLine{01212\ \ \ \ \ \textcolor{comment}{//\ p=fpminimax(f,[|1,3,5,7,9,11,13,15,17|],[|1,DD,double...|],interval,relative,floating);}}
+\DoxyCodeLine{01213\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q12\ =\ pset1<Packet>(2.87074255468000586e-\/9);}
+\DoxyCodeLine{01214\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q10\ =\ pset1<Packet>(2.38957980901884082e-\/8);}
+\DoxyCodeLine{01215\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q8\ =\ pset1<Packet>(2.31032094540014656e-\/7);}
+\DoxyCodeLine{01216\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q6\ =\ pset1<Packet>(2.27279857398537278e-\/6);}
+\DoxyCodeLine{01217\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q4\ =\ pset1<Packet>(2.31271023278625638e-\/5);}
+\DoxyCodeLine{01218\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q2\ =\ pset1<Packet>(2.47556738444535513e-\/4);}
+\DoxyCodeLine{01219\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q0\ =\ pset1<Packet>(2.88543873228900172e-\/3);}
+\DoxyCodeLine{01220\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C\_hi\ =\ pset1<Packet>(0.0400377511598501157);}
+\DoxyCodeLine{01221\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C\_lo\ =\ pset1<Packet>(-\/4.77726582251425391e-\/19);}
+\DoxyCodeLine{01222\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\ =\ pset1<Packet>(1.0);}
+\DoxyCodeLine{01223\ }
+\DoxyCodeLine{01224\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_2\_log2e\_hi\ =\ pset1<Packet>(2.88539008177792677);}
+\DoxyCodeLine{01225\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ cst\_2\_log2e\_lo\ =\ pset1<Packet>(4.07660016854549667e-\/17);}
+\DoxyCodeLine{01226\ \ \ \ \ \textcolor{comment}{//\ c\ *\ (x\ -\/\ 1)}}
+\DoxyCodeLine{01227\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ num\_hi,\ num\_lo;}
+\DoxyCodeLine{01228\ \ \ \ \ twoprod(cst\_2\_log2e\_hi,\ cst\_2\_log2e\_lo,\ psub(x,\ one),\ num\_hi,\ num\_lo);}
+\DoxyCodeLine{01229\ \ \ \ \ \textcolor{comment}{//\ TODO(rmlarsen):\ Investigate\ if\ using\ the\ division\ algorithm\ by}}
+\DoxyCodeLine{01230\ \ \ \ \ \textcolor{comment}{//\ Muller\ et\ al.\ is\ faster/more\ accurate.}}
+\DoxyCodeLine{01231\ \ \ \ \ \textcolor{comment}{//\ 1\ /\ (x\ +\ 1)}}
+\DoxyCodeLine{01232\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ denom\_hi,\ denom\_lo;}
+\DoxyCodeLine{01233\ \ \ \ \ doubleword\_reciprocal(padd(x,\ one),\ denom\_hi,\ denom\_lo);}
+\DoxyCodeLine{01234\ \ \ \ \ \textcolor{comment}{//\ r\ =\ \ c\ *\ (x-\/1)\ /\ (x+1),}}
+\DoxyCodeLine{01235\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r\_hi,\ r\_lo;}
+\DoxyCodeLine{01236\ \ \ \ \ twoprod(num\_hi,\ num\_lo,\ denom\_hi,\ denom\_lo,\ r\_hi,\ r\_lo);}
+\DoxyCodeLine{01237\ \ \ \ \ \textcolor{comment}{//\ r2\ =\ r\ *\ r}}
+\DoxyCodeLine{01238\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r2\_hi,\ r2\_lo;}
+\DoxyCodeLine{01239\ \ \ \ \ twoprod(r\_hi,\ r\_lo,\ r\_hi,\ r\_lo,\ r2\_hi,\ r2\_lo);}
+\DoxyCodeLine{01240\ \ \ \ \ \textcolor{comment}{//\ r4\ =\ r2\ *\ r2}}
+\DoxyCodeLine{01241\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ r4\_hi,\ r4\_lo;}
+\DoxyCodeLine{01242\ \ \ \ \ twoprod(r2\_hi,\ r2\_lo,\ r2\_hi,\ r2\_lo,\ r4\_hi,\ r4\_lo);}
+\DoxyCodeLine{01243\ }
+\DoxyCodeLine{01244\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ Q(r\string^2)\ in\ working\ precision.\ We\ evaluate\ it\ in\ two\ parts}}
+\DoxyCodeLine{01245\ \ \ \ \ \textcolor{comment}{//\ (even\ and\ odd\ in\ r\string^2)\ to\ improve\ instruction\ level\ parallelism.}}
+\DoxyCodeLine{01246\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q\_even\ =\ pmadd(q12,\ r4\_hi,\ q8);}
+\DoxyCodeLine{01247\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q\_odd\ =\ pmadd(q10,\ r4\_hi,\ q6);}
+\DoxyCodeLine{01248\ \ \ \ \ q\_even\ =\ pmadd(q\_even,\ r4\_hi,\ q4);}
+\DoxyCodeLine{01249\ \ \ \ \ q\_odd\ =\ pmadd(q\_odd,\ r4\_hi,\ q2);}
+\DoxyCodeLine{01250\ \ \ \ \ q\_even\ =\ pmadd(q\_even,\ r4\_hi,\ q0);}
+\DoxyCodeLine{01251\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q\ =\ pmadd(q\_odd,\ r2\_hi,\ q\_even);}
+\DoxyCodeLine{01252\ }
+\DoxyCodeLine{01253\ \ \ \ \ \textcolor{comment}{//\ Now\ evaluate\ the\ low\ order\ terms\ of\ P(x)\ in\ double\ word\ precision.}}
+\DoxyCodeLine{01254\ \ \ \ \ \textcolor{comment}{//\ In\ the\ following,\ due\ to\ the\ increasing\ magnitude\ of\ the\ coefficients}}
+\DoxyCodeLine{01255\ \ \ \ \ \textcolor{comment}{//\ and\ r\ being\ constrained\ to\ [-\/0.5,\ 0.5]\ we\ can\ use\ fast\_twosum\ instead}}
+\DoxyCodeLine{01256\ \ \ \ \ \textcolor{comment}{//\ of\ the\ slower\ twosum.}}
+\DoxyCodeLine{01257\ \ \ \ \ \textcolor{comment}{//\ Q(r\string^2)\ *\ r\string^2}}
+\DoxyCodeLine{01258\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_hi,\ p\_lo;}
+\DoxyCodeLine{01259\ \ \ \ \ twoprod(r2\_hi,\ r2\_lo,\ q,\ p\_hi,\ p\_lo);}
+\DoxyCodeLine{01260\ \ \ \ \ \textcolor{comment}{//\ Q(r\string^2)\ *\ r\string^2\ +\ C}}
+\DoxyCodeLine{01261\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p1\_hi,\ p1\_lo;}
+\DoxyCodeLine{01262\ \ \ \ \ fast\_twosum(C\_hi,\ C\_lo,\ p\_hi,\ p\_lo,\ p1\_hi,\ p1\_lo);}
+\DoxyCodeLine{01263\ \ \ \ \ \textcolor{comment}{//\ (Q(r\string^2)\ *\ r\string^2\ +\ C)\ *\ r\string^2}}
+\DoxyCodeLine{01264\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p2\_hi,\ p2\_lo;}
+\DoxyCodeLine{01265\ \ \ \ \ twoprod(r2\_hi,\ r2\_lo,\ p1\_hi,\ p1\_lo,\ p2\_hi,\ p2\_lo);}
+\DoxyCodeLine{01266\ \ \ \ \ \textcolor{comment}{//\ ((Q(r\string^2)\ *\ r\string^2\ +\ C)\ *\ r\string^2\ +\ 1)}}
+\DoxyCodeLine{01267\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p3\_hi,\ p3\_lo;}
+\DoxyCodeLine{01268\ \ \ \ \ fast\_twosum(one,\ p2\_hi,\ p2\_lo,\ p3\_hi,\ p3\_lo);}
+\DoxyCodeLine{01269\ }
+\DoxyCodeLine{01270\ \ \ \ \ \textcolor{comment}{//\ log(z)\ \string~=\ ((Q(r\string^2)\ *\ r\string^2\ +\ C)\ *\ r\string^2\ +\ 1)\ *\ r}}
+\DoxyCodeLine{01271\ \ \ \ \ twoprod(p3\_hi,\ p3\_lo,\ r\_hi,\ r\_lo,\ log2\_x\_hi,\ log2\_x\_lo);}
+\DoxyCodeLine{01272\ \ \ \}}
+\DoxyCodeLine{01273\ \};}
+\DoxyCodeLine{01274\ }
+\DoxyCodeLine{01275\ \textcolor{comment}{//\ This\ function\ computes\ exp2(x)\ (i.e.\ 2**x).}}
+\DoxyCodeLine{01276\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{01277\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1fast__accurate__exp2}{fast\_accurate\_exp2}}\ \{}
+\DoxyCodeLine{01278\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01279\ \ \ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01280\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ operator()(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)\ \{}
+\DoxyCodeLine{01281\ \ \ \ \ \textcolor{comment}{//\ TODO(rmlarsen):\ Add\ a\ pexp2\ packetop.}}
+\DoxyCodeLine{01282\ \ \ \ \ \textcolor{keywordflow}{return}\ pexp(pmul(pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(EIGEN\_LN2)),\ x));}
+\DoxyCodeLine{01283\ \ \ \}}
+\DoxyCodeLine{01284\ \};}
+\DoxyCodeLine{01285\ }
+\DoxyCodeLine{01286\ \textcolor{comment}{//\ This\ specialization\ uses\ a\ faster\ algorithm\ to\ compute\ exp2(x)\ for\ floats}}
+\DoxyCodeLine{01287\ \textcolor{comment}{//\ in\ [-\/0.5;0.5]\ with\ a\ relative\ accuracy\ of\ 1\ ulp.}}
+\DoxyCodeLine{01288\ \textcolor{comment}{//\ The\ minimax\ polynomial\ used\ was\ calculated\ using\ the\ Sollya\ tool.}}
+\DoxyCodeLine{01289\ \textcolor{comment}{//\ See\ sollya.org.}}
+\DoxyCodeLine{01290\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01291\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1fast__accurate__exp2}{fast\_accurate\_exp2}}<float>\ \{}
+\DoxyCodeLine{01292\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01293\ \ \ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01294\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ operator()(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)\ \{}
+\DoxyCodeLine{01295\ \ \ \ \ \textcolor{comment}{//\ This\ function\ approximates\ exp2(x)\ by\ a\ degree\ 6\ polynomial\ of\ the\ form}}
+\DoxyCodeLine{01296\ \ \ \ \ \textcolor{comment}{//\ Q(x)\ =\ 1\ +\ x\ *\ (C\ +\ x\ *\ P(x)),\ where\ the\ degree\ 4\ polynomial\ P(x)\ is\ evaluated\ in}}
+\DoxyCodeLine{01297\ \ \ \ \ \textcolor{comment}{//\ single\ precision,\ and\ the\ remaining\ steps\ are\ evaluated\ with\ extra\ precision\ using}}
+\DoxyCodeLine{01298\ \ \ \ \ \textcolor{comment}{//\ double\ word\ arithmetic.\ C\ is\ an\ extra\ precise\ constant\ stored\ as\ a\ double\ word.}}
+\DoxyCodeLine{01299\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01300\ \ \ \ \ \textcolor{comment}{//\ The\ polynomial\ coefficients\ were\ calculated\ using\ Sollya\ commands:}}
+\DoxyCodeLine{01301\ \ \ \ \ \textcolor{comment}{//\ >\ n\ =\ 6;}}
+\DoxyCodeLine{01302\ \ \ \ \ \textcolor{comment}{//\ >\ f\ =\ 2\string^x;}}
+\DoxyCodeLine{01303\ \ \ \ \ \textcolor{comment}{//\ >\ interval\ =\ [-\/0.5;0.5];}}
+\DoxyCodeLine{01304\ \ \ \ \ \textcolor{comment}{//\ >\ p\ =\ fpminimax(f,n,[|1,double,single...|],interval,relative,floating);}}
+\DoxyCodeLine{01305\ }
+\DoxyCodeLine{01306\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p4\ =\ pset1<Packet>(1.539513905e-\/4f);}
+\DoxyCodeLine{01307\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p3\ =\ pset1<Packet>(1.340007293e-\/3f);}
+\DoxyCodeLine{01308\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p2\ =\ pset1<Packet>(9.618283249e-\/3f);}
+\DoxyCodeLine{01309\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p1\ =\ pset1<Packet>(5.550328270e-\/2f);}
+\DoxyCodeLine{01310\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p0\ =\ pset1<Packet>(0.2402264923f);}
+\DoxyCodeLine{01311\ }
+\DoxyCodeLine{01312\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C\_hi\ =\ pset1<Packet>(0.6931471825f);}
+\DoxyCodeLine{01313\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C\_lo\ =\ pset1<Packet>(2.36836577e-\/08f);}
+\DoxyCodeLine{01314\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\ =\ pset1<Packet>(1.0f);}
+\DoxyCodeLine{01315\ }
+\DoxyCodeLine{01316\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ P(x)\ in\ working\ precision.}}
+\DoxyCodeLine{01317\ \ \ \ \ \textcolor{comment}{//\ We\ evaluate\ even\ and\ odd\ parts\ of\ the\ polynomial\ separately}}
+\DoxyCodeLine{01318\ \ \ \ \ \textcolor{comment}{//\ to\ gain\ some\ instruction\ level\ parallelism.}}
+\DoxyCodeLine{01319\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,x);}
+\DoxyCodeLine{01320\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_even\ =\ pmadd(p4,\ x2,\ p2);}
+\DoxyCodeLine{01321\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_odd\ =\ pmadd(p3,\ x2,\ p1);}
+\DoxyCodeLine{01322\ \ \ \ \ p\_even\ =\ pmadd(p\_even,\ x2,\ p0);}
+\DoxyCodeLine{01323\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\ =\ pmadd(p\_odd,\ x,\ p\_even);}
+\DoxyCodeLine{01324\ }
+\DoxyCodeLine{01325\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ the\ remaining\ terms\ of\ Q(x)\ with\ extra\ precision\ using}}
+\DoxyCodeLine{01326\ \ \ \ \ \textcolor{comment}{//\ double\ word\ arithmetic.}}
+\DoxyCodeLine{01327\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_hi,\ p\_lo;}
+\DoxyCodeLine{01328\ \ \ \ \ \textcolor{comment}{//\ x\ *\ p(x)}}
+\DoxyCodeLine{01329\ \ \ \ \ twoprod(p,\ x,\ p\_hi,\ p\_lo);}
+\DoxyCodeLine{01330\ \ \ \ \ \textcolor{comment}{//\ C\ +\ x\ *\ p(x)}}
+\DoxyCodeLine{01331\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q1\_hi,\ q1\_lo;}
+\DoxyCodeLine{01332\ \ \ \ \ twosum(p\_hi,\ p\_lo,\ C\_hi,\ C\_lo,\ q1\_hi,\ q1\_lo);}
+\DoxyCodeLine{01333\ \ \ \ \ \textcolor{comment}{//\ x\ *\ (C\ +\ x\ *\ p(x))}}
+\DoxyCodeLine{01334\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q2\_hi,\ q2\_lo;}
+\DoxyCodeLine{01335\ \ \ \ \ twoprod(q1\_hi,\ q1\_lo,\ x,\ q2\_hi,\ q2\_lo);}
+\DoxyCodeLine{01336\ \ \ \ \ \textcolor{comment}{//\ 1\ +\ x\ *\ (C\ +\ x\ *\ p(x))}}
+\DoxyCodeLine{01337\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q3\_hi,\ q3\_lo;}
+\DoxyCodeLine{01338\ \ \ \ \ \textcolor{comment}{//\ Since\ |q2\_hi|\ <=\ sqrt(2)-\/1\ <\ 1,\ we\ can\ use\ fast\_twosum}}
+\DoxyCodeLine{01339\ \ \ \ \ \textcolor{comment}{//\ for\ adding\ it\ to\ unity\ here.}}
+\DoxyCodeLine{01340\ \ \ \ \ fast\_twosum(one,\ q2\_hi,\ q3\_hi,\ q3\_lo);}
+\DoxyCodeLine{01341\ \ \ \ \ \textcolor{keywordflow}{return}\ padd(q3\_hi,\ padd(q2\_lo,\ q3\_lo));}
+\DoxyCodeLine{01342\ \ \ \}}
+\DoxyCodeLine{01343\ \};}
+\DoxyCodeLine{01344\ }
+\DoxyCodeLine{01345\ \textcolor{comment}{//\ in\ [-\/0.5;0.5]\ with\ a\ relative\ accuracy\ of\ 1\ ulp.}}
+\DoxyCodeLine{01346\ \textcolor{comment}{//\ The\ minimax\ polynomial\ used\ was\ calculated\ using\ the\ Sollya\ tool.}}
+\DoxyCodeLine{01347\ \textcolor{comment}{//\ See\ sollya.org.}}
+\DoxyCodeLine{01348\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01349\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1fast__accurate__exp2}{fast\_accurate\_exp2}}<double>\ \{}
+\DoxyCodeLine{01350\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01351\ \ \ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{01352\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ operator()(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x)\ \{}
+\DoxyCodeLine{01353\ \ \ \ \ \textcolor{comment}{//\ This\ function\ approximates\ exp2(x)\ by\ a\ degree\ 10\ polynomial\ of\ the\ form}}
+\DoxyCodeLine{01354\ \ \ \ \ \textcolor{comment}{//\ Q(x)\ =\ 1\ +\ x\ *\ (C\ +\ x\ *\ P(x)),\ where\ the\ degree\ 8\ polynomial\ P(x)\ is\ evaluated\ in}}
+\DoxyCodeLine{01355\ \ \ \ \ \textcolor{comment}{//\ single\ precision,\ and\ the\ remaining\ steps\ are\ evaluated\ with\ extra\ precision\ using}}
+\DoxyCodeLine{01356\ \ \ \ \ \textcolor{comment}{//\ double\ word\ arithmetic.\ C\ is\ an\ extra\ precise\ constant\ stored\ as\ a\ double\ word.}}
+\DoxyCodeLine{01357\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{01358\ \ \ \ \ \textcolor{comment}{//\ The\ polynomial\ coefficients\ were\ calculated\ using\ Sollya\ commands:}}
+\DoxyCodeLine{01359\ \ \ \ \ \textcolor{comment}{//\ >\ n\ =\ 11;}}
+\DoxyCodeLine{01360\ \ \ \ \ \textcolor{comment}{//\ >\ f\ =\ 2\string^x;}}
+\DoxyCodeLine{01361\ \ \ \ \ \textcolor{comment}{//\ >\ interval\ =\ [-\/0.5;0.5];}}
+\DoxyCodeLine{01362\ \ \ \ \ \textcolor{comment}{//\ >\ p\ =\ fpminimax(f,n,[|1,DD,double...|],interval,relative,floating);}}
+\DoxyCodeLine{01363\ }
+\DoxyCodeLine{01364\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p9\ =\ pset1<Packet>(4.431642109085495276e-\/10);}
+\DoxyCodeLine{01365\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p8\ =\ pset1<Packet>(7.073829923303358410e-\/9);}
+\DoxyCodeLine{01366\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p7\ =\ pset1<Packet>(1.017822306737031311e-\/7);}
+\DoxyCodeLine{01367\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p6\ =\ pset1<Packet>(1.321543498017646657e-\/6);}
+\DoxyCodeLine{01368\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p5\ =\ pset1<Packet>(1.525273342728892877e-\/5);}
+\DoxyCodeLine{01369\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p4\ =\ pset1<Packet>(1.540353045780084423e-\/4);}
+\DoxyCodeLine{01370\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p3\ =\ pset1<Packet>(1.333355814685869807e-\/3);}
+\DoxyCodeLine{01371\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p2\ =\ pset1<Packet>(9.618129107593478832e-\/3);}
+\DoxyCodeLine{01372\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p1\ =\ pset1<Packet>(5.550410866481961247e-\/2);}
+\DoxyCodeLine{01373\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p0\ =\ pset1<Packet>(0.240226506959101332);}
+\DoxyCodeLine{01374\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C\_hi\ =\ pset1<Packet>(0.693147180559945286);\ }
+\DoxyCodeLine{01375\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ C\_lo\ =\ pset1<Packet>(4.81927865669806721e-\/17);}
+\DoxyCodeLine{01376\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ one\ =\ pset1<Packet>(1.0);}
+\DoxyCodeLine{01377\ }
+\DoxyCodeLine{01378\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ P(x)\ in\ working\ precision.}}
+\DoxyCodeLine{01379\ \ \ \ \ \textcolor{comment}{//\ We\ evaluate\ even\ and\ odd\ parts\ of\ the\ polynomial\ separately}}
+\DoxyCodeLine{01380\ \ \ \ \ \textcolor{comment}{//\ to\ gain\ some\ instruction\ level\ parallelism.}}
+\DoxyCodeLine{01381\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x2\ =\ pmul(x,x);}
+\DoxyCodeLine{01382\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_even\ =\ pmadd(p8,\ x2,\ p6);}
+\DoxyCodeLine{01383\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_odd\ =\ pmadd(p9,\ x2,\ p7);}
+\DoxyCodeLine{01384\ \ \ \ \ p\_even\ =\ pmadd(p\_even,\ x2,\ p4);}
+\DoxyCodeLine{01385\ \ \ \ \ p\_odd\ =\ pmadd(p\_odd,\ x2,\ p5);}
+\DoxyCodeLine{01386\ \ \ \ \ p\_even\ =\ pmadd(p\_even,\ x2,\ p2);}
+\DoxyCodeLine{01387\ \ \ \ \ p\_odd\ =\ pmadd(p\_odd,\ x2,\ p3);}
+\DoxyCodeLine{01388\ \ \ \ \ p\_even\ =\ pmadd(p\_even,\ x2,\ p0);}
+\DoxyCodeLine{01389\ \ \ \ \ p\_odd\ =\ pmadd(p\_odd,\ x2,\ p1);}
+\DoxyCodeLine{01390\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\ =\ pmadd(p\_odd,\ x,\ p\_even);}
+\DoxyCodeLine{01391\ }
+\DoxyCodeLine{01392\ \ \ \ \ \textcolor{comment}{//\ Evaluate\ the\ remaining\ terms\ of\ Q(x)\ with\ extra\ precision\ using}}
+\DoxyCodeLine{01393\ \ \ \ \ \textcolor{comment}{//\ double\ word\ arithmetic.}}
+\DoxyCodeLine{01394\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ p\_hi,\ p\_lo;}
+\DoxyCodeLine{01395\ \ \ \ \ \textcolor{comment}{//\ x\ *\ p(x)}}
+\DoxyCodeLine{01396\ \ \ \ \ twoprod(p,\ x,\ p\_hi,\ p\_lo);}
+\DoxyCodeLine{01397\ \ \ \ \ \textcolor{comment}{//\ C\ +\ x\ *\ p(x)}}
+\DoxyCodeLine{01398\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q1\_hi,\ q1\_lo;}
+\DoxyCodeLine{01399\ \ \ \ \ twosum(p\_hi,\ p\_lo,\ C\_hi,\ C\_lo,\ q1\_hi,\ q1\_lo);}
+\DoxyCodeLine{01400\ \ \ \ \ \textcolor{comment}{//\ x\ *\ (C\ +\ x\ *\ p(x))}}
+\DoxyCodeLine{01401\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q2\_hi,\ q2\_lo;}
+\DoxyCodeLine{01402\ \ \ \ \ twoprod(q1\_hi,\ q1\_lo,\ x,\ q2\_hi,\ q2\_lo);}
+\DoxyCodeLine{01403\ \ \ \ \ \textcolor{comment}{//\ 1\ +\ x\ *\ (C\ +\ x\ *\ p(x))}}
+\DoxyCodeLine{01404\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ q3\_hi,\ q3\_lo;}
+\DoxyCodeLine{01405\ \ \ \ \ \textcolor{comment}{//\ Since\ |q2\_hi|\ <=\ sqrt(2)-\/1\ <\ 1,\ we\ can\ use\ fast\_twosum}}
+\DoxyCodeLine{01406\ \ \ \ \ \textcolor{comment}{//\ for\ adding\ it\ to\ unity\ here.}}
+\DoxyCodeLine{01407\ \ \ \ \ fast\_twosum(one,\ q2\_hi,\ q3\_hi,\ q3\_lo);}
+\DoxyCodeLine{01408\ \ \ \ \ \textcolor{keywordflow}{return}\ padd(q3\_hi,\ padd(q2\_lo,\ q3\_lo));}
+\DoxyCodeLine{01409\ \ \ \}}
+\DoxyCodeLine{01410\ \};}
+\DoxyCodeLine{01411\ }
+\DoxyCodeLine{01412\ \textcolor{comment}{//\ This\ function\ implements\ the\ non-\/trivial\ case\ of\ pow(x,y)\ where\ x\ is}}
+\DoxyCodeLine{01413\ \textcolor{comment}{//\ positive\ and\ y\ is\ (possibly)\ non-\/integer.}}
+\DoxyCodeLine{01414\ \textcolor{comment}{//\ Formally,\ pow(x,y)\ =\ exp2(y\ *\ log2(x)),\ where\ exp2(x)\ is\ shorthand\ for\ 2\string^x.}}
+\DoxyCodeLine{01415\ \textcolor{comment}{//\ TODO(rmlarsen):\ We\ should\ probably\ add\ this\ as\ a\ packet\ up\ 'ppow',\ to\ make\ it}}
+\DoxyCodeLine{01416\ \textcolor{comment}{//\ easier\ to\ specialize\ or\ turn\ off\ for\ specific\ types\ and/or\ backends.x}}
+\DoxyCodeLine{01417\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01418\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ generic\_pow\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ y)\ \{}
+\DoxyCodeLine{01419\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{01420\ \ \ \textcolor{comment}{//\ Split\ x\ into\ exponent\ e\_x\ and\ mantissa\ m\_x.}}
+\DoxyCodeLine{01421\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ e\_x;}
+\DoxyCodeLine{01422\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ m\_x\ =\ pfrexp(x,\ e\_x);}
+\DoxyCodeLine{01423\ }
+\DoxyCodeLine{01424\ \ \ \textcolor{comment}{//\ Adjust\ m\_x\ to\ lie\ in\ [1/sqrt(2):sqrt(2)]\ to\ minimize\ absolute\ error\ in\ log2(m\_x).}}
+\DoxyCodeLine{01425\ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ sqrt\_half\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(0.70710678118654752440);}
+\DoxyCodeLine{01426\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ m\_x\_scale\_mask\ =\ pcmp\_lt(m\_x,\ pset1<Packet>(sqrt\_half));}
+\DoxyCodeLine{01427\ \ \ m\_x\ =\ pselect(m\_x\_scale\_mask,\ pmul(pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(2)),\ m\_x),\ m\_x);}
+\DoxyCodeLine{01428\ \ \ e\_x\ =\ pselect(m\_x\_scale\_mask,\ psub(e\_x,\ pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1))),\ e\_x);}
+\DoxyCodeLine{01429\ }
+\DoxyCodeLine{01430\ \ \ \textcolor{comment}{//\ Compute\ log2(m\_x)\ with\ 6\ extra\ bits\ of\ accuracy.}}
+\DoxyCodeLine{01431\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ rx\_hi,\ rx\_lo;}
+\DoxyCodeLine{01432\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1accurate__log2}{accurate\_log2<Scalar>}}()(m\_x,\ rx\_hi,\ rx\_lo);}
+\DoxyCodeLine{01433\ }
+\DoxyCodeLine{01434\ \ \ \textcolor{comment}{//\ Compute\ the\ two\ terms\ \{y\ *\ e\_x,\ y\ *\ r\_x\}\ in\ f\ =\ y\ *\ log2(x)\ with\ doubled}}
+\DoxyCodeLine{01435\ \ \ \textcolor{comment}{//\ precision\ using\ double\ word\ arithmetic.}}
+\DoxyCodeLine{01436\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ f1\_hi,\ f1\_lo,\ f2\_hi,\ f2\_lo;}
+\DoxyCodeLine{01437\ \ \ twoprod(e\_x,\ y,\ f1\_hi,\ f1\_lo);}
+\DoxyCodeLine{01438\ \ \ twoprod(rx\_hi,\ rx\_lo,\ y,\ f2\_hi,\ f2\_lo);}
+\DoxyCodeLine{01439\ \ \ \textcolor{comment}{//\ Sum\ the\ two\ terms\ in\ f\ using\ double\ word\ arithmetic.\ We\ know}}
+\DoxyCodeLine{01440\ \ \ \textcolor{comment}{//\ that\ |e\_x|\ >\ |log2(m\_x)|,\ except\ for\ the\ case\ where\ e\_x==0.}}
+\DoxyCodeLine{01441\ \ \ \textcolor{comment}{//\ This\ means\ that\ we\ can\ use\ fast\_twosum(f1,f2).}}
+\DoxyCodeLine{01442\ \ \ \textcolor{comment}{//\ In\ the\ case\ e\_x\ ==\ 0,\ e\_x\ *\ y\ =\ f1\ =\ 0,\ so\ we\ don't\ lose\ any}}
+\DoxyCodeLine{01443\ \ \ \textcolor{comment}{//\ accuracy\ by\ violating\ the\ assumption\ of\ fast\_twosum,\ because}}
+\DoxyCodeLine{01444\ \ \ \textcolor{comment}{//\ it's\ a\ no-\/op.}}
+\DoxyCodeLine{01445\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ f\_hi,\ f\_lo;}
+\DoxyCodeLine{01446\ \ \ fast\_twosum(f1\_hi,\ f1\_lo,\ f2\_hi,\ f2\_lo,\ f\_hi,\ f\_lo);}
+\DoxyCodeLine{01447\ }
+\DoxyCodeLine{01448\ \ \ \textcolor{comment}{//\ Split\ f\ into\ integer\ and\ fractional\ parts.}}
+\DoxyCodeLine{01449\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ n\_z,\ r\_z;}
+\DoxyCodeLine{01450\ \ \ absolute\_split(f\_hi,\ n\_z,\ r\_z);}
+\DoxyCodeLine{01451\ \ \ r\_z\ =\ padd(r\_z,\ f\_lo);}
+\DoxyCodeLine{01452\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ n\_r;}
+\DoxyCodeLine{01453\ \ \ absolute\_split(r\_z,\ n\_r,\ r\_z);}
+\DoxyCodeLine{01454\ \ \ n\_z\ =\ padd(n\_z,\ n\_r);}
+\DoxyCodeLine{01455\ }
+\DoxyCodeLine{01456\ \ \ \textcolor{comment}{//\ We\ now\ have\ an\ accurate\ split\ of\ f\ =\ n\_z\ +\ r\_z\ and\ can\ compute}}
+\DoxyCodeLine{01457\ \ \ \textcolor{comment}{//\ \ \ x\string^y\ =\ 2**\{n\_z\ +\ r\_z)\ =\ exp2(r\_z)\ *\ 2**\{n\_z\}.}}
+\DoxyCodeLine{01458\ \ \ \textcolor{comment}{//\ Since\ r\_z\ is\ in\ [-\/0.5;0.5],\ we\ compute\ the\ first\ factor\ to\ high\ accuracy}}
+\DoxyCodeLine{01459\ \ \ \textcolor{comment}{//\ using\ a\ specialized\ algorithm.\ Multiplication\ by\ the\ second\ factor\ can}}
+\DoxyCodeLine{01460\ \ \ \textcolor{comment}{//\ be\ done\ exactly\ using\ pldexp(),\ since\ it\ is\ an\ integer\ power\ of\ 2.}}
+\DoxyCodeLine{01461\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ e\_r\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1fast__accurate__exp2}{fast\_accurate\_exp2<Scalar>}}()(r\_z);}
+\DoxyCodeLine{01462\ \ \ \textcolor{keywordflow}{return}\ pldexp(e\_r,\ n\_z);}
+\DoxyCodeLine{01463\ \}}
+\DoxyCodeLine{01464\ }
+\DoxyCodeLine{01465\ \textcolor{comment}{//\ Generic\ implementation\ of\ pow(x,y).}}
+\DoxyCodeLine{01466\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01467\ EIGEN\_DEFINE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS\ Packet\ generic\_pow(\textcolor{keyword}{const}\ Packet\&\ x,\ \textcolor{keyword}{const}\ Packet\&\ y)\ \{}
+\DoxyCodeLine{01468\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}};}
+\DoxyCodeLine{01469\ }
+\DoxyCodeLine{01470\ \ \ \textcolor{keyword}{const}\ Packet\ cst\_pos\_inf\ =\ pset1<Packet>(NumTraits<Scalar>::infinity());}
+\DoxyCodeLine{01471\ \ \ \textcolor{keyword}{const}\ Packet\ cst\_neg\_inf\ =\ pset1<Packet>(-\/NumTraits<Scalar>::infinity());}
+\DoxyCodeLine{01472\ \ \ \textcolor{keyword}{const}\ Packet\ cst\_zero\ =\ pset1<Packet>(\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0));}
+\DoxyCodeLine{01473\ \ \ \textcolor{keyword}{const}\ Packet\ cst\_one\ =\ pset1<Packet>(\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1));}
+\DoxyCodeLine{01474\ \ \ \textcolor{keyword}{const}\ Packet\ cst\_nan\ =\ pset1<Packet>(NumTraits<Scalar>::quiet\_NaN());}
+\DoxyCodeLine{01475\ }
+\DoxyCodeLine{01476\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_x\ =\ pabs(x);}
+\DoxyCodeLine{01477\ \ \ \textcolor{comment}{//\ Predicates\ for\ sign\ and\ magnitude\ of\ x.}}
+\DoxyCodeLine{01478\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_x\_is\_zero\ =\ pcmp\_eq(abs\_x,\ cst\_zero);}
+\DoxyCodeLine{01479\ \ \ \textcolor{keyword}{const}\ Packet\ x\_has\_signbit\ =\ pcmp\_eq(por(pand(x,\ cst\_neg\_inf),\ cst\_pos\_inf),\ cst\_neg\_inf);}
+\DoxyCodeLine{01480\ \ \ \textcolor{keyword}{const}\ Packet\ x\_is\_neg\ =\ pandnot(x\_has\_signbit,\ abs\_x\_is\_zero);}
+\DoxyCodeLine{01481\ \ \ \textcolor{keyword}{const}\ Packet\ x\_is\_neg\_zero\ =\ pand(x\_has\_signbit,\ abs\_x\_is\_zero);}
+\DoxyCodeLine{01482\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_x\_is\_inf\ =\ pcmp\_eq(abs\_x,\ cst\_pos\_inf);}
+\DoxyCodeLine{01483\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_x\_is\_one\ =\ pcmp\_eq(abs\_x,\ cst\_one);}
+\DoxyCodeLine{01484\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_x\_is\_gt\_one\ =\ pcmp\_lt(cst\_one,\ abs\_x);}
+\DoxyCodeLine{01485\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_x\_is\_lt\_one\ =\ pcmp\_lt(abs\_x,\ cst\_one);}
+\DoxyCodeLine{01486\ \ \ \textcolor{keyword}{const}\ Packet\ x\_is\_one\ =\ pandnot(abs\_x\_is\_one,\ x\_is\_neg);}
+\DoxyCodeLine{01487\ \ \ \textcolor{keyword}{const}\ Packet\ x\_is\_neg\_one\ =\ pand(abs\_x\_is\_one,\ x\_is\_neg);}
+\DoxyCodeLine{01488\ \ \ \textcolor{keyword}{const}\ Packet\ x\_is\_nan\ =\ pandnot(ptrue(x),\ pcmp\_eq(x,\ x));}
+\DoxyCodeLine{01489\ }
+\DoxyCodeLine{01490\ \ \ \textcolor{comment}{//\ Predicates\ for\ sign\ and\ magnitude\ of\ y.}}
+\DoxyCodeLine{01491\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_y\ =\ pabs(y);}
+\DoxyCodeLine{01492\ \ \ \textcolor{keyword}{const}\ Packet\ y\_is\_one\ =\ pcmp\_eq(y,\ cst\_one);}
+\DoxyCodeLine{01493\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_y\_is\_zero\ =\ pcmp\_eq(abs\_y,\ cst\_zero);}
+\DoxyCodeLine{01494\ \ \ \textcolor{keyword}{const}\ Packet\ y\_is\_neg\ =\ pcmp\_lt(y,\ cst\_zero);}
+\DoxyCodeLine{01495\ \ \ \textcolor{keyword}{const}\ Packet\ y\_is\_pos\ =\ pandnot(ptrue(y),\ por(abs\_y\_is\_zero,\ y\_is\_neg));}
+\DoxyCodeLine{01496\ \ \ \textcolor{keyword}{const}\ Packet\ y\_is\_nan\ =\ pandnot(ptrue(y),\ pcmp\_eq(y,\ y));}
+\DoxyCodeLine{01497\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_y\_is\_inf\ =\ pcmp\_eq(abs\_y,\ cst\_pos\_inf);}
+\DoxyCodeLine{01498\ \ \ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ huge\_exponent\ =}
+\DoxyCodeLine{01499\ \ \ \ \ \ \ (NumTraits<Scalar>::max\_exponent()\ *\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(EIGEN\_LN2))\ /\ NumTraits<Scalar>::epsilon();}
+\DoxyCodeLine{01500\ \ \ \textcolor{keyword}{const}\ Packet\ abs\_y\_is\_huge\ =\ pcmp\_le(pset1<Packet>(huge\_exponent),\ pabs(y));}
+\DoxyCodeLine{01501\ }
+\DoxyCodeLine{01502\ \ \ \textcolor{comment}{//\ Predicates\ for\ whether\ y\ is\ integer\ and/or\ even.}}
+\DoxyCodeLine{01503\ \ \ \textcolor{keyword}{const}\ Packet\ y\_is\_int\ =\ pcmp\_eq(pfloor(y),\ y);}
+\DoxyCodeLine{01504\ \ \ \textcolor{keyword}{const}\ Packet\ y\_div\_2\ =\ pmul(y,\ pset1<Packet>(\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.5)));}
+\DoxyCodeLine{01505\ \ \ \textcolor{keyword}{const}\ Packet\ y\_is\_even\ =\ pcmp\_eq(pround(y\_div\_2),\ y\_div\_2);}
+\DoxyCodeLine{01506\ }
+\DoxyCodeLine{01507\ \ \ \textcolor{comment}{//\ Predicates\ encoding\ special\ cases\ for\ the\ value\ of\ pow(x,y)}}
+\DoxyCodeLine{01508\ \ \ \textcolor{keyword}{const}\ Packet\ invalid\_negative\_x\ =\ pandnot(pandnot(pandnot(x\_is\_neg,\ abs\_x\_is\_inf),\ y\_is\_int),\ abs\_y\_is\_inf);}
+\DoxyCodeLine{01509\ \ \ \textcolor{keyword}{const}\ Packet\ pow\_is\_nan\ =\ por(invalid\_negative\_x,\ por(x\_is\_nan,\ y\_is\_nan));}
+\DoxyCodeLine{01510\ \ \ \textcolor{keyword}{const}\ Packet\ pow\_is\_one\ =}
+\DoxyCodeLine{01511\ \ \ \ \ \ \ por(por(x\_is\_one,\ abs\_y\_is\_zero),\ pand(x\_is\_neg\_one,\ por(abs\_y\_is\_inf,\ pandnot(y\_is\_even,\ invalid\_negative\_x))));}
+\DoxyCodeLine{01512\ \ \ \textcolor{keyword}{const}\ Packet\ pow\_is\_zero\ =\ por(por(por(pand(abs\_x\_is\_zero,\ y\_is\_pos),\ pand(abs\_x\_is\_inf,\ y\_is\_neg)),}
+\DoxyCodeLine{01513\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pand(pand(abs\_x\_is\_lt\_one,\ abs\_y\_is\_huge),\ y\_is\_pos)),}
+\DoxyCodeLine{01514\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pand(pand(abs\_x\_is\_gt\_one,\ abs\_y\_is\_huge),\ y\_is\_neg));}
+\DoxyCodeLine{01515\ \ \ \textcolor{keyword}{const}\ Packet\ pow\_is\_inf\ =\ por(por(por(pand(abs\_x\_is\_zero,\ y\_is\_neg),\ pand(abs\_x\_is\_inf,\ y\_is\_pos)),}
+\DoxyCodeLine{01516\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pand(pand(abs\_x\_is\_lt\_one,\ abs\_y\_is\_huge),\ y\_is\_neg)),}
+\DoxyCodeLine{01517\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pand(pand(abs\_x\_is\_gt\_one,\ abs\_y\_is\_huge),\ y\_is\_pos));}
+\DoxyCodeLine{01518\ \ \ \textcolor{keyword}{const}\ Packet\ inf\_val\ =}
+\DoxyCodeLine{01519\ \ \ \ \ \ \ pselect(pandnot(pand(por(pand(abs\_x\_is\_inf,\ x\_is\_neg),\ pand(x\_is\_neg\_zero,\ y\_is\_neg)),\ y\_is\_int),\ y\_is\_even),}
+\DoxyCodeLine{01520\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cst\_neg\_inf,\ cst\_pos\_inf);}
+\DoxyCodeLine{01521\ }
+\DoxyCodeLine{01522\ \ \ \textcolor{comment}{//\ General\ computation\ of\ pow(x,y)\ for\ positive\ x\ or\ negative\ x\ and\ integer\ y.}}
+\DoxyCodeLine{01523\ \ \ \textcolor{keyword}{const}\ Packet\ negate\_pow\_abs\ =\ pandnot(x\_is\_neg,\ y\_is\_even);}
+\DoxyCodeLine{01524\ \ \ \textcolor{keyword}{const}\ Packet\ pow\_abs\ =\ generic\_pow\_impl(abs\_x,\ y);}
+\DoxyCodeLine{01525\ \ \ \textcolor{keywordflow}{return}\ pselect(}
+\DoxyCodeLine{01526\ \ \ \ \ \ \ y\_is\_one,\ x,}
+\DoxyCodeLine{01527\ \ \ \ \ \ \ pselect(pow\_is\_one,\ cst\_one,}
+\DoxyCodeLine{01528\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(pow\_is\_nan,\ cst\_nan,}
+\DoxyCodeLine{01529\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(pow\_is\_inf,\ inf\_val,}
+\DoxyCodeLine{01530\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(pow\_is\_zero,\ cst\_zero,\ pselect(negate\_pow\_abs,\ pnegate(pow\_abs),\ pow\_abs))))));}
+\DoxyCodeLine{01531\ \}}
+\DoxyCodeLine{01532\ }
+\DoxyCodeLine{01533\ \textcolor{comment}{/*\ polevl\ (modified\ for\ Eigen)}}
+\DoxyCodeLine{01534\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01535\ \textcolor{comment}{\ *\ \ \ \ \ \ Evaluate\ polynomial}}
+\DoxyCodeLine{01536\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01537\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01538\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01539\ \textcolor{comment}{\ *\ SYNOPSIS:}}
+\DoxyCodeLine{01540\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01541\ \textcolor{comment}{\ *\ int\ N;}}
+\DoxyCodeLine{01542\ \textcolor{comment}{\ *\ Scalar\ x,\ y,\ coef[N+1];}}
+\DoxyCodeLine{01543\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01544\ \textcolor{comment}{\ *\ y\ =\ polevl<decltype(x),\ N>(\ x,\ coef);}}
+\DoxyCodeLine{01545\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01546\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01547\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01548\ \textcolor{comment}{\ *\ DESCRIPTION:}}
+\DoxyCodeLine{01549\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01550\ \textcolor{comment}{\ *\ Evaluates\ polynomial\ of\ degree\ N:}}
+\DoxyCodeLine{01551\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01552\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 2\ \ \ \ \ \ \ \ \ \ N}}
+\DoxyCodeLine{01553\ \textcolor{comment}{\ *\ y\ \ =\ \ C\ \ +\ C\ x\ +\ C\ x\ \ +...+\ C\ x}}
+\DoxyCodeLine{01554\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ 0\ \ \ \ 1\ \ \ \ \ 2\ \ \ \ \ \ \ \ \ \ N}}
+\DoxyCodeLine{01555\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01556\ \textcolor{comment}{\ *\ Coefficients\ are\ stored\ in\ reverse\ order:}}
+\DoxyCodeLine{01557\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01558\ \textcolor{comment}{\ *\ coef[0]\ =\ C\ \ ,\ ...,\ coef[N]\ =\ C\ \ .}}
+\DoxyCodeLine{01559\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ \ \ \ N\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ 0}}
+\DoxyCodeLine{01560\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01561\ \textcolor{comment}{\ *\ \ The\ function\ p1evl()\ assumes\ that\ coef[N]\ =\ 1.0\ and\ is}}
+\DoxyCodeLine{01562\ \textcolor{comment}{\ *\ omitted\ from\ the\ array.\ \ Its\ calling\ arguments\ are}}
+\DoxyCodeLine{01563\ \textcolor{comment}{\ *\ otherwise\ the\ same\ as\ polevl().}}
+\DoxyCodeLine{01564\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01565\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01566\ \textcolor{comment}{\ *\ The\ Eigen\ implementation\ is\ templatized.\ \ For\ best\ speed,\ store}}
+\DoxyCodeLine{01567\ \textcolor{comment}{\ *\ coef\ as\ a\ const\ array\ (constexpr),\ e.g.}}
+\DoxyCodeLine{01568\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01569\ \textcolor{comment}{\ *\ const\ double\ coef[]\ =\ \{1.0,\ 2.0,\ 3.0,\ ...\};}}
+\DoxyCodeLine{01570\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01571\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{01572\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{int}\ N>}
+\DoxyCodeLine{01573\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1ppolevl}{ppolevl}}\ \{}
+\DoxyCodeLine{01574\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ coeff[])\ \{}
+\DoxyCodeLine{01575\ \ \ \ \ EIGEN\_STATIC\_ASSERT((N\ >\ 0),\ YOU\_MADE\_A\_PROGRAMMING\_MISTAKE);}
+\DoxyCodeLine{01576\ \ \ \ \ \textcolor{keywordflow}{return}\ pmadd(ppolevl<Packet,\ N-\/1>::run(x,\ coeff),\ x,\ pset1<Packet>(coeff[N]));}
+\DoxyCodeLine{01577\ \ \ \}}
+\DoxyCodeLine{01578\ \};}
+\DoxyCodeLine{01579\ }
+\DoxyCodeLine{01580\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{01581\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1ppolevl}{ppolevl}}<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},\ 0>\ \{}
+\DoxyCodeLine{01582\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ x,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ coeff[])\ \{}
+\DoxyCodeLine{01583\ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(x);}
+\DoxyCodeLine{01584\ \ \ \ \ \textcolor{keywordflow}{return}\ pset1<Packet>(coeff[0]);}
+\DoxyCodeLine{01585\ \ \ \}}
+\DoxyCodeLine{01586\ \};}
+\DoxyCodeLine{01587\ }
+\DoxyCodeLine{01588\ \textcolor{comment}{/*\ chbevl\ (modified\ for\ Eigen)}}
+\DoxyCodeLine{01589\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01590\ \textcolor{comment}{\ *\ \ \ \ \ Evaluate\ Chebyshev\ series}}
+\DoxyCodeLine{01591\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01592\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01593\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01594\ \textcolor{comment}{\ *\ SYNOPSIS:}}
+\DoxyCodeLine{01595\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01596\ \textcolor{comment}{\ *\ int\ N;}}
+\DoxyCodeLine{01597\ \textcolor{comment}{\ *\ Scalar\ x,\ y,\ coef[N],\ chebevl();}}
+\DoxyCodeLine{01598\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01599\ \textcolor{comment}{\ *\ y\ =\ chbevl(\ x,\ coef,\ N\ );}}
+\DoxyCodeLine{01600\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01601\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01602\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01603\ \textcolor{comment}{\ *\ DESCRIPTION:}}
+\DoxyCodeLine{01604\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01605\ \textcolor{comment}{\ *\ Evaluates\ the\ series}}
+\DoxyCodeLine{01606\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01607\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ N-\/1}}
+\DoxyCodeLine{01608\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ -\/\ '}}
+\DoxyCodeLine{01609\ \textcolor{comment}{\ *\ \ y\ \ =\ \ \ >\ \ \ coef[i]\ T\ (x/2)}}
+\DoxyCodeLine{01610\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ -\/\ \ \ \ \ \ \ \ \ \ \ \ i}}
+\DoxyCodeLine{01611\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ i=0}}
+\DoxyCodeLine{01612\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01613\ \textcolor{comment}{\ *\ of\ Chebyshev\ polynomials\ Ti\ at\ argument\ x/2.}}
+\DoxyCodeLine{01614\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01615\ \textcolor{comment}{\ *\ Coefficients\ are\ stored\ in\ reverse\ order,\ i.e.\ the\ zero}}
+\DoxyCodeLine{01616\ \textcolor{comment}{\ *\ order\ term\ is\ last\ in\ the\ array.\ \ Note\ N\ is\ the\ number\ of}}
+\DoxyCodeLine{01617\ \textcolor{comment}{\ *\ coefficients,\ not\ the\ order.}}
+\DoxyCodeLine{01618\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01619\ \textcolor{comment}{\ *\ If\ coefficients\ are\ for\ the\ interval\ a\ to\ b,\ x\ must}}
+\DoxyCodeLine{01620\ \textcolor{comment}{\ *\ have\ been\ transformed\ to\ x\ -\/>\ 2(2x\ -\/\ b\ -\/\ a)/(b-\/a)\ before}}
+\DoxyCodeLine{01621\ \textcolor{comment}{\ *\ entering\ the\ routine.\ \ This\ maps\ x\ from\ (a,\ b)\ to\ (-\/1,\ 1),}}
+\DoxyCodeLine{01622\ \textcolor{comment}{\ *\ over\ which\ the\ Chebyshev\ polynomials\ are\ defined.}}
+\DoxyCodeLine{01623\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01624\ \textcolor{comment}{\ *\ If\ the\ coefficients\ are\ for\ the\ inverted\ interval,\ in}}
+\DoxyCodeLine{01625\ \textcolor{comment}{\ *\ which\ (a,\ b)\ is\ mapped\ to\ (1/b,\ 1/a),\ the\ transformation}}
+\DoxyCodeLine{01626\ \textcolor{comment}{\ *\ required\ is\ x\ -\/>\ 2(2ab/x\ -\/\ b\ -\/\ a)/(b-\/a).\ \ If\ b\ is\ infinity,}}
+\DoxyCodeLine{01627\ \textcolor{comment}{\ *\ this\ becomes\ x\ -\/>\ 4a/x\ -\/\ 1.}}
+\DoxyCodeLine{01628\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01629\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01630\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01631\ \textcolor{comment}{\ *\ SPEED:}}
+\DoxyCodeLine{01632\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01633\ \textcolor{comment}{\ *\ Taking\ advantage\ of\ the\ recurrence\ properties\ of\ the}}
+\DoxyCodeLine{01634\ \textcolor{comment}{\ *\ Chebyshev\ polynomials,\ the\ routine\ requires\ one\ more}}
+\DoxyCodeLine{01635\ \textcolor{comment}{\ *\ addition\ per\ loop\ than\ evaluating\ a\ nested\ polynomial\ of}}
+\DoxyCodeLine{01636\ \textcolor{comment}{\ *\ the\ same\ degree.}}
+\DoxyCodeLine{01637\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{01638\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{01639\ }
+\DoxyCodeLine{01640\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{int}\ N>}
+\DoxyCodeLine{01641\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pchebevl}{pchebevl}}\ \{}
+\DoxyCodeLine{01642\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{01643\ \ \ \textcolor{keyword}{static}\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ x,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ coef[])\ \{}
+\DoxyCodeLine{01644\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{01645\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ b0\ =\ pset1<Packet>(coef[0]);}
+\DoxyCodeLine{01646\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ b1\ =\ pset1<Packet>(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\textcolor{keyword}{>}(0.f));}
+\DoxyCodeLine{01647\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ b2;}
+\DoxyCodeLine{01648\ }
+\DoxyCodeLine{01649\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ i\ =\ 1;\ i\ <\ N;\ i++)\ \{}
+\DoxyCodeLine{01650\ \ \ \ \ \ \ b2\ =\ b1;}
+\DoxyCodeLine{01651\ \ \ \ \ \ \ b1\ =\ b0;}
+\DoxyCodeLine{01652\ \ \ \ \ \ \ b0\ =\ psub(pmadd(x,\ b1,\ pset1<Packet>(coef[i])),\ b2);}
+\DoxyCodeLine{01653\ \ \ \ \ \}}
+\DoxyCodeLine{01654\ }
+\DoxyCodeLine{01655\ \ \ \ \ \textcolor{keywordflow}{return}\ pmul(pset1<Packet>(\textcolor{keyword}{static\_cast<}\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\textcolor{keyword}{>}(0.5f)),\ psub(b0,\ b2));}
+\DoxyCodeLine{01656\ \ \ \}}
+\DoxyCodeLine{01657\ \};}
+\DoxyCodeLine{01658\ }
+\DoxyCodeLine{01659\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{01660\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{01661\ }
+\DoxyCodeLine{01662\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_ARCH\_GENERIC\_PACKET\_MATH\_FUNCTIONS\_H}}
+
+\end{DoxyCode}

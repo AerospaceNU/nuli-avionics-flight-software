@@ -1,0 +1,174 @@
+\doxysection{Geometry\+\_\+\+SIMD.\+h}
+\hypertarget{Geometry__SIMD_8h_source}{}\label{Geometry__SIMD_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Geometry/arch/Geometry\_SIMD.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Geometry/arch/Geometry\_SIMD.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009\ Rohit\ Garg\ <rpg.314@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2009-\/2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_GEOMETRY\_SIMD\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_GEOMETRY\_SIMD\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Derived,\ \textcolor{keyword}{class}\ OtherDerived>}
+\DoxyCodeLine{00019\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1quat__product}{quat\_product}}<Architecture::Target,\ Derived,\ OtherDerived,\ float>}
+\DoxyCodeLine{00020\ \{}
+\DoxyCodeLine{00021\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00022\ \ \ \ \ AAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Derived>::Alignment}},}
+\DoxyCodeLine{00023\ \ \ \ \ BAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<OtherDerived>::Alignment}},}
+\DoxyCodeLine{00024\ \ \ \ \ ResAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Quaternion<float>}}\ >::Alignment}
+\DoxyCodeLine{00025\ \ \ \};}
+\DoxyCodeLine{00026\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Quaternion}{Quaternion<float>}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1QuaternionBase}{QuaternionBase<Derived>}}\&\ \_a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1QuaternionBase}{QuaternionBase<OtherDerived>}}\&\ \_b)}
+\DoxyCodeLine{00027\ \ \ \{}
+\DoxyCodeLine{00028\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<typename\ Derived::Coefficients>}}\ ae(\_a.\mbox{\hyperlink{classEigen_1_1QuaternionBase_a1a7dd10b8e218170dd8f52edd8356f9b}{coeffs}}());}
+\DoxyCodeLine{00029\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<typename\ OtherDerived::Coefficients>}}\ be(\_b.\mbox{\hyperlink{classEigen_1_1QuaternionBase_a1a7dd10b8e218170dd8f52edd8356f9b}{coeffs}}());}
+\DoxyCodeLine{00030\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Quaternion}{Quaternion<float>}}\ res;}
+\DoxyCodeLine{00031\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ neg\_zero\ =\ numext::bit\_cast<float>(0x80000000u);}
+\DoxyCodeLine{00032\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ arr[4]\ =\ \{0.f,\ 0.f,\ 0.f,\ neg\_zero\};}
+\DoxyCodeLine{00033\ \ \ \ \ \textcolor{keyword}{const}\ Packet4f\ mask\ =\ ploadu<Packet4f>(arr);}
+\DoxyCodeLine{00034\ \ \ \ \ Packet4f\ a\ =\ ae.template\ packet<AAlignment,Packet4f>(0);}
+\DoxyCodeLine{00035\ \ \ \ \ Packet4f\ b\ =\ be.template\ packet<BAlignment,Packet4f>(0);}
+\DoxyCodeLine{00036\ \ \ \ \ Packet4f\ s1\ =\ pmul(vec4f\_swizzle1(a,1,2,0,2),vec4f\_swizzle1(b,2,0,1,2));}
+\DoxyCodeLine{00037\ \ \ \ \ Packet4f\ s2\ =\ pmul(vec4f\_swizzle1(a,3,3,3,1),vec4f\_swizzle1(b,0,1,2,1));}
+\DoxyCodeLine{00038\ \ \ \ \ pstoret<float,Packet4f,ResAlignment>(}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&res.\mbox{\hyperlink{classEigen_1_1QuaternionBase_af5a6618608a86232397a60d11dbad13d}{x}}(),}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ padd(psub(pmul(a,vec4f\_swizzle1(b,3,3,3,3)),}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pmul(vec4f\_swizzle1(a,2,0,1,0),}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ vec4f\_swizzle1(b,1,2,0,0))),}
+\DoxyCodeLine{00043\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pxor(mask,padd(s1,s2))));}
+\DoxyCodeLine{00044\ \ \ \ \ }
+\DoxyCodeLine{00045\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00046\ \ \ \}}
+\DoxyCodeLine{00047\ \};}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Derived>}
+\DoxyCodeLine{00050\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1quat__conj}{quat\_conj}}<Architecture::Target,\ Derived,\ float>}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ ResAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Quaternion<float>}}\ >::Alignment}
+\DoxyCodeLine{00054\ \ \ \};}
+\DoxyCodeLine{00055\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Quaternion}{Quaternion<float>}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1QuaternionBase}{QuaternionBase<Derived>}}\&\ q)}
+\DoxyCodeLine{00056\ \ \ \{}
+\DoxyCodeLine{00057\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<typename\ Derived::Coefficients>}}\ qe(q.\mbox{\hyperlink{classEigen_1_1QuaternionBase_a1a7dd10b8e218170dd8f52edd8356f9b}{coeffs}}());}
+\DoxyCodeLine{00058\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Quaternion}{Quaternion<float>}}\ res;}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ neg\_zero\ =\ numext::bit\_cast<float>(0x80000000u);}
+\DoxyCodeLine{00060\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\ arr[4]\ =\ \{neg\_zero,\ neg\_zero,\ neg\_zero,0.f\};}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{keyword}{const}\ Packet4f\ mask\ =\ ploadu<Packet4f>(arr);}
+\DoxyCodeLine{00062\ \ \ \ \ pstoret<float,Packet4f,ResAlignment>(\&res.\mbox{\hyperlink{classEigen_1_1QuaternionBase_af5a6618608a86232397a60d11dbad13d}{x}}(),\ pxor(mask,\ qe.template\ packet<\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Derived>::Alignment}},Packet4f>(0)));}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00064\ \ \ \}}
+\DoxyCodeLine{00065\ \};}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ VectorLhs,\textcolor{keyword}{typename}\ VectorRhs>}
+\DoxyCodeLine{00069\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1cross3__impl}{cross3\_impl}}<Architecture::Target,VectorLhs,VectorRhs,float,true>}
+\DoxyCodeLine{00070\ \{}
+\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ ResAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<typename\ plain\_matrix\_type<VectorLhs>::type}}>::Alignment}
+\DoxyCodeLine{00073\ \ \ \};}
+\DoxyCodeLine{00074\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type<VectorLhs>::type}}}
+\DoxyCodeLine{00075\ \ \ run(\textcolor{keyword}{const}\ VectorLhs\&\ lhs,\ \textcolor{keyword}{const}\ VectorRhs\&\ rhs)}
+\DoxyCodeLine{00076\ \ \ \{}
+\DoxyCodeLine{00077\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<VectorLhs>}}\ lhs\_eval(lhs);}
+\DoxyCodeLine{00078\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<VectorRhs>}}\ rhs\_eval(rhs);}
+\DoxyCodeLine{00079\ \ \ \ \ Packet4f\ a\ =\ lhs\_eval.template\ packet<traits<VectorLhs>::Alignment,Packet4f>(0);}
+\DoxyCodeLine{00080\ \ \ \ \ Packet4f\ b\ =\ rhs\_eval.template\ packet<traits<VectorRhs>::Alignment,Packet4f>(0);}
+\DoxyCodeLine{00081\ \ \ \ \ Packet4f\ mul1\ =\ pmul(vec4f\_swizzle1(a,1,2,0,3),vec4f\_swizzle1(b,2,0,1,3));}
+\DoxyCodeLine{00082\ \ \ \ \ Packet4f\ mul2\ =\ pmul(vec4f\_swizzle1(a,2,0,1,3),vec4f\_swizzle1(b,1,2,0,3));}
+\DoxyCodeLine{00083\ \ \ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1plain__matrix__type}{plain\_matrix\_type<VectorLhs>::type}}\ res;}
+\DoxyCodeLine{00084\ \ \ \ \ pstoret<float,Packet4f,ResAlignment>(\&res.x(),psub(mul1,mul2));}
+\DoxyCodeLine{00085\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00086\ \ \ \}}
+\DoxyCodeLine{00087\ \};}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{preprocessor}{\#if\ (defined\ EIGEN\_VECTORIZE\_SSE)\ ||\ (EIGEN\_ARCH\_ARM64)}}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Derived,\ \textcolor{keyword}{class}\ OtherDerived>}
+\DoxyCodeLine{00094\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1quat__product}{quat\_product}}<Architecture::Target,\ Derived,\ OtherDerived,\ double>}
+\DoxyCodeLine{00095\ \{}
+\DoxyCodeLine{00096\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00097\ \ \ \ \ BAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<OtherDerived>::Alignment}},}
+\DoxyCodeLine{00098\ \ \ \ \ ResAlignment\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<Quaternion<double>}}\ >::Alignment}
+\DoxyCodeLine{00099\ \ \ \};}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Quaternion}{Quaternion<double>}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1QuaternionBase}{QuaternionBase<Derived>}}\&\ \_a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1QuaternionBase}{QuaternionBase<OtherDerived>}}\&\ \_b)}
+\DoxyCodeLine{00102\ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \mbox{\hyperlink{classEigen_1_1Quaternion}{Quaternion<double>}}\ res;}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \ \ evaluator<typename\ Derived::Coefficients>\ ae(\_a.\mbox{\hyperlink{classEigen_1_1QuaternionBase_a1a7dd10b8e218170dd8f52edd8356f9b}{coeffs}}());}
+\DoxyCodeLine{00106\ \ \ evaluator<typename\ OtherDerived::Coefficients>\ be(\_b.\mbox{\hyperlink{classEigen_1_1QuaternionBase_a1a7dd10b8e218170dd8f52edd8356f9b}{coeffs}}());}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ a\ =\ \_a.\mbox{\hyperlink{classEigen_1_1QuaternionBase_a1a7dd10b8e218170dd8f52edd8356f9b}{coeffs}}().data();}
+\DoxyCodeLine{00109\ \ \ Packet2d\ b\_xy\ =\ be.template\ packet<BAlignment,Packet2d>(0);}
+\DoxyCodeLine{00110\ \ \ Packet2d\ b\_zw\ =\ be.template\ packet<BAlignment,Packet2d>(2);}
+\DoxyCodeLine{00111\ \ \ Packet2d\ a\_xx\ =\ pset1<Packet2d>(a[0]);}
+\DoxyCodeLine{00112\ \ \ Packet2d\ a\_yy\ =\ pset1<Packet2d>(a[1]);}
+\DoxyCodeLine{00113\ \ \ Packet2d\ a\_zz\ =\ pset1<Packet2d>(a[2]);}
+\DoxyCodeLine{00114\ \ \ Packet2d\ a\_ww\ =\ pset1<Packet2d>(a[3]);}
+\DoxyCodeLine{00115\ }
+\DoxyCodeLine{00116\ \ \ \textcolor{comment}{//\ two\ temporaries:}}
+\DoxyCodeLine{00117\ \ \ Packet2d\ t1,\ t2;}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ *\ t1\ =\ ww*xy\ +\ yy*zw}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ *\ t2\ =\ zz*xy\ -\/\ xx*zw}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ *\ res.xy\ =\ t1\ +/-\/\ swap(t2)}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00124\ \ \ t1\ =\ padd(pmul(a\_ww,\ b\_xy),\ pmul(a\_yy,\ b\_zw));}
+\DoxyCodeLine{00125\ \ \ t2\ =\ psub(pmul(a\_zz,\ b\_xy),\ pmul(a\_xx,\ b\_zw));}
+\DoxyCodeLine{00126\ \ \ pstoret<double,Packet2d,ResAlignment>(\&res.\mbox{\hyperlink{classEigen_1_1QuaternionBase_af5a6618608a86232397a60d11dbad13d}{x}}(),\ paddsub(t1,\ preverse(t2)));}
+\DoxyCodeLine{00127\ \ \ }
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ *\ t1\ =\ ww*zw\ -\/\ yy*xy}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ *\ t2\ =\ zz*zw\ +\ xx*xy}}
+\DoxyCodeLine{00131\ \textcolor{comment}{\ \ \ *\ res.zw\ =\ t1\ -\//+\ swap(t2)\ =\ swap(\ swap(t1)\ +/-\/\ t2)}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00133\ \ \ t1\ =\ psub(pmul(a\_ww,\ b\_zw),\ pmul(a\_yy,\ b\_xy));}
+\DoxyCodeLine{00134\ \ \ t2\ =\ padd(pmul(a\_zz,\ b\_zw),\ pmul(a\_xx,\ b\_xy));}
+\DoxyCodeLine{00135\ \ \ pstoret<double,Packet2d,ResAlignment>(\&res.\mbox{\hyperlink{classEigen_1_1QuaternionBase_af76afdeb1d1441cbf09d4989437a930e}{z}}(),\ preverse(paddsub(preverse(t1),\ t2)));}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ \};}
+\DoxyCodeLine{00140\ }
+\DoxyCodeLine{00141\ \textcolor{keyword}{template}<\textcolor{keyword}{class}\ Derived>}
+\DoxyCodeLine{00142\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1quat__conj}{quat\_conj}}<Architecture::Target,\ Derived,\ double>}
+\DoxyCodeLine{00143\ \{}
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00145\ \ \ \ \ ResAlignment\ =\ traits<Quaternion<double>\ >::Alignment}
+\DoxyCodeLine{00146\ \ \ \};}
+\DoxyCodeLine{00147\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Quaternion<double>\ run(\textcolor{keyword}{const}\ QuaternionBase<Derived>\&\ q)}
+\DoxyCodeLine{00148\ \ \ \{}
+\DoxyCodeLine{00149\ \ \ \ \ evaluator<typename\ Derived::Coefficients>\ qe(q.coeffs());}
+\DoxyCodeLine{00150\ \ \ \ \ Quaternion<double>\ res;}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ neg\_zero\ =\ numext::bit\_cast<double>(0x8000000000000000ull);}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ arr1[2]\ =\ \{neg\_zero,\ neg\_zero\};}
+\DoxyCodeLine{00153\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\ arr2[2]\ =\ \{neg\_zero,\ \ 0.0\};}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{const}\ Packet2d\ mask0\ =\ ploadu<Packet2d>(arr1);}
+\DoxyCodeLine{00155\ \ \ \ \ \textcolor{keyword}{const}\ Packet2d\ mask2\ =\ ploadu<Packet2d>(arr2);}
+\DoxyCodeLine{00156\ \ \ \ \ pstoret<double,Packet2d,ResAlignment>(\&res.x(),\ pxor(mask0,\ qe.template\ packet<traits<Derived>::Alignment,Packet2d>(0)));}
+\DoxyCodeLine{00157\ \ \ \ \ pstoret<double,Packet2d,ResAlignment>(\&res.z(),\ pxor(mask2,\ qe.template\ packet<traits<Derived>::Alignment,Packet2d>(2)));}
+\DoxyCodeLine{00158\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00159\ \ \ \}}
+\DoxyCodeLine{00160\ \};}
+\DoxyCodeLine{00161\ }
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ end\ EIGEN\_VECTORIZE\_SSE\_OR\_EIGEN\_ARCH\_ARM64}}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00165\ }
+\DoxyCodeLine{00166\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00167\ }
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_GEOMETRY\_SIMD\_H}}
+
+\end{DoxyCode}

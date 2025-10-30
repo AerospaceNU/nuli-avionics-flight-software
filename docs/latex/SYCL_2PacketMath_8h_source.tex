@@ -1,0 +1,676 @@
+\doxysection{Packet\+Math.\+h}
+\hypertarget{SYCL_2PacketMath_8h_source}{}\label{SYCL_2PacketMath_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/SYCL/PacketMath.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/SYCL/PacketMath.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Mehdi\ Goli\ \ \ \ Codeplay\ Software\ Ltd.}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Ralph\ Potter\ \ Codeplay\ Software\ Ltd.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Luke\ Iwanski\ \ Codeplay\ Software\ Ltd.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Contact:\ <eigen@codeplay.com>}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{comment}{/*****************************************************************}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ PacketMath.h}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ \(\backslash\)brief:}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ PacketMath}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *****************************************************************/}}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_PACKET\_MATH\_SYCL\_H}}
+\DoxyCodeLine{00022\ \textcolor{preprocessor}{\#define\ EIGEN\_PACKET\_MATH\_SYCL\_H}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#include\ <type\_traits>}}
+\DoxyCodeLine{00024\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#ifdef\ SYCL\_DEVICE\_ONLY}}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#define\ SYCL\_PLOADT\_RO(address\_space\_target)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\ \ template\ <typename\ packet\_type,\ int\ Alignment>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ ploadt\_ro(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \ \(\backslash\)}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\ \ \ \ typedef\ typename\ unpacket\_traits<packet\_type>::type\ scalar;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00037\ \textcolor{preprocessor}{\ \ \ \ typedef\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ scalar,\ cl::sycl::access::address\_space::address\_space\_target>\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ multi\_ptr;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ auto\ res\ =\ packet\_type(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ static\_cast<typename\ unpacket\_traits<packet\_type>::type>(0));\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ res.load(0,\ multi\_ptr(const\_cast<typename\ multi\_ptr::pointer\_t>(from)));\ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{\ \ \ \ return\ res;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ SYCL\_PLOADT\_RO(global\_space)}
+\DoxyCodeLine{00047\ SYCL\_PLOADT\_RO(local\_space)}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOADT\_RO}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ packet\_type,\ \textcolor{keywordtype}{int}\ Alignment,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00052\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type}
+\DoxyCodeLine{00053\ ploadt\_ro(\textcolor{keyword}{const}\ Eigen::TensorSycl::internal::RangeAccess<}
+\DoxyCodeLine{00054\ \ \ \ \ \ \ \ \ \ \ cl::sycl::access::mode::read\_write,\ T>\&\ from)\ \{}
+\DoxyCodeLine{00055\ \ \ \textcolor{keywordflow}{return}\ ploadt\_ro<packet\_type,\ Alignment>(from.get\_pointer());}
+\DoxyCodeLine{00056\ \}}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\#ifdef\ SYCL\_DEVICE\_ONLY}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\#define\ SYCL\_PLOAD(address\_space\_target,\ Alignment,\ AlignedType)\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\ \ template\ <typename\ packet\_type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ pload\#\#AlignedType(\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\ \ \ \ return\ ploadt\_ro<packet\_type,\ Alignment>(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00070\ SYCL\_PLOAD(global\_space,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1a4e19dd09d5ff42295ba1d72d12a46686}{Unaligned}},\ u)}
+\DoxyCodeLine{00071\ SYCL\_PLOAD(global\_space,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ae12d0f8f869c40c76128260af2242bc8}{Aligned}},\ )}
+\DoxyCodeLine{00072\ \textcolor{comment}{//\ local\ space}}
+\DoxyCodeLine{00073\ SYCL\_PLOAD(local\_space,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1a4e19dd09d5ff42295ba1d72d12a46686}{Unaligned}},\ u)}
+\DoxyCodeLine{00074\ SYCL\_PLOAD(local\_space,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ae12d0f8f869c40c76128260af2242bc8}{Aligned}},\ )}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOAD}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\#define\ SYCL\_PLOAD(Alignment,\ AlignedType)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\ \ template\ <typename\ packet\_type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ pload\#\#AlignedType(\ \(\backslash\)}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ Eigen::TensorSycl::internal::RangeAccess<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::mode::read\_write,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ typename\ unpacket\_traits<packet\_type>::type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\ \ \ \ return\ ploadt\_ro<packet\_type,\ Alignment>(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00088\ SYCL\_PLOAD(\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1a4e19dd09d5ff42295ba1d72d12a46686}{Unaligned}},\ u)}
+\DoxyCodeLine{00089\ SYCL\_PLOAD(\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ae12d0f8f869c40c76128260af2242bc8}{Aligned}},\ )}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOAD}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{preprocessor}{\#ifdef\ SYCL\_DEVICE\_ONLY}\textcolor{comment}{}}
+\DoxyCodeLine{00093\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ version\ of\ \(\backslash\)a\ *from.}}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ *\ The\ pointer\ \(\backslash\)a\ from\ must\ be\ aligned\ on\ a\ \(\backslash\)a\ Alignment\ bytes\ boundary.\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\#define\ SYCL\_PLOADT(address\_space\_target)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00096\ \textcolor{preprocessor}{\ \ template\ <typename\ packet\_type,\ int\ Alignment>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00097\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ ploadt(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00098\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00100\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00101\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\ \ \ \ if\ (Alignment\ >=\ unpacket\_traits<packet\_type>::alignment)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{\ \ \ \ \ \ return\ pload<packet\_type>(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\ \ \ \ else\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\ \ \ \ \ \ return\ ploadu<packet\_type>(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00109\ SYCL\_PLOADT(global\_space)}
+\DoxyCodeLine{00110\ \textcolor{comment}{//\ local\ space}}
+\DoxyCodeLine{00111\ SYCL\_PLOADT(local\_space)}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOADT}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ packet\_type,\ \textcolor{keywordtype}{int}\ Alignment>}
+\DoxyCodeLine{00116\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type}
+\DoxyCodeLine{00117\ ploadt(\textcolor{keyword}{const}\ Eigen::TensorSycl::internal::RangeAccess<}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ \ cl::sycl::access::mode::read\_write,}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ unpacket\_traits<packet\_type>::type>\&\ from)\ \{}
+\DoxyCodeLine{00120\ \ \ \textcolor{keywordflow}{return}\ ploadt<packet\_type,\ Alignment>(from.get\_pointer());}
+\DoxyCodeLine{00121\ \}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\#ifdef\ SYCL\_DEVICE\_ONLY}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{comment}{//\ private\_space}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\#define\ SYCL\_PLOADT\_RO\_SPECIAL(packet\_type,\ Alignment)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{\ \ ploadt\_ro<packet\_type,\ Alignment>(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type*\ from)\ \{\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00130\ \textcolor{preprocessor}{\ \ \ \ typedef\ typename\ unpacket\_traits<packet\_type>::type\ scalar;\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{\ \ \ \ auto\ res\ =\ packet\_type(static\_cast<scalar>(0));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\ \ \ \ res.template\ load<cl::sycl::access::address\_space::private\_space>(\ \(\backslash\)}}
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ 0,\ const\_cast<scalar*>(from));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00134\ \textcolor{preprocessor}{\ \ \ \ return\ res;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00135\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ SYCL\_PLOADT\_RO\_SPECIAL(cl::sycl::cl\_float4,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ae12d0f8f869c40c76128260af2242bc8}{Aligned}})}
+\DoxyCodeLine{00138\ SYCL\_PLOADT\_RO\_SPECIAL(cl::sycl::cl\_double2,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ae12d0f8f869c40c76128260af2242bc8}{Aligned}})}
+\DoxyCodeLine{00139\ SYCL\_PLOADT\_RO\_SPECIAL(cl::sycl::cl\_float4,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1a4e19dd09d5ff42295ba1d72d12a46686}{Unaligned}})}
+\DoxyCodeLine{00140\ SYCL\_PLOADT\_RO\_SPECIAL(cl::sycl::cl\_double2,\ \mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1a4e19dd09d5ff42295ba1d72d12a46686}{Unaligned}})}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\#define\ SYCL\_PLOAD\_SPECIAL(packet\_type,\ alignment\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ pload\#\#alignment\_type(\ \(\backslash\)}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type*\ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\ \ \ \ typedef\ typename\ unpacket\_traits<packet\_type>::type\ scalar;\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\ \ \ \ auto\ res\ =\ packet\_type(static\_cast<scalar>(0));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\ \ \ \ res.template\ load<cl::sycl::access::address\_space::private\_space>(\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ 0,\ const\_cast<scalar*>(from));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00150\ \textcolor{preprocessor}{\ \ \ \ return\ res;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00152\ SYCL\_PLOAD\_SPECIAL(cl::sycl::cl\_float4,\ )}
+\DoxyCodeLine{00153\ SYCL\_PLOAD\_SPECIAL(cl::sycl::cl\_double2,\ )}
+\DoxyCodeLine{00154\ SYCL\_PLOAD\_SPECIAL(cl::sycl::cl\_float4,\ u)}
+\DoxyCodeLine{00155\ SYCL\_PLOAD\_SPECIAL(cl::sycl::cl\_double2,\ u)}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOAD\_SPECIAL}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \textcolor{preprocessor}{\#define\ SYCL\_PSTORE(scalar,\ packet\_type,\ address\_space\_target,\ alignment)\ \ \ \(\backslash\)}}
+\DoxyCodeLine{00160\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ void\ pstore\#\#alignment(\ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00162\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00163\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ scalar,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00165\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ to,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00166\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ packet\_type\&\ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\ \ \ \ typedef\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00168\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ scalar,\ cl::sycl::access::address\_space::address\_space\_target>\ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00169\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ multi\_ptr;\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00170\ \textcolor{preprocessor}{\ \ \ \ from.store(0,\ multi\_ptr(to));\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00174\ SYCL\_PSTORE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4,\ global\_space,\ )}
+\DoxyCodeLine{00175\ SYCL\_PSTORE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4,\ global\_space,\ u)}
+\DoxyCodeLine{00176\ SYCL\_PSTORE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2,\ global\_space,\ )}
+\DoxyCodeLine{00177\ SYCL\_PSTORE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2,\ global\_space,\ u)}
+\DoxyCodeLine{00178\ SYCL\_PSTORE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4,\ local\_space,\ )}
+\DoxyCodeLine{00179\ SYCL\_PSTORE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4,\ local\_space,\ u)}
+\DoxyCodeLine{00180\ SYCL\_PSTORE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2,\ local\_space,\ )}
+\DoxyCodeLine{00181\ SYCL\_PSTORE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2,\ local\_space,\ u)}
+\DoxyCodeLine{00182\ }
+\DoxyCodeLine{00183\ SYCL\_PSTORE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4,\ private\_space,\ )}
+\DoxyCodeLine{00184\ SYCL\_PSTORE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4,\ private\_space,\ u)}
+\DoxyCodeLine{00185\ SYCL\_PSTORE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2,\ private\_space,\ )}
+\DoxyCodeLine{00186\ SYCL\_PSTORE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2,\ private\_space,\ u)}
+\DoxyCodeLine{00187\ \textcolor{preprocessor}{\#undef\ SYCL\_PSTORE}}
+\DoxyCodeLine{00188\ }
+\DoxyCodeLine{00189\ \textcolor{preprocessor}{\#define\ SYCL\_PSTORE\_T(address\_space\_target)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00190\ \textcolor{preprocessor}{\ \ template\ <typename\ scalar,\ typename\ packet\_type,\ int\ Alignment>\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00191\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ void\ pstoret(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00192\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00193\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ scalar,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00194\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00195\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ to,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00196\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ packet\_type\&\ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00197\ \textcolor{preprocessor}{\ \ \ \ if\ (Alignment)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00198\ \textcolor{preprocessor}{\ \ \ \ \ \ pstore(to,\ from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00199\ \textcolor{preprocessor}{\ \ \ \ else\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00200\ \textcolor{preprocessor}{\ \ \ \ \ \ pstoreu(to,\ from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00201\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ SYCL\_PSTORE\_T(global\_space)}
+\DoxyCodeLine{00204\ }
+\DoxyCodeLine{00205\ SYCL\_PSTORE\_T(local\_space)}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{preprocessor}{\#undef\ SYCL\_PSTORE\_T}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{preprocessor}{\#define\ SYCL\_PSET1(packet\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00210\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00211\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ pset1<packet\_type>(\ \(\backslash\)}}
+\DoxyCodeLine{00212\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type\&\ from)\ \{\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00213\ \textcolor{preprocessor}{\ \ \ \ return\ packet\_type(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00214\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00217\ SYCL\_PSET1(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00218\ SYCL\_PSET1(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00219\ }
+\DoxyCodeLine{00220\ \textcolor{preprocessor}{\#undef\ SYCL\_PSET1}}
+\DoxyCodeLine{00221\ }
+\DoxyCodeLine{00222\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ packet\_type>}
+\DoxyCodeLine{00223\ \textcolor{keyword}{struct\ }get\_base\_packet\ \{}
+\DoxyCodeLine{00224\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00225\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ packet\_type}
+\DoxyCodeLine{00226\ \ \ get\_ploaddup(sycl\_multi\_pointer)\ \{\}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00229\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ packet\_type}
+\DoxyCodeLine{00230\ \ \ get\_pgather(sycl\_multi\_pointer,\ Index)\ \{\}}
+\DoxyCodeLine{00231\ \};}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00234\ \textcolor{keyword}{struct\ }get\_base\_packet<cl::sycl::cl\_float4>\ \{}
+\DoxyCodeLine{00235\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00236\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ cl::sycl::cl\_float4\ get\_ploaddup(}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ sycl\_multi\_pointer\ from)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_float4(from[0],\ from[0],\ from[1],\ from[1]);}
+\DoxyCodeLine{00239\ \ \ \}}
+\DoxyCodeLine{00240\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00241\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ cl::sycl::cl\_float4\ get\_pgather(}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ sycl\_multi\_pointer\ from,\ Index\ stride)\ \{}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_float4(from[0\ *\ stride],\ from[1\ *\ stride],}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ from[2\ *\ stride],\ from[3\ *\ stride]);}
+\DoxyCodeLine{00245\ \ \ \}}
+\DoxyCodeLine{00246\ }
+\DoxyCodeLine{00247\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00248\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ set\_pscatter(}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ sycl\_multi\_pointer\ to,\ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ from,\ Index\ stride)\ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keyword}{auto}\ tmp\ =\ stride;}
+\DoxyCodeLine{00251\ \ \ \ \ to[0]\ =\ from.x();}
+\DoxyCodeLine{00252\ \ \ \ \ to[tmp]\ =\ from.y();}
+\DoxyCodeLine{00253\ \ \ \ \ to[tmp\ +=\ stride]\ =\ from.z();}
+\DoxyCodeLine{00254\ \ \ \ \ to[tmp\ +=\ stride]\ =\ from.w();}
+\DoxyCodeLine{00255\ \ \ \}}
+\DoxyCodeLine{00256\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ cl::sycl::cl\_float4\ set\_plset(}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a)\ \{}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_float4(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(a),\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(a\ +\ 1),}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(a\ +\ 2),}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{float}\textcolor{keyword}{>}(a\ +\ 3));}
+\DoxyCodeLine{00261\ \ \ \}}
+\DoxyCodeLine{00262\ \};}
+\DoxyCodeLine{00263\ }
+\DoxyCodeLine{00264\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00265\ \textcolor{keyword}{struct\ }get\_base\_packet<cl::sycl::cl\_double2>\ \{}
+\DoxyCodeLine{00266\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00267\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ cl::sycl::cl\_double2}
+\DoxyCodeLine{00268\ \ \ get\_ploaddup(\textcolor{keyword}{const}\ sycl\_multi\_pointer\ from)\ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_double2(from[0],\ from[0]);}
+\DoxyCodeLine{00270\ \ \ \}}
+\DoxyCodeLine{00271\ }
+\DoxyCodeLine{00272\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er,\ \textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00273\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ cl::sycl::cl\_double2\ get\_pgather(}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \textcolor{keyword}{const}\ sycl\_multi\_pointer\ from,\ Index\ stride)\ \{}
+\DoxyCodeLine{00275\ \ \ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_double2(from[0\ *\ stride],\ from[1\ *\ stride]);}
+\DoxyCodeLine{00276\ \ \ \}}
+\DoxyCodeLine{00277\ }
+\DoxyCodeLine{00278\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ sycl\_multi\_po\textcolor{keywordtype}{int}er>}
+\DoxyCodeLine{00279\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ set\_pscatter(}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ sycl\_multi\_pointer\ to,\ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ from,\ Index\ stride)\ \{}
+\DoxyCodeLine{00281\ \ \ \ \ to[0]\ =\ from.x();}
+\DoxyCodeLine{00282\ \ \ \ \ to[stride]\ =\ from.y();}
+\DoxyCodeLine{00283\ \ \ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ cl::sycl::cl\_double2\ set\_plset(}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a)\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_double2(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(a),}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(a\ +\ 1));}
+\DoxyCodeLine{00289\ \ \ \}}
+\DoxyCodeLine{00290\ \};}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{preprocessor}{\#define\ SYCL\_PLOAD\_DUP(address\_space\_target)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00293\ \textcolor{preprocessor}{\ \ template\ <typename\ packet\_type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00294\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ packet\_type\ ploaddup(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00295\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00296\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00297\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00298\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00299\ \textcolor{preprocessor}{\ \ \ \ return\ get\_base\_packet<packet\_type>::get\_ploaddup(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00300\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00301\ }
+\DoxyCodeLine{00302\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00303\ SYCL\_PLOAD\_DUP(global\_space)}
+\DoxyCodeLine{00304\ \textcolor{comment}{//\ local\_space}}
+\DoxyCodeLine{00305\ SYCL\_PLOAD\_DUP(local\_space)}
+\DoxyCodeLine{00306\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOAD\_DUP}}
+\DoxyCodeLine{00307\ }
+\DoxyCodeLine{00308\ \textcolor{preprocessor}{\#define\ SYCL\_PLOAD\_DUP\_SPECILIZE(packet\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00309\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00310\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ packet\_type\ ploaddup<packet\_type>(\ \(\backslash\)}}
+\DoxyCodeLine{00311\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type*\ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00312\ \textcolor{preprocessor}{\ \ \ \ return\ get\_base\_packet<packet\_type>::get\_ploaddup(from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00313\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ SYCL\_PLOAD\_DUP\_SPECILIZE(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00316\ SYCL\_PLOAD\_DUP\_SPECILIZE(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00317\ }
+\DoxyCodeLine{00318\ \textcolor{preprocessor}{\#undef\ SYCL\_PLOAD\_DUP\_SPECILIZE}}
+\DoxyCodeLine{00319\ }
+\DoxyCodeLine{00320\ \textcolor{preprocessor}{\#define\ SYCL\_PLSET(packet\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00321\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00322\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ plset<packet\_type>(\ \(\backslash\)}}
+\DoxyCodeLine{00323\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type\&\ a)\ \{\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\ \ \ \ return\ get\_base\_packet<packet\_type>::set\_plset(a);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00325\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00326\ }
+\DoxyCodeLine{00327\ SYCL\_PLSET(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00328\ SYCL\_PLSET(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\#undef\ SYCL\_PLSET}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \textcolor{preprocessor}{\#define\ SYCL\_PGATHER(address\_space\_target)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00333\ \textcolor{preprocessor}{\ \ template\ <typename\ Scalar,\ typename\ packet\_type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00334\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ inline\ packet\_type\ pgather(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00336\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00337\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00338\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ from,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00339\ \textcolor{preprocessor}{\ \ \ \ \ \ Index\ stride)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00340\ \textcolor{preprocessor}{\ \ \ \ return\ get\_base\_packet<packet\_type>::get\_pgather(from,\ stride);\ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00341\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00344\ SYCL\_PGATHER(global\_space)}
+\DoxyCodeLine{00345\ \textcolor{comment}{//\ local\ space}}
+\DoxyCodeLine{00346\ SYCL\_PGATHER(local\_space)}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \textcolor{preprocessor}{\#undef\ SYCL\_PGATHER}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \textcolor{preprocessor}{\#define\ SYCL\_PGATHER\_SPECILIZE(scalar,\ packet\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00351\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00352\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ packet\_type\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00353\ \textcolor{preprocessor}{\ \ pgather<scalar,\ packet\_type>(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00354\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ typename\ unpacket\_traits<packet\_type>::type*\ from,\ Index\ stride)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00355\ \textcolor{preprocessor}{\ \ \ \ return\ get\_base\_packet<packet\_type>::get\_pgather(from,\ stride);\ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00356\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00357\ }
+\DoxyCodeLine{00358\ SYCL\_PGATHER\_SPECILIZE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4)}
+\DoxyCodeLine{00359\ SYCL\_PGATHER\_SPECILIZE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2)}
+\DoxyCodeLine{00360\ }
+\DoxyCodeLine{00361\ \textcolor{preprocessor}{\#undef\ SYCL\_PGATHER\_SPECILIZE}}
+\DoxyCodeLine{00362\ }
+\DoxyCodeLine{00363\ \textcolor{preprocessor}{\#define\ SYCL\_PSCATTER(address\_space\_target)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00364\ \textcolor{preprocessor}{\ \ template\ <typename\ Scalar,\ typename\ packet\_type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00365\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ inline\ void\ pscatter(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00366\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ cl::sycl::multi\_ptr<\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ typename\ unpacket\_traits<packet\_type>::type,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00368\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::address\_space::address\_space\_target>::pointer\_t\ \(\backslash\)}}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ to,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00370\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ packet\_type\&\ from,\ Index\ stride)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00371\ \textcolor{preprocessor}{\ \ \ \ get\_base\_packet<packet\_type>::set\_pscatter(to,\ from,\ stride);\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00372\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00373\ }
+\DoxyCodeLine{00374\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00375\ SYCL\_PSCATTER(global\_space)}
+\DoxyCodeLine{00376\ \textcolor{comment}{//\ local\ space}}
+\DoxyCodeLine{00377\ SYCL\_PSCATTER(local\_space)}
+\DoxyCodeLine{00378\ }
+\DoxyCodeLine{00379\ \textcolor{preprocessor}{\#undef\ SYCL\_PSCATTER}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \textcolor{preprocessor}{\#define\ SYCL\_PSCATTER\_SPECILIZE(scalar,\ packet\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00383\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ void\ pscatter<scalar,\ packet\_type>(\ \(\backslash\)}}
+\DoxyCodeLine{00384\ \textcolor{preprocessor}{\ \ \ \ \ \ typename\ unpacket\_traits<packet\_type>::type\ *\ to,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00385\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ packet\_type\&\ from,\ Index\ stride)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00386\ \textcolor{preprocessor}{\ \ \ \ get\_base\_packet<packet\_type>::set\_pscatter(to,\ from,\ stride);\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00387\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ SYCL\_PSCATTER\_SPECILIZE(\textcolor{keywordtype}{float},\ cl::sycl::cl\_float4)}
+\DoxyCodeLine{00390\ SYCL\_PSCATTER\_SPECILIZE(\textcolor{keywordtype}{double},\ cl::sycl::cl\_double2)}
+\DoxyCodeLine{00391\ }
+\DoxyCodeLine{00392\ \textcolor{preprocessor}{\#undef\ SYCL\_PSCATTER\_SPECILIZE}}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#define\ SYCL\_PMAD(packet\_type)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00396\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ packet\_type\ pmadd(\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00397\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ packet\_type\&\ a,\ const\ packet\_type\&\ b,\ const\ packet\_type\&\ c)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00398\ \textcolor{preprocessor}{\ \ \ \ return\ cl::sycl::mad(a,\ b,\ c);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00399\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ SYCL\_PMAD(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00402\ SYCL\_PMAD(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00403\ \textcolor{preprocessor}{\#undef\ SYCL\_PMAD}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00406\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{float}\ pfirst<cl::sycl::cl\_float4>(}
+\DoxyCodeLine{00407\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ a)\ \{}
+\DoxyCodeLine{00408\ \ \ \textcolor{keywordflow}{return}\ a.x();}
+\DoxyCodeLine{00409\ \}}
+\DoxyCodeLine{00410\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00411\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{double}\ pfirst<cl::sycl::cl\_double2>(}
+\DoxyCodeLine{00412\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ a)\ \{}
+\DoxyCodeLine{00413\ \ \ \textcolor{keywordflow}{return}\ a.x();}
+\DoxyCodeLine{00414\ \}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00417\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{float}\ predux<cl::sycl::cl\_float4>(}
+\DoxyCodeLine{00418\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ a)\ \{}
+\DoxyCodeLine{00419\ \ \ \textcolor{keywordflow}{return}\ a.x()\ +\ a.y()\ +\ a.z()\ +\ a.w();}
+\DoxyCodeLine{00420\ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00423\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{double}\ predux<cl::sycl::cl\_double2>(}
+\DoxyCodeLine{00424\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ a)\ \{}
+\DoxyCodeLine{00425\ \ \ \textcolor{keywordflow}{return}\ a.x()\ +\ a.y();}
+\DoxyCodeLine{00426\ \}}
+\DoxyCodeLine{00427\ }
+\DoxyCodeLine{00428\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00429\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{float}\ predux\_max<cl::sycl::cl\_float4>(}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ a)\ \{}
+\DoxyCodeLine{00431\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::fmax(cl::sycl::fmax(a.x(),\ a.y()),}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::fmax(a.z(),\ a.w()));}
+\DoxyCodeLine{00433\ \}}
+\DoxyCodeLine{00434\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00435\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{double}\ predux\_max<cl::sycl::cl\_double2>(}
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ a)\ \{}
+\DoxyCodeLine{00437\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::fmax(a.x(),\ a.y());}
+\DoxyCodeLine{00438\ \}}
+\DoxyCodeLine{00439\ }
+\DoxyCodeLine{00440\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00441\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{float}\ predux\_min<cl::sycl::cl\_float4>(}
+\DoxyCodeLine{00442\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ a)\ \{}
+\DoxyCodeLine{00443\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::fmin(cl::sycl::fmin(a.x(),\ a.y()),}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::fmin(a.z(),\ a.w()));}
+\DoxyCodeLine{00445\ \}}
+\DoxyCodeLine{00446\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00447\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{double}\ predux\_min<cl::sycl::cl\_double2>(}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ a)\ \{}
+\DoxyCodeLine{00449\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::fmin(a.x(),\ a.y());}
+\DoxyCodeLine{00450\ \}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00453\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{float}\ predux\_mul<cl::sycl::cl\_float4>(}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ a)\ \{}
+\DoxyCodeLine{00455\ \ \ \textcolor{keywordflow}{return}\ a.x()\ *\ a.y()\ *\ a.z()\ *\ a.w();}
+\DoxyCodeLine{00456\ \}}
+\DoxyCodeLine{00457\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00458\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{double}\ predux\_mul<cl::sycl::cl\_double2>(}
+\DoxyCodeLine{00459\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ a)\ \{}
+\DoxyCodeLine{00460\ \ \ \textcolor{keywordflow}{return}\ a.x()\ *\ a.y();}
+\DoxyCodeLine{00461\ \}}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00464\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ cl::sycl::cl\_float4}
+\DoxyCodeLine{00465\ pabs<cl::sycl::cl\_float4>(\textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ a)\ \{}
+\DoxyCodeLine{00466\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_float4(cl::sycl::fabs(a.x()),\ cl::sycl::fabs(a.y()),}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::fabs(a.z()),\ cl::sycl::fabs(a.w()));}
+\DoxyCodeLine{00468\ \}}
+\DoxyCodeLine{00469\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00470\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ cl::sycl::cl\_double2}
+\DoxyCodeLine{00471\ pabs<cl::sycl::cl\_double2>(\textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ a)\ \{}
+\DoxyCodeLine{00472\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::cl\_double2(cl::sycl::fabs(a.x()),\ cl::sycl::fabs(a.y()));}
+\DoxyCodeLine{00473\ \}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00476\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ sycl\_pcmp\_le(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&a,}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&b)\ \{}
+\DoxyCodeLine{00478\ \ \ \textcolor{keywordflow}{return}\ ((a\ <=\ b)}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\textcolor{keyword}{template}\ convert<\textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type,}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::rounding\_mode::automatic>());}
+\DoxyCodeLine{00481\ \}}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00484\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ sycl\_pcmp\_lt(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&a,}
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&b)\ \{}
+\DoxyCodeLine{00486\ \ \ \textcolor{keywordflow}{return}\ ((a\ <\ b)}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\textcolor{keyword}{template}\ convert<\textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type,}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::rounding\_mode::automatic>());}
+\DoxyCodeLine{00489\ \}}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00492\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ sycl\_pcmp\_eq(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&a,}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&b)\ \{}
+\DoxyCodeLine{00494\ \ \ \textcolor{keywordflow}{return}\ ((a\ ==\ b)}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ .\textcolor{keyword}{template}\ convert<\textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type,}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::rounding\_mode::automatic>());}
+\DoxyCodeLine{00497\ \}}
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \textcolor{preprocessor}{\#define\ SYCL\_PCMP(OP,\ TYPE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00500\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00501\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ TYPE\ pcmp\_\#\#OP<TYPE>(const\ TYPE\ \&a,\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00502\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ TYPE\ \&b)\ \{\ \ \(\backslash\)}}
+\DoxyCodeLine{00503\ \textcolor{preprocessor}{\ \ \ \ return\ sycl\_pcmp\_\#\#OP<TYPE>(a,\ b);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00504\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00505\ }
+\DoxyCodeLine{00506\ SYCL\_PCMP(le,\ cl::sycl::cl\_float4)}
+\DoxyCodeLine{00507\ SYCL\_PCMP(lt,\ cl::sycl::cl\_float4)}
+\DoxyCodeLine{00508\ SYCL\_PCMP(eq,\ cl::sycl::cl\_float4)}
+\DoxyCodeLine{00509\ SYCL\_PCMP(le,\ cl::sycl::cl\_double2)}
+\DoxyCodeLine{00510\ SYCL\_PCMP(lt,\ cl::sycl::cl\_double2)}
+\DoxyCodeLine{00511\ SYCL\_PCMP(eq,\ cl::sycl::cl\_double2)}
+\DoxyCodeLine{00512\ \textcolor{preprocessor}{\#undef\ SYCL\_PCMP}}
+\DoxyCodeLine{00513\ }
+\DoxyCodeLine{00514\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }convert\_to\_integer;}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \textcolor{keyword}{template}\ <>\ \textcolor{keyword}{struct\ }convert\_to\_integer<float>\ \{}
+\DoxyCodeLine{00517\ \ \ \textcolor{keyword}{using\ }type\ =\ std::int32\_t;}
+\DoxyCodeLine{00518\ \ \ \textcolor{keyword}{using\ }packet\_type\ =\ cl::sycl::cl\_int4;}
+\DoxyCodeLine{00519\ \};}
+\DoxyCodeLine{00520\ \textcolor{keyword}{template}\ <>\ \textcolor{keyword}{struct\ }convert\_to\_integer<double>\ \{}
+\DoxyCodeLine{00521\ \ \ \textcolor{keyword}{using\ }type\ =\ std::int64\_t;}
+\DoxyCodeLine{00522\ \ \ \textcolor{keyword}{using\ }packet\_type\ =\ cl::sycl::cl\_long2;}
+\DoxyCodeLine{00523\ \};}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ PacketIn>}
+\DoxyCodeLine{00526\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{typename}\ convert\_to\_integer<}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{keyword}{typename}\ unpacket\_traits<PacketIn>::type>::packet\_type}
+\DoxyCodeLine{00528\ vector\_as\_int(\textcolor{keyword}{const}\ PacketIn\ \&p)\ \{}
+\DoxyCodeLine{00529\ \ \ \textcolor{keywordflow}{return}\ (}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ p.template\ convert<\textcolor{keyword}{typename}\ convert\_to\_integer<}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ unpacket\_traits<PacketIn>::type>::type,}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::rounding\_mode::automatic>());}
+\DoxyCodeLine{00533\ \}}
+\DoxyCodeLine{00534\ }
+\DoxyCodeLine{00535\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ packetOut,\ \textcolor{keyword}{typename}\ PacketIn>}
+\DoxyCodeLine{00536\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ packetOut}
+\DoxyCodeLine{00537\ convert\_vector(\textcolor{keyword}{const}\ PacketIn\ \&p)\ \{}
+\DoxyCodeLine{00538\ \ \ \textcolor{keywordflow}{return}\ (p.template\ convert<\textcolor{keyword}{typename}\ unpacket\_traits<packetOut>::type,}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::rounding\_mode::automatic>());}
+\DoxyCodeLine{00540\ \}}
+\DoxyCodeLine{00541\ }
+\DoxyCodeLine{00542\ \textcolor{preprocessor}{\#define\ SYCL\_PAND(TYPE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00543\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00544\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ TYPE\ pand<TYPE>(const\ TYPE\ \&a,\ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00545\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ TYPE\ \&b)\ \{\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00546\ \textcolor{preprocessor}{\ \ \ \ return\ convert\_vector<TYPE>(vector\_as\_int(a)\ \&\ vector\_as\_int(b));\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00547\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00548\ SYCL\_PAND(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00549\ SYCL\_PAND(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00550\ \textcolor{preprocessor}{\#undef\ SYCL\_PAND}}
+\DoxyCodeLine{00551\ }
+\DoxyCodeLine{00552\ \textcolor{preprocessor}{\#define\ SYCL\_POR(TYPE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00553\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00554\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ TYPE\ por<TYPE>(const\ TYPE\ \&a,\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00555\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ TYPE\ \&b)\ \{\ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00556\ \textcolor{preprocessor}{\ \ \ \ return\ convert\_vector<TYPE>(vector\_as\_int(a)\ |\ vector\_as\_int(b));\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00557\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ SYCL\_POR(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00560\ SYCL\_POR(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00561\ \textcolor{preprocessor}{\#undef\ SYCL\_POR}}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \textcolor{preprocessor}{\#define\ SYCL\_PXOR(TYPE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00564\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00565\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ TYPE\ pxor<TYPE>(const\ TYPE\ \&a,\ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00566\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ TYPE\ \&b)\ \{\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00567\ \textcolor{preprocessor}{\ \ \ \ return\ convert\_vector<TYPE>(vector\_as\_int(a)\ \string^\ vector\_as\_int(b));\ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00568\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ SYCL\_PXOR(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00571\ SYCL\_PXOR(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00572\ \textcolor{preprocessor}{\#undef\ SYCL\_PXOR}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \textcolor{preprocessor}{\#define\ SYCL\_PANDNOT(TYPE)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00575\ \textcolor{preprocessor}{\ \ template\ <>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00576\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ TYPE\ pandnot<TYPE>(const\ TYPE\ \&a,\ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ const\ TYPE\ \&b)\ \{\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00578\ \textcolor{preprocessor}{\ \ \ \ return\ convert\_vector<TYPE>(vector\_as\_int(a)\ \&\ (\string~vector\_as\_int(b)));\ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00579\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00580\ SYCL\_PANDNOT(cl::sycl::cl\_float4)}
+\DoxyCodeLine{00581\ SYCL\_PANDNOT(cl::sycl::cl\_double2)}
+\DoxyCodeLine{00582\ \textcolor{preprocessor}{\#undef\ SYCL\_PANDNOT}}
+\DoxyCodeLine{00583\ }
+\DoxyCodeLine{00584\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ ptranspose(}
+\DoxyCodeLine{00585\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<cl::sycl::cl\_float4,\ 4>}}\&\ kernel)\ \{}
+\DoxyCodeLine{00586\ \ \ \textcolor{keywordtype}{float}\ tmp\ =\ kernel.packet[0].y();}
+\DoxyCodeLine{00587\ \ \ kernel.packet[0].y()\ =\ kernel.packet[1].x();}
+\DoxyCodeLine{00588\ \ \ kernel.packet[1].x()\ =\ tmp;}
+\DoxyCodeLine{00589\ }
+\DoxyCodeLine{00590\ \ \ tmp\ =\ kernel.packet[0].z();}
+\DoxyCodeLine{00591\ \ \ kernel.packet[0].z()\ =\ kernel.packet[2].x();}
+\DoxyCodeLine{00592\ \ \ kernel.packet[2].x()\ =\ tmp;}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ \ \ tmp\ =\ kernel.packet[0].w();}
+\DoxyCodeLine{00595\ \ \ kernel.packet[0].w()\ =\ kernel.packet[3].x();}
+\DoxyCodeLine{00596\ \ \ kernel.packet[3].x()\ =\ tmp;}
+\DoxyCodeLine{00597\ }
+\DoxyCodeLine{00598\ \ \ tmp\ =\ kernel.packet[1].z();}
+\DoxyCodeLine{00599\ \ \ kernel.packet[1].z()\ =\ kernel.packet[2].y();}
+\DoxyCodeLine{00600\ \ \ kernel.packet[2].y()\ =\ tmp;}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ tmp\ =\ kernel.packet[1].w();}
+\DoxyCodeLine{00603\ \ \ kernel.packet[1].w()\ =\ kernel.packet[3].y();}
+\DoxyCodeLine{00604\ \ \ kernel.packet[3].y()\ =\ tmp;}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \ \ tmp\ =\ kernel.packet[2].w();}
+\DoxyCodeLine{00607\ \ \ kernel.packet[2].w()\ =\ kernel.packet[3].z();}
+\DoxyCodeLine{00608\ \ \ kernel.packet[3].z()\ =\ tmp;}
+\DoxyCodeLine{00609\ \}}
+\DoxyCodeLine{00610\ }
+\DoxyCodeLine{00611\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ ptranspose(}
+\DoxyCodeLine{00612\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<cl::sycl::cl\_double2,\ 2>}}\&\ kernel)\ \{}
+\DoxyCodeLine{00613\ \ \ \textcolor{keywordtype}{double}\ tmp\ =\ kernel.packet[0].y();}
+\DoxyCodeLine{00614\ \ \ kernel.packet[0].y()\ =\ kernel.packet[1].x();}
+\DoxyCodeLine{00615\ \ \ kernel.packet[1].x()\ =\ tmp;}
+\DoxyCodeLine{00616\ \}}
+\DoxyCodeLine{00617\ }
+\DoxyCodeLine{00618\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00619\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ cl::sycl::cl\_float4\ pblend(}
+\DoxyCodeLine{00620\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1Selector}{Selector}}<unpacket\_traits<cl::sycl::cl\_float4>::size>\&\ ifPacket,}
+\DoxyCodeLine{00621\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ thenPacket,}
+\DoxyCodeLine{00622\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_float4\&\ elsePacket)\ \{}
+\DoxyCodeLine{00623\ \ \ cl::sycl::cl\_int4\ condition(}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ ifPacket.select[0]\ ?\ 0\ :\ -\/1,\ ifPacket.select[1]\ ?\ 0\ :\ -\/1,}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ ifPacket.select[2]\ ?\ 0\ :\ -\/1,\ ifPacket.select[3]\ ?\ 0\ :\ -\/1);}
+\DoxyCodeLine{00626\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::select(thenPacket,\ elsePacket,\ condition);}
+\DoxyCodeLine{00627\ \}}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00630\ \textcolor{keyword}{inline}\ cl::sycl::cl\_double2\ pblend(}
+\DoxyCodeLine{00631\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1Selector}{Selector}}<unpacket\_traits<cl::sycl::cl\_double2>::size>\&\ ifPacket,}
+\DoxyCodeLine{00632\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ thenPacket,}
+\DoxyCodeLine{00633\ \ \ \ \ \textcolor{keyword}{const}\ cl::sycl::cl\_double2\&\ elsePacket)\ \{}
+\DoxyCodeLine{00634\ \ \ cl::sycl::cl\_long2\ condition(ifPacket.select[0]\ ?\ 0\ :\ -\/1,}
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ifPacket.select[1]\ ?\ 0\ :\ -\/1);}
+\DoxyCodeLine{00636\ \ \ \textcolor{keywordflow}{return}\ cl::sycl::select(thenPacket,\ elsePacket,\ condition);}
+\DoxyCodeLine{00637\ \}}
+\DoxyCodeLine{00638\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ SYCL\_DEVICE\_ONLY}}
+\DoxyCodeLine{00639\ }
+\DoxyCodeLine{00640\ \textcolor{preprocessor}{\#define\ SYCL\_PSTORE(alignment)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00641\ \textcolor{preprocessor}{\ \ template\ <typename\ packet\_type>\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00642\ \textcolor{preprocessor}{\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ void\ pstore\#\#alignment(\ \(\backslash\)}}
+\DoxyCodeLine{00643\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ Eigen::TensorSycl::internal::RangeAccess<\ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00644\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ cl::sycl::access::mode::read\_write,\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00645\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ typename\ unpacket\_traits<packet\_type>::type>\&\ to,\ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00646\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ packet\_type\&\ from)\ \{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00647\ \textcolor{preprocessor}{\ \ \ \ pstore\#\#alignment(to.get\_pointer(),\ from);\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00648\ \textcolor{preprocessor}{\ \ \}}}
+\DoxyCodeLine{00649\ }
+\DoxyCodeLine{00650\ \textcolor{comment}{//\ global\ space}}
+\DoxyCodeLine{00651\ SYCL\_PSTORE()}
+\DoxyCodeLine{00652\ SYCL\_PSTORE(u)}
+\DoxyCodeLine{00653\ }
+\DoxyCodeLine{00654\ \textcolor{preprocessor}{\#undef\ SYCL\_PSTORE}}
+\DoxyCodeLine{00655\ }
+\DoxyCodeLine{00656\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ scalar,\ \textcolor{keyword}{typename}\ packet\_type,\ \textcolor{keywordtype}{int}\ Alignment>}
+\DoxyCodeLine{00657\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pstoret(}
+\DoxyCodeLine{00658\ \ \ \ \ Eigen::TensorSycl::internal::RangeAccess<}
+\DoxyCodeLine{00659\ \ \ \ \ \ \ \ \ cl::sycl::access::mode::read\_write,}
+\DoxyCodeLine{00660\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ unpacket\_traits<packet\_type>::type>}
+\DoxyCodeLine{00661\ \ \ \ \ \ \ \ \ to,}
+\DoxyCodeLine{00662\ \ \ \ \ \textcolor{keyword}{const}\ packet\_type\&\ from)\ \{}
+\DoxyCodeLine{00663\ \ \ pstoret<scalar,\ packet\_type,\ Alignment>(to.get\_pointer(),\ from);}
+\DoxyCodeLine{00664\ \}}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \}\ \ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \}\ \ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00669\ }
+\DoxyCodeLine{00670\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ EIGEN\_PACKET\_MATH\_SYCL\_H}}
+
+\end{DoxyCode}

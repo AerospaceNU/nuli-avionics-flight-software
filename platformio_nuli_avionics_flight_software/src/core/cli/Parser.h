@@ -235,6 +235,14 @@ private:
      */
     CLIReturnCode_e getFlagGroup(int8_t uid, FlagGroup_s** flagGroup);
 
+    /**
+     * @brief Identifies if an argument belongs to a FlagGroup
+     * @param arg Argument
+     * @param flagGroupS FlagGroup which arg might belong to
+     * @return true if argument is in flag group
+     */
+    bool isKnownFlag(char* arg, FlagGroup_s& flagGroupS);
+
     FlagGroup_s m_flagGroups[MAX_FLAG_GROUPS];  ///< FlagGroups
     uint8_t m_numFlagGroups = 0;                ///< number of FlagGroups
     int8_t m_uid = 0;                           ///< index of uids

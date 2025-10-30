@@ -1,0 +1,931 @@
+\doxysection{Sparse\+LU.\+h}
+\hypertarget{SparseLU_8h_source}{}\label{SparseLU_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Désiré\ Nuentsa-\/Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2012-\/2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SPARSE\_LU\_H}}
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#define\ EIGEN\_SPARSE\_LU\_H}}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keyword}{typename}\ \_OrderingType\ =\ COLAMDOrdering<\textcolor{keyword}{typename}\ \_MatrixType::StorageIndex>\ >\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1SparseLU}{SparseLU}};}
+\DoxyCodeLine{00018\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MappedSparseMatrixType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1SparseLUMatrixLReturnType}{SparseLUMatrixLReturnType}};}
+\DoxyCodeLine{00019\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixLType,\ \textcolor{keyword}{typename}\ MatrixUType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1SparseLUMatrixUReturnType}{SparseLUMatrixUReturnType}};}
+\DoxyCodeLine{00020\ }
+\DoxyCodeLine{00021\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ Conjugate,\textcolor{keyword}{class}\ SparseLUType>}
+\DoxyCodeLine{00022\ \textcolor{keyword}{class\ }SparseLUTransposeView\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}<SparseLUTransposeView<Conjugate,SparseLUType>\ >}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00025\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase<SparseLUTransposeView<Conjugate,SparseLUType>}}\ >\ APIBase;}
+\DoxyCodeLine{00026\ \ \ \textcolor{keyword}{using\ }APIBase::m\_isInitialized;}
+\DoxyCodeLine{00027\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00028\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseLUType::Scalar\ Scalar;}
+\DoxyCodeLine{00029\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseLUType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00030\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseLUType::MatrixType\ MatrixType;}
+\DoxyCodeLine{00031\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseLUType::OrderingType\ OrderingType;}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00034\ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00035\ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime}
+\DoxyCodeLine{00036\ \ \ \};}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \ \ SparseLUTransposeView()\ :\ APIBase(),\ m\_sparseLU(NULL)\ \{\}}
+\DoxyCodeLine{00039\ \ \ SparseLUTransposeView(\textcolor{keyword}{const}\ SparseLUTransposeView\&\ view)\ :\ APIBase()\ \{}
+\DoxyCodeLine{00040\ \ \ \ \ this-\/>m\_sparseLU\ =\ view.m\_sparseLU;}
+\DoxyCodeLine{00041\ \ \ \ \ this-\/>m\_isInitialized\ =\ view.m\_isInitialized;}
+\DoxyCodeLine{00042\ \ \ \}}
+\DoxyCodeLine{00043\ \ \ \textcolor{keywordtype}{void}\ setIsInitialized(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ isInitialized)\ \{this-\/>m\_isInitialized\ =\ isInitialized;\}}
+\DoxyCodeLine{00044\ \ \ \textcolor{keywordtype}{void}\ setSparseLU(SparseLUType*\ sparseLU)\ \{m\_sparseLU\ =\ sparseLU;\}}
+\DoxyCodeLine{00045\ \ \ \textcolor{keyword}{using\ }APIBase::\_solve\_impl;}
+\DoxyCodeLine{00046\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00047\ \ \ \textcolor{keywordtype}{bool}\ \_solve\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\ \&B,\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&X\_base)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00048\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00049\ \ \ \ \ Dest\&\ X(X\_base.derived());}
+\DoxyCodeLine{00050\ \ \ \ \ eigen\_assert(m\_sparseLU-\/>info()\ ==\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ \&\&\ \textcolor{stringliteral}{"{}The\ matrix\ should\ be\ factorized\ first"{}});}
+\DoxyCodeLine{00051\ \ \ \ \ EIGEN\_STATIC\_ASSERT((Dest::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})==0,}
+\DoxyCodeLine{00052\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ THIS\_METHOD\_IS\_ONLY\_FOR\_COLUMN\_MAJOR\_MATRICES);}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \ \ \ \ \textcolor{comment}{//\ this\ ugly\ const\_cast\_derived()\ helps\ to\ detect\ aliasing\ when\ applying\ the\ permutations}}
+\DoxyCodeLine{00056\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ B.cols();\ ++j)\{}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ X.col(j)\ =\ m\_sparseLU-\/>colsPermutation()\ *\ B.const\_cast\_derived().\mbox{\hyperlink{classEigen_1_1DenseBase_ad0c05525967c16738c2cd2285b38a91f}{col}}(j);}
+\DoxyCodeLine{00058\ \ \ \ \ \}}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{comment}{//Forward\ substitution\ with\ transposed\ or\ adjoint\ of\ U}}
+\DoxyCodeLine{00060\ \ \ \ \ m\_sparseLU-\/>matrixU().template\ solveTransposedInPlace<Conjugate>(X);}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//Backward\ substitution\ with\ transposed\ or\ adjoint\ of\ L}}
+\DoxyCodeLine{00063\ \ \ \ \ m\_sparseLU-\/>matrixL().template\ solveTransposedInPlace<Conjugate>(X);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ \textcolor{comment}{//\ Permute\ back\ the\ solution}}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ B.cols();\ ++j)}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ X.col(j)\ =\ m\_sparseLU-\/>rowsPermutation().transpose()\ *\ X.col(j);}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00069\ \ \ \}}
+\DoxyCodeLine{00070\ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sparseLU-\/>rows();\ \}}
+\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sparseLU-\/>cols();\ \}}
+\DoxyCodeLine{00072\ }
+\DoxyCodeLine{00073\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00074\ \ \ SparseLUType\ *m\_sparseLU;}
+\DoxyCodeLine{00075\ \ \ SparseLUTransposeView\&\ operator=(\textcolor{keyword}{const}\ SparseLUTransposeView\&);}
+\DoxyCodeLine{00076\ \};}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{comment}{}}
+\DoxyCodeLine{00079\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ SparseLU\_Module}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ SparseLU}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Sparse\ supernodal\ LU\ factorization\ for\ general\ matrices}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ *\ This\ class\ implements\ the\ supernodal\ LU\ factorization\ for\ general\ matrices.}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ *\ It\ uses\ the\ main\ techniques\ from\ the\ sequential\ SuperLU\ package\ }}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ *\ (http://crd-\/legacy.lbl.gov/\string~xiaoye/SuperLU/).\ It\ handles\ transparently\ real\ }}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ \ *\ and\ complex\ arithmetic\ with\ single\ and\ double\ precision,\ depending\ on\ the\ }}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ \ *\ scalar\ type\ of\ your\ input\ matrix.\ }}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ *\ The\ code\ has\ been\ optimized\ to\ provide\ BLAS-\/3\ operations\ during\ supernode-\/panel\ updates.\ }}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ \ *\ It\ benefits\ directly\ from\ the\ built-\/in\ high-\/performant\ Eigen\ BLAS\ routines.\ }}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ *\ Moreover,\ when\ the\ size\ of\ a\ supernode\ is\ very\ small,\ the\ BLAS\ calls\ are\ avoided\ to\ }}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ \ *\ enable\ a\ better\ optimization\ from\ the\ compiler.\ For\ best\ performance,\ }}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ \ *\ you\ should\ compile\ it\ with\ NDEBUG\ flag\ to\ avoid\ the\ numerous\ bounds\ checking\ on\ vectors.\ }}
+\DoxyCodeLine{00094\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ *\ An\ important\ parameter\ of\ this\ class\ is\ the\ ordering\ method.\ It\ is\ used\ to\ reorder\ the\ columns\ }}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ *\ (and\ eventually\ the\ rows)\ of\ the\ matrix\ to\ reduce\ the\ number\ of\ new\ elements\ that\ are\ created\ during\ }}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ *\ numerical\ factorization.\ The\ cheapest\ method\ available\ is\ COLAMD.\ }}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ *\ See\ \ \(\backslash\)link\ OrderingMethods\_Module\ the\ OrderingMethods\ module\ \(\backslash\)endlink\ for\ the\ list\ of\ }}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ *\ built-\/in\ and\ external\ ordering\ methods.\ }}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ \ *\ Simple\ example\ with\ key\ steps\ }}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ \ *\ VectorXd\ x(n),\ b(n);}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ *\ SparseMatrix<double>\ A;}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ *\ SparseLU<SparseMatrix<double>,\ COLAMDOrdering<int>\ >\ \ \ solver;}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ *\ //\ fill\ A\ and\ b;}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ *\ //\ Compute\ the\ ordering\ permutation\ vector\ from\ the\ structural\ pattern\ of\ A}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ *\ solver.analyzePattern(A);\ }}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ *\ //\ Compute\ the\ numerical\ factorization\ }}
+\DoxyCodeLine{00110\ \textcolor{comment}{\ \ *\ solver.factorize(A);\ }}
+\DoxyCodeLine{00111\ \textcolor{comment}{\ \ *\ //Use\ the\ factors\ to\ solve\ the\ linear\ system\ }}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ *\ x\ =\ solver.solve(b);\ }}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ The\ input\ matrix\ A\ should\ be\ in\ a\ \(\backslash\)b\ compressed\ and\ \(\backslash\)b\ column-\/major\ form.}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ *\ Otherwise\ an\ expensive\ copy\ will\ be\ made.\ You\ can\ call\ the\ inexpensive\ makeCompressed()\ to\ get\ a\ compressed\ matrix.}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ *\ \(\backslash\)note\ Unlike\ the\ initial\ SuperLU\ implementation,\ there\ is\ no\ step\ to\ equilibrate\ the\ matrix.\ }}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ *\ For\ badly\ scaled\ matrices,\ this\ step\ can\ be\ useful\ to\ reduce\ the\ pivoting\ during\ factorization.\ }}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ *\ If\ this\ is\ the\ case\ for\ your\ matrices,\ you\ can\ try\ the\ basic\ scaling\ method\ at}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ *\ \ "{}unsupported/Eigen/src/IterativeSolvers/Scaling.h"{}}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ The\ type\ of\ the\ sparse\ matrix.\ It\ must\ be\ a\ column-\/major\ SparseMatrix<>}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_OrderingType\ The\ ordering\ method\ to\ use,\ either\ AMD,\ COLAMD\ or\ METIS.\ Default\ is\ COLMAD}}
+\DoxyCodeLine{00125\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00127\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ \(\backslash\)ref\ TutorialSparseSolverConcept}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ \(\backslash\)ref\ OrderingMethods\_Module}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00131\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \_MatrixType,\ \textcolor{keyword}{typename}\ \_OrderingType>}
+\DoxyCodeLine{00132\ \textcolor{keyword}{class\ }SparseLU\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}<SparseLU<\_MatrixType,\_OrderingType>\ >,\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl}{internal::SparseLUImpl}}<typename\ \_MatrixType::Scalar,\ typename\ \_MatrixType::StorageIndex>}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase<SparseLU<\_MatrixType,\_OrderingType>}}\ >\ APIBase;}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keyword}{using\ }APIBase::m\_isInitialized;}
+\DoxyCodeLine{00137\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{keyword}{using\ }APIBase::\_solve\_impl;}
+\DoxyCodeLine{00139\ \ \ \ \ }
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;\ }
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keyword}{typedef}\ \_OrderingType\ OrderingType;}
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;\ }
+\DoxyCodeLine{00143\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::RealScalar\ RealScalar;\ }
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00145\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<Scalar,ColMajor,StorageIndex>}}\ NCMatrix;}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1MappedSuperNodalMatrix}{internal::MappedSuperNodalMatrix<Scalar,\ StorageIndex>}}\ SCMatrix;}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,Dynamic,1>}}\ ScalarVector;}
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<StorageIndex,Dynamic,1>}}\ IndexVector;}
+\DoxyCodeLine{00149\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1PermutationMatrix}{PermutationMatrix<Dynamic,\ Dynamic,\ StorageIndex>}}\ PermutationType;}
+\DoxyCodeLine{00150\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl}{internal::SparseLUImpl<Scalar,\ StorageIndex>}}\ Base;}
+\DoxyCodeLine{00151\ }
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime}
+\DoxyCodeLine{00155\ \ \ \ \ \};}
+\DoxyCodeLine{00156\ \ \ \ \ }
+\DoxyCodeLine{00157\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ SparseLU():m\_lastError(\textcolor{stringliteral}{"{}"{}}),m\_Ustore(0,0,0,0,0,0),m\_symmetricmode(\textcolor{keyword}{false}),m\_diagpivotthresh(1.0),m\_detPermR(1)}
+\DoxyCodeLine{00160\ \ \ \ \ \{}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ initperfvalues();\ }
+\DoxyCodeLine{00162\ \ \ \ \ \}}
+\DoxyCodeLine{00163\ \ \ \ \ \textcolor{keyword}{explicit}\ SparseLU(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ :\ m\_lastError(\textcolor{stringliteral}{"{}"{}}),m\_Ustore(0,0,0,0,0,0),m\_symmetricmode(\textcolor{keyword}{false}),m\_diagpivotthresh(1.0),m\_detPermR(1)}
+\DoxyCodeLine{00165\ \ \ \ \ \{}
+\DoxyCodeLine{00166\ \ \ \ \ \ \ initperfvalues();\ }
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_a96a8dcb02015ab9be5777d4ba9173266}{compute}}(matrix);}
+\DoxyCodeLine{00168\ \ \ \ \ \}}
+\DoxyCodeLine{00169\ \ \ \ \ }
+\DoxyCodeLine{00170\ \ \ \ \ \string~SparseLU()}
+\DoxyCodeLine{00171\ \ \ \ \ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \textcolor{comment}{//\ Free\ all\ explicit\ dynamic\ pointers\ }}
+\DoxyCodeLine{00173\ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \ \ \ \ }
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_aa907ff958c4f4855145091d2686f3a8a}{analyzePattern}}\ (\textcolor{keyword}{const}\ MatrixType\&\ matrix);}
+\DoxyCodeLine{00176\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_a39858b0e72f2659d596364e252b34cbc}{factorize}}\ (\textcolor{keyword}{const}\ MatrixType\&\ matrix);}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordtype}{void}\ simplicialfactorize(\textcolor{keyword}{const}\ MatrixType\&\ matrix);}
+\DoxyCodeLine{00178\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00179\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00180\ \textcolor{comment}{\ \ \ \ \ \ *\ Compute\ the\ symbolic\ and\ numeric\ factorization\ of\ the\ input\ sparse\ matrix.}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ input\ matrix\ should\ be\ in\ column-\/major\ storage.\ }}
+\DoxyCodeLine{00182\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00183\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_a96a8dcb02015ab9be5777d4ba9173266}{compute}}\ (\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00184\ \ \ \ \ \{}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ \textcolor{comment}{//\ Analyze\ }}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_aa907ff958c4f4855145091d2686f3a8a}{analyzePattern}}(matrix);\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \textcolor{comment}{//Factorize}}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_a39858b0e72f2659d596364e252b34cbc}{factorize}}(matrix);}
+\DoxyCodeLine{00189\ \ \ \ \ \}\ }
+\DoxyCodeLine{00190\ \textcolor{comment}{}}
+\DoxyCodeLine{00191\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ transposed\ of\ the\ factored\ matrix.}}
+\DoxyCodeLine{00192\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00193\ \textcolor{comment}{\ \ \ \ \ \ *\ A\ typical\ usage\ is\ to\ solve\ for\ the\ transposed\ problem\ A\string^T\ x\ =\ b:}}
+\DoxyCodeLine{00194\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00195\ \textcolor{comment}{\ \ \ \ \ \ *\ solver.compute(A);}}
+\DoxyCodeLine{00196\ \textcolor{comment}{\ \ \ \ \ \ *\ x\ =\ solver.transpose().solve(b);}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ adjoint(),\ solve()}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseLUTransposeView}{SparseLUTransposeView<false,SparseLU<\_MatrixType,\_OrderingType>}}\ >\ \mbox{\hyperlink{classEigen_1_1SparseLU_a21c1275bf4ba8b36ca92b0138b2d6002}{transpose}}()}
+\DoxyCodeLine{00202\ \ \ \ \ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLUTransposeView}{SparseLUTransposeView<false,\ \ SparseLU<\_MatrixType,\_OrderingType>}}\ >\ transposeView;}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ transposeView.setSparseLU(\textcolor{keyword}{this});}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ transposeView.setIsInitialized(this-\/>m\_isInitialized);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ transposeView;}
+\DoxyCodeLine{00207\ \ \ \ \ \}}
+\DoxyCodeLine{00208\ }
+\DoxyCodeLine{00209\ \textcolor{comment}{}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ adjoint\ of\ the\ factored\ matrix}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ \ \ \ \ *\ A\ typical\ usage\ is\ to\ solve\ for\ the\ adjoint\ problem\ A'\ x\ =\ b:}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ \ \ \ \ \ *\ solver.compute(A);}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ \ \ \ \ *\ x\ =\ solver.adjoint().solve(b);}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ real\ scalar\ types,\ this\ function\ is\ equivalent\ to\ transpose().}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ transpose(),\ solve()}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00222\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseLUTransposeView}{SparseLUTransposeView<true,\ SparseLU<\_MatrixType,\_OrderingType>}}\ >\ \mbox{\hyperlink{classEigen_1_1SparseLU_aa91b3c06e8a1108f1a9a1d17a3198ec6}{adjoint}}()}
+\DoxyCodeLine{00223\ \ \ \ \ \{}
+\DoxyCodeLine{00224\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLUTransposeView}{SparseLUTransposeView<true,\ \ SparseLU<\_MatrixType,\_OrderingType>}}\ >\ adjointView;}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ adjointView.setSparseLU(\textcolor{keyword}{this});}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ adjointView.setIsInitialized(this-\/>m\_isInitialized);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ adjointView;}
+\DoxyCodeLine{00228\ \ \ \ \ \}}
+\DoxyCodeLine{00229\ \ \ \ \ }
+\DoxyCodeLine{00230\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_mat.\mbox{\hyperlink{classEigen_1_1SparseMatrix_a62e61bb861eee306d5b069ce652b5aa5}{rows}}();\ \}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_mat.\mbox{\hyperlink{classEigen_1_1SparseMatrix_aa391750e3c530227e4a5c3c52e959975}{cols}}();\ \}\textcolor{comment}{}}
+\DoxyCodeLine{00232\ \textcolor{comment}{\ \ \ \ /**\ Indicate\ that\ the\ pattern\ of\ the\ input\ matrix\ is\ symmetric\ */}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_afff3bd506cd78172e5219c707562729f}{isSymmetric}}(\textcolor{keywordtype}{bool}\ sym)}
+\DoxyCodeLine{00234\ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ m\_symmetricmode\ =\ sym;}
+\DoxyCodeLine{00236\ \ \ \ \ \}}
+\DoxyCodeLine{00237\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00238\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ matrix\ L,\ internally\ stored\ as\ supernodes}}
+\DoxyCodeLine{00239\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ only\ operation\ available\ with\ this\ expression\ is\ the\ triangular\ solve}}
+\DoxyCodeLine{00240\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00241\ \textcolor{comment}{\ \ \ \ \ \ *\ y\ =\ b;\ matrixL().solveInPlace(y);}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00243\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00244\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1SparseLUMatrixLReturnType}{SparseLUMatrixLReturnType<SCMatrix>}}\ \mbox{\hyperlink{classEigen_1_1SparseLU_a4f00118ca89df6528b41169dc4fe2f5d}{matrixL}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00245\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SparseLUMatrixLReturnType}{SparseLUMatrixLReturnType<SCMatrix>}}(m\_Lstore);}
+\DoxyCodeLine{00247\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00248\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ matrix\ U,}}
+\DoxyCodeLine{00249\ \textcolor{comment}{\ \ \ \ \ \ *\ The\ only\ operation\ available\ with\ this\ expression\ is\ the\ triangular\ solve}}
+\DoxyCodeLine{00250\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00251\ \textcolor{comment}{\ \ \ \ \ \ *\ y\ =\ b;\ matrixU().solveInPlace(y);}}
+\DoxyCodeLine{00252\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00254\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1SparseLUMatrixUReturnType}{SparseLUMatrixUReturnType<SCMatrix,MappedSparseMatrix<Scalar,ColMajor,StorageIndex>}}\ >\ \mbox{\hyperlink{classEigen_1_1SparseLU_aed9923a511defdeb00b729880d1c8c1d}{matrixU}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00255\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SparseLUMatrixUReturnType}{SparseLUMatrixUReturnType<SCMatrix,\ MappedSparseMatrix<Scalar,ColMajor,StorageIndex>}}\ >(m\_Lstore,\ m\_Ustore);}
+\DoxyCodeLine{00257\ \ \ \ \ \}}
+\DoxyCodeLine{00258\ \textcolor{comment}{}}
+\DoxyCodeLine{00259\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00260\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ reference\ to\ the\ row\ matrix\ permutation\ \(\backslash\)f\$\ P\_r\ \(\backslash\)f\$\ such\ that\ \(\backslash\)f\$P\_r\ A\ P\_c\string^T\ =\ L\ U\(\backslash\)f\$}}
+\DoxyCodeLine{00261\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ colsPermutation()}}
+\DoxyCodeLine{00262\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ PermutationType\&\ \mbox{\hyperlink{classEigen_1_1SparseLU_abae9898724d4a3a79b85c85a4af7251d}{rowsPermutation}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00264\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00265\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_perm\_r;}
+\DoxyCodeLine{00266\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00267\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00268\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ a\ reference\ to\ the\ column\ matrix\ permutation\(\backslash\)f\$\ P\_c\string^T\ \(\backslash\)f\$\ such\ that\ \(\backslash\)f\$P\_r\ A\ P\_c\string^T\ =\ L\ U\(\backslash\)f\$}}
+\DoxyCodeLine{00269\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ rowsPermutation()}}
+\DoxyCodeLine{00270\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ PermutationType\&\ \mbox{\hyperlink{classEigen_1_1SparseLU_a0af5167311511098d0c2c2b0d3055a8c}{colsPermutation}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00272\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_perm\_c;}
+\DoxyCodeLine{00274\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ \ \ \ /**\ Set\ the\ threshold\ used\ for\ a\ diagonal\ entry\ to\ be\ an\ acceptable\ pivot.\ */}}
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_a94c726c9ebb71a60b529fe47d942ad57}{setPivotThreshold}}(\textcolor{keyword}{const}\ RealScalar\&\ thresh)}
+\DoxyCodeLine{00277\ \ \ \ \ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \ \ m\_diagpivotthresh\ =\ thresh;\ }
+\DoxyCodeLine{00279\ \ \ \ \ \}}
+\DoxyCodeLine{00280\ }
+\DoxyCodeLine{00281\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_PARSED\_BY\_DOXYGEN}\textcolor{comment}{}}
+\DoxyCodeLine{00282\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ solution\ X\ of\ \(\backslash\)f\$\ A\ X\ =\ B\ \(\backslash\)f\$\ using\ the\ current\ decomposition\ of\ A.}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)warning\ the\ destination\ matrix\ X\ in\ X\ =\ this-\/>solve(B)\ must\ be\ colmun-\/major.}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00286\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute()}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ \ \ \ \ \ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<SparseLU,\ Rhs>}}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_a57c5b7f5e35274b55b5d57e8c88cc4a6}{solve}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\&\ B)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00290\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00292\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Reports\ whether\ previous\ computation\ was\ successful.}}
+\DoxyCodeLine{00293\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00294\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \(\backslash\)c\ Success\ if\ computation\ was\ successful,}}
+\DoxyCodeLine{00295\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \(\backslash\)c\ NumericalIssue\ if\ the\ LU\ factorization\ reports\ a\ problem,\ zero\ diagonal\ for\ instance}}
+\DoxyCodeLine{00296\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \(\backslash\)c\ InvalidInput\ if\ the\ input\ matrix\ is\ invalid}}
+\DoxyCodeLine{00297\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00298\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ iparm()\ \ \ \ \ \ \ \ \ \ }}
+\DoxyCodeLine{00299\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00300\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00301\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Decomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_info;}
+\DoxyCodeLine{00304\ \ \ \ \ \}}
+\DoxyCodeLine{00305\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00306\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ A\ string\ describing\ the\ type\ of\ error}}
+\DoxyCodeLine{00308\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00309\ \ \ \ \ std::string\ \mbox{\hyperlink{classEigen_1_1SparseLU_a5458c4e851d7d75c8ca92c4fd02d2adb}{lastErrorMessage}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00310\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_lastError;\ }
+\DoxyCodeLine{00312\ \ \ \ \ \}}
+\DoxyCodeLine{00313\ }
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keywordtype}{bool}\ \_solve\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\ \&B,\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&X\_base)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00316\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ Dest\&\ X(X\_base.derived());}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ matrix\ should\ be\ factorized\ first"{}});}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT((Dest::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})==0,}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ THIS\_METHOD\_IS\_ONLY\_FOR\_COLUMN\_MAJOR\_MATRICES);}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ }
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \textcolor{comment}{//\ Permute\ the\ right\ hand\ side\ to\ form\ X\ =\ Pr*B}}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \textcolor{comment}{//\ on\ return,\ X\ is\ overwritten\ by\ the\ computed\ solution}}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ X.resize(B.rows(),B.cols());}
+\DoxyCodeLine{00325\ }
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \textcolor{comment}{//\ this\ ugly\ const\_cast\_derived()\ helps\ to\ detect\ aliasing\ when\ applying\ the\ permutations}}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ B.cols();\ ++j)}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ X.col(j)\ =\ \mbox{\hyperlink{classEigen_1_1SparseLU_abae9898724d4a3a79b85c85a4af7251d}{rowsPermutation}}()\ *\ B.const\_cast\_derived().\mbox{\hyperlink{classEigen_1_1DenseBase_ad0c05525967c16738c2cd2285b38a91f}{col}}(j);}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ }
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \textcolor{comment}{//Forward\ substitution\ with\ L}}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1SparseLU_a4f00118ca89df6528b41169dc4fe2f5d}{matrixL}}().solveInPlace(X);}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1SparseLU_aed9923a511defdeb00b729880d1c8c1d}{matrixU}}().solveInPlace(X);}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ }
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \textcolor{comment}{//\ Permute\ back\ the\ solution\ }}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ B.cols();\ ++j)}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ X.col(j)\ =\ \mbox{\hyperlink{classEigen_1_1SparseLU_a0af5167311511098d0c2c2b0d3055a8c}{colsPermutation}}().\mbox{\hyperlink{classEigen_1_1PermutationBase_adb9af427f317202366c2832876064eb3}{inverse}}()\ *\ X.col(j);}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ }
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00339\ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00341\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ the\ absolute\ value\ of\ the\ determinant\ of\ the\ matrix\ of\ which}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ \ \ \ \ *\ *this\ is\ the\ QR\ decomposition.}}
+\DoxyCodeLine{00344\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)warning\ a\ determinant\ can\ be\ very\ big\ or\ small,\ so\ for\ matrices}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ \ \ \ \ *\ of\ large\ enough\ dimension,\ there\ is\ a\ risk\ of\ overflow/underflow.}}
+\DoxyCodeLine{00347\ \textcolor{comment}{\ \ \ \ \ \ *\ One\ way\ to\ work\ around\ that\ is\ to\ use\ logAbsDeterminant()\ instead.}}
+\DoxyCodeLine{00348\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00349\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ logAbsDeterminant(),\ signDeterminant()}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00351\ \ \ \ \ Scalar\ \mbox{\hyperlink{classEigen_1_1SparseLU_a06fa89424239fb169d408f08252426d0}{absDeterminant}}()}
+\DoxyCodeLine{00352\ \ \ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ matrix\ should\ be\ factorized\ first."{}});}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \textcolor{comment}{//\ Initialize\ with\ the\ determinant\ of\ the\ row\ matrix}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ Scalar\ det\ =\ Scalar(1.);}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \textcolor{comment}{//\ Note\ that\ the\ diagonal\ blocks\ of\ U\ are\ stored\ in\ supernodes,}}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \textcolor{comment}{//\ which\ are\ available\ in\ the\ \ L\ part\ :)}}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ this-\/>cols();\ ++j)}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ SCMatrix::InnerIterator\ it(m\_Lstore,\ j);\ it;\ ++it)}
+\DoxyCodeLine{00362\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it.index()\ ==\ j)}
+\DoxyCodeLine{00364\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00365\ \ \ \ \ \ \ \ \ \ \ \ \ det\ *=\ abs(it.value());}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ det;}
+\DoxyCodeLine{00371\ \ \ \ \ \}}
+\DoxyCodeLine{00372\ \textcolor{comment}{}}
+\DoxyCodeLine{00373\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ natural\ log\ of\ the\ absolute\ value\ of\ the\ determinant\ of\ the\ matrix}}
+\DoxyCodeLine{00374\ \textcolor{comment}{\ \ \ \ \ \ *\ of\ which\ **this\ is\ the\ QR\ decomposition}}
+\DoxyCodeLine{00375\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00376\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)note\ This\ method\ is\ useful\ to\ work\ around\ the\ risk\ of\ overflow/underflow\ that's}}
+\DoxyCodeLine{00377\ \textcolor{comment}{\ \ \ \ \ \ *\ inherent\ to\ the\ determinant\ computation.}}
+\DoxyCodeLine{00378\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00379\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ absDeterminant(),\ signDeterminant()}}
+\DoxyCodeLine{00380\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00381\ \ \ \ \ Scalar\ \mbox{\hyperlink{classEigen_1_1SparseLU_a89e30a7df205596784a5a73f4768eaec}{logAbsDeterminant}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00382\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::log;}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00385\ }
+\DoxyCodeLine{00386\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ matrix\ should\ be\ factorized\ first."{}});}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ Scalar\ det\ =\ Scalar(0.);}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ this-\/>cols();\ ++j)}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ SCMatrix::InnerIterator\ it(m\_Lstore,\ j);\ it;\ ++it)}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it.row()\ <\ j)\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it.row()\ ==\ j)}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ \ \ \ \ \ \ det\ +=\ log(abs(it.value()));}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00399\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00400\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ det;}
+\DoxyCodeLine{00401\ \ \ \ \ \}}
+\DoxyCodeLine{00402\ \textcolor{comment}{}}
+\DoxyCodeLine{00403\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ A\ number\ representing\ the\ sign\ of\ the\ determinant}}
+\DoxyCodeLine{00404\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00405\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ absDeterminant(),\ logAbsDeterminant()}}
+\DoxyCodeLine{00406\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00407\ \ \ \ \ Scalar\ \mbox{\hyperlink{classEigen_1_1SparseLU_a6651143e3b18fa90cfb3808b6fd23c4e}{signDeterminant}}()}
+\DoxyCodeLine{00408\ \ \ \ \ \{}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ matrix\ should\ be\ factorized\ first."{}});}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \textcolor{comment}{//\ Initialize\ with\ the\ determinant\ of\ the\ row\ matrix}}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ det\ =\ 1;}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \textcolor{comment}{//\ Note\ that\ the\ diagonal\ blocks\ of\ U\ are\ stored\ in\ supernodes,}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \textcolor{comment}{//\ which\ are\ available\ in\ the\ \ L\ part\ :)}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ this-\/>cols();\ ++j)}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ SCMatrix::InnerIterator\ it(m\_Lstore,\ j);\ it;\ ++it)}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it.index()\ ==\ j)}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it.value()<0)}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ det\ =\ -\/det;}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(it.value()==0)}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ det\ *\ m\_detPermR\ *\ m\_detPermC;}
+\DoxyCodeLine{00429\ \ \ \ \ \}}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00431\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ The\ determinant\ of\ the\ matrix.}}
+\DoxyCodeLine{00432\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00433\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ absDeterminant(),\ logAbsDeterminant()}}
+\DoxyCodeLine{00434\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00435\ \ \ \ \ Scalar\ \mbox{\hyperlink{classEigen_1_1SparseLU_a02d63d242d27211b5c5827f5d4fd99ff}{determinant}}()}
+\DoxyCodeLine{00436\ \ \ \ \ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ eigen\_assert(m\_factorizationIsOk\ \&\&\ \textcolor{stringliteral}{"{}The\ matrix\ should\ be\ factorized\ first."{}});}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \textcolor{comment}{//\ Initialize\ with\ the\ determinant\ of\ the\ row\ matrix}}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ Scalar\ det\ =\ Scalar(1.);}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \textcolor{comment}{//\ Note\ that\ the\ diagonal\ blocks\ of\ U\ are\ stored\ in\ supernodes,}}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \textcolor{comment}{//\ which\ are\ available\ in\ the\ \ L\ part\ :)}}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ this-\/>cols();\ ++j)}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{typename}\ SCMatrix::InnerIterator\ it(m\_Lstore,\ j);\ it;\ ++it)}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it.index()\ ==\ j)}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \ \ \ \ det\ *=\ it.value();}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_detPermR\ *\ m\_detPermC)\ >\ 0\ ?\ det\ :\ -\/det;}
+\DoxyCodeLine{00454\ \ \ \ \ \}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nnzL()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_nnzL;\ \};}
+\DoxyCodeLine{00457\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nnzU()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_nnzU;\ \};}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00460\ \ \ \ \ \textcolor{comment}{//\ Functions\ }}
+\DoxyCodeLine{00461\ \ \ \ \ \textcolor{keywordtype}{void}\ initperfvalues()}
+\DoxyCodeLine{00462\ \ \ \ \ \{}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ m\_perfv.panel\_size\ =\ 16;}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ m\_perfv.relax\ =\ 1;\ }
+\DoxyCodeLine{00465\ \ \ \ \ \ \ m\_perfv.maxsuper\ =\ 128;\ }
+\DoxyCodeLine{00466\ \ \ \ \ \ \ m\_perfv.rowblk\ =\ 16;\ }
+\DoxyCodeLine{00467\ \ \ \ \ \ \ m\_perfv.colblk\ =\ 8;\ }
+\DoxyCodeLine{00468\ \ \ \ \ \ \ m\_perfv.fillfactor\ =\ 20;\ \ }
+\DoxyCodeLine{00469\ \ \ \ \ \}}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ }
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{comment}{//\ Variables\ }}
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ m\_info;}
+\DoxyCodeLine{00473\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_factorizationIsOk;}
+\DoxyCodeLine{00474\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_analysisIsOk;}
+\DoxyCodeLine{00475\ \ \ \ \ std::string\ m\_lastError;}
+\DoxyCodeLine{00476\ \ \ \ \ NCMatrix\ m\_mat;\ \textcolor{comment}{//\ The\ input\ (permuted\ )\ matrix\ }}
+\DoxyCodeLine{00477\ \ \ \ \ SCMatrix\ m\_Lstore;\ \textcolor{comment}{//\ The\ lower\ triangular\ matrix\ (supernodal)}}
+\DoxyCodeLine{00478\ \ \ \ \ MappedSparseMatrix<Scalar,ColMajor,StorageIndex>\ m\_Ustore;\ \textcolor{comment}{//\ The\ upper\ triangular\ matrix}}
+\DoxyCodeLine{00479\ \ \ \ \ PermutationType\ m\_perm\_c;\ \textcolor{comment}{//\ Column\ permutation\ }}
+\DoxyCodeLine{00480\ \ \ \ \ PermutationType\ m\_perm\_r\ ;\ \textcolor{comment}{//\ Row\ permutation}}
+\DoxyCodeLine{00481\ \ \ \ \ IndexVector\ m\_etree;\ \textcolor{comment}{//\ Column\ elimination\ tree\ }}
+\DoxyCodeLine{00482\ \ \ \ \ }
+\DoxyCodeLine{00483\ \ \ \ \ \textcolor{keyword}{typename}\ Base::GlobalLU\_t\ m\_glu;\ }
+\DoxyCodeLine{00484\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00485\ \ \ \ \ \textcolor{comment}{//\ SparseLU\ options\ }}
+\DoxyCodeLine{00486\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_symmetricmode;}
+\DoxyCodeLine{00487\ \ \ \ \ \textcolor{comment}{//\ values\ for\ performance\ }}
+\DoxyCodeLine{00488\ \ \ \ \ internal::perfvalues\ m\_perfv;}
+\DoxyCodeLine{00489\ \ \ \ \ RealScalar\ m\_diagpivotthresh;\ \textcolor{comment}{//\ Specifies\ the\ threshold\ used\ for\ a\ diagonal\ entry\ to\ be\ an\ acceptable\ pivot}}
+\DoxyCodeLine{00490\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_nnzL,\ m\_nnzU;\ \textcolor{comment}{//\ Nonzeros\ in\ L\ and\ U\ factors}}
+\DoxyCodeLine{00491\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_detPermR,\ m\_detPermC;\ \textcolor{comment}{//\ Determinants\ of\ the\ permutation\ matrices}}
+\DoxyCodeLine{00492\ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00493\ \ \ \ \ \textcolor{comment}{//\ Disable\ copy\ constructor\ }}
+\DoxyCodeLine{00494\ \ \ \ \ SparseLU\ (\textcolor{keyword}{const}\ SparseLU\&\ );}
+\DoxyCodeLine{00495\ \};\ \textcolor{comment}{//\ End\ class\ SparseLU}}
+\DoxyCodeLine{00496\ }
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ }
+\DoxyCodeLine{00499\ \textcolor{comment}{//\ Functions\ needed\ by\ the\ anaysis\ phase}\textcolor{comment}{}}
+\DoxyCodeLine{00500\ \textcolor{comment}{/**\ }}
+\DoxyCodeLine{00501\ \textcolor{comment}{\ \ *\ Compute\ the\ column\ permutation\ to\ minimize\ the\ fill-\/in}}
+\DoxyCodeLine{00502\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00503\ \textcolor{comment}{\ \ *\ \ -\/\ Apply\ this\ permutation\ to\ the\ input\ matrix\ -\/\ }}
+\DoxyCodeLine{00504\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00505\ \textcolor{comment}{\ \ *\ \ -\/\ Compute\ the\ column\ elimination\ tree\ on\ the\ permuted\ matrix\ }}
+\DoxyCodeLine{00506\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00507\ \textcolor{comment}{\ \ *\ \ -\/\ Postorder\ the\ elimination\ tree\ and\ the\ column\ permutation}}
+\DoxyCodeLine{00508\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00509\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00510\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ OrderingType>}
+\DoxyCodeLine{00511\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_aa907ff958c4f4855145091d2686f3a8a}{SparseLU<MatrixType,\ OrderingType>::analyzePattern}}(\textcolor{keyword}{const}\ MatrixType\&\ mat)}
+\DoxyCodeLine{00512\ \{}
+\DoxyCodeLine{00513\ \ \ }
+\DoxyCodeLine{00514\ \ \ \textcolor{comment}{//TODO\ \ It\ is\ possible\ as\ in\ SuperLU\ to\ compute\ row\ and\ columns\ scaling\ vectors\ to\ equilibrate\ the\ matrix\ mat.}}
+\DoxyCodeLine{00515\ \ \ }
+\DoxyCodeLine{00516\ \ \ \textcolor{comment}{//\ Firstly,\ copy\ the\ whole\ input\ matrix.\ }}
+\DoxyCodeLine{00517\ \ \ m\_mat\ =\ mat;}
+\DoxyCodeLine{00518\ \ \ }
+\DoxyCodeLine{00519\ \ \ \textcolor{comment}{//\ Compute\ fill-\/in\ ordering}}
+\DoxyCodeLine{00520\ \ \ OrderingType\ ord;\ }
+\DoxyCodeLine{00521\ \ \ ord(m\_mat,m\_perm\_c);}
+\DoxyCodeLine{00522\ \ \ }
+\DoxyCodeLine{00523\ \ \ \textcolor{comment}{//\ Apply\ the\ permutation\ to\ the\ column\ of\ the\ input\ \ matrix}}
+\DoxyCodeLine{00524\ \ \ \textcolor{keywordflow}{if}\ (m\_perm\_c.size())}
+\DoxyCodeLine{00525\ \ \ \{}
+\DoxyCodeLine{00526\ \ \ \ \ m\_mat.uncompress();\ \textcolor{comment}{//NOTE:\ The\ effect\ of\ this\ command\ is\ only\ to\ create\ the\ InnerNonzeros\ pointers.\ FIXME\ :\ This\ vector\ is\ filled\ but\ not\ subsequently\ used.\ \ }}
+\DoxyCodeLine{00527\ \ \ \ \ \textcolor{comment}{//\ Then,\ permute\ only\ the\ column\ pointers}}
+\DoxyCodeLine{00528\ \ \ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(StorageIndex,outerIndexPtr,mat.cols()+1,mat.isCompressed()?\textcolor{keyword}{const\_cast<}StorageIndex*\textcolor{keyword}{>}(mat.outerIndexPtr()):0);}
+\DoxyCodeLine{00529\ \ \ \ \ }
+\DoxyCodeLine{00530\ \ \ \ \ \textcolor{comment}{//\ If\ the\ input\ matrix\ 'mat'\ is\ uncompressed,\ then\ the\ outer-\/indices\ do\ not\ match\ the\ ones\ of\ m\_mat,\ and\ a\ copy\ is\ thus\ needed.}}
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keywordflow}{if}(!mat.isCompressed())\ }
+\DoxyCodeLine{00532\ \ \ \ \ \ \ IndexVector::Map(outerIndexPtr,\ mat.cols()+1)\ =\ IndexVector::Map(m\_mat.outerIndexPtr(),mat.cols()+1);}
+\DoxyCodeLine{00533\ \ \ \ \ }
+\DoxyCodeLine{00534\ \ \ \ \ \textcolor{comment}{//\ Apply\ the\ permutation\ and\ compute\ the\ nnz\ per\ column.}}
+\DoxyCodeLine{00535\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ mat.cols();\ i++)}
+\DoxyCodeLine{00536\ \ \ \ \ \{}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ m\_mat.outerIndexPtr()[m\_perm\_c.indices()(i)]\ =\ outerIndexPtr[i];}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ m\_mat.innerNonZeroPtr()[m\_perm\_c.indices()(i)]\ =\ outerIndexPtr[i+1]\ -\/\ outerIndexPtr[i];}
+\DoxyCodeLine{00539\ \ \ \ \ \}}
+\DoxyCodeLine{00540\ \ \ \}}
+\DoxyCodeLine{00541\ \ \ }
+\DoxyCodeLine{00542\ \ \ \textcolor{comment}{//\ Compute\ the\ column\ elimination\ tree\ of\ the\ permuted\ matrix\ }}
+\DoxyCodeLine{00543\ \ \ IndexVector\ firstRowElt;}
+\DoxyCodeLine{00544\ \ \ internal::coletree(m\_mat,\ m\_etree,firstRowElt);\ }
+\DoxyCodeLine{00545\ \ \ \ \ \ }
+\DoxyCodeLine{00546\ \ \ \textcolor{comment}{//\ In\ symmetric\ mode,\ do\ not\ do\ postorder\ here}}
+\DoxyCodeLine{00547\ \ \ \textcolor{keywordflow}{if}\ (!m\_symmetricmode)\ \{}
+\DoxyCodeLine{00548\ \ \ \ \ IndexVector\ post,\ iwork;\ }
+\DoxyCodeLine{00549\ \ \ \ \ \textcolor{comment}{//\ Post\ order\ etree}}
+\DoxyCodeLine{00550\ \ \ \ \ internal::treePostorder(StorageIndex(m\_mat.cols()),\ m\_etree,\ post);\ }
+\DoxyCodeLine{00551\ \ \ \ \ \ \ }
+\DoxyCodeLine{00552\ \ \ \ }
+\DoxyCodeLine{00553\ \ \ \ \ \textcolor{comment}{//\ Renumber\ etree\ in\ postorder\ }}
+\DoxyCodeLine{00554\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\ =\ m\_mat.cols();\ }
+\DoxyCodeLine{00555\ \ \ \ \ iwork.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_a99d9054ee2d5a40c6e00ded0265e9cea}{resize}}(m+1);}
+\DoxyCodeLine{00556\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ m;\ ++i)\ iwork(post(i))\ =\ post(m\_etree(i));}
+\DoxyCodeLine{00557\ \ \ \ \ m\_etree\ =\ iwork;}
+\DoxyCodeLine{00558\ \ \ \ \ }
+\DoxyCodeLine{00559\ \ \ \ \ \textcolor{comment}{//\ Postmultiply\ A*Pc\ by\ post,\ i.e\ reorder\ the\ matrix\ according\ to\ the\ postorder\ of\ the\ etree}}
+\DoxyCodeLine{00560\ \ \ \ \ PermutationType\ post\_perm(m);\ }
+\DoxyCodeLine{00561\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ m;\ i++)\ }
+\DoxyCodeLine{00562\ \ \ \ \ \ \ post\_perm.\mbox{\hyperlink{classEigen_1_1PermutationMatrix_a9a2ae1608cc19e77e77863fce02f9066}{indices}}()(i)\ =\ post(i);\ }
+\DoxyCodeLine{00563\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00564\ \ \ \ \ \textcolor{comment}{//\ Combine\ the\ two\ permutations\ :\ postorder\ the\ permutation\ for\ future\ use}}
+\DoxyCodeLine{00565\ \ \ \ \ \textcolor{keywordflow}{if}(m\_perm\_c.size())\ \{}
+\DoxyCodeLine{00566\ \ \ \ \ \ \ m\_perm\_c\ =\ post\_perm\ *\ m\_perm\_c;}
+\DoxyCodeLine{00567\ \ \ \ \ \}}
+\DoxyCodeLine{00568\ \ \ \ \ }
+\DoxyCodeLine{00569\ \ \ \}\ \textcolor{comment}{//\ end\ postordering\ }}
+\DoxyCodeLine{00570\ \ \ }
+\DoxyCodeLine{00571\ \ \ m\_analysisIsOk\ =\ \textcolor{keyword}{true};\ }
+\DoxyCodeLine{00572\ \}}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \textcolor{comment}{//\ Functions\ needed\ by\ the\ numerical\ factorization\ phase}}
+\DoxyCodeLine{00575\ }
+\DoxyCodeLine{00576\ \textcolor{comment}{}}
+\DoxyCodeLine{00577\ \textcolor{comment}{/**\ }}
+\DoxyCodeLine{00578\ \textcolor{comment}{\ \ *\ \ -\/\ Numerical\ factorization\ }}
+\DoxyCodeLine{00579\ \textcolor{comment}{\ \ *\ \ -\/\ Interleaved\ with\ the\ symbolic\ factorization\ }}
+\DoxyCodeLine{00580\ \textcolor{comment}{\ \ *\ On\ exit,\ \ info\ is\ }}
+\DoxyCodeLine{00581\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00582\ \textcolor{comment}{\ \ *\ \ \ \ =\ 0:\ successful\ factorization}}
+\DoxyCodeLine{00583\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00584\ \textcolor{comment}{\ \ *\ \ \ \ >\ 0:\ if\ info\ =\ i,\ and\ i\ is}}
+\DoxyCodeLine{00585\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00586\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ <=\ A-\/>ncol:\ U(i,i)\ is\ exactly\ zero.\ The\ factorization\ has}}
+\DoxyCodeLine{00587\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ been\ completed,\ but\ the\ factor\ U\ is\ exactly\ singular,}}
+\DoxyCodeLine{00588\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ and\ division\ by\ zero\ will\ occur\ if\ it\ is\ used\ to\ solve\ a}}
+\DoxyCodeLine{00589\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ \ system\ of\ equations.}}
+\DoxyCodeLine{00590\ \textcolor{comment}{\ \ *\ }}
+\DoxyCodeLine{00591\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ >\ A-\/>ncol:\ number\ of\ bytes\ allocated\ when\ memory\ allocation}}
+\DoxyCodeLine{00592\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ failure\ occurred,\ plus\ A-\/>ncol.\ If\ lwork\ =\ -\/1,\ it\ is}}
+\DoxyCodeLine{00593\ \textcolor{comment}{\ \ *\ \ \ \ \ \ \ \ \ the\ estimated\ amount\ of\ space\ needed,\ plus\ A-\/>ncol.\ \ }}
+\DoxyCodeLine{00594\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00595\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ MatrixType,\ \textcolor{keyword}{typename}\ OrderingType>}
+\DoxyCodeLine{00596\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseLU_a39858b0e72f2659d596364e252b34cbc}{SparseLU<MatrixType,\ OrderingType>::factorize}}(\textcolor{keyword}{const}\ MatrixType\&\ matrix)}
+\DoxyCodeLine{00597\ \{}
+\DoxyCodeLine{00598\ \ \ \textcolor{keyword}{using\ }internal::emptyIdxLU;}
+\DoxyCodeLine{00599\ \ \ eigen\_assert(m\_analysisIsOk\ \&\&\ \textcolor{stringliteral}{"{}analyzePattern()\ should\ be\ called\ first"{}});\ }
+\DoxyCodeLine{00600\ \ \ eigen\_assert((matrix.rows()\ ==\ matrix.cols())\ \&\&\ \textcolor{stringliteral}{"{}Only\ for\ squared\ matrices"{}});}
+\DoxyCodeLine{00601\ \ \ }
+\DoxyCodeLine{00602\ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00603\ \ \ }
+\DoxyCodeLine{00604\ \ \ \textcolor{comment}{//\ Apply\ the\ column\ permutation\ computed\ in\ analyzepattern()}}
+\DoxyCodeLine{00605\ \ \ \textcolor{comment}{//\ \ \ m\_mat\ =\ matrix\ *\ m\_perm\_c.inverse();\ }}
+\DoxyCodeLine{00606\ \ \ m\_mat\ =\ matrix;}
+\DoxyCodeLine{00607\ \ \ \textcolor{keywordflow}{if}\ (m\_perm\_c.size())\ }
+\DoxyCodeLine{00608\ \ \ \{}
+\DoxyCodeLine{00609\ \ \ \ \ m\_mat.uncompress();\ \textcolor{comment}{//NOTE:\ The\ effect\ of\ this\ command\ is\ only\ to\ create\ the\ InnerNonzeros\ pointers.}}
+\DoxyCodeLine{00610\ \ \ \ \ \textcolor{comment}{//Then,\ permute\ only\ the\ column\ pointers}}
+\DoxyCodeLine{00611\ \ \ \ \ \textcolor{keyword}{const}\ StorageIndex\ *\ outerIndexPtr;}
+\DoxyCodeLine{00612\ \ \ \ \ \textcolor{keywordflow}{if}\ (matrix.isCompressed())\ outerIndexPtr\ =\ matrix.outerIndexPtr();}
+\DoxyCodeLine{00613\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00614\ \ \ \ \ \{}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ StorageIndex*\ outerIndexPtr\_t\ =\ \textcolor{keyword}{new}\ StorageIndex[matrix.cols()+1];}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <=\ matrix.cols();\ i++)\ outerIndexPtr\_t[i]\ =\ m\_mat.outerIndexPtr()[i];}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ outerIndexPtr\ =\ outerIndexPtr\_t;}
+\DoxyCodeLine{00618\ \ \ \ \ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ matrix.cols();\ i++)}
+\DoxyCodeLine{00620\ \ \ \ \ \{}
+\DoxyCodeLine{00621\ \ \ \ \ \ \ m\_mat.outerIndexPtr()[m\_perm\_c.indices()(i)]\ =\ outerIndexPtr[i];}
+\DoxyCodeLine{00622\ \ \ \ \ \ \ m\_mat.innerNonZeroPtr()[m\_perm\_c.indices()(i)]\ =\ outerIndexPtr[i+1]\ -\/\ outerIndexPtr[i];}
+\DoxyCodeLine{00623\ \ \ \ \ \}}
+\DoxyCodeLine{00624\ \ \ \ \ \textcolor{keywordflow}{if}(!matrix.isCompressed())\ \textcolor{keyword}{delete}[]\ outerIndexPtr;}
+\DoxyCodeLine{00625\ \ \ \}\ }
+\DoxyCodeLine{00626\ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00627\ \ \ \{\ \textcolor{comment}{//FIXME\ This\ should\ not\ be\ needed\ if\ the\ empty\ permutation\ is\ handled\ transparently}}
+\DoxyCodeLine{00628\ \ \ \ \ m\_perm\_c.resize(matrix.cols());}
+\DoxyCodeLine{00629\ \ \ \ \ \textcolor{keywordflow}{for}(StorageIndex\ i\ =\ 0;\ i\ <\ matrix.cols();\ ++i)\ m\_perm\_c.indices()(i)\ =\ i;}
+\DoxyCodeLine{00630\ \ \ \}}
+\DoxyCodeLine{00631\ \ \ }
+\DoxyCodeLine{00632\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\ =\ m\_mat.rows();}
+\DoxyCodeLine{00633\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ m\_mat.cols();}
+\DoxyCodeLine{00634\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nnz\ =\ m\_mat.nonZeros();}
+\DoxyCodeLine{00635\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ maxpanel\ =\ m\_perfv.panel\_size\ *\ m;}
+\DoxyCodeLine{00636\ \ \ \textcolor{comment}{//\ Allocate\ working\ storage\ common\ to\ the\ factor\ routines}}
+\DoxyCodeLine{00637\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lwork\ =\ 0;}
+\DoxyCodeLine{00638\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ =\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_ac018b8ed9664d4e19e34f1ff2d6c578a}{Base::memInit}}(m,\ n,\ nnz,\ lwork,\ m\_perfv.fillfactor,\ m\_perfv.panel\_size,\ m\_glu);\ }
+\DoxyCodeLine{00639\ \ \ \textcolor{keywordflow}{if}\ (\mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}})\ }
+\DoxyCodeLine{00640\ \ \ \{}
+\DoxyCodeLine{00641\ \ \ \ \ m\_lastError\ =\ \textcolor{stringliteral}{"{}UNABLE\ TO\ ALLOCATE\ WORKING\ MEMORY\(\backslash\)n\(\backslash\)n"{}}\ ;}
+\DoxyCodeLine{00642\ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00643\ \ \ \ \ return\ ;\ }
+\DoxyCodeLine{00644\ \ \ \}}
+\DoxyCodeLine{00645\ \ \ }
+\DoxyCodeLine{00646\ \ \ \textcolor{comment}{//\ Set\ up\ pointers\ for\ integer\ working\ arrays\ }}
+\DoxyCodeLine{00647\ \ \ IndexVector\ segrep(m);\ segrep.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00648\ \ \ IndexVector\ parent(m);\ parent.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00649\ \ \ IndexVector\ xplore(m);\ xplore.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00650\ \ \ IndexVector\ repfnz(maxpanel);}
+\DoxyCodeLine{00651\ \ \ IndexVector\ panel\_lsub(maxpanel);}
+\DoxyCodeLine{00652\ \ \ IndexVector\ xprune(n);\ xprune.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00653\ \ \ IndexVector\ marker(m*internal::LUNoMarker);\ marker.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}();}
+\DoxyCodeLine{00654\ \ \ }
+\DoxyCodeLine{00655\ \ \ repfnz.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac8dea1df3d92b752cc683ff42abf6f9b}{setConstant}}(-\/1);\ }
+\DoxyCodeLine{00656\ \ \ panel\_lsub.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac8dea1df3d92b752cc683ff42abf6f9b}{setConstant}}(-\/1);}
+\DoxyCodeLine{00657\ \ \ }
+\DoxyCodeLine{00658\ \ \ \textcolor{comment}{//\ Set\ up\ pointers\ for\ scalar\ working\ arrays\ }}
+\DoxyCodeLine{00659\ \ \ ScalarVector\ dense;\ }
+\DoxyCodeLine{00660\ \ \ dense.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}(maxpanel);}
+\DoxyCodeLine{00661\ \ \ ScalarVector\ tempv;\ }
+\DoxyCodeLine{00662\ \ \ tempv.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac21ad5f989f320e46958b75ac8d9a1da}{setZero}}(internal::LUnumTempV(m,\ m\_perfv.panel\_size,\ m\_perfv.maxsuper,\ \textcolor{comment}{/*m\_perfv.rowblk*/}m)\ );}
+\DoxyCodeLine{00663\ \ \ }
+\DoxyCodeLine{00664\ \ \ \textcolor{comment}{//\ Compute\ the\ inverse\ of\ perm\_c}}
+\DoxyCodeLine{00665\ \ \ PermutationType\ iperm\_c(m\_perm\_c.inverse());\ }
+\DoxyCodeLine{00666\ \ \ }
+\DoxyCodeLine{00667\ \ \ \textcolor{comment}{//\ Identify\ initial\ relaxed\ snodes}}
+\DoxyCodeLine{00668\ \ \ IndexVector\ relax\_end(n);}
+\DoxyCodeLine{00669\ \ \ \textcolor{keywordflow}{if}\ (\ m\_symmetricmode\ ==\ \textcolor{keyword}{true}\ )\ }
+\DoxyCodeLine{00670\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a88952ce33c968374b149e31d0539178d}{Base::heap\_relax\_snode}}(n,\ m\_etree,\ m\_perfv.relax,\ marker,\ relax\_end);}
+\DoxyCodeLine{00671\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00672\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a33672df380f94e774c5a6919d3474af4}{Base::relax\_snode}}(n,\ m\_etree,\ m\_perfv.relax,\ marker,\ relax\_end);}
+\DoxyCodeLine{00673\ \ \ }
+\DoxyCodeLine{00674\ \ \ }
+\DoxyCodeLine{00675\ \ \ m\_perm\_r.resize(m);\ }
+\DoxyCodeLine{00676\ \ \ m\_perm\_r.indices().setConstant(-\/1);}
+\DoxyCodeLine{00677\ \ \ marker.\mbox{\hyperlink{classEigen_1_1PlainObjectBase_ac8dea1df3d92b752cc683ff42abf6f9b}{setConstant}}(-\/1);}
+\DoxyCodeLine{00678\ \ \ m\_detPermR\ =\ 1;\ \textcolor{comment}{//\ Record\ the\ determinant\ of\ the\ row\ permutation}}
+\DoxyCodeLine{00679\ \ \ }
+\DoxyCodeLine{00680\ \ \ m\_glu.supno(0)\ =\ emptyIdxLU;\ m\_glu.xsup.setConstant(0);}
+\DoxyCodeLine{00681\ \ \ m\_glu.xsup(0)\ =\ m\_glu.xlsub(0)\ =\ m\_glu.xusub(0)\ =\ m\_glu.xlusup(0)\ =\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(0);}
+\DoxyCodeLine{00682\ \ \ }
+\DoxyCodeLine{00683\ \ \ \textcolor{comment}{//\ Work\ on\ one\ 'panel'\ at\ a\ time.\ A\ panel\ is\ one\ of\ the\ following\ :}}
+\DoxyCodeLine{00684\ \ \ \textcolor{comment}{//\ \ (a)\ a\ relaxed\ supernode\ at\ the\ bottom\ of\ the\ etree,\ or}}
+\DoxyCodeLine{00685\ \ \ \textcolor{comment}{//\ \ (b)\ panel\_size\ contiguous\ columns,\ <panel\_size>\ defined\ by\ the\ user}}
+\DoxyCodeLine{00686\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol;\ }
+\DoxyCodeLine{00687\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ pivrow;\ \textcolor{comment}{//\ Pivotal\ row\ number\ in\ the\ original\ row\ matrix}}
+\DoxyCodeLine{00688\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nseg1;\ \textcolor{comment}{//\ Number\ of\ segments\ in\ U-\/column\ above\ panel\ row\ jcol}}
+\DoxyCodeLine{00689\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nseg;\ \textcolor{comment}{//\ Number\ of\ segments\ in\ each\ U-\/column\ }}
+\DoxyCodeLine{00690\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ irep;\ }
+\DoxyCodeLine{00691\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i,\ k,\ jj;\ }
+\DoxyCodeLine{00692\ \ \ \textcolor{keywordflow}{for}\ (jcol\ =\ 0;\ jcol\ <\ n;\ )}
+\DoxyCodeLine{00693\ \ \ \{}
+\DoxyCodeLine{00694\ \ \ \ \ \textcolor{comment}{//\ Adjust\ panel\ size\ so\ that\ a\ panel\ won't\ overlap\ with\ the\ next\ relaxed\ snode.\ }}
+\DoxyCodeLine{00695\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ panel\_size\ =\ m\_perfv.panel\_size;\ \textcolor{comment}{//\ upper\ bound\ on\ panel\ width}}
+\DoxyCodeLine{00696\ \ \ \ \ \textcolor{keywordflow}{for}\ (k\ =\ jcol\ +\ 1;\ k\ <\ (std::min)(jcol+panel\_size,\ n);\ k++)}
+\DoxyCodeLine{00697\ \ \ \ \ \{}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (relax\_end(k)\ !=\ emptyIdxLU)\ }
+\DoxyCodeLine{00699\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ panel\_size\ =\ k\ -\/\ jcol;\ }
+\DoxyCodeLine{00701\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};\ }
+\DoxyCodeLine{00702\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00703\ \ \ \ \ \}}
+\DoxyCodeLine{00704\ \ \ \ \ \textcolor{keywordflow}{if}\ (k\ ==\ n)\ }
+\DoxyCodeLine{00705\ \ \ \ \ \ \ panel\_size\ =\ n\ -\/\ jcol;\ }
+\DoxyCodeLine{00706\ \ \ \ \ \ \ }
+\DoxyCodeLine{00707\ \ \ \ \ \textcolor{comment}{//\ Symbolic\ outer\ factorization\ on\ a\ panel\ of\ columns\ }}
+\DoxyCodeLine{00708\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_acaf62fda387ea03e9caa2734e4e7b0c9}{Base::panel\_dfs}}(m,\ panel\_size,\ jcol,\ m\_mat,\ m\_perm\_r.indices(),\ nseg1,\ dense,\ panel\_lsub,\ segrep,\ repfnz,\ xprune,\ marker,\ parent,\ xplore,\ m\_glu);\ }
+\DoxyCodeLine{00709\ \ \ \ \ }
+\DoxyCodeLine{00710\ \ \ \ \ \textcolor{comment}{//\ Numeric\ sup-\/panel\ updates\ in\ topological\ order\ }}
+\DoxyCodeLine{00711\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a277936738db49e25285164ac25c498c3}{Base::panel\_bmod}}(m,\ panel\_size,\ jcol,\ nseg1,\ dense,\ tempv,\ segrep,\ repfnz,\ m\_glu);\ }
+\DoxyCodeLine{00712\ \ \ \ \ }
+\DoxyCodeLine{00713\ \ \ \ \ \textcolor{comment}{//\ Sparse\ LU\ within\ the\ panel,\ and\ below\ the\ panel\ diagonal\ }}
+\DoxyCodeLine{00714\ \ \ \ \ \textcolor{keywordflow}{for}\ (\ jj\ =\ jcol;\ jj<\ jcol\ +\ panel\_size;\ jj++)\ }
+\DoxyCodeLine{00715\ \ \ \ \ \{}
+\DoxyCodeLine{00716\ \ \ \ \ \ \ k\ =\ (jj\ -\/\ jcol)\ *\ m;\ \textcolor{comment}{//\ Column\ index\ for\ w-\/wide\ arrays\ }}
+\DoxyCodeLine{00717\ \ \ \ \ \ \ }
+\DoxyCodeLine{00718\ \ \ \ \ \ \ nseg\ =\ nseg1;\ \textcolor{comment}{//\ begin\ after\ all\ the\ panel\ segments}}
+\DoxyCodeLine{00719\ \ \ \ \ \ \ \textcolor{comment}{//Depth-\/first-\/search\ for\ the\ current\ column}}
+\DoxyCodeLine{00720\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1VectorBlock}{VectorBlock<IndexVector>}}\ panel\_lsubk(panel\_lsub,\ k,\ m);}
+\DoxyCodeLine{00721\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1VectorBlock}{VectorBlock<IndexVector>}}\ repfnz\_k(repfnz,\ k,\ m);\ }
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ =\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a6f543ae02eb6467e9bcc1e5cec8ccdd2}{Base::column\_dfs}}(m,\ jj,\ m\_perm\_r.indices(),\ m\_perfv.maxsuper,\ nseg,\ panel\_lsubk,\ segrep,\ repfnz\_k,\ xprune,\ marker,\ parent,\ xplore,\ m\_glu);\ }
+\DoxyCodeLine{00723\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ )\ }
+\DoxyCodeLine{00724\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00725\ \ \ \ \ \ \ \ \ m\_lastError\ =\ \ \textcolor{stringliteral}{"{}UNABLE\ TO\ EXPAND\ MEMORY\ IN\ COLUMN\_DFS()\ "{}};}
+\DoxyCodeLine{00726\ \ \ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};\ }
+\DoxyCodeLine{00727\ \ \ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00728\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ }
+\DoxyCodeLine{00729\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00730\ \ \ \ \ \ \ \textcolor{comment}{//\ Numeric\ updates\ to\ this\ column\ }}
+\DoxyCodeLine{00731\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1VectorBlock}{VectorBlock<ScalarVector>}}\ dense\_k(dense,\ k,\ m);\ }
+\DoxyCodeLine{00732\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1VectorBlock}{VectorBlock<IndexVector>}}\ segrep\_k(segrep,\ nseg1,\ m-\/nseg1);\ }
+\DoxyCodeLine{00733\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ =\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_ae34275602cf12560edfcaf7cd5cbe932}{Base::column\_bmod}}(jj,\ (nseg\ -\/\ nseg1),\ dense\_k,\ tempv,\ segrep\_k,\ repfnz\_k,\ jcol,\ m\_glu);\ }
+\DoxyCodeLine{00734\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ )\ }
+\DoxyCodeLine{00735\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00736\ \ \ \ \ \ \ \ \ m\_lastError\ =\ \textcolor{stringliteral}{"{}UNABLE\ TO\ EXPAND\ MEMORY\ IN\ COLUMN\_BMOD()\ "{}};}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};\ }
+\DoxyCodeLine{00738\ \ \ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00739\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ }
+\DoxyCodeLine{00740\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00741\ \ \ \ \ \ \ }
+\DoxyCodeLine{00742\ \ \ \ \ \ \ \textcolor{comment}{//\ Copy\ the\ U-\/segments\ to\ ucol(*)}}
+\DoxyCodeLine{00743\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ =\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_ae4867ed1d5f104f9245411c356416a21}{Base::copy\_to\_ucol}}(jj,\ nseg,\ segrep,\ repfnz\_k\ ,m\_perm\_r.indices(),\ dense\_k,\ m\_glu);\ }
+\DoxyCodeLine{00744\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ )\ }
+\DoxyCodeLine{00745\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00746\ \ \ \ \ \ \ \ \ m\_lastError\ =\ \textcolor{stringliteral}{"{}UNABLE\ TO\ EXPAND\ MEMORY\ IN\ COPY\_TO\_UCOL()\ "{}};}
+\DoxyCodeLine{00747\ \ \ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};\ }
+\DoxyCodeLine{00748\ \ \ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00749\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ }
+\DoxyCodeLine{00750\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00751\ \ \ \ \ \ \ }
+\DoxyCodeLine{00752\ \ \ \ \ \ \ \textcolor{comment}{//\ Form\ the\ L-\/segment\ }}
+\DoxyCodeLine{00753\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ =\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_ab5f56947465b829f8d523575724c3ac6}{Base::pivotL}}(jj,\ m\_diagpivotthresh,\ m\_perm\_r.indices(),\ iperm\_c.\mbox{\hyperlink{classEigen_1_1PermutationMatrix_a9a2ae1608cc19e77e77863fce02f9066}{indices}}(),\ pivrow,\ m\_glu);}
+\DoxyCodeLine{00754\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}}\ )\ }
+\DoxyCodeLine{00755\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00756\ \ \ \ \ \ \ \ \ m\_lastError\ =\ \textcolor{stringliteral}{"{}THE\ MATRIX\ IS\ STRUCTURALLY\ SINGULAR"{}};}
+\DoxyCodeLine{00757\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_NO\_IO}}
+\DoxyCodeLine{00758\ \ \ \ \ \ \ \ \ std::ostringstream\ returnInfo;}
+\DoxyCodeLine{00759\ \ \ \ \ \ \ \ \ returnInfo\ <<\ \textcolor{stringliteral}{"{}\ ...\ ZERO\ COLUMN\ AT\ "{}};}
+\DoxyCodeLine{00760\ \ \ \ \ \ \ \ \ returnInfo\ <<\ \mbox{\hyperlink{classEigen_1_1SparseLU_ab0d0c1744ffd5a1dff578a44bcef2a3d}{info}};}
+\DoxyCodeLine{00761\ \ \ \ \ \ \ \ \ m\_lastError\ +=\ returnInfo.str();}
+\DoxyCodeLine{00762\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00763\ \ \ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};\ }
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{false};\ }
+\DoxyCodeLine{00765\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};\ }
+\DoxyCodeLine{00766\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00767\ \ \ \ \ \ \ }
+\DoxyCodeLine{00768\ \ \ \ \ \ \ \textcolor{comment}{//\ Update\ the\ determinant\ of\ the\ row\ permutation\ matrix}}
+\DoxyCodeLine{00769\ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ the\ following\ test\ is\ not\ correct,\ we\ should\ probably\ take\ iperm\_c\ into\ account\ and\ pivrow\ is\ not\ directly\ the\ row\ pivot.}}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (pivrow\ !=\ jj)\ m\_detPermR\ =\ -\/m\_detPermR;}
+\DoxyCodeLine{00771\ }
+\DoxyCodeLine{00772\ \ \ \ \ \ \ \textcolor{comment}{//\ Prune\ columns\ (0:jj-\/1)\ using\ column\ jj}}
+\DoxyCodeLine{00773\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a350464d1c83182fbd7da8a5a74bdfde8}{Base::pruneL}}(jj,\ m\_perm\_r.indices(),\ pivrow,\ nseg,\ segrep,\ repfnz\_k,\ xprune,\ m\_glu);\ }
+\DoxyCodeLine{00774\ \ \ \ \ \ \ }
+\DoxyCodeLine{00775\ \ \ \ \ \ \ \textcolor{comment}{//\ Reset\ repfnz\ for\ this\ column\ }}
+\DoxyCodeLine{00776\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0;\ i\ <\ nseg;\ i++)}
+\DoxyCodeLine{00777\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00778\ \ \ \ \ \ \ \ \ irep\ =\ segrep(i);\ }
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ repfnz\_k(irep)\ =\ emptyIdxLU;\ }
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00781\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ SparseLU\ within\ the\ panel\ \ }}
+\DoxyCodeLine{00782\ \ \ \ \ jcol\ +=\ panel\_size;\ \ \textcolor{comment}{//\ Move\ to\ the\ next\ panel}}
+\DoxyCodeLine{00783\ \ \ \}\ \textcolor{comment}{//\ end\ for\ -\/-\/\ end\ elimination\ }}
+\DoxyCodeLine{00784\ \ \ }
+\DoxyCodeLine{00785\ \ \ m\_detPermR\ =\ m\_perm\_r.determinant();}
+\DoxyCodeLine{00786\ \ \ m\_detPermC\ =\ m\_perm\_c.determinant();}
+\DoxyCodeLine{00787\ \ \ }
+\DoxyCodeLine{00788\ \ \ \textcolor{comment}{//\ Count\ the\ number\ of\ nonzeros\ in\ factors\ }}
+\DoxyCodeLine{00789\ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_acbede3f259186d48ad42ca093f80b64b}{Base::countnz}}(n,\ m\_nnzL,\ m\_nnzU,\ m\_glu);\ }
+\DoxyCodeLine{00790\ \ \ \textcolor{comment}{//\ Apply\ permutation\ \ to\ the\ L\ subscripts\ }}
+\DoxyCodeLine{00791\ \ \ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_ae1d1ed091956ff4e5734b4e3f79f866e}{Base::fixupL}}(n,\ m\_perm\_r.indices(),\ m\_glu);}
+\DoxyCodeLine{00792\ \ \ }
+\DoxyCodeLine{00793\ \ \ \textcolor{comment}{//\ Create\ supernode\ matrix\ L\ }}
+\DoxyCodeLine{00794\ \ \ m\_Lstore.setInfos(m,\ n,\ m\_glu.lusup,\ m\_glu.xlusup,\ m\_glu.lsub,\ m\_glu.xlsub,\ m\_glu.supno,\ m\_glu.xsup);\ }
+\DoxyCodeLine{00795\ \ \ \textcolor{comment}{//\ Create\ the\ column\ major\ upper\ sparse\ matrix\ \ U;\ }}
+\DoxyCodeLine{00796\ \ \ \textcolor{keyword}{new}\ (\&m\_Ustore)\ \mbox{\hyperlink{classEigen_1_1MappedSparseMatrix}{MappedSparseMatrix<Scalar,\ ColMajor,\ StorageIndex>}}\ (\ m,\ n,\ m\_nnzU,\ m\_glu.xusub.data(),\ m\_glu.usub.data(),\ m\_glu.ucol.data()\ );}
+\DoxyCodeLine{00797\ \ \ }
+\DoxyCodeLine{00798\ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00799\ \ \ m\_factorizationIsOk\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00800\ \}}
+\DoxyCodeLine{00801\ }
+\DoxyCodeLine{00802\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MappedSupernodalType>}
+\DoxyCodeLine{00803\ \textcolor{keyword}{struct\ }SparseLUMatrixLReturnType\ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{internal::no\_assignment\_operator}}}
+\DoxyCodeLine{00804\ \{}
+\DoxyCodeLine{00805\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MappedSupernodalType::Scalar\ Scalar;}
+\DoxyCodeLine{00806\ \ \ \textcolor{keyword}{explicit}\ SparseLUMatrixLReturnType(\textcolor{keyword}{const}\ MappedSupernodalType\&\ mapL)\ :\ m\_mapL(mapL)}
+\DoxyCodeLine{00807\ \ \ \{\ \}}
+\DoxyCodeLine{00808\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_mapL.rows();\ \}}
+\DoxyCodeLine{00809\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_mapL.cols();\ \}}
+\DoxyCodeLine{00810\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00811\ \ \ \textcolor{keywordtype}{void}\ solveInPlace(\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&X)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00812\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00813\ \ \ \ \ m\_mapL.solveInPlace(X);}
+\DoxyCodeLine{00814\ \ \ \}}
+\DoxyCodeLine{00815\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Conjugate,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00816\ \ \ \textcolor{keywordtype}{void}\ solveTransposedInPlace(\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&X)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00817\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00818\ \ \ \ \ m\_mapL.template\ solveTransposedInPlace<Conjugate>(X);}
+\DoxyCodeLine{00819\ \ \ \}}
+\DoxyCodeLine{00820\ }
+\DoxyCodeLine{00821\ \ \ \textcolor{keyword}{const}\ MappedSupernodalType\&\ m\_mapL;}
+\DoxyCodeLine{00822\ \};}
+\DoxyCodeLine{00823\ }
+\DoxyCodeLine{00824\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixLType,\ \textcolor{keyword}{typename}\ MatrixUType>}
+\DoxyCodeLine{00825\ \textcolor{keyword}{struct\ }SparseLUMatrixUReturnType\ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{internal::no\_assignment\_operator}}}
+\DoxyCodeLine{00826\ \{}
+\DoxyCodeLine{00827\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixLType::Scalar\ Scalar;}
+\DoxyCodeLine{00828\ \ \ SparseLUMatrixUReturnType(\textcolor{keyword}{const}\ MatrixLType\&\ mapL,\ \textcolor{keyword}{const}\ MatrixUType\&\ mapU)}
+\DoxyCodeLine{00829\ \ \ :\ m\_mapL(mapL),m\_mapU(mapU)}
+\DoxyCodeLine{00830\ \ \ \{\ \}}
+\DoxyCodeLine{00831\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_mapL.rows();\ \}}
+\DoxyCodeLine{00832\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_mapL.cols();\ \}}
+\DoxyCodeLine{00833\ }
+\DoxyCodeLine{00834\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Dest>\ \ \ \textcolor{keywordtype}{void}\ solveInPlace(\mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&X)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00835\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00836\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nrhs\ =\ X.cols();}
+\DoxyCodeLine{00837\ \ \ \ \ \textcolor{comment}{//\ Backward\ solve\ with\ U}}
+\DoxyCodeLine{00838\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ m\_mapL.nsuper();\ k\ >=\ 0;\ k-\/-\/)}
+\DoxyCodeLine{00839\ \ \ \ \ \{}
+\DoxyCodeLine{00840\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ fsupc\ =\ m\_mapL.supToCol()[k];}
+\DoxyCodeLine{00841\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lda\ =\ m\_mapL.colIndexPtr()[fsupc+1]\ -\/\ m\_mapL.colIndexPtr()[fsupc];\ \textcolor{comment}{//\ leading\ dimension}}
+\DoxyCodeLine{00842\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nsupc\ =\ m\_mapL.supToCol()[k+1]\ -\/\ fsupc;}
+\DoxyCodeLine{00843\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ luptr\ =\ m\_mapL.colIndexPtr()[fsupc];}
+\DoxyCodeLine{00844\ }
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nsupc\ ==\ 1)}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ nrhs;\ j++)}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \ \ \ \ X(fsupc,\ j)\ /=\ m\_mapL.valuePtr()[luptr];}
+\DoxyCodeLine{00850\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ FIXME:\ the\ following\ lines\ should\ use\ Block\ expressions\ and\ not\ Map!}}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<const\ Matrix<Scalar,Dynamic,Dynamic,\ ColMajor>}},\ 0,\ \mbox{\hyperlink{classEigen_1_1OuterStride}{OuterStride<>}}\ >\ A(\ \&(m\_mapL.valuePtr()[luptr]),\ nsupc,\ nsupc,\ \mbox{\hyperlink{classEigen_1_1OuterStride}{OuterStride<>}}(lda)\ );}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Dest::RowsBlockXpr\ U\ =\ X.derived().\mbox{\hyperlink{classEigen_1_1DenseBase_a0c9b37290b2c800d29eb33e168a4121c}{middleRows}}(fsupc,\ nsupc);}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ \ \ U\ =\ A.template\ triangularView<Upper>().solve(U);}
+\DoxyCodeLine{00858\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00859\ }
+\DoxyCodeLine{00860\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ nrhs;\ ++j)}
+\DoxyCodeLine{00861\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00862\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol\ =\ fsupc;\ jcol\ <\ fsupc\ +\ nsupc;\ jcol++)}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ MatrixUType::InnerIterator\ it(m\_mapU,\ jcol);}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ ;\ it;\ ++it)}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ irow\ =\ it.index();}
+\DoxyCodeLine{00868\ \ \ \ \ \ \ \ \ \ \ \ \ X(irow,\ j)\ -\/=\ X(jcol,\ j)\ *\ it.\mbox{\hyperlink{classEigen_1_1DenseBase_a8da735a6bfc7012606acf787156d10a0}{value}}();}
+\DoxyCodeLine{00869\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00870\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00872\ \ \ \ \ \}\ \textcolor{comment}{//\ End\ For\ U-\/solve}}
+\DoxyCodeLine{00873\ \ \ \}}
+\DoxyCodeLine{00874\ }
+\DoxyCodeLine{00875\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Conjugate,\ \textcolor{keyword}{typename}\ Dest>\ \ \ \textcolor{keywordtype}{void}\ solveTransposedInPlace(\mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&X)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00876\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00877\ \ \ \ \ \textcolor{keyword}{using\ }numext::conj;}
+\DoxyCodeLine{00878\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nrhs\ =\ X.cols();}
+\DoxyCodeLine{00879\ \ \ \ \ \textcolor{comment}{//\ Forward\ solve\ with\ U}}
+\DoxyCodeLine{00880\ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;\ k\ <=\ \ m\_mapL.nsuper();\ k++)}
+\DoxyCodeLine{00881\ \ \ \ \ \{}
+\DoxyCodeLine{00882\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ fsupc\ =\ m\_mapL.supToCol()[k];}
+\DoxyCodeLine{00883\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lda\ =\ m\_mapL.colIndexPtr()[fsupc+1]\ -\/\ m\_mapL.colIndexPtr()[fsupc];\ \textcolor{comment}{//\ leading\ dimension}}
+\DoxyCodeLine{00884\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nsupc\ =\ m\_mapL.supToCol()[k+1]\ -\/\ fsupc;}
+\DoxyCodeLine{00885\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ luptr\ =\ m\_mapL.colIndexPtr()[fsupc];}
+\DoxyCodeLine{00886\ }
+\DoxyCodeLine{00887\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ nrhs;\ ++j)}
+\DoxyCodeLine{00888\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00889\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol\ =\ fsupc;\ jcol\ <\ fsupc\ +\ nsupc;\ jcol++)}
+\DoxyCodeLine{00890\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00891\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ MatrixUType::InnerIterator\ it(m\_mapU,\ jcol);}
+\DoxyCodeLine{00892\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\ ;\ it;\ ++it)}
+\DoxyCodeLine{00893\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00894\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ irow\ =\ it.index();}
+\DoxyCodeLine{00895\ \ \ \ \ \ \ \ \ \ \ \ \ X(jcol,\ j)\ -\/=\ X(irow,\ j)\ *\ (\mbox{\hyperlink{classEigen_1_1Conjugate}{Conjugate}}?\ conj(it.value()):\ it.value());}
+\DoxyCodeLine{00896\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00897\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00898\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00899\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (nsupc\ ==\ 1)}
+\DoxyCodeLine{00900\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00901\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ nrhs;\ j++)}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ X(fsupc,\ j)\ /=\ (\mbox{\hyperlink{classEigen_1_1Conjugate}{Conjugate}}?\ conj(m\_mapL.valuePtr()[luptr])\ :\ m\_mapL.valuePtr()[luptr]);}
+\DoxyCodeLine{00904\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00906\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00907\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00908\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<const\ Matrix<Scalar,Dynamic,Dynamic,\ ColMajor>}},\ 0,\ \mbox{\hyperlink{classEigen_1_1OuterStride}{OuterStride<>}}\ >\ A(\ \&(m\_mapL.valuePtr()[luptr]),\ nsupc,\ nsupc,\ \mbox{\hyperlink{classEigen_1_1OuterStride}{OuterStride<>}}(lda)\ );}
+\DoxyCodeLine{00909\ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Dest::RowsBlockXpr\ U\ =\ X.derived().\mbox{\hyperlink{classEigen_1_1DenseBase_a0c9b37290b2c800d29eb33e168a4121c}{middleRows}}(fsupc,\ nsupc);}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\mbox{\hyperlink{classEigen_1_1Conjugate}{Conjugate}})}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ \ \ \ \ U\ =\ A.adjoint().template\ triangularView<Lower>().solve(U);}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ \ \ \ \ U\ =\ A.transpose().template\ triangularView<Lower>().solve(U);}
+\DoxyCodeLine{00914\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00915\ \ \ \ \ \}\textcolor{comment}{//\ End\ For\ U-\/solve}}
+\DoxyCodeLine{00916\ \ \ \}}
+\DoxyCodeLine{00917\ }
+\DoxyCodeLine{00918\ }
+\DoxyCodeLine{00919\ \ \ \textcolor{keyword}{const}\ MatrixLType\&\ m\_mapL;}
+\DoxyCodeLine{00920\ \ \ \textcolor{keyword}{const}\ MatrixUType\&\ m\_mapU;}
+\DoxyCodeLine{00921\ \};}
+\DoxyCodeLine{00922\ }
+\DoxyCodeLine{00923\ \}\ \textcolor{comment}{//\ End\ namespace\ Eigen\ }}
+\DoxyCodeLine{00924\ }
+\DoxyCodeLine{00925\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

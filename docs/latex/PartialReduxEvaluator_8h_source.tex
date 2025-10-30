@@ -1,0 +1,243 @@
+\doxysection{Partial\+Redux\+Evaluator.\+h}
+\hypertarget{PartialReduxEvaluator_8h_source}{}\label{PartialReduxEvaluator_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/PartialReduxEvaluator.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/PartialReduxEvaluator.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2011-\/2018\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_PARTIALREDUX\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_PARTIALREDUX\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ }
+\DoxyCodeLine{00018\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00019\ \textcolor{comment}{*}}
+\DoxyCodeLine{00020\ \textcolor{comment}{*\ This\ file\ provides\ evaluators\ for\ partial\ reductions.}}
+\DoxyCodeLine{00021\ \textcolor{comment}{*\ There\ are\ two\ modes:}}
+\DoxyCodeLine{00022\ \textcolor{comment}{*}}
+\DoxyCodeLine{00023\ \textcolor{comment}{*\ \ -\/\ scalar\ path:\ simply\ calls\ the\ respective\ function\ on\ the\ column\ or\ row.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{*\ \ \ \ -\/>\ nothing\ special\ here,\ all\ the\ tricky\ part\ is\ handled\ by\ the\ return}}
+\DoxyCodeLine{00025\ \textcolor{comment}{*\ \ \ \ \ \ \ types\ of\ VectorwiseOp's\ members.\ They\ embed\ the\ functor\ calling\ the}}
+\DoxyCodeLine{00026\ \textcolor{comment}{*\ \ \ \ \ \ \ respective\ DenseBase's\ member\ function.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{*}}
+\DoxyCodeLine{00028\ \textcolor{comment}{*\ \ -\/\ vectorized\ path:\ implements\ a\ packet-\/wise\ reductions\ followed\ by}}
+\DoxyCodeLine{00029\ \textcolor{comment}{*\ \ \ \ some\ (optional)\ processing\ of\ the\ outcome,\ e.g.,\ division\ by\ n\ for\ mean.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{*}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*\ For\ the\ vectorized\ path\ let's\ observe\ that\ the\ packet-\/size\ and\ outer-\/unrolling}}
+\DoxyCodeLine{00032\ \textcolor{comment}{*\ are\ both\ decided\ by\ the\ assignement\ logic.\ So\ all\ we\ have\ to\ do\ is\ to\ decide}}
+\DoxyCodeLine{00033\ \textcolor{comment}{*\ on\ the\ inner\ unrolling.}}
+\DoxyCodeLine{00034\ \textcolor{comment}{*}}
+\DoxyCodeLine{00035\ \textcolor{comment}{*\ For\ the\ unrolling,\ we\ can\ reuse\ "{}internal::redux\_vec\_unroller"{}\ from\ Redux.h,}}
+\DoxyCodeLine{00036\ \textcolor{comment}{*\ but\ be\ need\ to\ be\ careful\ to\ specify\ correct\ increment.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{*}}
+\DoxyCodeLine{00038\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ }
+\DoxyCodeLine{00041\ \textcolor{comment}{/*\ logic\ deciding\ a\ strategy\ for\ unrolling\ of\ vectorized\ paths\ */}}
+\DoxyCodeLine{00042\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Func,\ \textcolor{keyword}{typename}\ Evaluator>}
+\DoxyCodeLine{00043\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packetwise__redux__traits}{packetwise\_redux\_traits}}}
+\DoxyCodeLine{00044\ \{}
+\DoxyCodeLine{00045\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00046\ \ \ \ \ OuterSize\ =\ int(Evaluator::IsRowMajor)\ ?\ Evaluator::RowsAtCompileTime\ :\ Evaluator::ColsAtCompileTime,}
+\DoxyCodeLine{00047\ \ \ \ \ Cost\ =\ OuterSize\ ==\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}}}
+\DoxyCodeLine{00048\ \ \ \ \ \ \ \ \ \ :\ OuterSize\ *\ Evaluator::CoeffReadCost\ +\ (OuterSize-\/1)\ *\ functor\_traits<Func>::Cost,}
+\DoxyCodeLine{00049\ \ \ \ \ Unrolling\ =\ Cost\ <=\ EIGEN\_UNROLLING\_LIMIT\ ?\ CompleteUnrolling\ :\ NoUnrolling}
+\DoxyCodeLine{00050\ \ \ \};}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \};}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{comment}{/*\ Value\ to\ be\ returned\ when\ size==0\ ,\ by\ default\ let's\ return\ 0\ */}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ PacketType,\textcolor{keyword}{typename}\ Func>}
+\DoxyCodeLine{00056\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00057\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ packetwise\_redux\_empty\_value(\textcolor{keyword}{const}\ Func\&\ )\ \{}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<PacketType>::type\ zero(0);}
+\DoxyCodeLine{00059\ \ \ \textcolor{keywordflow}{return}\ pset1<PacketType>(zero);}
+\DoxyCodeLine{00060\ \}}
+\DoxyCodeLine{00061\ }
+\DoxyCodeLine{00062\ \textcolor{comment}{/*\ For\ products\ the\ default\ is\ 1\ */}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ PacketType,\textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00064\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00065\ PacketType\ packetwise\_redux\_empty\_value(\textcolor{keyword}{const}\ scalar\_product\_op<Scalar,Scalar>\&\ )\ \{}
+\DoxyCodeLine{00066\ \ \ \textcolor{keywordflow}{return}\ pset1<PacketType>(\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1));}
+\DoxyCodeLine{00067\ \}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \textcolor{comment}{/*\ Perform\ the\ actual\ reduction\ */}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Func,\ \textcolor{keyword}{typename}\ Evaluator,}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ Unrolling\ =\ packetwise\_redux\_traits<Func,\ Evaluator>::Unrolling}
+\DoxyCodeLine{00072\ >}
+\DoxyCodeLine{00073\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packetwise__redux__impl}{packetwise\_redux\_impl}};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{comment}{/*\ Perform\ the\ actual\ reduction\ with\ unrolling\ */}}
+\DoxyCodeLine{00076\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Func,\ \textcolor{keyword}{typename}\ Evaluator>}
+\DoxyCodeLine{00077\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packetwise__redux__impl}{packetwise\_redux\_impl}}<Func,\ Evaluator,\ CompleteUnrolling>}
+\DoxyCodeLine{00078\ \{}
+\DoxyCodeLine{00079\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__novec__unroller}{redux\_novec\_unroller<Func,Evaluator,\ 0,\ Evaluator::SizeAtCompileTime>}}\ Base;}
+\DoxyCodeLine{00080\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Evaluator::Scalar\ Scalar;}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00083\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00084\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ run(\textcolor{keyword}{const}\ Evaluator\ \&\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}},\ \textcolor{keyword}{const}\ Func\&\ func,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \textcolor{comment}{/*size*/})}
+\DoxyCodeLine{00085\ \ \ \{}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__vec__unroller}{redux\_vec\_unroller<Func,\ Evaluator,\ 0,\ packetwise\_redux\_traits<Func,\ Evaluator>::OuterSize}}>::template\ run<PacketType>(\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}},func);}
+\DoxyCodeLine{00087\ \ \ \}}
+\DoxyCodeLine{00088\ \};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{comment}{/*\ Add\ a\ specialization\ of\ redux\_vec\_unroller\ for\ size==0\ at\ compiletime.}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ *\ This\ specialization\ is\ not\ required\ for\ general\ reductions,\ which\ is}}
+\DoxyCodeLine{00092\ \textcolor{comment}{\ *\ why\ it\ is\ defined\ here.}}
+\DoxyCodeLine{00093\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00094\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Func,\ \textcolor{keyword}{typename}\ Evaluator,\ \textcolor{keywordtype}{int}\ Start>}
+\DoxyCodeLine{00095\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1redux__vec__unroller}{redux\_vec\_unroller}}<Func,\ Evaluator,\ Start,\ 0>}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00098\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00099\ \ \ \textcolor{keyword}{static}\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ run(\textcolor{keyword}{const}\ Evaluator\ \&,\ \textcolor{keyword}{const}\ Func\&\ f)}
+\DoxyCodeLine{00100\ \ \ \{}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{return}\ packetwise\_redux\_empty\_value<PacketType>(f);}
+\DoxyCodeLine{00102\ \ \ \}}
+\DoxyCodeLine{00103\ \};}
+\DoxyCodeLine{00104\ }
+\DoxyCodeLine{00105\ \textcolor{comment}{/*\ Perform\ the\ actual\ reduction\ for\ dynamic\ sizes\ */}}
+\DoxyCodeLine{00106\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Func,\ \textcolor{keyword}{typename}\ Evaluator>}
+\DoxyCodeLine{00107\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packetwise__redux__impl}{packetwise\_redux\_impl}}<Func,\ Evaluator,\ NoUnrolling>}
+\DoxyCodeLine{00108\ \{}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Evaluator::Scalar\ Scalar;}
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ redux\_traits<Func,\ Evaluator>::PacketType\ PacketScalar;}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00113\ \ \ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00114\ \ \ \textcolor{keyword}{static}\ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ run(\textcolor{keyword}{const}\ Evaluator\ \&\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}},\ \textcolor{keyword}{const}\ Func\&\ func,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size)}
+\DoxyCodeLine{00115\ \ \ \{}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordflow}{if}(size==0)}
+\DoxyCodeLine{00117\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ packetwise\_redux\_empty\_value<PacketType>(func);}
+\DoxyCodeLine{00118\ \ \ \ \ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size4\ =\ (size-\/1)\&(\string~3);}
+\DoxyCodeLine{00120\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ p\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}.template\ packetByOuterInner<Unaligned,PacketType>(0,0);}
+\DoxyCodeLine{00121\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 1;}
+\DoxyCodeLine{00122\ \ \ \ \ \textcolor{comment}{//\ This\ loop\ is\ optimized\ for\ instruction\ pipelining:}}
+\DoxyCodeLine{00123\ \ \ \ \ \textcolor{comment}{//\ -\/\ each\ iteration\ generates\ two\ independent\ instructions}}
+\DoxyCodeLine{00124\ \ \ \ \ \textcolor{comment}{//\ -\/\ thanks\ to\ branch\ prediction\ and\ out-\/of-\/order\ execution\ we\ have\ independent\ instructions\ across\ loops}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordflow}{for}(;\ i<size4;\ i+=4)}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ p\ =\ func.packetOp(p,}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \ \ \ \ \ \ func.packetOp(}
+\DoxyCodeLine{00128\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ func.packetOp(\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}.template\ packetByOuterInner<Unaligned,PacketType>(i+0,0),\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}.template\ packetByOuterInner<Unaligned,PacketType>(i+1,0)),}
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ func.packetOp(\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}.template\ packetByOuterInner<Unaligned,PacketType>(i+2,0),\mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}.template\ packetByOuterInner<Unaligned,PacketType>(i+3,0))));}
+\DoxyCodeLine{00130\ \ \ \ \ \textcolor{keywordflow}{for}(;\ i<size;\ ++i)}
+\DoxyCodeLine{00131\ \ \ \ \ \ \ p\ =\ func.packetOp(p,\ \mbox{\hyperlink{structEigen_1_1internal_1_1eval}{eval}}.template\ packetByOuterInner<Unaligned,PacketType>(i,0));}
+\DoxyCodeLine{00132\ \ \ \ \ \textcolor{keywordflow}{return}\ p;}
+\DoxyCodeLine{00133\ \ \ \}}
+\DoxyCodeLine{00134\ \};}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ ArgType,\ \textcolor{keyword}{typename}\ MemberOp,\ \textcolor{keywordtype}{int}\ Direction>}
+\DoxyCodeLine{00137\ \textcolor{keyword}{struct\ }evaluator<\mbox{\hyperlink{classEigen_1_1PartialReduxExpr}{PartialReduxExpr}}<ArgType,\ MemberOp,\ Direction>\ >}
+\DoxyCodeLine{00138\ \ \ :\ evaluator\_base<PartialReduxExpr<ArgType,\ MemberOp,\ Direction>\ >}
+\DoxyCodeLine{00139\ \{}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1PartialReduxExpr}{PartialReduxExpr<ArgType,\ MemberOp,\ Direction>}}\ XprType;}
+\DoxyCodeLine{00141\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::nested\_eval<ArgType,1>::type\ ArgTypeNested;}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::add\_const\_on\_value\_type<ArgTypeNested>::type\ ConstArgTypeNested;}
+\DoxyCodeLine{00143\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::remove\_all<ArgTypeNested>::type\ ArgTypeNestedCleaned;}
+\DoxyCodeLine{00144\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ ArgType::Scalar\ InputScalar;}
+\DoxyCodeLine{00145\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::Scalar\ Scalar;}
+\DoxyCodeLine{00146\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00147\ \ \ \ \ TraversalSize\ =\ Direction==int(\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}})\ ?\ int(ArgType::RowsAtCompileTime)\ :\ \ int(ArgType::ColsAtCompileTime)}
+\DoxyCodeLine{00148\ \ \ \};}
+\DoxyCodeLine{00149\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MemberOp::template\ Cost<int(TraversalSize)>\ CostOpType;}
+\DoxyCodeLine{00150\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00151\ \ \ \ \ CoeffReadCost\ =\ TraversalSize==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}}}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ TraversalSize==0\ ?\ 1}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ int(TraversalSize)\ *\ int(evaluator<ArgType>::CoeffReadCost)\ +\ int(CostOpType::value),}
+\DoxyCodeLine{00154\ \ \ \ \ }
+\DoxyCodeLine{00155\ \ \ \ \ \_ArgFlags\ =\ evaluator<ArgType>::Flags,}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \_Vectorizable\ =\ \ bool(\textcolor{keywordtype}{int}(\_ArgFlags)\&\mbox{\hyperlink{group__flags_ga1a306a438e1ab074e8be59512e887b9f}{PacketAccessBit}})}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ bool(MemberOp::Vectorizable)}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (Direction==int(\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}})\ ?\ bool(\_ArgFlags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ :\ (\_ArgFlags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})==0)}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&\&\ (TraversalSize!=0),}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00162\ \ \ \ \ Flags\ =\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<XprType>::Flags}}\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \ \ \ \ |\ (evaluator<ArgType>::Flags\&(HereditaryBits\&(\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{\string~RowMajorBit}})))}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \ \ \ \ |\ (\_Vectorizable\ ?\ \mbox{\hyperlink{group__flags_ga1a306a438e1ab074e8be59512e887b9f}{PacketAccessBit}}\ :\ 0)}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ |\ \mbox{\hyperlink{group__flags_ga4b983a15d57cd55806df618ac544d09e}{LinearAccessBit}},}
+\DoxyCodeLine{00166\ \ \ \ \ }
+\DoxyCodeLine{00167\ \ \ \ \ Alignment\ =\ 0\ \textcolor{comment}{//\ FIXME\ this\ will\ need\ to\ be\ improved\ once\ PartialReduxExpr\ is\ vectorized}}
+\DoxyCodeLine{00168\ \ \ \};}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{explicit}\ evaluator(\textcolor{keyword}{const}\ XprType\ xpr)}
+\DoxyCodeLine{00171\ \ \ \ \ :\ m\_arg(xpr.nestedExpression()),\ m\_functor(xpr.functor())}
+\DoxyCodeLine{00172\ \ \ \{}
+\DoxyCodeLine{00173\ \ \ \ \ EIGEN\_INTERNAL\_CHECK\_COST\_VALUE(TraversalSize==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}}\ :\ (TraversalSize==0\ ?\ 1\ :\ \textcolor{keywordtype}{int}(CostOpType::value)));}
+\DoxyCodeLine{00174\ \ \ \ \ EIGEN\_INTERNAL\_CHECK\_COST\_VALUE(CoeffReadCost);}
+\DoxyCodeLine{00175\ \ \ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ XprType::CoeffReturnType\ CoeffReturnType;}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00180\ \ \ \textcolor{keyword}{const}\ Scalar\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00181\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00182\ \ \ \ \ \textcolor{keywordflow}{return}\ coeff(Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ j\ :\ i);}
+\DoxyCodeLine{00183\ \ \ \}}
+\DoxyCodeLine{00184\ }
+\DoxyCodeLine{00185\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00186\ \ \ \textcolor{keyword}{const}\ Scalar\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ index)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00187\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00188\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_functor(m\_arg.template\ subVector<\mbox{\hyperlink{group__enums_gad49a7b3738e273eb00932271b36127f7}{DirectionType}}(Direction)>(index));}
+\DoxyCodeLine{00189\ \ \ \}}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LoadMode,\textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00192\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00193\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ packet(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00194\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{return}\ packet<LoadMode,PacketType>(Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ j\ :\ i);}
+\DoxyCodeLine{00196\ \ \ \}}
+\DoxyCodeLine{00197\ \ \ }
+\DoxyCodeLine{00198\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LoadMode,\textcolor{keyword}{typename}\ PacketType>}
+\DoxyCodeLine{00199\ \ \ EIGEN\_STRONG\_INLINE\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00200\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ packet(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ idx)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00201\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00202\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ PacketSize\ =\ internal::unpacket\_traits<PacketType>::size\ \};}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Block}{Block}}<\textcolor{keyword}{const}\ ArgTypeNestedCleaned,}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ int(ArgType::RowsAtCompileTime)\ :\ int(PacketSize),}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ int(PacketSize)\ :\ int(ArgType::ColsAtCompileTime),}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{true}\ \textcolor{comment}{/*\ InnerPanel\ */}>\ PanelType;}
+\DoxyCodeLine{00207\ \ \ \ \ }
+\DoxyCodeLine{00208\ \ \ \ \ PanelType\ panel(m\_arg,}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ 0\ :\ idx,}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ idx\ :\ 0,}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ m\_arg.rows()\ :\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(PacketSize),}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Direction==\mbox{\hyperlink{group__enums_ggad49a7b3738e273eb00932271b36127f7ae2efac6e74ecab5e3b0b1561c5ddf83e}{Vertical}}\ ?\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(PacketSize)\ :\ m\_arg.cols());}
+\DoxyCodeLine{00213\ }
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{comment}{//\ FIXME}}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ See\ bug\ 1612,\ currently\ if\ PacketSize==1\ (i.e.\ complex<double>\ with\ 128bits\ registers)\ then\ the\ storage-\/order\ of\ panel\ get\ reversed}}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ and\ methods\ like\ packetByOuterInner\ do\ not\ make\ sense\ anymore\ in\ this\ context.}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{comment}{//\ So\ let's\ just\ by\ pass\ "{}vectorization"{}\ in\ this\ case:}}
+\DoxyCodeLine{00218\ \ \ \ \ \textcolor{keywordflow}{if}(PacketSize==1)}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ internal::pset1<PacketType>(coeff(idx));}
+\DoxyCodeLine{00220\ \ \ \ \ }
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1internal_1_1redux__evaluator}{internal::redux\_evaluator<PanelType>}}\ PanelEvaluator;}
+\DoxyCodeLine{00222\ \ \ \ \ PanelEvaluator\ panel\_eval(panel);}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MemberOp::BinaryOp\ BinaryOp;}
+\DoxyCodeLine{00224\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1redux__traits}{PacketType}}\ p\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1packetwise__redux__impl}{internal::packetwise\_redux\_impl<BinaryOp,PanelEvaluator>::template}}\ run<PacketType>(panel\_eval,m\_functor.binaryFunc(),m\_arg.outerSize());}
+\DoxyCodeLine{00225\ \ \ \ \ \textcolor{keywordflow}{return}\ p;}
+\DoxyCodeLine{00226\ \ \ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00229\ \ \ ConstArgTypeNested\ m\_arg;}
+\DoxyCodeLine{00230\ \ \ \textcolor{keyword}{const}\ MemberOp\ m\_functor;}
+\DoxyCodeLine{00231\ \};}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00234\ }
+\DoxyCodeLine{00235\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00236\ }
+\DoxyCodeLine{00237\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_PARTIALREDUX\_H}}
+
+\end{DoxyCode}

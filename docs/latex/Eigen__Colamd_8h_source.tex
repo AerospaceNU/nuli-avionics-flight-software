@@ -1,0 +1,1869 @@
+\doxysection{Eigen\+\_\+\+Colamd.\+h}
+\hypertarget{Eigen__Colamd_8h_source}{}\label{Eigen__Colamd_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/OrderingMethods/Eigen\_Colamd.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/OrderingMethods/Eigen\_Colamd.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ //\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Desire\ Nuentsa\ Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ This\ file\ is\ modified\ from\ the\ colamd/symamd\ library.\ The\ copyright\ is\ below}}
+\DoxyCodeLine{00011\ }
+\DoxyCodeLine{00012\ \textcolor{comment}{//\ \ \ The\ authors\ of\ the\ code\ itself\ are\ Stefan\ I.\ Larimore\ and\ Timothy\ A.}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ \ \ Davis\ (davis@cise.ufl.edu),\ University\ of\ Florida.\ \ The\ algorithm\ was}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//\ \ \ developed\ in\ collaboration\ with\ John\ Gilbert,\ Xerox\ PARC,\ and\ Esmond}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ \ \ Ng,\ Oak\ Ridge\ National\ Laboratory.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ \ \ \ \ Date:}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ September\ 8,\ 2003.\ \ Version\ 2.3.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ \ \ \ \ Acknowledgements:}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ This\ work\ was\ supported\ by\ the\ National\ Science\ Foundation,\ under}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ grants\ DMS-\/9504974\ and\ DMS-\/9803599.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ \ \ Notice:}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ Copyright\ (c)\ 1998-\/2003\ by\ the\ University\ of\ Florida.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ \ All\ Rights\ Reserved.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ THIS\ MATERIAL\ IS\ PROVIDED\ AS\ IS,\ WITH\ ABSOLUTELY\ NO\ WARRANTY}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ \ \ EXPRESSED\ OR\ IMPLIED.\ \ ANY\ USE\ IS\ AT\ YOUR\ OWN\ RISK.}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ \ \ Permission\ is\ hereby\ granted\ to\ use,\ copy,\ modify,\ and/or\ distribute}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ \ \ this\ program,\ provided\ that\ the\ Copyright,\ this\ License,\ and\ the}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ \ \ Availability\ of\ the\ original\ version\ is\ retained\ on\ all\ copies\ and\ made}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ \ \ accessible\ to\ the\ end-\/user\ of\ any\ code\ or\ package\ that\ includes\ COLAMD}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ \ \ or\ any\ modified\ version\ of\ COLAMD.}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ \ \ \ \ Availability:}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ \ \ The\ colamd/symamd\ library\ is\ available\ at}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ \ \ \ \ \ \ http://www.suitesparse.com}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_COLAMD\_H}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\#define\ EIGEN\_COLAMD\_H}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00051\ }
+\DoxyCodeLine{00052\ \textcolor{keyword}{namespace\ }Colamd\ \{}
+\DoxyCodeLine{00053\ }
+\DoxyCodeLine{00054\ \textcolor{comment}{/*\ Ensure\ that\ debugging\ is\ turned\ off:\ */}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\#ifndef\ COLAMD\_NDEBUG}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\#define\ COLAMD\_NDEBUG}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{/*\ NDEBUG\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00061\ \textcolor{comment}{/*\ ===\ Knob\ and\ statistics\ definitions\ ======================================\ */}}
+\DoxyCodeLine{00062\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{comment}{/*\ size\ of\ the\ knobs\ [\ ]\ array.\ \ Only\ knobs\ [0..1]\ are\ currently\ used.\ */}}
+\DoxyCodeLine{00065\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ NKnobs\ =\ 20;}
+\DoxyCodeLine{00066\ }
+\DoxyCodeLine{00067\ \textcolor{comment}{/*\ number\ of\ output\ statistics.\ \ Only\ stats\ [0..6]\ are\ currently\ used.\ */}}
+\DoxyCodeLine{00068\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ NStats\ =\ 20;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \textcolor{comment}{/*\ Indices\ into\ knobs\ and\ stats\ array.\ */}}
+\DoxyCodeLine{00071\ \textcolor{keyword}{enum}\ KnobsStatsIndex\ \{}
+\DoxyCodeLine{00072\ \ \ \textcolor{comment}{/*\ knobs\ [0]\ and\ stats\ [0]:\ dense\ row\ knob\ and\ output\ statistic.\ */}}
+\DoxyCodeLine{00073\ \ \ DenseRow\ =\ 0,}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \textcolor{comment}{/*\ knobs\ [1]\ and\ stats\ [1]:\ dense\ column\ knob\ and\ output\ statistic.\ */}}
+\DoxyCodeLine{00076\ \ \ DenseCol\ =\ 1,}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \ \ \textcolor{comment}{/*\ stats\ [2]:\ memory\ defragmentation\ count\ output\ statistic\ */}}
+\DoxyCodeLine{00079\ \ \ DefragCount\ =\ 2,}
+\DoxyCodeLine{00080\ }
+\DoxyCodeLine{00081\ \ \ \textcolor{comment}{/*\ stats\ [3]:\ colamd\ status:\ \ zero\ OK,\ >\ 0\ warning\ or\ notice,\ <\ 0\ error\ */}}
+\DoxyCodeLine{00082\ \ \ Status\ =\ 3,}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \textcolor{comment}{/*\ stats\ [4..6]:\ error\ info,\ or\ info\ on\ jumbled\ columns\ */}}
+\DoxyCodeLine{00085\ \ \ Info1\ =\ 4,}
+\DoxyCodeLine{00086\ \ \ Info2\ =\ 5,}
+\DoxyCodeLine{00087\ \ \ Info3\ =\ 6}
+\DoxyCodeLine{00088\ \};}
+\DoxyCodeLine{00089\ }
+\DoxyCodeLine{00090\ \textcolor{comment}{/*\ error\ codes\ returned\ in\ stats\ [3]:\ */}}
+\DoxyCodeLine{00091\ \textcolor{keyword}{enum}\ Status\ \{}
+\DoxyCodeLine{00092\ \ \ Ok\ =\ 0,}
+\DoxyCodeLine{00093\ \ \ OkButJumbled\ =\ 1,}
+\DoxyCodeLine{00094\ \ \ ErrorANotPresent\ =\ -\/1,}
+\DoxyCodeLine{00095\ \ \ ErrorPNotPresent\ =\ -\/2,}
+\DoxyCodeLine{00096\ \ \ ErrorNrowNegative\ =\ -\/3,}
+\DoxyCodeLine{00097\ \ \ ErrorNcolNegative\ =\ -\/4,}
+\DoxyCodeLine{00098\ \ \ ErrorNnzNegative\ =\ -\/5,}
+\DoxyCodeLine{00099\ \ \ ErrorP0Nonzero\ =\ -\/6,}
+\DoxyCodeLine{00100\ \ \ ErrorATooSmall\ =\ -\/7,}
+\DoxyCodeLine{00101\ \ \ ErrorColLengthNegative\ =\ -\/8,}
+\DoxyCodeLine{00102\ \ \ ErrorRowIndexOutOfBounds\ =\ -\/9,}
+\DoxyCodeLine{00103\ \ \ ErrorOutOfMemory\ =\ -\/10,}
+\DoxyCodeLine{00104\ \ \ ErrorInternalError\ =\ -\/999}
+\DoxyCodeLine{00105\ \};}
+\DoxyCodeLine{00106\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00107\ \textcolor{comment}{/*\ ===\ Definitions\ ==========================================================\ */}}
+\DoxyCodeLine{00108\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00111\ IndexType\ ones\_complement(\textcolor{keyword}{const}\ IndexType\ r)\ \{}
+\DoxyCodeLine{00112\ \ \ \textcolor{keywordflow}{return}\ (-\/(r)-\/1);}
+\DoxyCodeLine{00113\ \}}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \textcolor{comment}{/*\ -\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/-\/\ */}}
+\DoxyCodeLine{00116\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\ Empty\ =\ -\/1;}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \textcolor{comment}{/*\ Row\ and\ column\ status\ */}}
+\DoxyCodeLine{00119\ \textcolor{keyword}{enum}\ RowColumnStatus\ \{}
+\DoxyCodeLine{00120\ \ \ Alive\ =\ 0,}
+\DoxyCodeLine{00121\ \ \ Dead\ =\ -\/1}
+\DoxyCodeLine{00122\ \};}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{comment}{/*\ Column\ status\ */}}
+\DoxyCodeLine{00125\ \textcolor{keyword}{enum}\ ColumnStatus\ \{}
+\DoxyCodeLine{00126\ \ \ DeadPrincipal\ =\ -\/1,}
+\DoxyCodeLine{00127\ \ \ DeadNonPrincipal\ =\ -\/2}
+\DoxyCodeLine{00128\ \};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00131\ \textcolor{comment}{/*\ ===\ Colamd\ reporting\ mechanism\ ===========================================\ */}}
+\DoxyCodeLine{00132\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ ==\ Row\ and\ Column\ structures\ ==}}
+\DoxyCodeLine{00135\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00136\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure}}}
+\DoxyCodeLine{00137\ \{}
+\DoxyCodeLine{00138\ \ \ IndexType\ start\ ;\ \ \ \textcolor{comment}{/*\ index\ for\ A\ of\ first\ row\ in\ this\ column,\ or\ Dead\ */}}
+\DoxyCodeLine{00139\ \ \ \textcolor{comment}{/*\ if\ column\ is\ dead\ */}}
+\DoxyCodeLine{00140\ \ \ IndexType\ length\ ;\ \ \textcolor{comment}{/*\ number\ of\ rows\ in\ this\ column\ */}}
+\DoxyCodeLine{00141\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00142\ \ \ \{}
+\DoxyCodeLine{00143\ \ \ \ \ IndexType\ thickness\ ;\ \textcolor{comment}{/*\ number\ of\ original\ columns\ represented\ by\ this\ */}}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{comment}{/*\ col,\ if\ the\ column\ is\ alive\ */}}
+\DoxyCodeLine{00145\ \ \ \ \ IndexType\ parent\ ;\ \ \textcolor{comment}{/*\ parent\ in\ parent\ tree\ super-\/column\ structure,\ if\ */}}
+\DoxyCodeLine{00146\ \ \ \ \ \textcolor{comment}{/*\ the\ column\ is\ dead\ */}}
+\DoxyCodeLine{00147\ \ \ \}\ shared1\ ;}
+\DoxyCodeLine{00148\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00149\ \ \ \{}
+\DoxyCodeLine{00150\ \ \ \ \ IndexType\ score\ ;\ \textcolor{comment}{/*\ the\ score\ used\ to\ maintain\ heap,\ if\ col\ is\ alive\ */}}
+\DoxyCodeLine{00151\ \ \ \ \ IndexType\ order\ ;\ \textcolor{comment}{/*\ pivot\ ordering\ of\ this\ column,\ if\ col\ is\ dead\ */}}
+\DoxyCodeLine{00152\ \ \ \}\ shared2\ ;}
+\DoxyCodeLine{00153\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00154\ \ \ \{}
+\DoxyCodeLine{00155\ \ \ \ \ IndexType\ headhash\ ;\ \ \textcolor{comment}{/*\ head\ of\ a\ hash\ bucket,\ if\ col\ is\ at\ the\ head\ of\ */}}
+\DoxyCodeLine{00156\ \ \ \ \ \textcolor{comment}{/*\ a\ degree\ list\ */}}
+\DoxyCodeLine{00157\ \ \ \ \ IndexType\ hash\ ;\ \ \textcolor{comment}{/*\ hash\ value,\ if\ col\ is\ not\ in\ a\ degree\ list\ */}}
+\DoxyCodeLine{00158\ \ \ \ \ IndexType\ prev\ ;\ \ \textcolor{comment}{/*\ previous\ column\ in\ degree\ list,\ if\ col\ is\ in\ a\ */}}
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{comment}{/*\ degree\ list\ (but\ not\ at\ the\ head\ of\ a\ degree\ list)\ */}}
+\DoxyCodeLine{00160\ \ \ \}\ shared3\ ;}
+\DoxyCodeLine{00161\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00162\ \ \ \{}
+\DoxyCodeLine{00163\ \ \ \ \ IndexType\ degree\_next\ ;\ \textcolor{comment}{/*\ next\ column,\ if\ col\ is\ in\ a\ degree\ list\ */}}
+\DoxyCodeLine{00164\ \ \ \ \ IndexType\ hash\_next\ ;\ \ \ \textcolor{comment}{/*\ next\ column,\ if\ col\ is\ in\ a\ hash\ list\ */}}
+\DoxyCodeLine{00165\ \ \ \}\ shared4\ ;}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_dead()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ start\ <\ Alive;\ \}}
+\DoxyCodeLine{00168\ }
+\DoxyCodeLine{00169\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_alive()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ start\ >=\ Alive;\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_dead\_principal()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ start\ ==\ DeadPrincipal;\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ kill\_principal()\ \{\ start\ =\ DeadPrincipal;\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ kill\_non\_principal()\ \{\ start\ =\ DeadNonPrincipal;\ \}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \};}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00180\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure}}}
+\DoxyCodeLine{00181\ \{}
+\DoxyCodeLine{00182\ \ \ IndexType\ start\ ;\ \ \ \textcolor{comment}{/*\ index\ for\ A\ of\ first\ col\ in\ this\ row\ */}}
+\DoxyCodeLine{00183\ \ \ IndexType\ length\ ;\ \ \textcolor{comment}{/*\ number\ of\ principal\ columns\ in\ this\ row\ */}}
+\DoxyCodeLine{00184\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00185\ \ \ \{}
+\DoxyCodeLine{00186\ \ \ \ \ IndexType\ degree\ ;\ \ \textcolor{comment}{/*\ number\ of\ principal\ \&\ non-\/principal\ columns\ in\ row\ */}}
+\DoxyCodeLine{00187\ \ \ \ \ IndexType\ p\ ;\ \ \ \textcolor{comment}{/*\ used\ as\ a\ row\ pointer\ in\ init\_rows\_cols\ ()\ */}}
+\DoxyCodeLine{00188\ \ \ \}\ shared1\ ;}
+\DoxyCodeLine{00189\ \ \ \textcolor{keyword}{union}}
+\DoxyCodeLine{00190\ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ IndexType\ mark\ ;\ \ \textcolor{comment}{/*\ for\ computing\ set\ differences\ and\ marking\ dead\ rows*/}}
+\DoxyCodeLine{00192\ \ \ \ \ IndexType\ first\_column\ ;\textcolor{comment}{/*\ first\ column\ in\ row\ (used\ in\ garbage\ collection)\ */}}
+\DoxyCodeLine{00193\ \ \ \}\ shared2\ ;}
+\DoxyCodeLine{00194\ }
+\DoxyCodeLine{00195\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_dead()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ shared2.mark\ <\ Alive;\ \}}
+\DoxyCodeLine{00196\ }
+\DoxyCodeLine{00197\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_alive()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ shared2.mark\ >=\ Alive;\ \}}
+\DoxyCodeLine{00198\ }
+\DoxyCodeLine{00199\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ kill()\ \{\ shared2.mark\ =\ Dead;\ \}}
+\DoxyCodeLine{00200\ }
+\DoxyCodeLine{00201\ \};}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00204\ \textcolor{comment}{/*\ ===\ Colamd\ recommended\ memory\ size\ =======================================\ */}}
+\DoxyCodeLine{00205\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00208\ \textcolor{comment}{\ \ The\ recommended\ length\ Alen\ of\ the\ array\ A\ passed\ to\ colamd\ is\ given\ by}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ the\ COLAMD\_RECOMMENDED\ (nnz,\ n\_row,\ n\_col)\ macro.\ \ It\ returns\ -\/1\ if\ any}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ argument\ is\ negative.\ \ 2*nnz\ space\ is\ required\ for\ the\ row\ and\ column}}
+\DoxyCodeLine{00211\ \textcolor{comment}{\ \ indices\ of\ the\ matrix.\ colamd\_c\ (n\_col)\ +\ colamd\_r\ (n\_row)\ space\ is}}
+\DoxyCodeLine{00212\ \textcolor{comment}{\ \ required\ for\ the\ Col\ and\ Row\ arrays,\ respectively,\ which\ are\ internal\ to}}
+\DoxyCodeLine{00213\ \textcolor{comment}{\ \ colamd.\ \ An\ additional\ n\_col\ space\ is\ the\ minimal\ amount\ of\ "{}elbow\ room"{},}}
+\DoxyCodeLine{00214\ \textcolor{comment}{\ \ and\ nnz/5\ more\ space\ is\ recommended\ for\ run\ time\ efficiency.}}
+\DoxyCodeLine{00215\ \textcolor{comment}{}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ This\ macro\ is\ not\ needed\ when\ using\ symamd.}}
+\DoxyCodeLine{00217\ \textcolor{comment}{}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ Explicit\ typecast\ to\ IndexType\ added\ Sept.\ 23,\ 2002,\ COLAMD\ version\ 2.2,\ to\ avoid}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ gcc\ -\/pedantic\ warning\ messages.}}
+\DoxyCodeLine{00220\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00221\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00222\ \textcolor{keyword}{inline}\ IndexType\ colamd\_c(IndexType\ n\_col)}
+\DoxyCodeLine{00223\ \{\ \textcolor{keywordflow}{return}\ IndexType(\ ((n\_col)\ +\ 1)\ *\ \textcolor{keyword}{sizeof}\ (\mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}})\ /\ \textcolor{keyword}{sizeof}\ (IndexType)\ )\ ;\ \}}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00226\ \textcolor{keyword}{inline}\ IndexType\ \ colamd\_r(IndexType\ n\_row)}
+\DoxyCodeLine{00227\ \{\ \textcolor{keywordflow}{return}\ IndexType(((n\_row)\ +\ 1)\ *\ \textcolor{keyword}{sizeof}\ (RowStructure<IndexType>)\ /\ \textcolor{keyword}{sizeof}\ (IndexType));\ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \textcolor{comment}{//\ Prototypes\ of\ non-\/user\ callable\ routines}}
+\DoxyCodeLine{00230\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00231\ \textcolor{keyword}{static}\ IndexType\ init\_rows\_cols\ (IndexType\ n\_row,\ IndexType\ n\_col,\ RowStructure<IndexType>\ Row\ [],\ ColStructure<IndexType>\ col\ [],\ IndexType\ A\ [],\ IndexType\ p\ [],\ IndexType\ stats[NStats]\ );}
+\DoxyCodeLine{00232\ }
+\DoxyCodeLine{00233\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00234\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ init\_scoring\ (IndexType\ n\_row,\ IndexType\ n\_col,\ RowStructure<IndexType>\ Row\ [],\ ColStructure<IndexType>\ Col\ [],\ IndexType\ A\ [],\ IndexType\ head\ [],\ \textcolor{keywordtype}{double}\ knobs[NKnobs],\ IndexType\ *p\_n\_row2,\ IndexType\ *p\_n\_col2,\ IndexType\ *p\_max\_deg);}
+\DoxyCodeLine{00235\ }
+\DoxyCodeLine{00236\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00237\ \textcolor{keyword}{static}\ IndexType\ find\_ordering\ (IndexType\ n\_row,\ IndexType\ n\_col,\ IndexType\ Alen,\ RowStructure<IndexType>\ Row\ [],\ ColStructure<IndexType>\ Col\ [],\ IndexType\ A\ [],\ IndexType\ head\ [],\ IndexType\ n\_col2,\ IndexType\ max\_deg,\ IndexType\ pfree);}
+\DoxyCodeLine{00238\ }
+\DoxyCodeLine{00239\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00240\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ order\_children\ (IndexType\ n\_col,\ ColStructure<IndexType>\ Col\ [],\ IndexType\ p\ []);}
+\DoxyCodeLine{00241\ }
+\DoxyCodeLine{00242\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00243\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ detect\_super\_cols\ (ColStructure<IndexType>\ Col\ [],\ IndexType\ A\ [],\ IndexType\ head\ [],\ IndexType\ row\_start,\ IndexType\ row\_length\ )\ ;}
+\DoxyCodeLine{00244\ }
+\DoxyCodeLine{00245\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00246\ \textcolor{keyword}{static}\ IndexType\ garbage\_collection\ (IndexType\ n\_row,\ IndexType\ n\_col,\ RowStructure<IndexType>\ Row\ [],\ ColStructure<IndexType>\ Col\ [],\ IndexType\ A\ [],\ IndexType\ *pfree)\ ;}
+\DoxyCodeLine{00247\ }
+\DoxyCodeLine{00248\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00249\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \ IndexType\ clear\_mark\ (IndexType\ n\_row,\ RowStructure<IndexType>\ Row\ []\ )\ ;}
+\DoxyCodeLine{00250\ }
+\DoxyCodeLine{00251\ \textcolor{comment}{/*\ ===\ No\ debugging\ =========================================================\ */}}
+\DoxyCodeLine{00252\ }
+\DoxyCodeLine{00253\ \textcolor{preprocessor}{\#define\ COLAMD\_DEBUG0(params)\ ;}}
+\DoxyCodeLine{00254\ \textcolor{preprocessor}{\#define\ COLAMD\_DEBUG1(params)\ ;}}
+\DoxyCodeLine{00255\ \textcolor{preprocessor}{\#define\ COLAMD\_DEBUG2(params)\ ;}}
+\DoxyCodeLine{00256\ \textcolor{preprocessor}{\#define\ COLAMD\_DEBUG3(params)\ ;}}
+\DoxyCodeLine{00257\ \textcolor{preprocessor}{\#define\ COLAMD\_DEBUG4(params)\ ;}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \textcolor{preprocessor}{\#define\ COLAMD\_ASSERT(expression)\ ((void)\ 0)}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \textcolor{comment}{}}
+\DoxyCodeLine{00262\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00263\ \textcolor{comment}{\ *\ \(\backslash\)brief\ Returns\ the\ recommended\ value\ of\ Alen}}
+\DoxyCodeLine{00264\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00265\ \textcolor{comment}{\ *\ Returns\ recommended\ value\ of\ Alen\ for\ use\ by\ colamd.}}
+\DoxyCodeLine{00266\ \textcolor{comment}{\ *\ Returns\ -\/1\ if\ any\ input\ argument\ is\ negative.}}
+\DoxyCodeLine{00267\ \textcolor{comment}{\ *\ The\ use\ of\ this\ routine\ or\ macro\ is\ optional.}}
+\DoxyCodeLine{00268\ \textcolor{comment}{\ *\ Note\ that\ the\ macro\ uses\ its\ arguments\ \ \ more\ than\ once,}}
+\DoxyCodeLine{00269\ \textcolor{comment}{\ *\ so\ be\ careful\ for\ side\ effects,\ if\ you\ pass\ expressions\ as\ arguments\ to\ COLAMD\_RECOMMENDED.}}
+\DoxyCodeLine{00270\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00271\ \textcolor{comment}{\ *\ \(\backslash\)param\ nnz\ nonzeros\ in\ A}}
+\DoxyCodeLine{00272\ \textcolor{comment}{\ *\ \(\backslash\)param\ n\_row\ number\ of\ rows\ in\ A}}
+\DoxyCodeLine{00273\ \textcolor{comment}{\ *\ \(\backslash\)param\ n\_col\ number\ of\ columns\ in\ A}}
+\DoxyCodeLine{00274\ \textcolor{comment}{\ *\ \(\backslash\)return\ recommended\ value\ of\ Alen\ for\ use\ by\ colamd}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00276\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00277\ \textcolor{keyword}{inline}\ IndexType\ recommended\ (\ IndexType\ nnz,\ IndexType\ n\_row,\ IndexType\ n\_col)}
+\DoxyCodeLine{00278\ \{}
+\DoxyCodeLine{00279\ \ \ \textcolor{keywordflow}{if}\ ((nnz)\ <\ 0\ ||\ (n\_row)\ <\ 0\ ||\ (n\_col)\ <\ 0)}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordflow}{return}\ (-\/1);}
+\DoxyCodeLine{00281\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{return}\ (2\ *\ (nnz)\ +\ colamd\_c\ (n\_col)\ +\ colamd\_r\ (n\_row)\ +\ (n\_col)\ +\ ((nnz)\ /\ 5));}
+\DoxyCodeLine{00283\ \}}
+\DoxyCodeLine{00284\ \textcolor{comment}{}}
+\DoxyCodeLine{00285\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00286\ \textcolor{comment}{\ *\ \(\backslash\)brief\ set\ default\ parameters\ \ The\ use\ of\ this\ routine\ is\ optional.}}
+\DoxyCodeLine{00287\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00288\ \textcolor{comment}{\ *\ Colamd:\ rows\ with\ more\ than\ (knobs\ [DenseRow]\ *\ n\_col)}}
+\DoxyCodeLine{00289\ \textcolor{comment}{\ *\ entries\ are\ removed\ prior\ to\ ordering.\ \ Columns\ with\ more\ than}}
+\DoxyCodeLine{00290\ \textcolor{comment}{\ *\ (knobs\ [DenseCol]\ *\ n\_row)\ entries\ are\ removed\ prior\ to}}
+\DoxyCodeLine{00291\ \textcolor{comment}{\ *\ ordering,\ and\ placed\ last\ in\ the\ output\ column\ ordering.}}
+\DoxyCodeLine{00292\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00293\ \textcolor{comment}{\ *\ DenseRow\ and\ DenseCol\ are\ defined\ as\ 0\ and\ 1,}}
+\DoxyCodeLine{00294\ \textcolor{comment}{\ *\ respectively,\ in\ colamd.h.\ \ Default\ values\ of\ these\ two\ knobs}}
+\DoxyCodeLine{00295\ \textcolor{comment}{\ *\ are\ both\ 0.5.\ \ Currently,\ only\ knobs\ [0]\ and\ knobs\ [1]\ are}}
+\DoxyCodeLine{00296\ \textcolor{comment}{\ *\ used,\ but\ future\ versions\ may\ use\ more\ knobs.\ \ If\ so,\ they\ will}}
+\DoxyCodeLine{00297\ \textcolor{comment}{\ *\ be\ properly\ set\ to\ their\ defaults\ by\ the\ future\ version\ of}}
+\DoxyCodeLine{00298\ \textcolor{comment}{\ *\ colamd\_set\_defaults,\ so\ that\ the\ code\ that\ calls\ colamd\ will}}
+\DoxyCodeLine{00299\ \textcolor{comment}{\ *\ not\ need\ to\ change,\ assuming\ that\ you\ either\ use}}
+\DoxyCodeLine{00300\ \textcolor{comment}{\ *\ colamd\_set\_defaults,\ or\ pass\ a\ (double\ *)\ NULL\ pointer\ as\ the}}
+\DoxyCodeLine{00301\ \textcolor{comment}{\ *\ knobs\ array\ to\ colamd\ or\ symamd.}}
+\DoxyCodeLine{00302\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00303\ \textcolor{comment}{\ *\ \(\backslash\)param\ knobs\ parameter\ settings\ for\ colamd}}
+\DoxyCodeLine{00304\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ set\_defaults(\textcolor{keywordtype}{double}\ knobs[NKnobs])}
+\DoxyCodeLine{00307\ \{}
+\DoxyCodeLine{00308\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{00309\ }
+\DoxyCodeLine{00310\ \ \ \textcolor{keywordtype}{int}\ i\ ;}
+\DoxyCodeLine{00311\ }
+\DoxyCodeLine{00312\ \ \ \textcolor{keywordflow}{if}\ (!knobs)}
+\DoxyCodeLine{00313\ \ \ \{}
+\DoxyCodeLine{00314\ \ \ \ \ return\ ;\ \ \ \ \ \ \textcolor{comment}{/*\ no\ knobs\ to\ initialize\ */}}
+\DoxyCodeLine{00315\ \ \ \}}
+\DoxyCodeLine{00316\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0\ ;\ i\ <\ NKnobs\ ;\ i++)}
+\DoxyCodeLine{00317\ \ \ \{}
+\DoxyCodeLine{00318\ \ \ \ \ knobs\ [i]\ =\ 0\ ;}
+\DoxyCodeLine{00319\ \ \ \}}
+\DoxyCodeLine{00320\ \ \ knobs\ [Colamd::DenseRow]\ =\ 0.5\ ;\ \ \textcolor{comment}{/*\ ignore\ rows\ over\ 50\%\ dense\ */}}
+\DoxyCodeLine{00321\ \ \ knobs\ [Colamd::DenseCol]\ =\ 0.5\ ;\ \ \textcolor{comment}{/*\ ignore\ columns\ over\ 50\%\ dense\ */}}
+\DoxyCodeLine{00322\ \}}
+\DoxyCodeLine{00323\ \textcolor{comment}{}}
+\DoxyCodeLine{00324\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00325\ \textcolor{comment}{\ *\ \(\backslash\)brief\ \ Computes\ a\ column\ ordering\ using\ the\ column\ approximate\ minimum\ degree\ ordering}}
+\DoxyCodeLine{00326\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00327\ \textcolor{comment}{\ *\ Computes\ a\ column\ ordering\ (Q)\ of\ A\ such\ that\ P(AQ)=LU\ or}}
+\DoxyCodeLine{00328\ \textcolor{comment}{\ *\ (AQ)'AQ=LL'\ have\ less\ fill-\/in\ and\ require\ fewer\ floating\ point}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ *\ operations\ than\ factorizing\ the\ unpermuted\ matrix\ A\ or\ A'A,}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ *\ respectively.}}
+\DoxyCodeLine{00331\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00332\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00333\ \textcolor{comment}{\ *\ \(\backslash\)param\ n\_row\ number\ of\ rows\ in\ A}}
+\DoxyCodeLine{00334\ \textcolor{comment}{\ *\ \(\backslash\)param\ n\_col\ number\ of\ columns\ in\ A}}
+\DoxyCodeLine{00335\ \textcolor{comment}{\ *\ \(\backslash\)param\ Alen,\ size\ of\ the\ array\ A}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ *\ \(\backslash\)param\ A\ row\ indices\ of\ the\ matrix,\ of\ size\ ALen}}
+\DoxyCodeLine{00337\ \textcolor{comment}{\ *\ \(\backslash\)param\ p\ column\ pointers\ of\ A,\ of\ size\ n\_col+1}}
+\DoxyCodeLine{00338\ \textcolor{comment}{\ *\ \(\backslash\)param\ knobs\ parameter\ settings\ for\ colamd}}
+\DoxyCodeLine{00339\ \textcolor{comment}{\ *\ \(\backslash\)param\ stats\ colamd\ output\ statistics\ and\ error\ codes}}
+\DoxyCodeLine{00340\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00341\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00342\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{bool}\ compute\_ordering(IndexType\ n\_row,\ IndexType\ n\_col,\ IndexType\ Alen,\ IndexType\ *A,\ IndexType\ *p,\ \textcolor{keywordtype}{double}\ knobs[NKnobs],\ IndexType\ stats[NStats])}
+\DoxyCodeLine{00343\ \{}
+\DoxyCodeLine{00344\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{00345\ }
+\DoxyCodeLine{00346\ \ \ IndexType\ i\ ;\ \ \ \ \ \textcolor{comment}{/*\ loop\ index\ */}}
+\DoxyCodeLine{00347\ \ \ IndexType\ nnz\ ;\ \ \ \ \ \textcolor{comment}{/*\ nonzeros\ in\ A\ */}}
+\DoxyCodeLine{00348\ \ \ IndexType\ Row\_size\ ;\ \ \ \ \textcolor{comment}{/*\ size\ of\ Row\ [],\ in\ integers\ */}}
+\DoxyCodeLine{00349\ \ \ IndexType\ Col\_size\ ;\ \ \ \ \textcolor{comment}{/*\ size\ of\ Col\ [],\ in\ integers\ */}}
+\DoxyCodeLine{00350\ \ \ IndexType\ need\ ;\ \ \ \ \ \ \textcolor{comment}{/*\ minimum\ required\ length\ of\ A\ */}}
+\DoxyCodeLine{00351\ \ \ Colamd::RowStructure<IndexType>\ *Row\ ;\ \ \ \textcolor{comment}{/*\ pointer\ into\ A\ of\ Row\ [0..n\_row]\ array\ */}}
+\DoxyCodeLine{00352\ \ \ Colamd::ColStructure<IndexType>\ *Col\ ;\ \ \ \textcolor{comment}{/*\ pointer\ into\ A\ of\ Col\ [0..n\_col]\ array\ */}}
+\DoxyCodeLine{00353\ \ \ IndexType\ n\_col2\ ;\ \ \ \ \textcolor{comment}{/*\ number\ of\ non-\/dense,\ non-\/empty\ columns\ */}}
+\DoxyCodeLine{00354\ \ \ IndexType\ n\_row2\ ;\ \ \ \ \textcolor{comment}{/*\ number\ of\ non-\/dense,\ non-\/empty\ rows\ */}}
+\DoxyCodeLine{00355\ \ \ IndexType\ ngarbage\ ;\ \ \ \ \textcolor{comment}{/*\ number\ of\ garbage\ collections\ performed\ */}}
+\DoxyCodeLine{00356\ \ \ IndexType\ max\_deg\ ;\ \ \ \textcolor{comment}{/*\ maximum\ row\ degree\ */}}
+\DoxyCodeLine{00357\ \ \ \textcolor{keywordtype}{double}\ default\_knobs\ [NKnobs]\ ;\ \textcolor{comment}{/*\ default\ knobs\ array\ */}}
+\DoxyCodeLine{00358\ }
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \textcolor{comment}{/*\ ===\ Check\ the\ input\ arguments\ ========================================\ */}}
+\DoxyCodeLine{00361\ }
+\DoxyCodeLine{00362\ \ \ \textcolor{keywordflow}{if}\ (!stats)}
+\DoxyCodeLine{00363\ \ \ \{}
+\DoxyCodeLine{00364\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ stats\ not\ present\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{00365\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00366\ \ \ \}}
+\DoxyCodeLine{00367\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0\ ;\ i\ <\ NStats\ ;\ i++)}
+\DoxyCodeLine{00368\ \ \ \{}
+\DoxyCodeLine{00369\ \ \ \ \ stats\ [i]\ =\ 0\ ;}
+\DoxyCodeLine{00370\ \ \ \}}
+\DoxyCodeLine{00371\ \ \ stats\ [Colamd::Status]\ =\ Colamd::Ok\ ;}
+\DoxyCodeLine{00372\ \ \ stats\ [Colamd::Info1]\ =\ -\/1\ ;}
+\DoxyCodeLine{00373\ \ \ stats\ [Colamd::Info2]\ =\ -\/1\ ;}
+\DoxyCodeLine{00374\ }
+\DoxyCodeLine{00375\ \ \ \textcolor{keywordflow}{if}\ (!A)\ \ \ \textcolor{comment}{/*\ A\ is\ not\ present\ */}}
+\DoxyCodeLine{00376\ \ \ \{}
+\DoxyCodeLine{00377\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorANotPresent\ ;}
+\DoxyCodeLine{00378\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ A\ not\ present\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{00379\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00380\ \ \ \}}
+\DoxyCodeLine{00381\ }
+\DoxyCodeLine{00382\ \ \ \textcolor{keywordflow}{if}\ (!p)\ \ \ \textcolor{comment}{/*\ p\ is\ not\ present\ */}}
+\DoxyCodeLine{00383\ \ \ \{}
+\DoxyCodeLine{00384\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorPNotPresent\ ;}
+\DoxyCodeLine{00385\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ p\ not\ present\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00387\ \ \ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \textcolor{keywordflow}{if}\ (n\_row\ <\ 0)\ \ \textcolor{comment}{/*\ n\_row\ must\ be\ >=\ 0\ */}}
+\DoxyCodeLine{00390\ \ \ \{}
+\DoxyCodeLine{00391\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorNrowNegative\ ;}
+\DoxyCodeLine{00392\ \ \ \ \ stats\ [Colamd::Info1]\ =\ n\_row\ ;}
+\DoxyCodeLine{00393\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ nrow\ negative\ \%d\(\backslash\)n"{}},\ n\_row))\ ;}
+\DoxyCodeLine{00394\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00395\ \ \ \}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \ \ \textcolor{keywordflow}{if}\ (n\_col\ <\ 0)\ \ \textcolor{comment}{/*\ n\_col\ must\ be\ >=\ 0\ */}}
+\DoxyCodeLine{00398\ \ \ \{}
+\DoxyCodeLine{00399\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorNcolNegative\ ;}
+\DoxyCodeLine{00400\ \ \ \ \ stats\ [Colamd::Info1]\ =\ n\_col\ ;}
+\DoxyCodeLine{00401\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ ncol\ negative\ \%d\(\backslash\)n"{}},\ n\_col))\ ;}
+\DoxyCodeLine{00402\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00403\ \ \ \}}
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ \ \ nnz\ =\ p\ [n\_col]\ ;}
+\DoxyCodeLine{00406\ \ \ \textcolor{keywordflow}{if}\ (nnz\ <\ 0)\ \ \textcolor{comment}{/*\ nnz\ must\ be\ >=\ 0\ */}}
+\DoxyCodeLine{00407\ \ \ \{}
+\DoxyCodeLine{00408\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorNnzNegative\ ;}
+\DoxyCodeLine{00409\ \ \ \ \ stats\ [Colamd::Info1]\ =\ nnz\ ;}
+\DoxyCodeLine{00410\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ number\ of\ entries\ negative\ \%d\(\backslash\)n"{}},\ nnz))\ ;}
+\DoxyCodeLine{00411\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00412\ \ \ \}}
+\DoxyCodeLine{00413\ }
+\DoxyCodeLine{00414\ \ \ \textcolor{keywordflow}{if}\ (p\ [0]\ !=\ 0)}
+\DoxyCodeLine{00415\ \ \ \{}
+\DoxyCodeLine{00416\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorP0Nonzero\ ;}
+\DoxyCodeLine{00417\ \ \ \ \ stats\ [Colamd::Info1]\ =\ p\ [0]\ ;}
+\DoxyCodeLine{00418\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ p[0]\ not\ zero\ \%d\(\backslash\)n"{}},\ p\ [0]))\ ;}
+\DoxyCodeLine{00419\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00420\ \ \ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \ \textcolor{comment}{/*\ ===\ If\ no\ knobs,\ set\ default\ knobs\ ===================================\ */}}
+\DoxyCodeLine{00423\ }
+\DoxyCodeLine{00424\ \ \ \textcolor{keywordflow}{if}\ (!knobs)}
+\DoxyCodeLine{00425\ \ \ \{}
+\DoxyCodeLine{00426\ \ \ \ \ set\_defaults\ (default\_knobs)\ ;}
+\DoxyCodeLine{00427\ \ \ \ \ knobs\ =\ default\_knobs\ ;}
+\DoxyCodeLine{00428\ \ \ \}}
+\DoxyCodeLine{00429\ }
+\DoxyCodeLine{00430\ \ \ \textcolor{comment}{/*\ ===\ Allocate\ the\ Row\ and\ Col\ arrays\ from\ array\ A\ =====================\ */}}
+\DoxyCodeLine{00431\ }
+\DoxyCodeLine{00432\ \ \ Col\_size\ =\ colamd\_c\ (n\_col)\ ;}
+\DoxyCodeLine{00433\ \ \ Row\_size\ =\ colamd\_r\ (n\_row)\ ;}
+\DoxyCodeLine{00434\ \ \ need\ =\ 2*nnz\ +\ n\_col\ +\ Col\_size\ +\ Row\_size\ ;}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \ \ \textcolor{keywordflow}{if}\ (need\ >\ Alen)}
+\DoxyCodeLine{00437\ \ \ \{}
+\DoxyCodeLine{00438\ \ \ \ \ \textcolor{comment}{/*\ not\ enough\ space\ in\ array\ A\ to\ perform\ the\ ordering\ */}}
+\DoxyCodeLine{00439\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorATooSmall\ ;}
+\DoxyCodeLine{00440\ \ \ \ \ stats\ [Colamd::Info1]\ =\ need\ ;}
+\DoxyCodeLine{00441\ \ \ \ \ stats\ [Colamd::Info2]\ =\ Alen\ ;}
+\DoxyCodeLine{00442\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ Need\ Alen\ >=\ \%d,\ given\ only\ Alen\ =\ \%d\(\backslash\)n"{}},\ need,Alen));}
+\DoxyCodeLine{00443\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00444\ \ \ \}}
+\DoxyCodeLine{00445\ }
+\DoxyCodeLine{00446\ \ \ Alen\ -\/=\ Col\_size\ +\ Row\_size\ ;}
+\DoxyCodeLine{00447\ \ \ Col\ =\ (\mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ *)\ \&A\ [Alen]\ ;}
+\DoxyCodeLine{00448\ \ \ Row\ =\ (\mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure<IndexType>}}\ *)\ \&A\ [Alen\ +\ Col\_size]\ ;}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \ \ \textcolor{comment}{/*\ ===\ Construct\ the\ row\ and\ column\ data\ structures\ =====================\ */}}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \textcolor{keywordflow}{if}\ (!Colamd::init\_rows\_cols\ (n\_row,\ n\_col,\ Row,\ Col,\ A,\ p,\ stats))}
+\DoxyCodeLine{00453\ \ \ \{}
+\DoxyCodeLine{00454\ \ \ \ \ \textcolor{comment}{/*\ input\ matrix\ is\ invalid\ */}}
+\DoxyCodeLine{00455\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ Matrix\ invalid\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{00456\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00457\ \ \ \}}
+\DoxyCodeLine{00458\ }
+\DoxyCodeLine{00459\ \ \ \textcolor{comment}{/*\ ===\ Initialize\ scores,\ kill\ dense\ rows/columns\ =======================\ */}}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ Colamd::init\_scoring\ (n\_row,\ n\_col,\ Row,\ Col,\ A,\ p,\ knobs,}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \ \ \&n\_row2,\ \&n\_col2,\ \&max\_deg)\ ;}
+\DoxyCodeLine{00463\ }
+\DoxyCodeLine{00464\ \ \ \textcolor{comment}{/*\ ===\ Order\ the\ supercolumns\ ===========================================\ */}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \ \ ngarbage\ =\ Colamd::find\_ordering\ (n\_row,\ n\_col,\ Alen,\ Row,\ Col,\ A,\ p,}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ n\_col2,\ max\_deg,\ 2*nnz)\ ;}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \textcolor{comment}{/*\ ===\ Order\ the\ non-\/principal\ columns\ ==================================\ */}}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ Colamd::order\_children\ (n\_col,\ Col,\ p)\ ;}
+\DoxyCodeLine{00472\ }
+\DoxyCodeLine{00473\ \ \ \textcolor{comment}{/*\ ===\ Return\ statistics\ in\ stats\ =======================================\ */}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ stats\ [Colamd::DenseRow]\ =\ n\_row\ -\/\ n\_row2\ ;}
+\DoxyCodeLine{00476\ \ \ stats\ [Colamd::DenseCol]\ =\ n\_col\ -\/\ n\_col2\ ;}
+\DoxyCodeLine{00477\ \ \ stats\ [Colamd::DefragCount]\ =\ ngarbage\ ;}
+\DoxyCodeLine{00478\ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ done.\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{00479\ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{true})\ ;}
+\DoxyCodeLine{00480\ \}}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00483\ \textcolor{comment}{/*\ ===\ NON-\/USER-\/CALLABLE\ ROUTINES:\ ==========================================\ */}}
+\DoxyCodeLine{00484\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \textcolor{comment}{/*\ There\ are\ no\ user-\/callable\ routines\ beyond\ this\ point\ in\ the\ file\ */}}
+\DoxyCodeLine{00487\ }
+\DoxyCodeLine{00488\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00489\ \textcolor{comment}{/*\ ===\ init\_rows\_cols\ =======================================================\ */}}
+\DoxyCodeLine{00490\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00491\ }
+\DoxyCodeLine{00492\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00493\ \textcolor{comment}{\ \ Takes\ the\ column\ form\ of\ the\ matrix\ in\ A\ and\ creates\ the\ row\ form\ of\ the}}
+\DoxyCodeLine{00494\ \textcolor{comment}{\ \ matrix.\ \ Also,\ row\ and\ column\ attributes\ are\ stored\ in\ the\ Col\ and\ Row}}
+\DoxyCodeLine{00495\ \textcolor{comment}{\ \ structs.\ \ If\ the\ columns\ are\ un-\/sorted\ or\ contain\ duplicate\ row\ indices,}}
+\DoxyCodeLine{00496\ \textcolor{comment}{\ \ this\ routine\ will\ also\ sort\ and\ remove\ duplicate\ row\ indices\ from\ the}}
+\DoxyCodeLine{00497\ \textcolor{comment}{\ \ column\ form\ of\ the\ matrix.\ \ Returns\ false\ if\ the\ matrix\ is\ invalid,}}
+\DoxyCodeLine{00498\ \textcolor{comment}{\ \ true\ otherwise.\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{00499\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00500\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00501\ \textcolor{keyword}{static}\ IndexType\ init\_rows\_cols\ \ \textcolor{comment}{/*\ returns\ true\ if\ OK,\ or\ false\ otherwise\ */}}
+\DoxyCodeLine{00502\ \ \ (}
+\DoxyCodeLine{00503\ \ \ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \ \ \ \ IndexType\ n\_row,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ rows\ of\ A\ */}}
+\DoxyCodeLine{00506\ \ \ \ \ IndexType\ n\_col,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ columns\ of\ A\ */}}
+\DoxyCodeLine{00507\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure<IndexType>}}\ Row\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_row+1\ */}}
+\DoxyCodeLine{00508\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ Col\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{00509\ \ \ \ \ IndexType\ A\ [],\ \ \ \ \ \textcolor{comment}{/*\ row\ indices\ of\ A,\ of\ size\ Alen\ */}}
+\DoxyCodeLine{00510\ \ \ \ \ IndexType\ p\ [],\ \ \ \ \ \textcolor{comment}{/*\ pointers\ to\ columns\ in\ A,\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{00511\ \ \ \ \ IndexType\ stats\ [NStats]\ \ \textcolor{comment}{/*\ colamd\ statistics\ */}}
+\DoxyCodeLine{00512\ \ \ \ \ )}
+\DoxyCodeLine{00513\ \{}
+\DoxyCodeLine{00514\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{00515\ }
+\DoxyCodeLine{00516\ \ \ IndexType\ col\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ index\ */}}
+\DoxyCodeLine{00517\ \ \ IndexType\ row\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ row\ index\ */}}
+\DoxyCodeLine{00518\ \ \ IndexType\ *cp\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ pointer\ */}}
+\DoxyCodeLine{00519\ \ \ IndexType\ *cp\_end\ ;\ \ \ \textcolor{comment}{/*\ a\ pointer\ to\ the\ end\ of\ a\ column\ */}}
+\DoxyCodeLine{00520\ \ \ IndexType\ *rp\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ row\ pointer\ */}}
+\DoxyCodeLine{00521\ \ \ IndexType\ *rp\_end\ ;\ \ \ \textcolor{comment}{/*\ a\ pointer\ to\ the\ end\ of\ a\ row\ */}}
+\DoxyCodeLine{00522\ \ \ IndexType\ last\_row\ ;\ \ \ \ \textcolor{comment}{/*\ previous\ row\ */}}
+\DoxyCodeLine{00523\ }
+\DoxyCodeLine{00524\ \ \ \textcolor{comment}{/*\ ===\ Initialize\ columns,\ and\ check\ column\ pointers\ ====================\ */}}
+\DoxyCodeLine{00525\ }
+\DoxyCodeLine{00526\ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0\ ;\ col\ <\ n\_col\ ;\ col++)}
+\DoxyCodeLine{00527\ \ \ \{}
+\DoxyCodeLine{00528\ \ \ \ \ Col\ [col].start\ =\ p\ [col]\ ;}
+\DoxyCodeLine{00529\ \ \ \ \ Col\ [col].length\ =\ p\ [col+1]\ -\/\ p\ [col]\ ;}
+\DoxyCodeLine{00530\ }
+\DoxyCodeLine{00531\ \ \ \ \ \textcolor{keywordflow}{if}\ ((Col\ [col].length)\ <\ 0)\ \textcolor{comment}{//\ extra\ parentheses\ to\ work-\/around\ gcc\ bug\ 10200}}
+\DoxyCodeLine{00532\ \ \ \ \ \{}
+\DoxyCodeLine{00533\ \ \ \ \ \ \ \textcolor{comment}{/*\ column\ pointers\ must\ be\ non-\/decreasing\ */}}
+\DoxyCodeLine{00534\ \ \ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorColLengthNegative\ ;}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ stats\ [Colamd::Info1]\ =\ col\ ;}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ stats\ [Colamd::Info2]\ =\ Col\ [col].length\ ;}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ col\ \%d\ length\ \%d\ <\ 0\(\backslash\)n"{}},\ col,\ Col\ [col].length))\ ;}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00539\ \ \ \ \ \}}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \ Col\ [col].shared1.thickness\ =\ 1\ ;}
+\DoxyCodeLine{00542\ \ \ \ \ Col\ [col].shared2.score\ =\ 0\ ;}
+\DoxyCodeLine{00543\ \ \ \ \ Col\ [col].shared3.prev\ =\ Empty\ ;}
+\DoxyCodeLine{00544\ \ \ \ \ Col\ [col].shared4.degree\_next\ =\ Empty\ ;}
+\DoxyCodeLine{00545\ \ \ \}}
+\DoxyCodeLine{00546\ }
+\DoxyCodeLine{00547\ \ \ \textcolor{comment}{/*\ p\ [0..n\_col]\ no\ longer\ needed,\ used\ as\ "{}head"{}\ in\ subsequent\ routines\ */}}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \textcolor{comment}{/*\ ===\ Scan\ columns,\ compute\ row\ degrees,\ and\ check\ row\ indices\ =========\ */}}
+\DoxyCodeLine{00550\ }
+\DoxyCodeLine{00551\ \ \ stats\ [Info3]\ =\ 0\ ;\ \ \textcolor{comment}{/*\ number\ of\ duplicate\ or\ unsorted\ row\ indices*/}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0\ ;\ row\ <\ n\_row\ ;\ row++)}
+\DoxyCodeLine{00554\ \ \ \{}
+\DoxyCodeLine{00555\ \ \ \ \ Row\ [row].length\ =\ 0\ ;}
+\DoxyCodeLine{00556\ \ \ \ \ Row\ [row].shared2.mark\ =\ -\/1\ ;}
+\DoxyCodeLine{00557\ \ \ \}}
+\DoxyCodeLine{00558\ }
+\DoxyCodeLine{00559\ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0\ ;\ col\ <\ n\_col\ ;\ col++)}
+\DoxyCodeLine{00560\ \ \ \{}
+\DoxyCodeLine{00561\ \ \ \ \ last\_row\ =\ -\/1\ ;}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \ \ \ \ cp\ =\ \&A\ [p\ [col]]\ ;}
+\DoxyCodeLine{00564\ \ \ \ \ cp\_end\ =\ \&A\ [p\ [col+1]]\ ;}
+\DoxyCodeLine{00565\ }
+\DoxyCodeLine{00566\ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{00567\ \ \ \ \ \{}
+\DoxyCodeLine{00568\ \ \ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ \ \ \ \ \ \ \textcolor{comment}{/*\ make\ sure\ row\ indices\ within\ range\ */}}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (row\ <\ 0\ ||\ row\ >=\ n\_row)}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00573\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::ErrorRowIndexOutOfBounds\ ;}
+\DoxyCodeLine{00574\ \ \ \ \ stats\ [Colamd::Info1]\ =\ col\ ;}
+\DoxyCodeLine{00575\ \ \ \ \ stats\ [Colamd::Info2]\ =\ row\ ;}
+\DoxyCodeLine{00576\ \ \ \ \ stats\ [Colamd::Info3]\ =\ n\_row\ ;}
+\DoxyCodeLine{00577\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ row\ \%d\ col\ \%d\ out\ of\ bounds\(\backslash\)n"{}},\ row,\ col))\ ;}
+\DoxyCodeLine{00578\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{false})\ ;}
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00580\ }
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (row\ <=\ last\_row\ ||\ Row\ [row].shared2.mark\ ==\ col)}
+\DoxyCodeLine{00582\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00583\ \ \ \ \ \textcolor{comment}{/*\ row\ index\ are\ unsorted\ or\ repeated\ (or\ both),\ thus\ col\ */}}
+\DoxyCodeLine{00584\ \ \ \ \ \textcolor{comment}{/*\ is\ jumbled.\ \ This\ is\ a\ notice,\ not\ an\ error\ condition.\ */}}
+\DoxyCodeLine{00585\ \ \ \ \ stats\ [Colamd::Status]\ =\ Colamd::OkButJumbled\ ;}
+\DoxyCodeLine{00586\ \ \ \ \ stats\ [Colamd::Info1]\ =\ col\ ;}
+\DoxyCodeLine{00587\ \ \ \ \ stats\ [Colamd::Info2]\ =\ row\ ;}
+\DoxyCodeLine{00588\ \ \ \ \ (stats\ [Colamd::Info3])\ ++\ ;}
+\DoxyCodeLine{00589\ \ \ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ row\ \%d\ col\ \%d\ unsorted/duplicate\(\backslash\)n"{}},row,col));}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Row\ [row].shared2.mark\ !=\ col)}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00594\ \ \ \ \ Row\ [row].length++\ ;}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00598\ \ \ \ \ \textcolor{comment}{/*\ this\ is\ a\ repeated\ entry\ in\ the\ column,\ */}}
+\DoxyCodeLine{00599\ \ \ \ \ \textcolor{comment}{/*\ it\ will\ be\ removed\ */}}
+\DoxyCodeLine{00600\ \ \ \ \ Col\ [col].length-\/-\/\ ;}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00602\ }
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \textcolor{comment}{/*\ mark\ the\ row\ as\ having\ been\ seen\ in\ this\ column\ */}}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ Row\ [row].shared2.mark\ =\ col\ ;}
+\DoxyCodeLine{00605\ }
+\DoxyCodeLine{00606\ \ \ \ \ \ \ last\_row\ =\ row\ ;}
+\DoxyCodeLine{00607\ \ \ \ \ \}}
+\DoxyCodeLine{00608\ \ \ \}}
+\DoxyCodeLine{00609\ }
+\DoxyCodeLine{00610\ \ \ \textcolor{comment}{/*\ ===\ Compute\ row\ pointers\ =============================================\ */}}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ \ \ \textcolor{comment}{/*\ row\ form\ of\ the\ matrix\ starts\ directly\ after\ the\ column\ */}}
+\DoxyCodeLine{00613\ \ \ \textcolor{comment}{/*\ form\ of\ matrix\ in\ A\ */}}
+\DoxyCodeLine{00614\ \ \ Row\ [0].start\ =\ p\ [n\_col]\ ;}
+\DoxyCodeLine{00615\ \ \ Row\ [0].shared1.p\ =\ Row\ [0].start\ ;}
+\DoxyCodeLine{00616\ \ \ Row\ [0].shared2.mark\ =\ -\/1\ ;}
+\DoxyCodeLine{00617\ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 1\ ;\ row\ <\ n\_row\ ;\ row++)}
+\DoxyCodeLine{00618\ \ \ \{}
+\DoxyCodeLine{00619\ \ \ \ \ Row\ [row].start\ =\ Row\ [row-\/1].start\ +\ Row\ [row-\/1].length\ ;}
+\DoxyCodeLine{00620\ \ \ \ \ Row\ [row].shared1.p\ =\ Row\ [row].start\ ;}
+\DoxyCodeLine{00621\ \ \ \ \ Row\ [row].shared2.mark\ =\ -\/1\ ;}
+\DoxyCodeLine{00622\ \ \ \}}
+\DoxyCodeLine{00623\ }
+\DoxyCodeLine{00624\ \ \ \textcolor{comment}{/*\ ===\ Create\ row\ form\ ==================================================\ */}}
+\DoxyCodeLine{00625\ }
+\DoxyCodeLine{00626\ \ \ \textcolor{keywordflow}{if}\ (stats\ [Status]\ ==\ OkButJumbled)}
+\DoxyCodeLine{00627\ \ \ \{}
+\DoxyCodeLine{00628\ \ \ \ \ \textcolor{comment}{/*\ if\ cols\ jumbled,\ watch\ for\ repeated\ row\ indices\ */}}
+\DoxyCodeLine{00629\ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0\ ;\ col\ <\ n\_col\ ;\ col++)}
+\DoxyCodeLine{00630\ \ \ \ \ \{}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ cp\ =\ \&A\ [p\ [col]]\ ;}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ cp\_end\ =\ \&A\ [p\ [col+1]]\ ;}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{00634\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00635\ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{00636\ \ \ \ \ \textcolor{keywordflow}{if}\ (Row\ [row].shared2.mark\ !=\ col)}
+\DoxyCodeLine{00637\ \ \ \ \ \{}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ A\ [(Row\ [row].shared1.p)++]\ =\ col\ ;}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ Row\ [row].shared2.mark\ =\ col\ ;}
+\DoxyCodeLine{00640\ \ \ \ \ \}}
+\DoxyCodeLine{00641\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00642\ \ \ \ \ \}}
+\DoxyCodeLine{00643\ \ \ \}}
+\DoxyCodeLine{00644\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00645\ \ \ \{}
+\DoxyCodeLine{00646\ \ \ \ \ \textcolor{comment}{/*\ if\ cols\ not\ jumbled,\ we\ don't\ need\ the\ mark\ (this\ is\ faster)\ */}}
+\DoxyCodeLine{00647\ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 0\ ;\ col\ <\ n\_col\ ;\ col++)}
+\DoxyCodeLine{00648\ \ \ \ \ \{}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ cp\ =\ \&A\ [p\ [col]]\ ;}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ cp\_end\ =\ \&A\ [p\ [col+1]]\ ;}
+\DoxyCodeLine{00651\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00653\ \ \ \ \ A\ [(Row\ [*cp++].shared1.p)++]\ =\ col\ ;}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00655\ \ \ \ \ \}}
+\DoxyCodeLine{00656\ \ \ \}}
+\DoxyCodeLine{00657\ }
+\DoxyCodeLine{00658\ \ \ \textcolor{comment}{/*\ ===\ Clear\ the\ row\ marks\ and\ set\ row\ degrees\ ==========================\ */}}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0\ ;\ row\ <\ n\_row\ ;\ row++)}
+\DoxyCodeLine{00661\ \ \ \{}
+\DoxyCodeLine{00662\ \ \ \ \ Row\ [row].shared2.mark\ =\ 0\ ;}
+\DoxyCodeLine{00663\ \ \ \ \ Row\ [row].shared1.degree\ =\ Row\ [row].length\ ;}
+\DoxyCodeLine{00664\ \ \ \}}
+\DoxyCodeLine{00665\ }
+\DoxyCodeLine{00666\ \ \ \textcolor{comment}{/*\ ===\ See\ if\ we\ need\ to\ re-\/create\ columns\ ==============================\ */}}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \ \ \textcolor{keywordflow}{if}\ (stats\ [Status]\ ==\ OkButJumbled)}
+\DoxyCodeLine{00669\ \ \ \{}
+\DoxyCodeLine{00670\ \ \ \ \ COLAMD\_DEBUG0\ ((\textcolor{stringliteral}{"{}colamd:\ reconstructing\ column\ form,\ matrix\ jumbled\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{00671\ }
+\DoxyCodeLine{00672\ }
+\DoxyCodeLine{00673\ \ \ \ \ \textcolor{comment}{/*\ ===\ Compute\ col\ pointers\ =========================================\ */}}
+\DoxyCodeLine{00674\ }
+\DoxyCodeLine{00675\ \ \ \ \ \textcolor{comment}{/*\ col\ form\ of\ the\ matrix\ starts\ at\ A\ [0].\ */}}
+\DoxyCodeLine{00676\ \ \ \ \ \textcolor{comment}{/*\ Note,\ we\ may\ have\ a\ gap\ between\ the\ col\ form\ and\ the\ row\ */}}
+\DoxyCodeLine{00677\ \ \ \ \ \textcolor{comment}{/*\ form\ if\ there\ were\ duplicate\ entries,\ if\ so,\ it\ will\ be\ */}}
+\DoxyCodeLine{00678\ \ \ \ \ \textcolor{comment}{/*\ removed\ upon\ the\ first\ garbage\ collection\ */}}
+\DoxyCodeLine{00679\ \ \ \ \ Col\ [0].start\ =\ 0\ ;}
+\DoxyCodeLine{00680\ \ \ \ \ p\ [0]\ =\ Col\ [0].start\ ;}
+\DoxyCodeLine{00681\ \ \ \ \ \textcolor{keywordflow}{for}\ (col\ =\ 1\ ;\ col\ <\ n\_col\ ;\ col++)}
+\DoxyCodeLine{00682\ \ \ \ \ \{}
+\DoxyCodeLine{00683\ \ \ \ \ \ \ \textcolor{comment}{/*\ note\ that\ the\ lengths\ here\ are\ for\ pruned\ columns,\ i.e.\ */}}
+\DoxyCodeLine{00684\ \ \ \ \ \ \ \textcolor{comment}{/*\ no\ duplicate\ row\ indices\ will\ exist\ for\ these\ columns\ */}}
+\DoxyCodeLine{00685\ \ \ \ \ \ \ Col\ [col].start\ =\ Col\ [col-\/1].start\ +\ Col\ [col-\/1].length\ ;}
+\DoxyCodeLine{00686\ \ \ \ \ \ \ p\ [col]\ =\ Col\ [col].start\ ;}
+\DoxyCodeLine{00687\ \ \ \ \ \}}
+\DoxyCodeLine{00688\ }
+\DoxyCodeLine{00689\ \ \ \ \ \textcolor{comment}{/*\ ===\ Re-\/create\ col\ form\ ===========================================\ */}}
+\DoxyCodeLine{00690\ }
+\DoxyCodeLine{00691\ \ \ \ \ \textcolor{keywordflow}{for}\ (row\ =\ 0\ ;\ row\ <\ n\_row\ ;\ row++)}
+\DoxyCodeLine{00692\ \ \ \ \ \{}
+\DoxyCodeLine{00693\ \ \ \ \ \ \ rp\ =\ \&A\ [Row\ [row].start]\ ;}
+\DoxyCodeLine{00694\ \ \ \ \ \ \ rp\_end\ =\ rp\ +\ Row\ [row].length\ ;}
+\DoxyCodeLine{00695\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (rp\ <\ rp\_end)}
+\DoxyCodeLine{00696\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00697\ \ \ \ \ A\ [(p\ [*rp++])++]\ =\ row\ ;}
+\DoxyCodeLine{00698\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00699\ \ \ \ \ \}}
+\DoxyCodeLine{00700\ \ \ \}}
+\DoxyCodeLine{00701\ }
+\DoxyCodeLine{00702\ \ \ \textcolor{comment}{/*\ ===\ Done.\ \ Matrix\ is\ not\ (or\ no\ longer)\ jumbled\ ======================\ */}}
+\DoxyCodeLine{00703\ }
+\DoxyCodeLine{00704\ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{true})\ ;}
+\DoxyCodeLine{00705\ \}}
+\DoxyCodeLine{00706\ }
+\DoxyCodeLine{00707\ }
+\DoxyCodeLine{00708\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00709\ \textcolor{comment}{/*\ ===\ init\_scoring\ =========================================================\ */}}
+\DoxyCodeLine{00710\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00713\ \textcolor{comment}{\ \ Kills\ dense\ or\ empty\ columns\ and\ rows,\ calculates\ an\ initial\ score\ for}}
+\DoxyCodeLine{00714\ \textcolor{comment}{\ \ each\ column,\ and\ places\ all\ columns\ in\ the\ degree\ lists.\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{00715\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00716\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00717\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ init\_scoring}
+\DoxyCodeLine{00718\ \ \ (}
+\DoxyCodeLine{00719\ \ \ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ \ \ \ \ IndexType\ n\_row,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ rows\ of\ A\ */}}
+\DoxyCodeLine{00722\ \ \ \ \ IndexType\ n\_col,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ columns\ of\ A\ */}}
+\DoxyCodeLine{00723\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure<IndexType>}}\ Row\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_row+1\ */}}
+\DoxyCodeLine{00724\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ Col\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{00725\ \ \ \ \ IndexType\ A\ [],\ \ \ \ \ \textcolor{comment}{/*\ column\ form\ and\ row\ form\ of\ A\ */}}
+\DoxyCodeLine{00726\ \ \ \ \ IndexType\ head\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{00727\ \ \ \ \ \textcolor{keywordtype}{double}\ knobs\ [NKnobs],\textcolor{comment}{/*\ parameters\ */}}
+\DoxyCodeLine{00728\ \ \ \ \ IndexType\ *p\_n\_row2,\ \ \ \ \textcolor{comment}{/*\ number\ of\ non-\/dense,\ non-\/empty\ rows\ */}}
+\DoxyCodeLine{00729\ \ \ \ \ IndexType\ *p\_n\_col2,\ \ \ \ \textcolor{comment}{/*\ number\ of\ non-\/dense,\ non-\/empty\ columns\ */}}
+\DoxyCodeLine{00730\ \ \ \ \ IndexType\ *p\_max\_deg\ \ \ \ \textcolor{comment}{/*\ maximum\ row\ degree\ */}}
+\DoxyCodeLine{00731\ \ \ \ \ )}
+\DoxyCodeLine{00732\ \{}
+\DoxyCodeLine{00733\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{00734\ }
+\DoxyCodeLine{00735\ \ \ IndexType\ c\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ index\ */}}
+\DoxyCodeLine{00736\ \ \ IndexType\ r,\ row\ ;\ \ \ \ \textcolor{comment}{/*\ a\ row\ index\ */}}
+\DoxyCodeLine{00737\ \ \ IndexType\ *cp\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ pointer\ */}}
+\DoxyCodeLine{00738\ \ \ IndexType\ deg\ ;\ \ \ \ \ \textcolor{comment}{/*\ degree\ of\ a\ row\ or\ column\ */}}
+\DoxyCodeLine{00739\ \ \ IndexType\ *cp\_end\ ;\ \ \ \textcolor{comment}{/*\ a\ pointer\ to\ the\ end\ of\ a\ column\ */}}
+\DoxyCodeLine{00740\ \ \ IndexType\ *new\_cp\ ;\ \ \ \textcolor{comment}{/*\ new\ column\ pointer\ */}}
+\DoxyCodeLine{00741\ \ \ IndexType\ col\_length\ ;\ \ \ \ \textcolor{comment}{/*\ length\ of\ pruned\ column\ */}}
+\DoxyCodeLine{00742\ \ \ IndexType\ score\ ;\ \ \ \ \ \textcolor{comment}{/*\ current\ column\ score\ */}}
+\DoxyCodeLine{00743\ \ \ IndexType\ n\_col2\ ;\ \ \ \ \textcolor{comment}{/*\ number\ of\ non-\/dense,\ non-\/empty\ columns\ */}}
+\DoxyCodeLine{00744\ \ \ IndexType\ n\_row2\ ;\ \ \ \ \textcolor{comment}{/*\ number\ of\ non-\/dense,\ non-\/empty\ rows\ */}}
+\DoxyCodeLine{00745\ \ \ IndexType\ dense\_row\_count\ ;\ \textcolor{comment}{/*\ remove\ rows\ with\ more\ entries\ than\ this\ */}}
+\DoxyCodeLine{00746\ \ \ IndexType\ dense\_col\_count\ ;\ \textcolor{comment}{/*\ remove\ cols\ with\ more\ entries\ than\ this\ */}}
+\DoxyCodeLine{00747\ \ \ IndexType\ min\_score\ ;\ \ \ \textcolor{comment}{/*\ smallest\ column\ score\ */}}
+\DoxyCodeLine{00748\ \ \ IndexType\ max\_deg\ ;\ \ \ \textcolor{comment}{/*\ maximum\ row\ degree\ */}}
+\DoxyCodeLine{00749\ \ \ IndexType\ next\_col\ ;\ \ \ \ \textcolor{comment}{/*\ Used\ to\ add\ to\ degree\ list.*/}}
+\DoxyCodeLine{00750\ }
+\DoxyCodeLine{00751\ }
+\DoxyCodeLine{00752\ \ \ \textcolor{comment}{/*\ ===\ Extract\ knobs\ ====================================================\ */}}
+\DoxyCodeLine{00753\ }
+\DoxyCodeLine{00754\ \ \ dense\_row\_count\ =\ numext::maxi(IndexType(0),\ numext::mini(IndexType(knobs\ [Colamd::DenseRow]\ *\ n\_col),\ n\_col))\ ;}
+\DoxyCodeLine{00755\ \ \ dense\_col\_count\ =\ numext::maxi(IndexType(0),\ numext::mini(IndexType(knobs\ [Colamd::DenseCol]\ *\ n\_row),\ n\_row))\ ;}
+\DoxyCodeLine{00756\ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ densecount:\ \%d\ \%d\(\backslash\)n"{}},\ dense\_row\_count,\ dense\_col\_count))\ ;}
+\DoxyCodeLine{00757\ \ \ max\_deg\ =\ 0\ ;}
+\DoxyCodeLine{00758\ \ \ n\_col2\ =\ n\_col\ ;}
+\DoxyCodeLine{00759\ \ \ n\_row2\ =\ n\_row\ ;}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ \ \ \textcolor{comment}{/*\ ===\ Kill\ empty\ columns\ ===============================================\ */}}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00763\ \ \ \textcolor{comment}{/*\ Put\ the\ empty\ columns\ at\ the\ end\ in\ their\ natural\ order,\ so\ that\ LU\ */}}
+\DoxyCodeLine{00764\ \ \ \textcolor{comment}{/*\ factorization\ can\ proceed\ as\ far\ as\ possible.\ */}}
+\DoxyCodeLine{00765\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ n\_col-\/1\ ;\ c\ >=\ 0\ ;\ c-\/-\/)}
+\DoxyCodeLine{00766\ \ \ \{}
+\DoxyCodeLine{00767\ \ \ \ \ deg\ =\ Col\ [c].length\ ;}
+\DoxyCodeLine{00768\ \ \ \ \ \textcolor{keywordflow}{if}\ (deg\ ==\ 0)}
+\DoxyCodeLine{00769\ \ \ \ \ \{}
+\DoxyCodeLine{00770\ \ \ \ \ \ \ \textcolor{comment}{/*\ this\ is\ a\ empty\ column,\ kill\ and\ order\ it\ last\ */}}
+\DoxyCodeLine{00771\ \ \ \ \ \ \ Col\ [c].shared2.order\ =\ -\/-\/n\_col2\ ;}
+\DoxyCodeLine{00772\ \ \ \ \ \ \ Col[c].kill\_principal()\ ;}
+\DoxyCodeLine{00773\ \ \ \ \ \}}
+\DoxyCodeLine{00774\ \ \ \}}
+\DoxyCodeLine{00775\ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ null\ columns\ killed:\ \%d\(\backslash\)n"{}},\ n\_col\ -\/\ n\_col2))\ ;}
+\DoxyCodeLine{00776\ }
+\DoxyCodeLine{00777\ \ \ \textcolor{comment}{/*\ ===\ Kill\ dense\ columns\ ===============================================\ */}}
+\DoxyCodeLine{00778\ }
+\DoxyCodeLine{00779\ \ \ \textcolor{comment}{/*\ Put\ the\ dense\ columns\ at\ the\ end,\ in\ their\ natural\ order\ */}}
+\DoxyCodeLine{00780\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ n\_col-\/1\ ;\ c\ >=\ 0\ ;\ c-\/-\/)}
+\DoxyCodeLine{00781\ \ \ \{}
+\DoxyCodeLine{00782\ \ \ \ \ \textcolor{comment}{/*\ skip\ any\ dead\ columns\ */}}
+\DoxyCodeLine{00783\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[c].is\_dead())}
+\DoxyCodeLine{00784\ \ \ \ \ \{}
+\DoxyCodeLine{00785\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{00786\ \ \ \ \ \}}
+\DoxyCodeLine{00787\ \ \ \ \ deg\ =\ Col\ [c].length\ ;}
+\DoxyCodeLine{00788\ \ \ \ \ \textcolor{keywordflow}{if}\ (deg\ >\ dense\_col\_count)}
+\DoxyCodeLine{00789\ \ \ \ \ \{}
+\DoxyCodeLine{00790\ \ \ \ \ \ \ \textcolor{comment}{/*\ this\ is\ a\ dense\ column,\ kill\ and\ order\ it\ last\ */}}
+\DoxyCodeLine{00791\ \ \ \ \ \ \ Col\ [c].shared2.order\ =\ -\/-\/n\_col2\ ;}
+\DoxyCodeLine{00792\ \ \ \ \ \ \ \textcolor{comment}{/*\ decrement\ the\ row\ degrees\ */}}
+\DoxyCodeLine{00793\ \ \ \ \ \ \ cp\ =\ \&A\ [Col\ [c].start]\ ;}
+\DoxyCodeLine{00794\ \ \ \ \ \ \ cp\_end\ =\ cp\ +\ Col\ [c].length\ ;}
+\DoxyCodeLine{00795\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{00796\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00797\ \ \ \ \ Row\ [*cp++].shared1.degree-\/-\/\ ;}
+\DoxyCodeLine{00798\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00799\ \ \ \ \ \ \ Col[c].kill\_principal()\ ;}
+\DoxyCodeLine{00800\ \ \ \ \ \}}
+\DoxyCodeLine{00801\ \ \ \}}
+\DoxyCodeLine{00802\ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ Dense\ and\ null\ columns\ killed:\ \%d\(\backslash\)n"{}},\ n\_col\ -\/\ n\_col2))\ ;}
+\DoxyCodeLine{00803\ }
+\DoxyCodeLine{00804\ \ \ \textcolor{comment}{/*\ ===\ Kill\ dense\ and\ empty\ rows\ ========================================\ */}}
+\DoxyCodeLine{00805\ }
+\DoxyCodeLine{00806\ \ \ \textcolor{keywordflow}{for}\ (r\ =\ 0\ ;\ r\ <\ n\_row\ ;\ r++)}
+\DoxyCodeLine{00807\ \ \ \{}
+\DoxyCodeLine{00808\ \ \ \ \ deg\ =\ Row\ [r].shared1.degree\ ;}
+\DoxyCodeLine{00809\ \ \ \ \ COLAMD\_ASSERT\ (deg\ >=\ 0\ \&\&\ deg\ <=\ n\_col)\ ;}
+\DoxyCodeLine{00810\ \ \ \ \ \textcolor{keywordflow}{if}\ (deg\ >\ dense\_row\_count\ ||\ deg\ ==\ 0)}
+\DoxyCodeLine{00811\ \ \ \ \ \{}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \textcolor{comment}{/*\ kill\ a\ dense\ or\ empty\ row\ */}}
+\DoxyCodeLine{00813\ \ \ \ \ \ \ Row[r].kill()\ ;}
+\DoxyCodeLine{00814\ \ \ \ \ \ \ -\/-\/n\_row2\ ;}
+\DoxyCodeLine{00815\ \ \ \ \ \}}
+\DoxyCodeLine{00816\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00817\ \ \ \ \ \{}
+\DoxyCodeLine{00818\ \ \ \ \ \ \ \textcolor{comment}{/*\ keep\ track\ of\ max\ degree\ of\ remaining\ rows\ */}}
+\DoxyCodeLine{00819\ \ \ \ \ \ \ max\_deg\ =\ numext::maxi(max\_deg,\ deg)\ ;}
+\DoxyCodeLine{00820\ \ \ \ \ \}}
+\DoxyCodeLine{00821\ \ \ \}}
+\DoxyCodeLine{00822\ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ Dense\ and\ null\ rows\ killed:\ \%d\(\backslash\)n"{}},\ n\_row\ -\/\ n\_row2))\ ;}
+\DoxyCodeLine{00823\ }
+\DoxyCodeLine{00824\ \ \ \textcolor{comment}{/*\ ===\ Compute\ initial\ column\ scores\ ====================================\ */}}
+\DoxyCodeLine{00825\ }
+\DoxyCodeLine{00826\ \ \ \textcolor{comment}{/*\ At\ this\ point\ the\ row\ degrees\ are\ accurate.\ \ They\ reflect\ the\ number\ */}}
+\DoxyCodeLine{00827\ \ \ \textcolor{comment}{/*\ of\ "{}live"{}\ (non-\/dense)\ columns\ in\ each\ row.\ \ No\ empty\ rows\ exist.\ */}}
+\DoxyCodeLine{00828\ \ \ \textcolor{comment}{/*\ Some\ "{}live"{}\ columns\ may\ contain\ only\ dead\ rows,\ however.\ \ These\ are\ */}}
+\DoxyCodeLine{00829\ \ \ \textcolor{comment}{/*\ pruned\ in\ the\ code\ below.\ */}}
+\DoxyCodeLine{00830\ }
+\DoxyCodeLine{00831\ \ \ \textcolor{comment}{/*\ now\ find\ the\ initial\ matlab\ score\ for\ each\ column\ */}}
+\DoxyCodeLine{00832\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ n\_col-\/1\ ;\ c\ >=\ 0\ ;\ c-\/-\/)}
+\DoxyCodeLine{00833\ \ \ \{}
+\DoxyCodeLine{00834\ \ \ \ \ \textcolor{comment}{/*\ skip\ dead\ column\ */}}
+\DoxyCodeLine{00835\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[c].is\_dead())}
+\DoxyCodeLine{00836\ \ \ \ \ \{}
+\DoxyCodeLine{00837\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{00838\ \ \ \ \ \}}
+\DoxyCodeLine{00839\ \ \ \ \ score\ =\ 0\ ;}
+\DoxyCodeLine{00840\ \ \ \ \ cp\ =\ \&A\ [Col\ [c].start]\ ;}
+\DoxyCodeLine{00841\ \ \ \ \ new\_cp\ =\ cp\ ;}
+\DoxyCodeLine{00842\ \ \ \ \ cp\_end\ =\ cp\ +\ Col\ [c].length\ ;}
+\DoxyCodeLine{00843\ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{00844\ \ \ \ \ \{}
+\DoxyCodeLine{00845\ \ \ \ \ \ \ \textcolor{comment}{/*\ get\ a\ row\ */}}
+\DoxyCodeLine{00846\ \ \ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{00847\ \ \ \ \ \ \ \textcolor{comment}{/*\ skip\ if\ dead\ */}}
+\DoxyCodeLine{00848\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Row[row].is\_dead())}
+\DoxyCodeLine{00849\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00850\ \ \ \ \ continue\ ;}
+\DoxyCodeLine{00851\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00852\ \ \ \ \ \ \ \textcolor{comment}{/*\ compact\ the\ column\ */}}
+\DoxyCodeLine{00853\ \ \ \ \ \ \ *new\_cp++\ =\ row\ ;}
+\DoxyCodeLine{00854\ \ \ \ \ \ \ \textcolor{comment}{/*\ add\ row's\ external\ degree\ */}}
+\DoxyCodeLine{00855\ \ \ \ \ \ \ score\ +=\ Row\ [row].shared1.degree\ -\/\ 1\ ;}
+\DoxyCodeLine{00856\ \ \ \ \ \ \ \textcolor{comment}{/*\ guard\ against\ integer\ overflow\ */}}
+\DoxyCodeLine{00857\ \ \ \ \ \ \ score\ =\ numext::mini(score,\ n\_col)\ ;}
+\DoxyCodeLine{00858\ \ \ \ \ \}}
+\DoxyCodeLine{00859\ \ \ \ \ \textcolor{comment}{/*\ determine\ pruned\ column\ length\ */}}
+\DoxyCodeLine{00860\ \ \ \ \ col\_length\ =\ (IndexType)\ (new\_cp\ -\/\ \&A\ [Col\ [c].start])\ ;}
+\DoxyCodeLine{00861\ \ \ \ \ \textcolor{keywordflow}{if}\ (col\_length\ ==\ 0)}
+\DoxyCodeLine{00862\ \ \ \ \ \{}
+\DoxyCodeLine{00863\ \ \ \ \ \ \ \textcolor{comment}{/*\ a\ newly-\/made\ null\ column\ (all\ rows\ in\ this\ col\ are\ "{}dense"{}\ */}}
+\DoxyCodeLine{00864\ \ \ \ \ \ \ \textcolor{comment}{/*\ and\ have\ already\ been\ killed)\ */}}
+\DoxyCodeLine{00865\ \ \ \ \ \ \ COLAMD\_DEBUG2\ ((\textcolor{stringliteral}{"{}Newly\ null\ killed:\ \%d\(\backslash\)n"{}},\ c))\ ;}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ Col\ [c].shared2.order\ =\ -\/-\/n\_col2\ ;}
+\DoxyCodeLine{00867\ \ \ \ \ \ \ Col[c].kill\_principal()\ ;}
+\DoxyCodeLine{00868\ \ \ \ \ \}}
+\DoxyCodeLine{00869\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00870\ \ \ \ \ \{}
+\DoxyCodeLine{00871\ \ \ \ \ \ \ \textcolor{comment}{/*\ set\ column\ length\ and\ set\ score\ */}}
+\DoxyCodeLine{00872\ \ \ \ \ \ \ COLAMD\_ASSERT\ (score\ >=\ 0)\ ;}
+\DoxyCodeLine{00873\ \ \ \ \ \ \ COLAMD\_ASSERT\ (score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{00874\ \ \ \ \ \ \ Col\ [c].length\ =\ col\_length\ ;}
+\DoxyCodeLine{00875\ \ \ \ \ \ \ Col\ [c].shared2.score\ =\ score\ ;}
+\DoxyCodeLine{00876\ \ \ \ \ \}}
+\DoxyCodeLine{00877\ \ \ \}}
+\DoxyCodeLine{00878\ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ Dense,\ null,\ and\ newly-\/null\ columns\ killed:\ \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{00879\ \ \ \ \ \ \ \ \ \ \ n\_col-\/n\_col2))\ ;}
+\DoxyCodeLine{00880\ }
+\DoxyCodeLine{00881\ \ \ \textcolor{comment}{/*\ At\ this\ point,\ all\ empty\ rows\ and\ columns\ are\ dead.\ \ All\ live\ columns\ */}}
+\DoxyCodeLine{00882\ \ \ \textcolor{comment}{/*\ are\ "{}clean"{}\ (containing\ no\ dead\ rows)\ and\ simplicial\ (no\ supercolumns\ */}}
+\DoxyCodeLine{00883\ \ \ \textcolor{comment}{/*\ yet).\ \ Rows\ may\ contain\ dead\ columns,\ but\ all\ live\ rows\ contain\ at\ */}}
+\DoxyCodeLine{00884\ \ \ \textcolor{comment}{/*\ least\ one\ live\ column.\ */}}
+\DoxyCodeLine{00885\ }
+\DoxyCodeLine{00886\ \ \ \textcolor{comment}{/*\ ===\ Initialize\ degree\ lists\ ==========================================\ */}}
+\DoxyCodeLine{00887\ }
+\DoxyCodeLine{00888\ }
+\DoxyCodeLine{00889\ \ \ \textcolor{comment}{/*\ clear\ the\ hash\ buckets\ */}}
+\DoxyCodeLine{00890\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ 0\ ;\ c\ <=\ n\_col\ ;\ c++)}
+\DoxyCodeLine{00891\ \ \ \{}
+\DoxyCodeLine{00892\ \ \ \ \ head\ [c]\ =\ Empty\ ;}
+\DoxyCodeLine{00893\ \ \ \}}
+\DoxyCodeLine{00894\ \ \ min\_score\ =\ n\_col\ ;}
+\DoxyCodeLine{00895\ \ \ \textcolor{comment}{/*\ place\ in\ reverse\ order,\ so\ low\ column\ indices\ are\ at\ the\ front\ */}}
+\DoxyCodeLine{00896\ \ \ \textcolor{comment}{/*\ of\ the\ lists.\ \ This\ is\ to\ encourage\ natural\ tie-\/breaking\ */}}
+\DoxyCodeLine{00897\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ n\_col-\/1\ ;\ c\ >=\ 0\ ;\ c-\/-\/)}
+\DoxyCodeLine{00898\ \ \ \{}
+\DoxyCodeLine{00899\ \ \ \ \ \textcolor{comment}{/*\ only\ add\ principal\ columns\ to\ degree\ lists\ */}}
+\DoxyCodeLine{00900\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[c].is\_alive())}
+\DoxyCodeLine{00901\ \ \ \ \ \{}
+\DoxyCodeLine{00902\ \ \ \ \ \ \ COLAMD\_DEBUG4\ ((\textcolor{stringliteral}{"{}place\ \%d\ score\ \%d\ minscore\ \%d\ ncol\ \%d\(\backslash\)n"{}},}
+\DoxyCodeLine{00903\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ c,\ Col\ [c].shared2.score,\ min\_score,\ n\_col))\ ;}
+\DoxyCodeLine{00904\ }
+\DoxyCodeLine{00905\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Add\ columns\ score\ to\ DList\ ===============================\ */}}
+\DoxyCodeLine{00906\ }
+\DoxyCodeLine{00907\ \ \ \ \ \ \ score\ =\ Col\ [c].shared2.score\ ;}
+\DoxyCodeLine{00908\ }
+\DoxyCodeLine{00909\ \ \ \ \ \ \ COLAMD\_ASSERT\ (min\_score\ >=\ 0)\ ;}
+\DoxyCodeLine{00910\ \ \ \ \ \ \ COLAMD\_ASSERT\ (min\_score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{00911\ \ \ \ \ \ \ COLAMD\_ASSERT\ (score\ >=\ 0)\ ;}
+\DoxyCodeLine{00912\ \ \ \ \ \ \ COLAMD\_ASSERT\ (score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{00913\ \ \ \ \ \ \ COLAMD\_ASSERT\ (head\ [score]\ >=\ Empty)\ ;}
+\DoxyCodeLine{00914\ }
+\DoxyCodeLine{00915\ \ \ \ \ \ \ \textcolor{comment}{/*\ now\ add\ this\ column\ to\ dList\ at\ proper\ score\ location\ */}}
+\DoxyCodeLine{00916\ \ \ \ \ \ \ next\_col\ =\ head\ [score]\ ;}
+\DoxyCodeLine{00917\ \ \ \ \ \ \ Col\ [c].shared3.prev\ =\ Empty\ ;}
+\DoxyCodeLine{00918\ \ \ \ \ \ \ Col\ [c].shared4.degree\_next\ =\ next\_col\ ;}
+\DoxyCodeLine{00919\ }
+\DoxyCodeLine{00920\ \ \ \ \ \ \ \textcolor{comment}{/*\ if\ there\ already\ was\ a\ column\ with\ the\ same\ score,\ set\ its\ */}}
+\DoxyCodeLine{00921\ \ \ \ \ \ \ \textcolor{comment}{/*\ previous\ pointer\ to\ this\ new\ column\ */}}
+\DoxyCodeLine{00922\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (next\_col\ !=\ Empty)}
+\DoxyCodeLine{00923\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00924\ \ \ \ \ Col\ [next\_col].shared3.prev\ =\ c\ ;}
+\DoxyCodeLine{00925\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00926\ \ \ \ \ \ \ head\ [score]\ =\ c\ ;}
+\DoxyCodeLine{00927\ }
+\DoxyCodeLine{00928\ \ \ \ \ \ \ \textcolor{comment}{/*\ see\ if\ this\ score\ is\ less\ than\ current\ min\ */}}
+\DoxyCodeLine{00929\ \ \ \ \ \ \ min\_score\ =\ numext::mini(min\_score,\ score)\ ;}
+\DoxyCodeLine{00930\ }
+\DoxyCodeLine{00931\ }
+\DoxyCodeLine{00932\ \ \ \ \ \}}
+\DoxyCodeLine{00933\ \ \ \}}
+\DoxyCodeLine{00934\ }
+\DoxyCodeLine{00935\ }
+\DoxyCodeLine{00936\ \ \ \textcolor{comment}{/*\ ===\ Return\ number\ of\ remaining\ columns,\ and\ max\ row\ degree\ ===========\ */}}
+\DoxyCodeLine{00937\ }
+\DoxyCodeLine{00938\ \ \ *p\_n\_col2\ =\ n\_col2\ ;}
+\DoxyCodeLine{00939\ \ \ *p\_n\_row2\ =\ n\_row2\ ;}
+\DoxyCodeLine{00940\ \ \ *p\_max\_deg\ =\ max\_deg\ ;}
+\DoxyCodeLine{00941\ \}}
+\DoxyCodeLine{00942\ }
+\DoxyCodeLine{00943\ }
+\DoxyCodeLine{00944\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00945\ \textcolor{comment}{/*\ ===\ find\_ordering\ ========================================================\ */}}
+\DoxyCodeLine{00946\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{00947\ }
+\DoxyCodeLine{00948\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00949\ \textcolor{comment}{\ \ Order\ the\ principal\ columns\ of\ the\ supercolumn\ form\ of\ the\ matrix}}
+\DoxyCodeLine{00950\ \textcolor{comment}{\ \ (no\ supercolumns\ on\ input).\ \ Uses\ a\ minimum\ approximate\ column\ minimum}}
+\DoxyCodeLine{00951\ \textcolor{comment}{\ \ degree\ ordering\ method.\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{00952\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00953\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{00954\ \textcolor{keyword}{static}\ IndexType\ find\_ordering\ \textcolor{comment}{/*\ return\ the\ number\ of\ garbage\ collections\ */}}
+\DoxyCodeLine{00955\ \ \ (}
+\DoxyCodeLine{00956\ \ \ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{00957\ }
+\DoxyCodeLine{00958\ \ \ \ \ IndexType\ n\_row,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ rows\ of\ A\ */}}
+\DoxyCodeLine{00959\ \ \ \ \ IndexType\ n\_col,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ columns\ of\ A\ */}}
+\DoxyCodeLine{00960\ \ \ \ \ IndexType\ Alen,\ \ \ \ \ \textcolor{comment}{/*\ size\ of\ A,\ 2*nnz\ +\ n\_col\ or\ larger\ */}}
+\DoxyCodeLine{00961\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure<IndexType>}}\ Row\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_row+1\ */}}
+\DoxyCodeLine{00962\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ Col\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{00963\ \ \ \ \ IndexType\ A\ [],\ \ \ \ \ \textcolor{comment}{/*\ column\ form\ and\ row\ form\ of\ A\ */}}
+\DoxyCodeLine{00964\ \ \ \ \ IndexType\ head\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{00965\ \ \ \ \ IndexType\ n\_col2,\ \ \ \ \ \textcolor{comment}{/*\ Remaining\ columns\ to\ order\ */}}
+\DoxyCodeLine{00966\ \ \ \ \ IndexType\ max\_deg,\ \ \ \ \textcolor{comment}{/*\ Maximum\ row\ degree\ */}}
+\DoxyCodeLine{00967\ \ \ \ \ IndexType\ pfree\ \ \ \ \ \textcolor{comment}{/*\ index\ of\ first\ free\ slot\ (2*nnz\ on\ entry)\ */}}
+\DoxyCodeLine{00968\ \ \ \ \ )}
+\DoxyCodeLine{00969\ \{}
+\DoxyCodeLine{00970\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{00971\ }
+\DoxyCodeLine{00972\ \ \ IndexType\ k\ ;\ \ \ \ \ \textcolor{comment}{/*\ current\ pivot\ ordering\ step\ */}}
+\DoxyCodeLine{00973\ \ \ IndexType\ pivot\_col\ ;\ \ \ \textcolor{comment}{/*\ current\ pivot\ column\ */}}
+\DoxyCodeLine{00974\ \ \ IndexType\ *cp\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ pointer\ */}}
+\DoxyCodeLine{00975\ \ \ IndexType\ *rp\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ row\ pointer\ */}}
+\DoxyCodeLine{00976\ \ \ IndexType\ pivot\_row\ ;\ \ \ \textcolor{comment}{/*\ current\ pivot\ row\ */}}
+\DoxyCodeLine{00977\ \ \ IndexType\ *new\_cp\ ;\ \ \ \textcolor{comment}{/*\ modified\ column\ pointer\ */}}
+\DoxyCodeLine{00978\ \ \ IndexType\ *new\_rp\ ;\ \ \ \textcolor{comment}{/*\ modified\ row\ pointer\ */}}
+\DoxyCodeLine{00979\ \ \ IndexType\ pivot\_row\_start\ ;\ \textcolor{comment}{/*\ pointer\ to\ start\ of\ pivot\ row\ */}}
+\DoxyCodeLine{00980\ \ \ IndexType\ pivot\_row\_degree\ ;\ \ \textcolor{comment}{/*\ number\ of\ columns\ in\ pivot\ row\ */}}
+\DoxyCodeLine{00981\ \ \ IndexType\ pivot\_row\_length\ ;\ \ \textcolor{comment}{/*\ number\ of\ supercolumns\ in\ pivot\ row\ */}}
+\DoxyCodeLine{00982\ \ \ IndexType\ pivot\_col\_score\ ;\ \textcolor{comment}{/*\ score\ of\ pivot\ column\ */}}
+\DoxyCodeLine{00983\ \ \ IndexType\ needed\_memory\ ;\ \ \ \textcolor{comment}{/*\ free\ space\ needed\ for\ pivot\ row\ */}}
+\DoxyCodeLine{00984\ \ \ IndexType\ *cp\_end\ ;\ \ \ \textcolor{comment}{/*\ pointer\ to\ the\ end\ of\ a\ column\ */}}
+\DoxyCodeLine{00985\ \ \ IndexType\ *rp\_end\ ;\ \ \ \textcolor{comment}{/*\ pointer\ to\ the\ end\ of\ a\ row\ */}}
+\DoxyCodeLine{00986\ \ \ IndexType\ row\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ row\ index\ */}}
+\DoxyCodeLine{00987\ \ \ IndexType\ col\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ index\ */}}
+\DoxyCodeLine{00988\ \ \ IndexType\ max\_score\ ;\ \ \ \textcolor{comment}{/*\ maximum\ possible\ score\ */}}
+\DoxyCodeLine{00989\ \ \ IndexType\ cur\_score\ ;\ \ \ \textcolor{comment}{/*\ score\ of\ current\ column\ */}}
+\DoxyCodeLine{00990\ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\ hash\ ;\ \ \ \textcolor{comment}{/*\ hash\ value\ for\ supernode\ detection\ */}}
+\DoxyCodeLine{00991\ \ \ IndexType\ head\_column\ ;\ \ \ \textcolor{comment}{/*\ head\ of\ hash\ bucket\ */}}
+\DoxyCodeLine{00992\ \ \ IndexType\ first\_col\ ;\ \ \ \textcolor{comment}{/*\ first\ column\ in\ hash\ bucket\ */}}
+\DoxyCodeLine{00993\ \ \ IndexType\ tag\_mark\ ;\ \ \ \ \textcolor{comment}{/*\ marker\ value\ for\ mark\ array\ */}}
+\DoxyCodeLine{00994\ \ \ IndexType\ row\_mark\ ;\ \ \ \ \textcolor{comment}{/*\ Row\ [row].shared2.mark\ */}}
+\DoxyCodeLine{00995\ \ \ IndexType\ set\_difference\ ;\ \ \textcolor{comment}{/*\ set\ difference\ size\ of\ row\ with\ pivot\ row\ */}}
+\DoxyCodeLine{00996\ \ \ IndexType\ min\_score\ ;\ \ \ \textcolor{comment}{/*\ smallest\ column\ score\ */}}
+\DoxyCodeLine{00997\ \ \ IndexType\ col\_thickness\ ;\ \ \ \textcolor{comment}{/*\ "{}thickness"{}\ (no.\ of\ columns\ in\ a\ supercol)\ */}}
+\DoxyCodeLine{00998\ \ \ IndexType\ max\_mark\ ;\ \ \ \ \textcolor{comment}{/*\ maximum\ value\ of\ tag\_mark\ */}}
+\DoxyCodeLine{00999\ \ \ IndexType\ pivot\_col\_thickness\ ;\ \textcolor{comment}{/*\ number\ of\ columns\ represented\ by\ pivot\ col\ */}}
+\DoxyCodeLine{01000\ \ \ IndexType\ prev\_col\ ;\ \ \ \ \textcolor{comment}{/*\ Used\ by\ Dlist\ operations.\ */}}
+\DoxyCodeLine{01001\ \ \ IndexType\ next\_col\ ;\ \ \ \ \textcolor{comment}{/*\ Used\ by\ Dlist\ operations.\ */}}
+\DoxyCodeLine{01002\ \ \ IndexType\ ngarbage\ ;\ \ \ \ \textcolor{comment}{/*\ number\ of\ garbage\ collections\ performed\ */}}
+\DoxyCodeLine{01003\ }
+\DoxyCodeLine{01004\ }
+\DoxyCodeLine{01005\ \ \ \textcolor{comment}{/*\ ===\ Initialization\ and\ clear\ mark\ ====================================\ */}}
+\DoxyCodeLine{01006\ }
+\DoxyCodeLine{01007\ \ \ max\_mark\ =\ INT\_MAX\ -\/\ n\_col\ ;\ \ \textcolor{comment}{/*\ INT\_MAX\ defined\ in\ <limits.h>\ */}}
+\DoxyCodeLine{01008\ \ \ tag\_mark\ =\ Colamd::clear\_mark\ (n\_row,\ Row)\ ;}
+\DoxyCodeLine{01009\ \ \ min\_score\ =\ 0\ ;}
+\DoxyCodeLine{01010\ \ \ ngarbage\ =\ 0\ ;}
+\DoxyCodeLine{01011\ \ \ COLAMD\_DEBUG1\ ((\textcolor{stringliteral}{"{}colamd:\ Ordering,\ n\_col2=\%d\(\backslash\)n"{}},\ n\_col2))\ ;}
+\DoxyCodeLine{01012\ }
+\DoxyCodeLine{01013\ \ \ \textcolor{comment}{/*\ ===\ Order\ the\ columns\ ================================================\ */}}
+\DoxyCodeLine{01014\ }
+\DoxyCodeLine{01015\ \ \ \textcolor{keywordflow}{for}\ (k\ =\ 0\ ;\ k\ <\ n\_col2\ ;\ \textcolor{comment}{/*\ 'k'\ is\ incremented\ below\ */})}
+\DoxyCodeLine{01016\ \ \ \{}
+\DoxyCodeLine{01017\ }
+\DoxyCodeLine{01018\ \ \ \ \ \textcolor{comment}{/*\ ===\ Select\ pivot\ column,\ and\ order\ it\ ============================\ */}}
+\DoxyCodeLine{01019\ }
+\DoxyCodeLine{01020\ \ \ \ \ \textcolor{comment}{/*\ make\ sure\ degree\ list\ isn't\ empty\ */}}
+\DoxyCodeLine{01021\ \ \ \ \ COLAMD\_ASSERT\ (min\_score\ >=\ 0)\ ;}
+\DoxyCodeLine{01022\ \ \ \ \ COLAMD\_ASSERT\ (min\_score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01023\ \ \ \ \ COLAMD\_ASSERT\ (head\ [min\_score]\ >=\ Empty)\ ;}
+\DoxyCodeLine{01024\ }
+\DoxyCodeLine{01025\ \ \ \ \ \textcolor{comment}{/*\ get\ pivot\ column\ from\ head\ of\ minimum\ degree\ list\ */}}
+\DoxyCodeLine{01026\ \ \ \ \ \textcolor{keywordflow}{while}\ (min\_score\ <\ n\_col\ \&\&\ head\ [min\_score]\ ==\ Empty)}
+\DoxyCodeLine{01027\ \ \ \ \ \{}
+\DoxyCodeLine{01028\ \ \ \ \ \ \ min\_score++\ ;}
+\DoxyCodeLine{01029\ \ \ \ \ \}}
+\DoxyCodeLine{01030\ \ \ \ \ pivot\_col\ =\ head\ [min\_score]\ ;}
+\DoxyCodeLine{01031\ \ \ \ \ COLAMD\_ASSERT\ (pivot\_col\ >=\ 0\ \&\&\ pivot\_col\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01032\ \ \ \ \ next\_col\ =\ Col\ [pivot\_col].shared4.degree\_next\ ;}
+\DoxyCodeLine{01033\ \ \ \ \ head\ [min\_score]\ =\ next\_col\ ;}
+\DoxyCodeLine{01034\ \ \ \ \ \textcolor{keywordflow}{if}\ (next\_col\ !=\ Empty)}
+\DoxyCodeLine{01035\ \ \ \ \ \{}
+\DoxyCodeLine{01036\ \ \ \ \ \ \ Col\ [next\_col].shared3.prev\ =\ Empty\ ;}
+\DoxyCodeLine{01037\ \ \ \ \ \}}
+\DoxyCodeLine{01038\ }
+\DoxyCodeLine{01039\ \ \ \ \ COLAMD\_ASSERT\ (Col[pivot\_col].is\_alive())\ ;}
+\DoxyCodeLine{01040\ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}Pivot\ col:\ \%d\(\backslash\)n"{}},\ pivot\_col))\ ;}
+\DoxyCodeLine{01041\ }
+\DoxyCodeLine{01042\ \ \ \ \ \textcolor{comment}{/*\ remember\ score\ for\ defrag\ check\ */}}
+\DoxyCodeLine{01043\ \ \ \ \ pivot\_col\_score\ =\ Col\ [pivot\_col].shared2.score\ ;}
+\DoxyCodeLine{01044\ }
+\DoxyCodeLine{01045\ \ \ \ \ \textcolor{comment}{/*\ the\ pivot\ column\ is\ the\ kth\ column\ in\ the\ pivot\ order\ */}}
+\DoxyCodeLine{01046\ \ \ \ \ Col\ [pivot\_col].shared2.order\ =\ k\ ;}
+\DoxyCodeLine{01047\ }
+\DoxyCodeLine{01048\ \ \ \ \ \textcolor{comment}{/*\ increment\ order\ count\ by\ column\ thickness\ */}}
+\DoxyCodeLine{01049\ \ \ \ \ pivot\_col\_thickness\ =\ Col\ [pivot\_col].shared1.thickness\ ;}
+\DoxyCodeLine{01050\ \ \ \ \ k\ +=\ pivot\_col\_thickness\ ;}
+\DoxyCodeLine{01051\ \ \ \ \ COLAMD\_ASSERT\ (pivot\_col\_thickness\ >\ 0)\ ;}
+\DoxyCodeLine{01052\ }
+\DoxyCodeLine{01053\ \ \ \ \ \textcolor{comment}{/*\ ===\ Garbage\_collection,\ if\ necessary\ =============================\ */}}
+\DoxyCodeLine{01054\ }
+\DoxyCodeLine{01055\ \ \ \ \ needed\_memory\ =\ numext::mini(pivot\_col\_score,\ n\_col\ -\/\ k)\ ;}
+\DoxyCodeLine{01056\ \ \ \ \ \textcolor{keywordflow}{if}\ (pfree\ +\ needed\_memory\ >=\ Alen)}
+\DoxyCodeLine{01057\ \ \ \ \ \{}
+\DoxyCodeLine{01058\ \ \ \ \ \ \ pfree\ =\ Colamd::garbage\_collection\ (n\_row,\ n\_col,\ Row,\ Col,\ A,\ \&A\ [pfree])\ ;}
+\DoxyCodeLine{01059\ \ \ \ \ \ \ ngarbage++\ ;}
+\DoxyCodeLine{01060\ \ \ \ \ \ \ \textcolor{comment}{/*\ after\ garbage\ collection\ we\ will\ have\ enough\ */}}
+\DoxyCodeLine{01061\ \ \ \ \ \ \ COLAMD\_ASSERT\ (pfree\ +\ needed\_memory\ <\ Alen)\ ;}
+\DoxyCodeLine{01062\ \ \ \ \ \ \ \textcolor{comment}{/*\ garbage\ collection\ has\ wiped\ out\ the\ Row[].shared2.mark\ array\ */}}
+\DoxyCodeLine{01063\ \ \ \ \ \ \ tag\_mark\ =\ Colamd::clear\_mark\ (n\_row,\ Row)\ ;}
+\DoxyCodeLine{01064\ }
+\DoxyCodeLine{01065\ \ \ \ \ \}}
+\DoxyCodeLine{01066\ }
+\DoxyCodeLine{01067\ \ \ \ \ \textcolor{comment}{/*\ ===\ Compute\ pivot\ row\ pattern\ ====================================\ */}}
+\DoxyCodeLine{01068\ }
+\DoxyCodeLine{01069\ \ \ \ \ \textcolor{comment}{/*\ get\ starting\ location\ for\ this\ new\ merged\ row\ */}}
+\DoxyCodeLine{01070\ \ \ \ \ pivot\_row\_start\ =\ pfree\ ;}
+\DoxyCodeLine{01071\ }
+\DoxyCodeLine{01072\ \ \ \ \ \textcolor{comment}{/*\ initialize\ new\ row\ counts\ to\ zero\ */}}
+\DoxyCodeLine{01073\ \ \ \ \ pivot\_row\_degree\ =\ 0\ ;}
+\DoxyCodeLine{01074\ }
+\DoxyCodeLine{01075\ \ \ \ \ \textcolor{comment}{/*\ tag\ pivot\ column\ as\ having\ been\ visited\ so\ it\ isn't\ included\ */}}
+\DoxyCodeLine{01076\ \ \ \ \ \textcolor{comment}{/*\ in\ merged\ pivot\ row\ */}}
+\DoxyCodeLine{01077\ \ \ \ \ Col\ [pivot\_col].shared1.thickness\ =\ -\/pivot\_col\_thickness\ ;}
+\DoxyCodeLine{01078\ }
+\DoxyCodeLine{01079\ \ \ \ \ \textcolor{comment}{/*\ pivot\ row\ is\ the\ union\ of\ all\ rows\ in\ the\ pivot\ column\ pattern\ */}}
+\DoxyCodeLine{01080\ \ \ \ \ cp\ =\ \&A\ [Col\ [pivot\_col].start]\ ;}
+\DoxyCodeLine{01081\ \ \ \ \ cp\_end\ =\ cp\ +\ Col\ [pivot\_col].length\ ;}
+\DoxyCodeLine{01082\ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{01083\ \ \ \ \ \{}
+\DoxyCodeLine{01084\ \ \ \ \ \ \ \textcolor{comment}{/*\ get\ a\ row\ */}}
+\DoxyCodeLine{01085\ \ \ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{01086\ \ \ \ \ \ \ COLAMD\_DEBUG4\ ((\textcolor{stringliteral}{"{}Pivot\ col\ pattern\ \%d\ \%d\(\backslash\)n"{}},\ Row[row].is\_alive(),\ row))\ ;}
+\DoxyCodeLine{01087\ \ \ \ \ \ \ \textcolor{comment}{/*\ skip\ if\ row\ is\ dead\ */}}
+\DoxyCodeLine{01088\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Row[row].is\_dead())}
+\DoxyCodeLine{01089\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01090\ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01091\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01092\ \ \ \ \ \ \ rp\ =\ \&A\ [Row\ [row].start]\ ;}
+\DoxyCodeLine{01093\ \ \ \ \ \ \ rp\_end\ =\ rp\ +\ Row\ [row].length\ ;}
+\DoxyCodeLine{01094\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (rp\ <\ rp\_end)}
+\DoxyCodeLine{01095\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01096\ \ \ \ \ \textcolor{comment}{/*\ get\ a\ column\ */}}
+\DoxyCodeLine{01097\ \ \ \ \ col\ =\ *rp++\ ;}
+\DoxyCodeLine{01098\ \ \ \ \ \textcolor{comment}{/*\ add\ the\ column,\ if\ alive\ and\ untagged\ */}}
+\DoxyCodeLine{01099\ \ \ \ \ col\_thickness\ =\ Col\ [col].shared1.thickness\ ;}
+\DoxyCodeLine{01100\ \ \ \ \ \textcolor{keywordflow}{if}\ (col\_thickness\ >\ 0\ \&\&\ Col[col].is\_alive())}
+\DoxyCodeLine{01101\ \ \ \ \ \{}
+\DoxyCodeLine{01102\ \ \ \ \ \ \ \textcolor{comment}{/*\ tag\ column\ in\ pivot\ row\ */}}
+\DoxyCodeLine{01103\ \ \ \ \ \ \ Col\ [col].shared1.thickness\ =\ -\/col\_thickness\ ;}
+\DoxyCodeLine{01104\ \ \ \ \ \ \ COLAMD\_ASSERT\ (pfree\ <\ Alen)\ ;}
+\DoxyCodeLine{01105\ \ \ \ \ \ \ \textcolor{comment}{/*\ place\ column\ in\ pivot\ row\ */}}
+\DoxyCodeLine{01106\ \ \ \ \ \ \ A\ [pfree++]\ =\ col\ ;}
+\DoxyCodeLine{01107\ \ \ \ \ \ \ pivot\_row\_degree\ +=\ col\_thickness\ ;}
+\DoxyCodeLine{01108\ \ \ \ \ \}}
+\DoxyCodeLine{01109\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01110\ \ \ \ \ \}}
+\DoxyCodeLine{01111\ }
+\DoxyCodeLine{01112\ \ \ \ \ \textcolor{comment}{/*\ clear\ tag\ on\ pivot\ column\ */}}
+\DoxyCodeLine{01113\ \ \ \ \ Col\ [pivot\_col].shared1.thickness\ =\ pivot\_col\_thickness\ ;}
+\DoxyCodeLine{01114\ \ \ \ \ max\_deg\ =\ numext::maxi(max\_deg,\ pivot\_row\_degree)\ ;}
+\DoxyCodeLine{01115\ }
+\DoxyCodeLine{01116\ }
+\DoxyCodeLine{01117\ \ \ \ \ \textcolor{comment}{/*\ ===\ Kill\ all\ rows\ used\ to\ construct\ pivot\ row\ ====================\ */}}
+\DoxyCodeLine{01118\ }
+\DoxyCodeLine{01119\ \ \ \ \ \textcolor{comment}{/*\ also\ kill\ pivot\ row,\ temporarily\ */}}
+\DoxyCodeLine{01120\ \ \ \ \ cp\ =\ \&A\ [Col\ [pivot\_col].start]\ ;}
+\DoxyCodeLine{01121\ \ \ \ \ cp\_end\ =\ cp\ +\ Col\ [pivot\_col].length\ ;}
+\DoxyCodeLine{01122\ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{01123\ \ \ \ \ \{}
+\DoxyCodeLine{01124\ \ \ \ \ \ \ \textcolor{comment}{/*\ may\ be\ killing\ an\ already\ dead\ row\ */}}
+\DoxyCodeLine{01125\ \ \ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{01126\ \ \ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}Kill\ row\ in\ pivot\ col:\ \%d\(\backslash\)n"{}},\ row))\ ;}
+\DoxyCodeLine{01127\ \ \ \ \ \ \ Row[row].kill()\ ;}
+\DoxyCodeLine{01128\ \ \ \ \ \}}
+\DoxyCodeLine{01129\ }
+\DoxyCodeLine{01130\ \ \ \ \ \textcolor{comment}{/*\ ===\ Select\ a\ row\ index\ to\ use\ as\ the\ new\ pivot\ row\ ===============\ */}}
+\DoxyCodeLine{01131\ }
+\DoxyCodeLine{01132\ \ \ \ \ pivot\_row\_length\ =\ pfree\ -\/\ pivot\_row\_start\ ;}
+\DoxyCodeLine{01133\ \ \ \ \ \textcolor{keywordflow}{if}\ (pivot\_row\_length\ >\ 0)}
+\DoxyCodeLine{01134\ \ \ \ \ \{}
+\DoxyCodeLine{01135\ \ \ \ \ \ \ \textcolor{comment}{/*\ pick\ the\ "{}pivot"{}\ row\ arbitrarily\ (first\ row\ in\ col)\ */}}
+\DoxyCodeLine{01136\ \ \ \ \ \ \ pivot\_row\ =\ A\ [Col\ [pivot\_col].start]\ ;}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}Pivotal\ row\ is\ \%d\(\backslash\)n"{}},\ pivot\_row))\ ;}
+\DoxyCodeLine{01138\ \ \ \ \ \}}
+\DoxyCodeLine{01139\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01140\ \ \ \ \ \{}
+\DoxyCodeLine{01141\ \ \ \ \ \ \ \textcolor{comment}{/*\ there\ is\ no\ pivot\ row,\ since\ it\ is\ of\ zero\ length\ */}}
+\DoxyCodeLine{01142\ \ \ \ \ \ \ pivot\_row\ =\ Empty\ ;}
+\DoxyCodeLine{01143\ \ \ \ \ \ \ COLAMD\_ASSERT\ (pivot\_row\_length\ ==\ 0)\ ;}
+\DoxyCodeLine{01144\ \ \ \ \ \}}
+\DoxyCodeLine{01145\ \ \ \ \ COLAMD\_ASSERT\ (Col\ [pivot\_col].length\ >\ 0\ ||\ pivot\_row\_length\ ==\ 0)\ ;}
+\DoxyCodeLine{01146\ }
+\DoxyCodeLine{01147\ \ \ \ \ \textcolor{comment}{/*\ ===\ Approximate\ degree\ computation\ ===============================\ */}}
+\DoxyCodeLine{01148\ }
+\DoxyCodeLine{01149\ \ \ \ \ \textcolor{comment}{/*\ Here\ begins\ the\ computation\ of\ the\ approximate\ degree.\ \ The\ column\ */}}
+\DoxyCodeLine{01150\ \ \ \ \ \textcolor{comment}{/*\ score\ is\ the\ sum\ of\ the\ pivot\ row\ "{}length"{},\ plus\ the\ size\ of\ the\ */}}
+\DoxyCodeLine{01151\ \ \ \ \ \textcolor{comment}{/*\ set\ differences\ of\ each\ row\ in\ the\ column\ minus\ the\ pattern\ of\ the\ */}}
+\DoxyCodeLine{01152\ \ \ \ \ \textcolor{comment}{/*\ pivot\ row\ itself.\ \ The\ column\ ("{}thickness"{})\ itself\ is\ also\ */}}
+\DoxyCodeLine{01153\ \ \ \ \ \textcolor{comment}{/*\ excluded\ from\ the\ column\ score\ (we\ thus\ use\ an\ approximate\ */}}
+\DoxyCodeLine{01154\ \ \ \ \ \textcolor{comment}{/*\ external\ degree).\ */}}
+\DoxyCodeLine{01155\ }
+\DoxyCodeLine{01156\ \ \ \ \ \textcolor{comment}{/*\ The\ time\ taken\ by\ the\ following\ code\ (compute\ set\ differences,\ and\ */}}
+\DoxyCodeLine{01157\ \ \ \ \ \textcolor{comment}{/*\ add\ them\ up)\ is\ proportional\ to\ the\ size\ of\ the\ data\ structure\ */}}
+\DoxyCodeLine{01158\ \ \ \ \ \textcolor{comment}{/*\ being\ scanned\ -\/\ that\ is,\ the\ sum\ of\ the\ sizes\ of\ each\ column\ in\ */}}
+\DoxyCodeLine{01159\ \ \ \ \ \textcolor{comment}{/*\ the\ pivot\ row.\ \ Thus,\ the\ amortized\ time\ to\ compute\ a\ column\ score\ */}}
+\DoxyCodeLine{01160\ \ \ \ \ \textcolor{comment}{/*\ is\ proportional\ to\ the\ size\ of\ that\ column\ (where\ size,\ in\ this\ */}}
+\DoxyCodeLine{01161\ \ \ \ \ \textcolor{comment}{/*\ context,\ is\ the\ column\ "{}length"{},\ or\ the\ number\ of\ row\ indices\ */}}
+\DoxyCodeLine{01162\ \ \ \ \ \textcolor{comment}{/*\ in\ that\ column).\ \ The\ number\ of\ row\ indices\ in\ a\ column\ is\ */}}
+\DoxyCodeLine{01163\ \ \ \ \ \textcolor{comment}{/*\ monotonically\ non-\/decreasing,\ from\ the\ length\ of\ the\ original\ */}}
+\DoxyCodeLine{01164\ \ \ \ \ \textcolor{comment}{/*\ column\ on\ input\ to\ colamd.\ */}}
+\DoxyCodeLine{01165\ }
+\DoxyCodeLine{01166\ \ \ \ \ \textcolor{comment}{/*\ ===\ Compute\ set\ differences\ ======================================\ */}}
+\DoxyCodeLine{01167\ }
+\DoxyCodeLine{01168\ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}**\ Computing\ set\ differences\ phase.\ **\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{01169\ }
+\DoxyCodeLine{01170\ \ \ \ \ \textcolor{comment}{/*\ pivot\ row\ is\ currently\ dead\ -\/\ it\ will\ be\ revived\ later.\ */}}
+\DoxyCodeLine{01171\ }
+\DoxyCodeLine{01172\ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}Pivot\ row:\ "{}}))\ ;}
+\DoxyCodeLine{01173\ \ \ \ \ \textcolor{comment}{/*\ for\ each\ column\ in\ pivot\ row\ */}}
+\DoxyCodeLine{01174\ \ \ \ \ rp\ =\ \&A\ [pivot\_row\_start]\ ;}
+\DoxyCodeLine{01175\ \ \ \ \ rp\_end\ =\ rp\ +\ pivot\_row\_length\ ;}
+\DoxyCodeLine{01176\ \ \ \ \ \textcolor{keywordflow}{while}\ (rp\ <\ rp\_end)}
+\DoxyCodeLine{01177\ \ \ \ \ \{}
+\DoxyCodeLine{01178\ \ \ \ \ \ \ col\ =\ *rp++\ ;}
+\DoxyCodeLine{01179\ \ \ \ \ \ \ COLAMD\_ASSERT\ (Col[col].is\_alive()\ \&\&\ col\ !=\ pivot\_col)\ ;}
+\DoxyCodeLine{01180\ \ \ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}Col:\ \%d\(\backslash\)n"{}},\ col))\ ;}
+\DoxyCodeLine{01181\ }
+\DoxyCodeLine{01182\ \ \ \ \ \ \ \textcolor{comment}{/*\ clear\ tags\ used\ to\ construct\ pivot\ row\ pattern\ */}}
+\DoxyCodeLine{01183\ \ \ \ \ \ \ col\_thickness\ =\ -\/Col\ [col].shared1.thickness\ ;}
+\DoxyCodeLine{01184\ \ \ \ \ \ \ COLAMD\_ASSERT\ (col\_thickness\ >\ 0)\ ;}
+\DoxyCodeLine{01185\ \ \ \ \ \ \ Col\ [col].shared1.thickness\ =\ col\_thickness\ ;}
+\DoxyCodeLine{01186\ }
+\DoxyCodeLine{01187\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Remove\ column\ from\ degree\ list\ ===========================\ */}}
+\DoxyCodeLine{01188\ }
+\DoxyCodeLine{01189\ \ \ \ \ \ \ cur\_score\ =\ Col\ [col].shared2.score\ ;}
+\DoxyCodeLine{01190\ \ \ \ \ \ \ prev\_col\ =\ Col\ [col].shared3.prev\ ;}
+\DoxyCodeLine{01191\ \ \ \ \ \ \ next\_col\ =\ Col\ [col].shared4.degree\_next\ ;}
+\DoxyCodeLine{01192\ \ \ \ \ \ \ COLAMD\_ASSERT\ (cur\_score\ >=\ 0)\ ;}
+\DoxyCodeLine{01193\ \ \ \ \ \ \ COLAMD\_ASSERT\ (cur\_score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01194\ \ \ \ \ \ \ COLAMD\_ASSERT\ (cur\_score\ >=\ Empty)\ ;}
+\DoxyCodeLine{01195\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (prev\_col\ ==\ Empty)}
+\DoxyCodeLine{01196\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01197\ \ \ \ \ head\ [cur\_score]\ =\ next\_col\ ;}
+\DoxyCodeLine{01198\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01199\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01200\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01201\ \ \ \ \ Col\ [prev\_col].shared4.degree\_next\ =\ next\_col\ ;}
+\DoxyCodeLine{01202\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01203\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (next\_col\ !=\ Empty)}
+\DoxyCodeLine{01204\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01205\ \ \ \ \ Col\ [next\_col].shared3.prev\ =\ prev\_col\ ;}
+\DoxyCodeLine{01206\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01207\ }
+\DoxyCodeLine{01208\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Scan\ the\ column\ ==========================================\ */}}
+\DoxyCodeLine{01209\ }
+\DoxyCodeLine{01210\ \ \ \ \ \ \ cp\ =\ \&A\ [Col\ [col].start]\ ;}
+\DoxyCodeLine{01211\ \ \ \ \ \ \ cp\_end\ =\ cp\ +\ Col\ [col].length\ ;}
+\DoxyCodeLine{01212\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{01213\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01214\ \ \ \ \ \textcolor{comment}{/*\ get\ a\ row\ */}}
+\DoxyCodeLine{01215\ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{01216\ \ \ \ \ \textcolor{comment}{/*\ skip\ if\ dead\ */}}
+\DoxyCodeLine{01217\ \ \ \ \ \textcolor{keywordflow}{if}\ (Row[row].is\_dead())}
+\DoxyCodeLine{01218\ \ \ \ \ \{}
+\DoxyCodeLine{01219\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01220\ \ \ \ \ \}}
+\DoxyCodeLine{01221\ \ \ row\_mark\ =\ Row\ [row].shared2.mark\ ;}
+\DoxyCodeLine{01222\ \ \ \ \ COLAMD\_ASSERT\ (row\ !=\ pivot\_row)\ ;}
+\DoxyCodeLine{01223\ \ \ \ \ set\_difference\ =\ row\_mark\ -\/\ tag\_mark\ ;}
+\DoxyCodeLine{01224\ \ \ \ \ \textcolor{comment}{/*\ check\ if\ the\ row\ has\ been\ seen\ yet\ */}}
+\DoxyCodeLine{01225\ \ \ \ \ \textcolor{keywordflow}{if}\ (set\_difference\ <\ 0)}
+\DoxyCodeLine{01226\ \ \ \ \ \{}
+\DoxyCodeLine{01227\ \ \ \ \ \ \ COLAMD\_ASSERT\ (Row\ [row].shared1.degree\ <=\ max\_deg)\ ;}
+\DoxyCodeLine{01228\ \ \ \ \ \ \ set\_difference\ =\ Row\ [row].shared1.degree\ ;}
+\DoxyCodeLine{01229\ \ \ \ \ \}}
+\DoxyCodeLine{01230\ \ \ \ \ \textcolor{comment}{/*\ subtract\ column\ thickness\ from\ this\ row's\ set\ difference\ */}}
+\DoxyCodeLine{01231\ \ \ \ \ set\_difference\ -\/=\ col\_thickness\ ;}
+\DoxyCodeLine{01232\ \ \ \ \ COLAMD\_ASSERT\ (set\_difference\ >=\ 0)\ ;}
+\DoxyCodeLine{01233\ \ \ \ \ \textcolor{comment}{/*\ absorb\ this\ row\ if\ the\ set\ difference\ becomes\ zero\ */}}
+\DoxyCodeLine{01234\ \ \ \ \ \textcolor{keywordflow}{if}\ (set\_difference\ ==\ 0)}
+\DoxyCodeLine{01235\ \ \ \ \ \{}
+\DoxyCodeLine{01236\ \ \ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}aggressive\ absorption.\ Row:\ \%d\(\backslash\)n"{}},\ row))\ ;}
+\DoxyCodeLine{01237\ \ \ \ \ \ \ Row[row].kill()\ ;}
+\DoxyCodeLine{01238\ \ \ \ \ \}}
+\DoxyCodeLine{01239\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01240\ \ \ \ \ \{}
+\DoxyCodeLine{01241\ \ \ \ \ \ \ \textcolor{comment}{/*\ save\ the\ new\ mark\ */}}
+\DoxyCodeLine{01242\ \ \ \ \ \ \ Row\ [row].shared2.mark\ =\ set\_difference\ +\ tag\_mark\ ;}
+\DoxyCodeLine{01243\ \ \ \ \ \}}
+\DoxyCodeLine{01244\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01245\ \ \ \ \ \}}
+\DoxyCodeLine{01246\ }
+\DoxyCodeLine{01247\ }
+\DoxyCodeLine{01248\ \ \ \ \ \textcolor{comment}{/*\ ===\ Add\ up\ set\ differences\ for\ each\ column\ =======================\ */}}
+\DoxyCodeLine{01249\ }
+\DoxyCodeLine{01250\ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}**\ Adding\ set\ differences\ phase.\ **\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{01251\ }
+\DoxyCodeLine{01252\ \ \ \ \ \textcolor{comment}{/*\ for\ each\ column\ in\ pivot\ row\ */}}
+\DoxyCodeLine{01253\ \ \ \ \ rp\ =\ \&A\ [pivot\_row\_start]\ ;}
+\DoxyCodeLine{01254\ \ \ \ \ rp\_end\ =\ rp\ +\ pivot\_row\_length\ ;}
+\DoxyCodeLine{01255\ \ \ \ \ \textcolor{keywordflow}{while}\ (rp\ <\ rp\_end)}
+\DoxyCodeLine{01256\ \ \ \ \ \{}
+\DoxyCodeLine{01257\ \ \ \ \ \ \ \textcolor{comment}{/*\ get\ a\ column\ */}}
+\DoxyCodeLine{01258\ \ \ \ \ \ \ col\ =\ *rp++\ ;}
+\DoxyCodeLine{01259\ \ \ \ \ \ \ COLAMD\_ASSERT\ (Col[col].is\_alive()\ \&\&\ col\ !=\ pivot\_col)\ ;}
+\DoxyCodeLine{01260\ \ \ \ \ \ \ hash\ =\ 0\ ;}
+\DoxyCodeLine{01261\ \ \ \ \ \ \ cur\_score\ =\ 0\ ;}
+\DoxyCodeLine{01262\ \ \ \ \ \ \ cp\ =\ \&A\ [Col\ [col].start]\ ;}
+\DoxyCodeLine{01263\ \ \ \ \ \ \ \textcolor{comment}{/*\ compact\ the\ column\ */}}
+\DoxyCodeLine{01264\ \ \ \ \ \ \ new\_cp\ =\ cp\ ;}
+\DoxyCodeLine{01265\ \ \ \ \ \ \ cp\_end\ =\ cp\ +\ Col\ [col].length\ ;}
+\DoxyCodeLine{01266\ }
+\DoxyCodeLine{01267\ \ \ \ \ \ \ COLAMD\_DEBUG4\ ((\textcolor{stringliteral}{"{}Adding\ set\ diffs\ for\ Col:\ \%d.\(\backslash\)n"{}},\ col))\ ;}
+\DoxyCodeLine{01268\ }
+\DoxyCodeLine{01269\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (cp\ <\ cp\_end)}
+\DoxyCodeLine{01270\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01271\ \ \ \ \ \textcolor{comment}{/*\ get\ a\ row\ */}}
+\DoxyCodeLine{01272\ \ \ \ \ row\ =\ *cp++\ ;}
+\DoxyCodeLine{01273\ \ \ \ \ COLAMD\_ASSERT(row\ >=\ 0\ \&\&\ row\ <\ n\_row)\ ;}
+\DoxyCodeLine{01274\ \ \ \ \ \textcolor{comment}{/*\ skip\ if\ dead\ */}}
+\DoxyCodeLine{01275\ \ \ \ \ \textcolor{keywordflow}{if}\ (Row\ [row].is\_dead())}
+\DoxyCodeLine{01276\ \ \ \ \ \{}
+\DoxyCodeLine{01277\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01278\ \ \ \ \ \}}
+\DoxyCodeLine{01279\ \ \ row\_mark\ =\ Row\ [row].shared2.mark\ ;}
+\DoxyCodeLine{01280\ \ \ \ \ COLAMD\_ASSERT\ (row\_mark\ >\ tag\_mark)\ ;}
+\DoxyCodeLine{01281\ \ \ \ \ \textcolor{comment}{/*\ compact\ the\ column\ */}}
+\DoxyCodeLine{01282\ \ \ \ \ *new\_cp++\ =\ row\ ;}
+\DoxyCodeLine{01283\ \ \ \ \ \textcolor{comment}{/*\ compute\ hash\ function\ */}}
+\DoxyCodeLine{01284\ \ \ \ \ hash\ +=\ row\ ;}
+\DoxyCodeLine{01285\ \ \ \ \ \textcolor{comment}{/*\ add\ set\ difference\ */}}
+\DoxyCodeLine{01286\ \ \ \ \ cur\_score\ +=\ row\_mark\ -\/\ tag\_mark\ ;}
+\DoxyCodeLine{01287\ \ \ \ \ \textcolor{comment}{/*\ integer\ overflow...\ */}}
+\DoxyCodeLine{01288\ \ \ \ \ cur\_score\ =\ numext::mini(cur\_score,\ n\_col)\ ;}
+\DoxyCodeLine{01289\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01290\ }
+\DoxyCodeLine{01291\ \ \ \ \ \ \ \textcolor{comment}{/*\ recompute\ the\ column's\ length\ */}}
+\DoxyCodeLine{01292\ \ \ \ \ \ \ Col\ [col].length\ =\ (IndexType)\ (new\_cp\ -\/\ \&A\ [Col\ [col].start])\ ;}
+\DoxyCodeLine{01293\ }
+\DoxyCodeLine{01294\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Further\ mass\ elimination\ =================================\ */}}
+\DoxyCodeLine{01295\ }
+\DoxyCodeLine{01296\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Col\ [col].length\ ==\ 0)}
+\DoxyCodeLine{01297\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01298\ \ \ \ \ COLAMD\_DEBUG4\ ((\textcolor{stringliteral}{"{}further\ mass\ elimination.\ Col:\ \%d\(\backslash\)n"{}},\ col))\ ;}
+\DoxyCodeLine{01299\ \ \ \ \ \textcolor{comment}{/*\ nothing\ left\ but\ the\ pivot\ row\ in\ this\ column\ */}}
+\DoxyCodeLine{01300\ \ \ \ \ Col[col].kill\_principal()\ ;}
+\DoxyCodeLine{01301\ \ \ \ \ pivot\_row\_degree\ -\/=\ Col\ [col].shared1.thickness\ ;}
+\DoxyCodeLine{01302\ \ \ \ \ COLAMD\_ASSERT\ (pivot\_row\_degree\ >=\ 0)\ ;}
+\DoxyCodeLine{01303\ \ \ \ \ \textcolor{comment}{/*\ order\ it\ */}}
+\DoxyCodeLine{01304\ \ \ \ \ Col\ [col].shared2.order\ =\ k\ ;}
+\DoxyCodeLine{01305\ \ \ \ \ \textcolor{comment}{/*\ increment\ order\ count\ by\ column\ thickness\ */}}
+\DoxyCodeLine{01306\ \ \ \ \ k\ +=\ Col\ [col].shared1.thickness\ ;}
+\DoxyCodeLine{01307\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01308\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01309\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01310\ \ \ \ \ \textcolor{comment}{/*\ ===\ Prepare\ for\ supercolumn\ detection\ ====================\ */}}
+\DoxyCodeLine{01311\ }
+\DoxyCodeLine{01312\ \ \ \ \ COLAMD\_DEBUG4\ ((\textcolor{stringliteral}{"{}Preparing\ supercol\ detection\ for\ Col:\ \%d.\(\backslash\)n"{}},\ col))\ ;}
+\DoxyCodeLine{01313\ }
+\DoxyCodeLine{01314\ \ \ \ \ \textcolor{comment}{/*\ save\ score\ so\ far\ */}}
+\DoxyCodeLine{01315\ \ \ \ \ Col\ [col].shared2.score\ =\ cur\_score\ ;}
+\DoxyCodeLine{01316\ }
+\DoxyCodeLine{01317\ \ \ \ \ \textcolor{comment}{/*\ add\ column\ to\ hash\ table,\ for\ supercolumn\ detection\ */}}
+\DoxyCodeLine{01318\ \ \ \ \ hash\ \%=\ n\_col\ +\ 1\ ;}
+\DoxyCodeLine{01319\ }
+\DoxyCodeLine{01320\ \ \ \ \ COLAMD\_DEBUG4\ ((\textcolor{stringliteral}{"{}\ Hash\ =\ \%d,\ n\_col\ =\ \%d.\(\backslash\)n"{}},\ hash,\ n\_col))\ ;}
+\DoxyCodeLine{01321\ \ \ \ \ COLAMD\_ASSERT\ (hash\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01322\ }
+\DoxyCodeLine{01323\ \ \ \ \ head\_column\ =\ head\ [hash]\ ;}
+\DoxyCodeLine{01324\ \ \ \ \ \textcolor{keywordflow}{if}\ (head\_column\ >\ Empty)}
+\DoxyCodeLine{01325\ \ \ \ \ \{}
+\DoxyCodeLine{01326\ \ \ \ \ \ \ \textcolor{comment}{/*\ degree\ list\ "{}hash"{}\ is\ non-\/empty,\ use\ prev\ (shared3)\ of\ */}}
+\DoxyCodeLine{01327\ \ \ \ \ \ \ \textcolor{comment}{/*\ first\ column\ in\ degree\ list\ as\ head\ of\ hash\ bucket\ */}}
+\DoxyCodeLine{01328\ \ \ \ \ \ \ first\_col\ =\ Col\ [head\_column].shared3.headhash\ ;}
+\DoxyCodeLine{01329\ \ \ \ \ \ \ Col\ [head\_column].shared3.headhash\ =\ col\ ;}
+\DoxyCodeLine{01330\ \ \ \ \ \}}
+\DoxyCodeLine{01331\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01332\ \ \ \ \ \{}
+\DoxyCodeLine{01333\ \ \ \ \ \ \ \textcolor{comment}{/*\ degree\ list\ "{}hash"{}\ is\ empty,\ use\ head\ as\ hash\ bucket\ */}}
+\DoxyCodeLine{01334\ \ \ \ \ \ \ first\_col\ =\ -\/\ (head\_column\ +\ 2)\ ;}
+\DoxyCodeLine{01335\ \ \ \ \ \ \ head\ [hash]\ =\ -\/\ (col\ +\ 2)\ ;}
+\DoxyCodeLine{01336\ \ \ \ \ \}}
+\DoxyCodeLine{01337\ \ \ \ \ Col\ [col].shared4.hash\_next\ =\ first\_col\ ;}
+\DoxyCodeLine{01338\ }
+\DoxyCodeLine{01339\ \ \ \ \ \textcolor{comment}{/*\ save\ hash\ function\ in\ Col\ [col].shared3.hash\ */}}
+\DoxyCodeLine{01340\ \ \ \ \ Col\ [col].shared3.hash\ =\ (IndexType)\ hash\ ;}
+\DoxyCodeLine{01341\ \ \ \ \ COLAMD\_ASSERT\ (Col[col].is\_alive())\ ;}
+\DoxyCodeLine{01342\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01343\ \ \ \ \ \}}
+\DoxyCodeLine{01344\ }
+\DoxyCodeLine{01345\ \ \ \ \ \textcolor{comment}{/*\ The\ approximate\ external\ column\ degree\ is\ now\ computed.\ \ */}}
+\DoxyCodeLine{01346\ }
+\DoxyCodeLine{01347\ \ \ \ \ \textcolor{comment}{/*\ ===\ Supercolumn\ detection\ ========================================\ */}}
+\DoxyCodeLine{01348\ }
+\DoxyCodeLine{01349\ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}**\ Supercolumn\ detection\ phase.\ **\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{01350\ }
+\DoxyCodeLine{01351\ \ \ \ \ Colamd::detect\_super\_cols\ (Col,\ A,\ head,\ pivot\_row\_start,\ pivot\_row\_length)\ ;}
+\DoxyCodeLine{01352\ }
+\DoxyCodeLine{01353\ \ \ \ \ \textcolor{comment}{/*\ ===\ Kill\ the\ pivotal\ column\ ======================================\ */}}
+\DoxyCodeLine{01354\ }
+\DoxyCodeLine{01355\ \ \ \ \ Col[pivot\_col].kill\_principal()\ ;}
+\DoxyCodeLine{01356\ }
+\DoxyCodeLine{01357\ \ \ \ \ \textcolor{comment}{/*\ ===\ Clear\ mark\ ===================================================\ */}}
+\DoxyCodeLine{01358\ }
+\DoxyCodeLine{01359\ \ \ \ \ tag\_mark\ +=\ (max\_deg\ +\ 1)\ ;}
+\DoxyCodeLine{01360\ \ \ \ \ \textcolor{keywordflow}{if}\ (tag\_mark\ >=\ max\_mark)}
+\DoxyCodeLine{01361\ \ \ \ \ \{}
+\DoxyCodeLine{01362\ \ \ \ \ \ \ COLAMD\_DEBUG2\ ((\textcolor{stringliteral}{"{}clearing\ tag\_mark\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{01363\ \ \ \ \ \ \ tag\_mark\ =\ Colamd::clear\_mark\ (n\_row,\ Row)\ ;}
+\DoxyCodeLine{01364\ \ \ \ \ \}}
+\DoxyCodeLine{01365\ }
+\DoxyCodeLine{01366\ \ \ \ \ \textcolor{comment}{/*\ ===\ Finalize\ the\ new\ pivot\ row,\ and\ column\ scores\ ================\ */}}
+\DoxyCodeLine{01367\ }
+\DoxyCodeLine{01368\ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}**\ Finalize\ scores\ phase.\ **\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{01369\ }
+\DoxyCodeLine{01370\ \ \ \ \ \textcolor{comment}{/*\ for\ each\ column\ in\ pivot\ row\ */}}
+\DoxyCodeLine{01371\ \ \ \ \ rp\ =\ \&A\ [pivot\_row\_start]\ ;}
+\DoxyCodeLine{01372\ \ \ \ \ \textcolor{comment}{/*\ compact\ the\ pivot\ row\ */}}
+\DoxyCodeLine{01373\ \ \ \ \ new\_rp\ =\ rp\ ;}
+\DoxyCodeLine{01374\ \ \ \ \ rp\_end\ =\ rp\ +\ pivot\_row\_length\ ;}
+\DoxyCodeLine{01375\ \ \ \ \ \textcolor{keywordflow}{while}\ (rp\ <\ rp\_end)}
+\DoxyCodeLine{01376\ \ \ \ \ \{}
+\DoxyCodeLine{01377\ \ \ \ \ \ \ col\ =\ *rp++\ ;}
+\DoxyCodeLine{01378\ \ \ \ \ \ \ \textcolor{comment}{/*\ skip\ dead\ columns\ */}}
+\DoxyCodeLine{01379\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[col].is\_dead())}
+\DoxyCodeLine{01380\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01381\ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01382\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01383\ \ \ \ \ \ \ *new\_rp++\ =\ col\ ;}
+\DoxyCodeLine{01384\ \ \ \ \ \ \ \textcolor{comment}{/*\ add\ new\ pivot\ row\ to\ column\ */}}
+\DoxyCodeLine{01385\ \ \ \ \ \ \ A\ [Col\ [col].start\ +\ (Col\ [col].length++)]\ =\ pivot\_row\ ;}
+\DoxyCodeLine{01386\ }
+\DoxyCodeLine{01387\ \ \ \ \ \ \ \textcolor{comment}{/*\ retrieve\ score\ so\ far\ and\ add\ on\ pivot\ row's\ degree.\ */}}
+\DoxyCodeLine{01388\ \ \ \ \ \ \ \textcolor{comment}{/*\ (we\ wait\ until\ here\ for\ this\ in\ case\ the\ pivot\ */}}
+\DoxyCodeLine{01389\ \ \ \ \ \ \ \textcolor{comment}{/*\ row's\ degree\ was\ reduced\ due\ to\ mass\ elimination).\ */}}
+\DoxyCodeLine{01390\ \ \ \ \ \ \ cur\_score\ =\ Col\ [col].shared2.score\ +\ pivot\_row\_degree\ ;}
+\DoxyCodeLine{01391\ }
+\DoxyCodeLine{01392\ \ \ \ \ \ \ \textcolor{comment}{/*\ calculate\ the\ max\ possible\ score\ as\ the\ number\ of\ */}}
+\DoxyCodeLine{01393\ \ \ \ \ \ \ \textcolor{comment}{/*\ external\ columns\ minus\ the\ 'k'\ value\ minus\ the\ */}}
+\DoxyCodeLine{01394\ \ \ \ \ \ \ \textcolor{comment}{/*\ columns\ thickness\ */}}
+\DoxyCodeLine{01395\ \ \ \ \ \ \ max\_score\ =\ n\_col\ -\/\ k\ -\/\ Col\ [col].shared1.thickness\ ;}
+\DoxyCodeLine{01396\ }
+\DoxyCodeLine{01397\ \ \ \ \ \ \ \textcolor{comment}{/*\ make\ the\ score\ the\ external\ degree\ of\ the\ union-\/of-\/rows\ */}}
+\DoxyCodeLine{01398\ \ \ \ \ \ \ cur\_score\ -\/=\ Col\ [col].shared1.thickness\ ;}
+\DoxyCodeLine{01399\ }
+\DoxyCodeLine{01400\ \ \ \ \ \ \ \textcolor{comment}{/*\ make\ sure\ score\ is\ less\ or\ equal\ than\ the\ max\ score\ */}}
+\DoxyCodeLine{01401\ \ \ \ \ \ \ cur\_score\ =\ numext::mini(cur\_score,\ max\_score)\ ;}
+\DoxyCodeLine{01402\ \ \ \ \ \ \ COLAMD\_ASSERT\ (cur\_score\ >=\ 0)\ ;}
+\DoxyCodeLine{01403\ }
+\DoxyCodeLine{01404\ \ \ \ \ \ \ \textcolor{comment}{/*\ store\ updated\ score\ */}}
+\DoxyCodeLine{01405\ \ \ \ \ \ \ Col\ [col].shared2.score\ =\ cur\_score\ ;}
+\DoxyCodeLine{01406\ }
+\DoxyCodeLine{01407\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Place\ column\ back\ in\ degree\ list\ =========================\ */}}
+\DoxyCodeLine{01408\ }
+\DoxyCodeLine{01409\ \ \ \ \ \ \ COLAMD\_ASSERT\ (min\_score\ >=\ 0)\ ;}
+\DoxyCodeLine{01410\ \ \ \ \ \ \ COLAMD\_ASSERT\ (min\_score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01411\ \ \ \ \ \ \ COLAMD\_ASSERT\ (cur\_score\ >=\ 0)\ ;}
+\DoxyCodeLine{01412\ \ \ \ \ \ \ COLAMD\_ASSERT\ (cur\_score\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01413\ \ \ \ \ \ \ COLAMD\_ASSERT\ (head\ [cur\_score]\ >=\ Empty)\ ;}
+\DoxyCodeLine{01414\ \ \ \ \ \ \ next\_col\ =\ head\ [cur\_score]\ ;}
+\DoxyCodeLine{01415\ \ \ \ \ \ \ Col\ [col].shared4.degree\_next\ =\ next\_col\ ;}
+\DoxyCodeLine{01416\ \ \ \ \ \ \ Col\ [col].shared3.prev\ =\ Empty\ ;}
+\DoxyCodeLine{01417\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (next\_col\ !=\ Empty)}
+\DoxyCodeLine{01418\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01419\ \ \ \ \ Col\ [next\_col].shared3.prev\ =\ col\ ;}
+\DoxyCodeLine{01420\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01421\ \ \ \ \ \ \ head\ [cur\_score]\ =\ col\ ;}
+\DoxyCodeLine{01422\ }
+\DoxyCodeLine{01423\ \ \ \ \ \ \ \textcolor{comment}{/*\ see\ if\ this\ score\ is\ less\ than\ current\ min\ */}}
+\DoxyCodeLine{01424\ \ \ \ \ \ \ min\_score\ =\ numext::mini(min\_score,\ cur\_score)\ ;}
+\DoxyCodeLine{01425\ }
+\DoxyCodeLine{01426\ \ \ \ \ \}}
+\DoxyCodeLine{01427\ }
+\DoxyCodeLine{01428\ \ \ \ \ \textcolor{comment}{/*\ ===\ Resurrect\ the\ new\ pivot\ row\ ==================================\ */}}
+\DoxyCodeLine{01429\ }
+\DoxyCodeLine{01430\ \ \ \ \ \textcolor{keywordflow}{if}\ (pivot\_row\_degree\ >\ 0)}
+\DoxyCodeLine{01431\ \ \ \ \ \{}
+\DoxyCodeLine{01432\ \ \ \ \ \ \ \textcolor{comment}{/*\ update\ pivot\ row\ length\ to\ reflect\ any\ cols\ that\ were\ killed\ */}}
+\DoxyCodeLine{01433\ \ \ \ \ \ \ \textcolor{comment}{/*\ during\ super-\/col\ detection\ and\ mass\ elimination\ */}}
+\DoxyCodeLine{01434\ \ \ \ \ \ \ Row\ [pivot\_row].start\ \ =\ pivot\_row\_start\ ;}
+\DoxyCodeLine{01435\ \ \ \ \ \ \ Row\ [pivot\_row].length\ =\ (IndexType)\ (new\_rp\ -\/\ \&A[pivot\_row\_start])\ ;}
+\DoxyCodeLine{01436\ \ \ \ \ \ \ Row\ [pivot\_row].shared1.degree\ =\ pivot\_row\_degree\ ;}
+\DoxyCodeLine{01437\ \ \ \ \ \ \ Row\ [pivot\_row].shared2.mark\ =\ 0\ ;}
+\DoxyCodeLine{01438\ \ \ \ \ \ \ \textcolor{comment}{/*\ pivot\ row\ is\ no\ longer\ dead\ */}}
+\DoxyCodeLine{01439\ \ \ \ \ \}}
+\DoxyCodeLine{01440\ \ \ \}}
+\DoxyCodeLine{01441\ }
+\DoxyCodeLine{01442\ \ \ \textcolor{comment}{/*\ ===\ All\ principal\ columns\ have\ now\ been\ ordered\ ======================\ */}}
+\DoxyCodeLine{01443\ }
+\DoxyCodeLine{01444\ \ \ \textcolor{keywordflow}{return}\ (ngarbage)\ ;}
+\DoxyCodeLine{01445\ \}}
+\DoxyCodeLine{01446\ }
+\DoxyCodeLine{01447\ }
+\DoxyCodeLine{01448\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01449\ \textcolor{comment}{/*\ ===\ order\_children\ =======================================================\ */}}
+\DoxyCodeLine{01450\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01451\ }
+\DoxyCodeLine{01452\ \textcolor{comment}{/*}}
+\DoxyCodeLine{01453\ \textcolor{comment}{\ \ The\ find\_ordering\ routine\ has\ ordered\ all\ of\ the\ principal\ columns\ (the}}
+\DoxyCodeLine{01454\ \textcolor{comment}{\ \ representatives\ of\ the\ supercolumns).\ \ The\ non-\/principal\ columns\ have\ not}}
+\DoxyCodeLine{01455\ \textcolor{comment}{\ \ yet\ been\ ordered.\ \ This\ routine\ orders\ those\ columns\ by\ walking\ up\ the}}
+\DoxyCodeLine{01456\ \textcolor{comment}{\ \ parent\ tree\ (a\ column\ is\ a\ child\ of\ the\ column\ which\ absorbed\ it).\ \ The}}
+\DoxyCodeLine{01457\ \textcolor{comment}{\ \ final\ permutation\ vector\ is\ then\ placed\ in\ p\ [0\ ...\ n\_col-\/1],\ with\ p\ [0]}}
+\DoxyCodeLine{01458\ \textcolor{comment}{\ \ being\ the\ first\ column,\ and\ p\ [n\_col-\/1]\ being\ the\ last.\ \ It\ doesn't\ look}}
+\DoxyCodeLine{01459\ \textcolor{comment}{\ \ like\ it\ at\ first\ glance,\ but\ be\ assured\ that\ this\ routine\ takes\ time\ linear}}
+\DoxyCodeLine{01460\ \textcolor{comment}{\ \ in\ the\ number\ of\ columns.\ \ Although\ not\ immediately\ obvious,\ the\ time}}
+\DoxyCodeLine{01461\ \textcolor{comment}{\ \ taken\ by\ this\ routine\ is\ O\ (n\_col),\ that\ is,\ linear\ in\ the\ number\ of}}
+\DoxyCodeLine{01462\ \textcolor{comment}{\ \ columns.\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{01463\ \textcolor{comment}{*/}}
+\DoxyCodeLine{01464\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{01465\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \ \textcolor{keywordtype}{void}\ order\_children}
+\DoxyCodeLine{01466\ (}
+\DoxyCodeLine{01467\ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{01468\ }
+\DoxyCodeLine{01469\ \ \ IndexType\ n\_col,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ columns\ of\ A\ */}}
+\DoxyCodeLine{01470\ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ Col\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{01471\ \ \ IndexType\ p\ []\ \ \ \ \ \ \textcolor{comment}{/*\ p\ [0\ ...\ n\_col-\/1]\ is\ the\ column\ permutation*/}}
+\DoxyCodeLine{01472\ \ \ )}
+\DoxyCodeLine{01473\ \{}
+\DoxyCodeLine{01474\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{01475\ }
+\DoxyCodeLine{01476\ \ \ IndexType\ i\ ;\ \ \ \ \ \textcolor{comment}{/*\ loop\ counter\ for\ all\ columns\ */}}
+\DoxyCodeLine{01477\ \ \ IndexType\ c\ ;\ \ \ \ \ \textcolor{comment}{/*\ column\ index\ */}}
+\DoxyCodeLine{01478\ \ \ IndexType\ parent\ ;\ \ \ \ \textcolor{comment}{/*\ index\ of\ column's\ parent\ */}}
+\DoxyCodeLine{01479\ \ \ IndexType\ order\ ;\ \ \ \ \ \textcolor{comment}{/*\ column's\ order\ */}}
+\DoxyCodeLine{01480\ }
+\DoxyCodeLine{01481\ \ \ \textcolor{comment}{/*\ ===\ Order\ each\ non-\/principal\ column\ ==================================\ */}}
+\DoxyCodeLine{01482\ }
+\DoxyCodeLine{01483\ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0\ ;\ i\ <\ n\_col\ ;\ i++)}
+\DoxyCodeLine{01484\ \ \ \{}
+\DoxyCodeLine{01485\ \ \ \ \ \textcolor{comment}{/*\ find\ an\ un-\/ordered\ non-\/principal\ column\ */}}
+\DoxyCodeLine{01486\ \ \ \ \ COLAMD\_ASSERT\ (col\_is\_dead(Col,\ i))\ ;}
+\DoxyCodeLine{01487\ \ \ \ \ \textcolor{keywordflow}{if}\ (!Col[i].is\_dead\_principal()\ \&\&\ Col\ [i].shared2.order\ ==\ Empty)}
+\DoxyCodeLine{01488\ \ \ \ \ \{}
+\DoxyCodeLine{01489\ \ \ \ \ \ \ parent\ =\ i\ ;}
+\DoxyCodeLine{01490\ \ \ \ \ \ \ \textcolor{comment}{/*\ once\ found,\ find\ its\ principal\ parent\ */}}
+\DoxyCodeLine{01491\ \ \ \ \ \ \ \textcolor{keywordflow}{do}}
+\DoxyCodeLine{01492\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01493\ \ \ \ \ parent\ =\ Col\ [parent].shared1.parent\ ;}
+\DoxyCodeLine{01494\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (!Col[parent].is\_dead\_principal())\ ;}
+\DoxyCodeLine{01495\ }
+\DoxyCodeLine{01496\ \ \ \ \ \ \ \textcolor{comment}{/*\ now,\ order\ all\ un-\/ordered\ non-\/principal\ columns\ along\ path\ */}}
+\DoxyCodeLine{01497\ \ \ \ \ \ \ \textcolor{comment}{/*\ to\ this\ parent.\ \ collapse\ tree\ at\ the\ same\ time\ */}}
+\DoxyCodeLine{01498\ \ \ \ \ \ \ c\ =\ i\ ;}
+\DoxyCodeLine{01499\ \ \ \ \ \ \ \textcolor{comment}{/*\ get\ order\ of\ parent\ */}}
+\DoxyCodeLine{01500\ \ \ \ \ \ \ order\ =\ Col\ [parent].shared2.order\ ;}
+\DoxyCodeLine{01501\ }
+\DoxyCodeLine{01502\ \ \ \ \ \ \ \textcolor{keywordflow}{do}}
+\DoxyCodeLine{01503\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01504\ \ \ \ \ COLAMD\_ASSERT\ (Col\ [c].shared2.order\ ==\ Empty)\ ;}
+\DoxyCodeLine{01505\ }
+\DoxyCodeLine{01506\ \ \ \ \ \textcolor{comment}{/*\ order\ this\ column\ */}}
+\DoxyCodeLine{01507\ \ \ \ \ Col\ [c].shared2.order\ =\ order++\ ;}
+\DoxyCodeLine{01508\ \ \ \ \ \textcolor{comment}{/*\ collaps\ tree\ */}}
+\DoxyCodeLine{01509\ \ \ \ \ Col\ [c].shared1.parent\ =\ parent\ ;}
+\DoxyCodeLine{01510\ }
+\DoxyCodeLine{01511\ \ \ \ \ \textcolor{comment}{/*\ get\ immediate\ parent\ of\ this\ column\ */}}
+\DoxyCodeLine{01512\ \ \ \ \ c\ =\ Col\ [c].shared1.parent\ ;}
+\DoxyCodeLine{01513\ }
+\DoxyCodeLine{01514\ \ \ \ \ \textcolor{comment}{/*\ continue\ until\ we\ hit\ an\ ordered\ column.\ \ There\ are\ */}}
+\DoxyCodeLine{01515\ \ \ \ \ \textcolor{comment}{/*\ guaranteed\ not\ to\ be\ anymore\ unordered\ columns\ */}}
+\DoxyCodeLine{01516\ \ \ \ \ \textcolor{comment}{/*\ above\ an\ ordered\ column\ */}}
+\DoxyCodeLine{01517\ \ \ \ \ \ \ \}\ \textcolor{keywordflow}{while}\ (Col\ [c].shared2.order\ ==\ Empty)\ ;}
+\DoxyCodeLine{01518\ }
+\DoxyCodeLine{01519\ \ \ \ \ \ \ \textcolor{comment}{/*\ re-\/order\ the\ super\_col\ parent\ to\ largest\ order\ for\ this\ group\ */}}
+\DoxyCodeLine{01520\ \ \ \ \ \ \ Col\ [parent].shared2.order\ =\ order\ ;}
+\DoxyCodeLine{01521\ \ \ \ \ \}}
+\DoxyCodeLine{01522\ \ \ \}}
+\DoxyCodeLine{01523\ }
+\DoxyCodeLine{01524\ \ \ \textcolor{comment}{/*\ ===\ Generate\ the\ permutation\ =========================================\ */}}
+\DoxyCodeLine{01525\ }
+\DoxyCodeLine{01526\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ 0\ ;\ c\ <\ n\_col\ ;\ c++)}
+\DoxyCodeLine{01527\ \ \ \{}
+\DoxyCodeLine{01528\ \ \ \ \ p\ [Col\ [c].shared2.order]\ =\ c\ ;}
+\DoxyCodeLine{01529\ \ \ \}}
+\DoxyCodeLine{01530\ \}}
+\DoxyCodeLine{01531\ }
+\DoxyCodeLine{01532\ }
+\DoxyCodeLine{01533\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01534\ \textcolor{comment}{/*\ ===\ detect\_super\_cols\ ====================================================\ */}}
+\DoxyCodeLine{01535\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01536\ }
+\DoxyCodeLine{01537\ \textcolor{comment}{/*}}
+\DoxyCodeLine{01538\ \textcolor{comment}{\ \ Detects\ supercolumns\ by\ finding\ matches\ between\ columns\ in\ the\ hash\ buckets.}}
+\DoxyCodeLine{01539\ \textcolor{comment}{\ \ Check\ amongst\ columns\ in\ the\ set\ A\ [row\_start\ ...\ row\_start\ +\ row\_length-\/1].}}
+\DoxyCodeLine{01540\ \textcolor{comment}{\ \ The\ columns\ under\ consideration\ are\ currently\ *not*\ in\ the\ degree\ lists,}}
+\DoxyCodeLine{01541\ \textcolor{comment}{\ \ and\ have\ already\ been\ placed\ in\ the\ hash\ buckets.}}
+\DoxyCodeLine{01542\ \textcolor{comment}{}}
+\DoxyCodeLine{01543\ \textcolor{comment}{\ \ The\ hash\ bucket\ for\ columns\ whose\ hash\ function\ is\ equal\ to\ h\ is\ stored}}
+\DoxyCodeLine{01544\ \textcolor{comment}{\ \ as\ follows:}}
+\DoxyCodeLine{01545\ \textcolor{comment}{}}
+\DoxyCodeLine{01546\ \textcolor{comment}{\ \ if\ head\ [h]\ is\ >=\ 0,\ then\ head\ [h]\ contains\ a\ degree\ list,\ so:}}
+\DoxyCodeLine{01547\ \textcolor{comment}{}}
+\DoxyCodeLine{01548\ \textcolor{comment}{\ \ head\ [h]\ is\ the\ first\ column\ in\ degree\ bucket\ h.}}
+\DoxyCodeLine{01549\ \textcolor{comment}{\ \ Col\ [head\ [h]].headhash\ gives\ the\ first\ column\ in\ hash\ bucket\ h.}}
+\DoxyCodeLine{01550\ \textcolor{comment}{}}
+\DoxyCodeLine{01551\ \textcolor{comment}{\ \ otherwise,\ the\ degree\ list\ is\ empty,\ and:}}
+\DoxyCodeLine{01552\ \textcolor{comment}{}}
+\DoxyCodeLine{01553\ \textcolor{comment}{\ \ -\/(head\ [h]\ +\ 2)\ is\ the\ first\ column\ in\ hash\ bucket\ h.}}
+\DoxyCodeLine{01554\ \textcolor{comment}{}}
+\DoxyCodeLine{01555\ \textcolor{comment}{\ \ For\ a\ column\ c\ in\ a\ hash\ bucket,\ Col\ [c].shared3.prev\ is\ NOT\ a\ "{}previous}}
+\DoxyCodeLine{01556\ \textcolor{comment}{\ \ column"{}\ pointer.\ \ Col\ [c].shared3.hash\ is\ used\ instead\ as\ the\ hash\ number}}
+\DoxyCodeLine{01557\ \textcolor{comment}{\ \ for\ that\ column.\ \ The\ value\ of\ Col\ [c].shared4.hash\_next\ is\ the\ next\ column}}
+\DoxyCodeLine{01558\ \textcolor{comment}{\ \ in\ the\ same\ hash\ bucket.}}
+\DoxyCodeLine{01559\ \textcolor{comment}{}}
+\DoxyCodeLine{01560\ \textcolor{comment}{\ \ Assuming\ no,\ or\ "{}few"{}\ hash\ collisions,\ the\ time\ taken\ by\ this\ routine\ is}}
+\DoxyCodeLine{01561\ \textcolor{comment}{\ \ linear\ in\ the\ sum\ of\ the\ sizes\ (lengths)\ of\ each\ column\ whose\ score\ has}}
+\DoxyCodeLine{01562\ \textcolor{comment}{\ \ just\ been\ computed\ in\ the\ approximate\ degree\ computation.}}
+\DoxyCodeLine{01563\ \textcolor{comment}{\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{01564\ \textcolor{comment}{*/}}
+\DoxyCodeLine{01565\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{01566\ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ detect\_super\_cols}
+\DoxyCodeLine{01567\ (}
+\DoxyCodeLine{01568\ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{01569\ }
+\DoxyCodeLine{01570\ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ Col\ [],\ \ \ \ \textcolor{comment}{/*\ of\ size\ n\_col+1\ */}}
+\DoxyCodeLine{01571\ \ \ IndexType\ A\ [],\ \ \ \ \ \textcolor{comment}{/*\ row\ indices\ of\ A\ */}}
+\DoxyCodeLine{01572\ \ \ IndexType\ head\ [],\ \ \ \ \textcolor{comment}{/*\ head\ of\ degree\ lists\ and\ hash\ buckets\ */}}
+\DoxyCodeLine{01573\ \ \ IndexType\ row\_start,\ \ \ \ \textcolor{comment}{/*\ pointer\ to\ set\ of\ columns\ to\ check\ */}}
+\DoxyCodeLine{01574\ \ \ IndexType\ row\_length\ \ \ \ \textcolor{comment}{/*\ number\ of\ columns\ to\ check\ */}}
+\DoxyCodeLine{01575\ )}
+\DoxyCodeLine{01576\ \{}
+\DoxyCodeLine{01577\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{01578\ }
+\DoxyCodeLine{01579\ \ \ IndexType\ hash\ ;\ \ \ \ \ \ \textcolor{comment}{/*\ hash\ value\ for\ a\ column\ */}}
+\DoxyCodeLine{01580\ \ \ IndexType\ *rp\ ;\ \ \ \ \ \textcolor{comment}{/*\ pointer\ to\ a\ row\ */}}
+\DoxyCodeLine{01581\ \ \ IndexType\ c\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ index\ */}}
+\DoxyCodeLine{01582\ \ \ IndexType\ super\_c\ ;\ \ \ \textcolor{comment}{/*\ column\ index\ of\ the\ column\ to\ absorb\ into\ */}}
+\DoxyCodeLine{01583\ \ \ IndexType\ *cp1\ ;\ \ \ \ \ \ \textcolor{comment}{/*\ column\ pointer\ for\ column\ super\_c\ */}}
+\DoxyCodeLine{01584\ \ \ IndexType\ *cp2\ ;\ \ \ \ \ \ \textcolor{comment}{/*\ column\ pointer\ for\ column\ c\ */}}
+\DoxyCodeLine{01585\ \ \ IndexType\ length\ ;\ \ \ \ \textcolor{comment}{/*\ length\ of\ column\ super\_c\ */}}
+\DoxyCodeLine{01586\ \ \ IndexType\ prev\_c\ ;\ \ \ \ \textcolor{comment}{/*\ column\ preceding\ c\ in\ hash\ bucket\ */}}
+\DoxyCodeLine{01587\ \ \ IndexType\ i\ ;\ \ \ \ \ \textcolor{comment}{/*\ loop\ counter\ */}}
+\DoxyCodeLine{01588\ \ \ IndexType\ *rp\_end\ ;\ \ \ \textcolor{comment}{/*\ pointer\ to\ the\ end\ of\ the\ row\ */}}
+\DoxyCodeLine{01589\ \ \ IndexType\ col\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ index\ in\ the\ row\ to\ check\ */}}
+\DoxyCodeLine{01590\ \ \ IndexType\ head\_column\ ;\ \ \ \textcolor{comment}{/*\ first\ column\ in\ hash\ bucket\ or\ degree\ list\ */}}
+\DoxyCodeLine{01591\ \ \ IndexType\ first\_col\ ;\ \ \ \textcolor{comment}{/*\ first\ column\ in\ hash\ bucket\ */}}
+\DoxyCodeLine{01592\ }
+\DoxyCodeLine{01593\ \ \ \textcolor{comment}{/*\ ===\ Consider\ each\ column\ in\ the\ row\ ==================================\ */}}
+\DoxyCodeLine{01594\ }
+\DoxyCodeLine{01595\ \ \ rp\ =\ \&A\ [row\_start]\ ;}
+\DoxyCodeLine{01596\ \ \ rp\_end\ =\ rp\ +\ row\_length\ ;}
+\DoxyCodeLine{01597\ \ \ \textcolor{keywordflow}{while}\ (rp\ <\ rp\_end)}
+\DoxyCodeLine{01598\ \ \ \{}
+\DoxyCodeLine{01599\ \ \ \ \ col\ =\ *rp++\ ;}
+\DoxyCodeLine{01600\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[col].is\_dead())}
+\DoxyCodeLine{01601\ \ \ \ \ \{}
+\DoxyCodeLine{01602\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01603\ \ \ \ \ \}}
+\DoxyCodeLine{01604\ }
+\DoxyCodeLine{01605\ \ \ \ \ \textcolor{comment}{/*\ get\ hash\ number\ for\ this\ column\ */}}
+\DoxyCodeLine{01606\ \ \ \ \ hash\ =\ Col\ [col].shared3.hash\ ;}
+\DoxyCodeLine{01607\ \ \ \ \ COLAMD\_ASSERT\ (hash\ <=\ n\_col)\ ;}
+\DoxyCodeLine{01608\ }
+\DoxyCodeLine{01609\ \ \ \ \ \textcolor{comment}{/*\ ===\ Get\ the\ first\ column\ in\ this\ hash\ bucket\ =====================\ */}}
+\DoxyCodeLine{01610\ }
+\DoxyCodeLine{01611\ \ \ \ \ head\_column\ =\ head\ [hash]\ ;}
+\DoxyCodeLine{01612\ \ \ \ \ \textcolor{keywordflow}{if}\ (head\_column\ >\ Empty)}
+\DoxyCodeLine{01613\ \ \ \ \ \{}
+\DoxyCodeLine{01614\ \ \ \ \ \ \ first\_col\ =\ Col\ [head\_column].shared3.headhash\ ;}
+\DoxyCodeLine{01615\ \ \ \ \ \}}
+\DoxyCodeLine{01616\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01617\ \ \ \ \ \{}
+\DoxyCodeLine{01618\ \ \ \ \ \ \ first\_col\ =\ -\/\ (head\_column\ +\ 2)\ ;}
+\DoxyCodeLine{01619\ \ \ \ \ \}}
+\DoxyCodeLine{01620\ }
+\DoxyCodeLine{01621\ \ \ \ \ \textcolor{comment}{/*\ ===\ Consider\ each\ column\ in\ the\ hash\ bucket\ ======================\ */}}
+\DoxyCodeLine{01622\ }
+\DoxyCodeLine{01623\ \ \ \ \ \textcolor{keywordflow}{for}\ (super\_c\ =\ first\_col\ ;\ super\_c\ !=\ Empty\ ;}
+\DoxyCodeLine{01624\ \ \ \ \ \ super\_c\ =\ Col\ [super\_c].shared4.hash\_next)}
+\DoxyCodeLine{01625\ \ \ \ \ \{}
+\DoxyCodeLine{01626\ \ \ \ \ \ \ COLAMD\_ASSERT\ (Col\ [super\_c].is\_alive())\ ;}
+\DoxyCodeLine{01627\ \ \ \ \ \ \ COLAMD\_ASSERT\ (Col\ [super\_c].shared3.hash\ ==\ hash)\ ;}
+\DoxyCodeLine{01628\ \ \ \ \ \ \ length\ =\ Col\ [super\_c].length\ ;}
+\DoxyCodeLine{01629\ }
+\DoxyCodeLine{01630\ \ \ \ \ \ \ \textcolor{comment}{/*\ prev\_c\ is\ the\ column\ preceding\ column\ c\ in\ the\ hash\ bucket\ */}}
+\DoxyCodeLine{01631\ \ \ \ \ \ \ prev\_c\ =\ super\_c\ ;}
+\DoxyCodeLine{01632\ }
+\DoxyCodeLine{01633\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Compare\ super\_c\ with\ all\ columns\ after\ it\ ================\ */}}
+\DoxyCodeLine{01634\ }
+\DoxyCodeLine{01635\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (c\ =\ Col\ [super\_c].shared4.hash\_next\ ;}
+\DoxyCodeLine{01636\ \ \ \ \ \ \ \ c\ !=\ Empty\ ;\ c\ =\ Col\ [c].shared4.hash\_next)}
+\DoxyCodeLine{01637\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01638\ \ \ \ \ COLAMD\_ASSERT\ (c\ !=\ super\_c)\ ;}
+\DoxyCodeLine{01639\ \ \ \ \ COLAMD\_ASSERT\ (Col[c].is\_alive())\ ;}
+\DoxyCodeLine{01640\ \ \ \ \ COLAMD\_ASSERT\ (Col\ [c].shared3.hash\ ==\ hash)\ ;}
+\DoxyCodeLine{01641\ }
+\DoxyCodeLine{01642\ \ \ \ \ \textcolor{comment}{/*\ not\ identical\ if\ lengths\ or\ scores\ are\ different\ */}}
+\DoxyCodeLine{01643\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col\ [c].length\ !=\ length\ ||}
+\DoxyCodeLine{01644\ \ \ \ \ \ \ \ \ Col\ [c].shared2.score\ !=\ Col\ [super\_c].shared2.score)}
+\DoxyCodeLine{01645\ \ \ \ \ \{}
+\DoxyCodeLine{01646\ \ \ \ \ \ \ prev\_c\ =\ c\ ;}
+\DoxyCodeLine{01647\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01648\ \ \ \ \ \}}
+\DoxyCodeLine{01649\ }
+\DoxyCodeLine{01650\ \ \ \ \ \textcolor{comment}{/*\ compare\ the\ two\ columns\ */}}
+\DoxyCodeLine{01651\ \ \ \ \ cp1\ =\ \&A\ [Col\ [super\_c].start]\ ;}
+\DoxyCodeLine{01652\ \ \ \ \ cp2\ =\ \&A\ [Col\ [c].start]\ ;}
+\DoxyCodeLine{01653\ }
+\DoxyCodeLine{01654\ \ \ \ \ \textcolor{keywordflow}{for}\ (i\ =\ 0\ ;\ i\ <\ length\ ;\ i++)}
+\DoxyCodeLine{01655\ \ \ \ \ \{}
+\DoxyCodeLine{01656\ \ \ \ \ \ \ \textcolor{comment}{/*\ the\ columns\ are\ "{}clean"{}\ (no\ dead\ rows)\ */}}
+\DoxyCodeLine{01657\ \ \ \ \ \ \ COLAMD\_ASSERT\ (\ cp1-\/>is\_alive()\ );}
+\DoxyCodeLine{01658\ \ \ \ \ \ \ COLAMD\_ASSERT\ (\ cp2-\/>is\_alive()\ );}
+\DoxyCodeLine{01659\ \ \ \ \ \ \ \textcolor{comment}{/*\ row\ indices\ will\ same\ order\ for\ both\ supercols,\ */}}
+\DoxyCodeLine{01660\ \ \ \ \ \ \ \textcolor{comment}{/*\ no\ gather\ scatter\ necessary\ */}}
+\DoxyCodeLine{01661\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (*cp1++\ !=\ *cp2++)}
+\DoxyCodeLine{01662\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01663\ \ \ \ \ \ \ \ \ break\ ;}
+\DoxyCodeLine{01664\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01665\ \ \ \ \ \}}
+\DoxyCodeLine{01666\ }
+\DoxyCodeLine{01667\ \ \ \ \ \textcolor{comment}{/*\ the\ two\ columns\ are\ different\ if\ the\ for-\/loop\ "{}broke"{}\ */}}
+\DoxyCodeLine{01668\ \ \ \ \ \textcolor{keywordflow}{if}\ (i\ !=\ length)}
+\DoxyCodeLine{01669\ \ \ \ \ \{}
+\DoxyCodeLine{01670\ \ \ \ \ \ \ prev\_c\ =\ c\ ;}
+\DoxyCodeLine{01671\ \ \ \ \ \ \ continue\ ;}
+\DoxyCodeLine{01672\ \ \ \ \ \}}
+\DoxyCodeLine{01673\ }
+\DoxyCodeLine{01674\ \ \ \ \ \textcolor{comment}{/*\ ===\ Got\ it!\ \ two\ columns\ are\ identical\ ===================\ */}}
+\DoxyCodeLine{01675\ }
+\DoxyCodeLine{01676\ \ \ \ \ COLAMD\_ASSERT\ (Col\ [c].shared2.score\ ==\ Col\ [super\_c].shared2.score)\ ;}
+\DoxyCodeLine{01677\ }
+\DoxyCodeLine{01678\ \ \ \ \ Col\ [super\_c].shared1.thickness\ +=\ Col\ [c].shared1.thickness\ ;}
+\DoxyCodeLine{01679\ \ \ \ \ Col\ [c].shared1.parent\ =\ super\_c\ ;}
+\DoxyCodeLine{01680\ \ \ \ \ Col[c].kill\_non\_principal()\ ;}
+\DoxyCodeLine{01681\ \ \ \ \ \textcolor{comment}{/*\ order\ c\ later,\ in\ order\_children()\ */}}
+\DoxyCodeLine{01682\ \ \ \ \ Col\ [c].shared2.order\ =\ Empty\ ;}
+\DoxyCodeLine{01683\ \ \ \ \ \textcolor{comment}{/*\ remove\ c\ from\ hash\ bucket\ */}}
+\DoxyCodeLine{01684\ \ \ \ \ Col\ [prev\_c].shared4.hash\_next\ =\ Col\ [c].shared4.hash\_next\ ;}
+\DoxyCodeLine{01685\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01686\ \ \ \ \ \}}
+\DoxyCodeLine{01687\ }
+\DoxyCodeLine{01688\ \ \ \ \ \textcolor{comment}{/*\ ===\ Empty\ this\ hash\ bucket\ =======================================\ */}}
+\DoxyCodeLine{01689\ }
+\DoxyCodeLine{01690\ \ \ \ \ \textcolor{keywordflow}{if}\ (head\_column\ >\ Empty)}
+\DoxyCodeLine{01691\ \ \ \ \ \{}
+\DoxyCodeLine{01692\ \ \ \ \ \ \ \textcolor{comment}{/*\ corresponding\ degree\ list\ "{}hash"{}\ is\ not\ empty\ */}}
+\DoxyCodeLine{01693\ \ \ \ \ \ \ Col\ [head\_column].shared3.headhash\ =\ Empty\ ;}
+\DoxyCodeLine{01694\ \ \ \ \ \}}
+\DoxyCodeLine{01695\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01696\ \ \ \ \ \{}
+\DoxyCodeLine{01697\ \ \ \ \ \ \ \textcolor{comment}{/*\ corresponding\ degree\ list\ "{}hash"{}\ is\ empty\ */}}
+\DoxyCodeLine{01698\ \ \ \ \ \ \ head\ [hash]\ =\ Empty\ ;}
+\DoxyCodeLine{01699\ \ \ \ \ \}}
+\DoxyCodeLine{01700\ \ \ \}}
+\DoxyCodeLine{01701\ \}}
+\DoxyCodeLine{01702\ }
+\DoxyCodeLine{01703\ }
+\DoxyCodeLine{01704\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01705\ \textcolor{comment}{/*\ ===\ garbage\_collection\ ===================================================\ */}}
+\DoxyCodeLine{01706\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01707\ }
+\DoxyCodeLine{01708\ \textcolor{comment}{/*}}
+\DoxyCodeLine{01709\ \textcolor{comment}{\ \ Defragments\ and\ compacts\ columns\ and\ rows\ in\ the\ workspace\ A.\ \ Used\ when}}
+\DoxyCodeLine{01710\ \textcolor{comment}{\ \ all\ available\ memory\ has\ been\ used\ while\ performing\ row\ merging.\ \ Returns}}
+\DoxyCodeLine{01711\ \textcolor{comment}{\ \ the\ index\ of\ the\ first\ free\ position\ in\ A,\ after\ garbage\ collection.\ \ The}}
+\DoxyCodeLine{01712\ \textcolor{comment}{\ \ time\ taken\ by\ this\ routine\ is\ linear\ is\ the\ size\ of\ the\ array\ A,\ which\ is}}
+\DoxyCodeLine{01713\ \textcolor{comment}{\ \ itself\ linear\ in\ the\ number\ of\ nonzeros\ in\ the\ input\ matrix.}}
+\DoxyCodeLine{01714\ \textcolor{comment}{\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{01715\ \textcolor{comment}{*/}}
+\DoxyCodeLine{01716\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{01717\ \textcolor{keyword}{static}\ IndexType\ garbage\_collection\ \ \textcolor{comment}{/*\ returns\ the\ new\ value\ of\ pfree\ */}}
+\DoxyCodeLine{01718\ \ \ (}
+\DoxyCodeLine{01719\ \ \ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{01720\ }
+\DoxyCodeLine{01721\ \ \ \ \ IndexType\ n\_row,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ rows\ */}}
+\DoxyCodeLine{01722\ \ \ \ \ IndexType\ n\_col,\ \ \ \ \ \ \textcolor{comment}{/*\ number\ of\ columns\ */}}
+\DoxyCodeLine{01723\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure<IndexType>}}\ Row\ [],\ \ \ \ \textcolor{comment}{/*\ row\ info\ */}}
+\DoxyCodeLine{01724\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1ColStructure}{ColStructure<IndexType>}}\ Col\ [],\ \ \ \ \textcolor{comment}{/*\ column\ info\ */}}
+\DoxyCodeLine{01725\ \ \ \ \ IndexType\ A\ [],\ \ \ \ \ \textcolor{comment}{/*\ A\ [0\ ...\ Alen-\/1]\ holds\ the\ matrix\ */}}
+\DoxyCodeLine{01726\ \ \ \ \ IndexType\ *pfree\ \ \ \ \ \ \textcolor{comment}{/*\ \&A\ [0]\ ...\ pfree\ is\ in\ use\ */}}
+\DoxyCodeLine{01727\ \ \ \ \ )}
+\DoxyCodeLine{01728\ \{}
+\DoxyCodeLine{01729\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{01730\ }
+\DoxyCodeLine{01731\ \ \ IndexType\ *psrc\ ;\ \ \ \ \ \textcolor{comment}{/*\ source\ pointer\ */}}
+\DoxyCodeLine{01732\ \ \ IndexType\ *pdest\ ;\ \ \ \ \textcolor{comment}{/*\ destination\ pointer\ */}}
+\DoxyCodeLine{01733\ \ \ IndexType\ j\ ;\ \ \ \ \ \textcolor{comment}{/*\ counter\ */}}
+\DoxyCodeLine{01734\ \ \ IndexType\ r\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ row\ index\ */}}
+\DoxyCodeLine{01735\ \ \ IndexType\ c\ ;\ \ \ \ \ \textcolor{comment}{/*\ a\ column\ index\ */}}
+\DoxyCodeLine{01736\ \ \ IndexType\ length\ ;\ \ \ \ \textcolor{comment}{/*\ length\ of\ a\ row\ or\ column\ */}}
+\DoxyCodeLine{01737\ }
+\DoxyCodeLine{01738\ \ \ \textcolor{comment}{/*\ ===\ Defragment\ the\ columns\ ===========================================\ */}}
+\DoxyCodeLine{01739\ }
+\DoxyCodeLine{01740\ \ \ pdest\ =\ \&A[0]\ ;}
+\DoxyCodeLine{01741\ \ \ \textcolor{keywordflow}{for}\ (c\ =\ 0\ ;\ c\ <\ n\_col\ ;\ c++)}
+\DoxyCodeLine{01742\ \ \ \{}
+\DoxyCodeLine{01743\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[c].is\_alive())}
+\DoxyCodeLine{01744\ \ \ \ \ \{}
+\DoxyCodeLine{01745\ \ \ \ \ \ \ psrc\ =\ \&A\ [Col\ [c].start]\ ;}
+\DoxyCodeLine{01746\ }
+\DoxyCodeLine{01747\ \ \ \ \ \ \ \textcolor{comment}{/*\ move\ and\ compact\ the\ column\ */}}
+\DoxyCodeLine{01748\ \ \ \ \ \ \ COLAMD\_ASSERT\ (pdest\ <=\ psrc)\ ;}
+\DoxyCodeLine{01749\ \ \ \ \ \ \ Col\ [c].start\ =\ (IndexType)\ (pdest\ -\/\ \&A\ [0])\ ;}
+\DoxyCodeLine{01750\ \ \ \ \ \ \ length\ =\ Col\ [c].length\ ;}
+\DoxyCodeLine{01751\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0\ ;\ j\ <\ length\ ;\ j++)}
+\DoxyCodeLine{01752\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01753\ \ \ \ \ r\ =\ *psrc++\ ;}
+\DoxyCodeLine{01754\ \ \ \ \ \textcolor{keywordflow}{if}\ (Row[r].is\_alive())}
+\DoxyCodeLine{01755\ \ \ \ \ \{}
+\DoxyCodeLine{01756\ \ \ \ \ \ \ *pdest++\ =\ r\ ;}
+\DoxyCodeLine{01757\ \ \ \ \ \}}
+\DoxyCodeLine{01758\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01759\ \ \ \ \ \ \ Col\ [c].length\ =\ (IndexType)\ (pdest\ -\/\ \&A\ [Col\ [c].start])\ ;}
+\DoxyCodeLine{01760\ \ \ \ \ \}}
+\DoxyCodeLine{01761\ \ \ \}}
+\DoxyCodeLine{01762\ }
+\DoxyCodeLine{01763\ \ \ \textcolor{comment}{/*\ ===\ Prepare\ to\ defragment\ the\ rows\ ===================================\ */}}
+\DoxyCodeLine{01764\ }
+\DoxyCodeLine{01765\ \ \ \textcolor{keywordflow}{for}\ (r\ =\ 0\ ;\ r\ <\ n\_row\ ;\ r++)}
+\DoxyCodeLine{01766\ \ \ \{}
+\DoxyCodeLine{01767\ \ \ \ \ \textcolor{keywordflow}{if}\ (Row[r].is\_alive())}
+\DoxyCodeLine{01768\ \ \ \ \ \{}
+\DoxyCodeLine{01769\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (Row\ [r].length\ ==\ 0)}
+\DoxyCodeLine{01770\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01771\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ this\ row\ is\ of\ zero\ length.\ \ cannot\ compact\ it,\ so\ kill\ it\ */}}
+\DoxyCodeLine{01772\ \ \ \ \ \ \ \ \ COLAMD\_DEBUG3\ ((\textcolor{stringliteral}{"{}Defrag\ row\ kill\(\backslash\)n"{}}))\ ;}
+\DoxyCodeLine{01773\ \ \ \ \ \ \ \ \ Row[r].kill()\ ;}
+\DoxyCodeLine{01774\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01775\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{01776\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01777\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ save\ first\ column\ index\ in\ Row\ [r].shared2.first\_column\ */}}
+\DoxyCodeLine{01778\ \ \ \ \ \ \ \ \ psrc\ =\ \&A\ [Row\ [r].start]\ ;}
+\DoxyCodeLine{01779\ \ \ \ \ \ \ \ \ Row\ [r].shared2.first\_column\ =\ *psrc\ ;}
+\DoxyCodeLine{01780\ \ \ \ \ \ \ \ \ COLAMD\_ASSERT\ (Row[r].is\_alive())\ ;}
+\DoxyCodeLine{01781\ \ \ \ \ \ \ \ \ \textcolor{comment}{/*\ flag\ the\ start\ of\ the\ row\ with\ the\ one's\ complement\ of\ row\ */}}
+\DoxyCodeLine{01782\ \ \ \ \ \ \ \ \ *psrc\ =\ ones\_complement(r)\ ;}
+\DoxyCodeLine{01783\ }
+\DoxyCodeLine{01784\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01785\ \ \ \ \ \}}
+\DoxyCodeLine{01786\ \ \ \}}
+\DoxyCodeLine{01787\ }
+\DoxyCodeLine{01788\ \ \ \textcolor{comment}{/*\ ===\ Defragment\ the\ rows\ ==============================================\ */}}
+\DoxyCodeLine{01789\ }
+\DoxyCodeLine{01790\ \ \ psrc\ =\ pdest\ ;}
+\DoxyCodeLine{01791\ \ \ \textcolor{keywordflow}{while}\ (psrc\ <\ pfree)}
+\DoxyCodeLine{01792\ \ \ \{}
+\DoxyCodeLine{01793\ \ \ \ \ \textcolor{comment}{/*\ find\ a\ negative\ number\ ...\ the\ start\ of\ a\ row\ */}}
+\DoxyCodeLine{01794\ \ \ \ \ \textcolor{keywordflow}{if}\ (*psrc++\ <\ 0)}
+\DoxyCodeLine{01795\ \ \ \ \ \{}
+\DoxyCodeLine{01796\ \ \ \ \ \ \ psrc-\/-\/\ ;}
+\DoxyCodeLine{01797\ \ \ \ \ \ \ \textcolor{comment}{/*\ get\ the\ row\ index\ */}}
+\DoxyCodeLine{01798\ \ \ \ \ \ \ r\ =\ ones\_complement(*psrc)\ ;}
+\DoxyCodeLine{01799\ \ \ \ \ \ \ COLAMD\_ASSERT\ (r\ >=\ 0\ \&\&\ r\ <\ n\_row)\ ;}
+\DoxyCodeLine{01800\ \ \ \ \ \ \ \textcolor{comment}{/*\ restore\ first\ column\ index\ */}}
+\DoxyCodeLine{01801\ \ \ \ \ \ \ *psrc\ =\ Row\ [r].shared2.first\_column\ ;}
+\DoxyCodeLine{01802\ \ \ \ \ \ \ COLAMD\_ASSERT\ (Row[r].is\_alive())\ ;}
+\DoxyCodeLine{01803\ }
+\DoxyCodeLine{01804\ \ \ \ \ \ \ \textcolor{comment}{/*\ move\ and\ compact\ the\ row\ */}}
+\DoxyCodeLine{01805\ \ \ \ \ \ \ COLAMD\_ASSERT\ (pdest\ <=\ psrc)\ ;}
+\DoxyCodeLine{01806\ \ \ \ \ \ \ Row\ [r].start\ =\ (IndexType)\ (pdest\ -\/\ \&A\ [0])\ ;}
+\DoxyCodeLine{01807\ \ \ \ \ \ \ length\ =\ Row\ [r].length\ ;}
+\DoxyCodeLine{01808\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (j\ =\ 0\ ;\ j\ <\ length\ ;\ j++)}
+\DoxyCodeLine{01809\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{01810\ \ \ \ \ c\ =\ *psrc++\ ;}
+\DoxyCodeLine{01811\ \ \ \ \ \textcolor{keywordflow}{if}\ (Col[c].is\_alive())}
+\DoxyCodeLine{01812\ \ \ \ \ \{}
+\DoxyCodeLine{01813\ \ \ \ \ \ \ *pdest++\ =\ c\ ;}
+\DoxyCodeLine{01814\ \ \ \ \ \}}
+\DoxyCodeLine{01815\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{01816\ \ \ \ \ \ \ Row\ [r].length\ =\ (IndexType)\ (pdest\ -\/\ \&A\ [Row\ [r].start])\ ;}
+\DoxyCodeLine{01817\ }
+\DoxyCodeLine{01818\ \ \ \ \ \}}
+\DoxyCodeLine{01819\ \ \ \}}
+\DoxyCodeLine{01820\ \ \ \textcolor{comment}{/*\ ensure\ we\ found\ all\ the\ rows\ */}}
+\DoxyCodeLine{01821\ \ \ COLAMD\_ASSERT\ (debug\_rows\ ==\ 0)\ ;}
+\DoxyCodeLine{01822\ }
+\DoxyCodeLine{01823\ \ \ \textcolor{comment}{/*\ ===\ Return\ the\ new\ value\ of\ pfree\ ====================================\ */}}
+\DoxyCodeLine{01824\ }
+\DoxyCodeLine{01825\ \ \ \textcolor{keywordflow}{return}\ ((IndexType)\ (pdest\ -\/\ \&A\ [0]))\ ;}
+\DoxyCodeLine{01826\ \}}
+\DoxyCodeLine{01827\ }
+\DoxyCodeLine{01828\ }
+\DoxyCodeLine{01829\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01830\ \textcolor{comment}{/*\ ===\ clear\_mark\ ===========================================================\ */}}
+\DoxyCodeLine{01831\ \textcolor{comment}{/*\ ==========================================================================\ */}}
+\DoxyCodeLine{01832\ }
+\DoxyCodeLine{01833\ \textcolor{comment}{/*}}
+\DoxyCodeLine{01834\ \textcolor{comment}{\ \ Clears\ the\ Row\ [].shared2.mark\ array,\ and\ returns\ the\ new\ tag\_mark.}}
+\DoxyCodeLine{01835\ \textcolor{comment}{\ \ Return\ value\ is\ the\ new\ tag\_mark.\ \ Not\ user-\/callable.}}
+\DoxyCodeLine{01836\ \textcolor{comment}{*/}}
+\DoxyCodeLine{01837\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ IndexType>}
+\DoxyCodeLine{01838\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \ IndexType\ clear\_mark\ \ \textcolor{comment}{/*\ return\ the\ new\ value\ for\ tag\_mark\ */}}
+\DoxyCodeLine{01839\ \ \ (}
+\DoxyCodeLine{01840\ \ \ \ \ \ \ \textcolor{comment}{/*\ ===\ Parameters\ =======================================================\ */}}
+\DoxyCodeLine{01841\ }
+\DoxyCodeLine{01842\ \ \ \ \ IndexType\ n\_row,\ \ \ \ \textcolor{comment}{/*\ number\ of\ rows\ in\ A\ */}}
+\DoxyCodeLine{01843\ \ \ \ \ \mbox{\hyperlink{structinternal_1_1Colamd_1_1RowStructure}{RowStructure<IndexType>}}\ Row\ []\ \textcolor{comment}{/*\ Row\ [0\ ...\ n\_row-\/1].shared2.mark\ is\ set\ to\ zero\ */}}
+\DoxyCodeLine{01844\ \ \ \ \ )}
+\DoxyCodeLine{01845\ \{}
+\DoxyCodeLine{01846\ \ \ \textcolor{comment}{/*\ ===\ Local\ variables\ ==================================================\ */}}
+\DoxyCodeLine{01847\ }
+\DoxyCodeLine{01848\ \ \ IndexType\ r\ ;}
+\DoxyCodeLine{01849\ }
+\DoxyCodeLine{01850\ \ \ \textcolor{keywordflow}{for}\ (r\ =\ 0\ ;\ r\ <\ n\_row\ ;\ r++)}
+\DoxyCodeLine{01851\ \ \ \{}
+\DoxyCodeLine{01852\ \ \ \ \ \textcolor{keywordflow}{if}\ (Row[r].is\_alive())}
+\DoxyCodeLine{01853\ \ \ \ \ \{}
+\DoxyCodeLine{01854\ \ \ \ \ \ \ Row\ [r].shared2.mark\ =\ 0\ ;}
+\DoxyCodeLine{01855\ \ \ \ \ \}}
+\DoxyCodeLine{01856\ \ \ \}}
+\DoxyCodeLine{01857\ \ \ \textcolor{keywordflow}{return}\ (1)\ ;}
+\DoxyCodeLine{01858\ \}}
+\DoxyCodeLine{01859\ }
+\DoxyCodeLine{01860\ \}\ \textcolor{comment}{//\ namespace\ Colamd}}
+\DoxyCodeLine{01861\ }
+\DoxyCodeLine{01862\ \}\ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{01863\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

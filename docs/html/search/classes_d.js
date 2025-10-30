@@ -1,5 +1,6 @@
 var searchData=
 [
-  ['timer_0',['Timer',['../classTimer.html',1,'']]],
-  ['timestamp_5fs_1',['Timestamp_s',['../structTimestamp__s.html',1,'']]]
+  ['quaternion_5fs_0',['Quaternion_s',['../structQuaternion__s.html',1,'']]],
+  ['quaternionhelper_1',['QuaternionHelper',['../classQuaternionHelper.html',1,'']]],
+  ['quaterniontransform_2',['QuaternionTransform',['../classQuaternionTransform.html',1,'']]]
 ];

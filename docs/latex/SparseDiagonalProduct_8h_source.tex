@@ -1,0 +1,144 @@
+\doxysection{Sparse\+Diagonal\+Product.\+h}
+\hypertarget{SparseDiagonalProduct_8h_source}{}\label{SparseDiagonalProduct_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseDiagonalProduct.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseDiagonalProduct.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2009-\/2015\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SPARSE\_DIAGONAL\_PRODUCT\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_SPARSE\_DIAGONAL\_PRODUCT\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ The\ product\ of\ a\ diagonal\ matrix\ with\ a\ sparse\ matrix\ can\ be\ easily}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ implemented\ using\ expression\ template.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ We\ have\ two\ consider\ very\ different\ cases:}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//\ 1\ -\/\ diag\ *\ row-\/major\ sparse}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ \ \ \ \ =>\ each\ inner\ vector\ <=>\ scalar\ *\ sparse\ vector\ product}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ \ \ \ \ =>\ so\ we\ can\ reuse\ CwiseUnaryOp::InnerIterator}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ 2\ -\/\ diag\ *\ col-\/major\ sparse}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ \ \ \ \ =>\ each\ inner\ vector\ <=>\ densevector\ *\ sparse\ vector\ cwise\ product}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ \ \ \ =>\ again,\ we\ can\ reuse\ specialization\ of\ CwiseBinaryOp::InnerIterator}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ \ \ \ \ for\ that\ particular\ case}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ The\ two\ other\ cases\ are\ symmetric.}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00028\ }
+\DoxyCodeLine{00029\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00030\ \ \ SDP\_AsScalarProduct,}
+\DoxyCodeLine{00031\ \ \ SDP\_AsCwiseProduct}
+\DoxyCodeLine{00032\ \};}
+\DoxyCodeLine{00033\ \ \ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SparseXprType,\ \textcolor{keyword}{typename}\ DiagonalCoeffType,\ \textcolor{keywordtype}{int}\ SDP\_Tag>}
+\DoxyCodeLine{00035\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1sparse__diagonal__product__evaluator}{sparse\_diagonal\_product\_evaluator}};}
+\DoxyCodeLine{00036\ }
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keywordtype}{int}\ ProductTag>}
+\DoxyCodeLine{00038\ \textcolor{keyword}{struct\ }product\_evaluator<\mbox{\hyperlink{classEigen_1_1Product}{Product}}<Lhs,\ Rhs,\ DefaultProduct>,\ ProductTag,\ \mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}},\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}}>}
+\DoxyCodeLine{00039\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__diagonal__product__evaluator}{sparse\_diagonal\_product\_evaluator}}<Rhs,\ typename\ Lhs::DiagonalVectorType,\ Rhs::Flags\&RowMajorBit?SDP\_AsScalarProduct:SDP\_AsCwiseProduct>}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Lhs,\ Rhs,\ DefaultProduct>}}\ XprType;}
+\DoxyCodeLine{00042\ \ \ \textcolor{keyword}{enum}\ \{\ CoeffReadCost\ =\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}},\ Flags\ =\ Rhs::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}},\ Alignment\ =\ 0\ \};\ \textcolor{comment}{//\ FIXME\ CoeffReadCost\ \&\ Flags}}
+\DoxyCodeLine{00043\ \ \ }
+\DoxyCodeLine{00044\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__diagonal__product__evaluator}{sparse\_diagonal\_product\_evaluator<Rhs,\ typename\ Lhs::DiagonalVectorType,\ Rhs::Flags\&RowMajorBit?SDP\_AsScalarProduct:SDP\_AsCwiseProduct>}}\ Base;}
+\DoxyCodeLine{00045\ \ \ \textcolor{keyword}{explicit}\ product\_evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)\ :\ Base(xpr.rhs(),\ xpr.lhs().diagonal())\ \{\}}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keywordtype}{int}\ ProductTag>}
+\DoxyCodeLine{00049\ \textcolor{keyword}{struct\ }product\_evaluator<\mbox{\hyperlink{classEigen_1_1Product}{Product}}<Lhs,\ Rhs,\ DefaultProduct>,\ ProductTag,\ \mbox{\hyperlink{structEigen_1_1SparseShape}{SparseShape}},\ \mbox{\hyperlink{structEigen_1_1DiagonalShape}{DiagonalShape}}>}
+\DoxyCodeLine{00050\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__diagonal__product__evaluator}{sparse\_diagonal\_product\_evaluator}}<Lhs,\ Transpose<const\ typename\ Rhs::DiagonalVectorType>,\ Lhs::Flags\&RowMajorBit?SDP\_AsCwiseProduct:SDP\_AsScalarProduct>}
+\DoxyCodeLine{00051\ \{}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Product}{Product<Lhs,\ Rhs,\ DefaultProduct>}}\ XprType;}
+\DoxyCodeLine{00053\ \ \ \textcolor{keyword}{enum}\ \{\ CoeffReadCost\ =\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}},\ Flags\ =\ Lhs::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}},\ Alignment\ =\ 0\ \};\ \textcolor{comment}{//\ FIXME\ CoeffReadCost\ \&\ Flags}}
+\DoxyCodeLine{00054\ \ \ }
+\DoxyCodeLine{00055\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__diagonal__product__evaluator}{sparse\_diagonal\_product\_evaluator<Lhs,\ Transpose<const\ typename\ Rhs::DiagonalVectorType>}},\ Lhs::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}}?SDP\_AsCwiseProduct:SDP\_AsScalarProduct>\ Base;}
+\DoxyCodeLine{00056\ \ \ \textcolor{keyword}{explicit}\ product\_evaluator(\textcolor{keyword}{const}\ XprType\&\ xpr)\ :\ Base(xpr.lhs(),\ xpr.rhs().diagonal().transpose())\ \{\}}
+\DoxyCodeLine{00057\ \};}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SparseXprType,\ \textcolor{keyword}{typename}\ DiagonalCoeffType>}
+\DoxyCodeLine{00060\ \textcolor{keyword}{struct\ }sparse\_diagonal\_product\_evaluator<SparseXprType,\ DiagonalCoeffType,\ SDP\_AsScalarProduct>}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00063\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<SparseXprType>::InnerIterator}}\ SparseXprInnerIterator;}
+\DoxyCodeLine{00064\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseXprType::Scalar\ Scalar;}
+\DoxyCodeLine{00065\ \ \ }
+\DoxyCodeLine{00066\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00067\ \ \ \textcolor{keyword}{class\ }InnerIterator\ :\ \textcolor{keyword}{public}\ SparseXprInnerIterator}
+\DoxyCodeLine{00068\ \ \ \{}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \ \ \ \ InnerIterator(\textcolor{keyword}{const}\ sparse\_diagonal\_product\_evaluator\ \&xprEval,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outer)}
+\DoxyCodeLine{00071\ \ \ \ \ \ \ :\ SparseXprInnerIterator(xprEval.m\_sparseXprImpl,\ outer),}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \ \ m\_coeff(xprEval.m\_diagCoeffImpl.coeff(outer))}
+\DoxyCodeLine{00073\ \ \ \ \ \{\}}
+\DoxyCodeLine{00074\ \ \ \ \ }
+\DoxyCodeLine{00075\ \ \ \ \ EIGEN\_STRONG\_INLINE\ Scalar\ value()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_coeff\ *\ SparseXprInnerIterator::value();\ \}}
+\DoxyCodeLine{00076\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{typename}\ DiagonalCoeffType::Scalar\ m\_coeff;}
+\DoxyCodeLine{00078\ \ \ \};}
+\DoxyCodeLine{00079\ \ \ }
+\DoxyCodeLine{00080\ \ \ sparse\_diagonal\_product\_evaluator(\textcolor{keyword}{const}\ SparseXprType\ \&sparseXpr,\ \textcolor{keyword}{const}\ DiagonalCoeffType\ \&diagCoeff)}
+\DoxyCodeLine{00081\ \ \ \ \ :\ m\_sparseXprImpl(sparseXpr),\ m\_diagCoeffImpl(diagCoeff)}
+\DoxyCodeLine{00082\ \ \ \{\}}
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nonZerosEstimate()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sparseXprImpl.nonZerosEstimate();\ \}}
+\DoxyCodeLine{00085\ \ \ \ \ }
+\DoxyCodeLine{00086\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00087\ \ \ evaluator<SparseXprType>\ m\_sparseXprImpl;}
+\DoxyCodeLine{00088\ \ \ evaluator<DiagonalCoeffType>\ m\_diagCoeffImpl;}
+\DoxyCodeLine{00089\ \};}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SparseXprType,\ \textcolor{keyword}{typename}\ DiagCoeffType>}
+\DoxyCodeLine{00093\ \textcolor{keyword}{struct\ }sparse\_diagonal\_product\_evaluator<SparseXprType,\ DiagCoeffType,\ SDP\_AsCwiseProduct>}
+\DoxyCodeLine{00094\ \{}
+\DoxyCodeLine{00095\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseXprType::Scalar\ Scalar;}
+\DoxyCodeLine{00096\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseXprType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00097\ \ \ }
+\DoxyCodeLine{00098\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1nested__eval}{nested\_eval}}<DiagCoeffType,SparseXprType::IsRowMajor\ ?\ SparseXprType::RowsAtCompileTime}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ SparseXprType::ColsAtCompileTime>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ DiagCoeffNested;}
+\DoxyCodeLine{00100\ \ \ }
+\DoxyCodeLine{00101\ \ \ \textcolor{keyword}{class\ }InnerIterator}
+\DoxyCodeLine{00102\ \ \ \{}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{evaluator<SparseXprType>::InnerIterator}}\ SparseXprIter;}
+\DoxyCodeLine{00104\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00105\ \ \ \ \ InnerIterator(\textcolor{keyword}{const}\ sparse\_diagonal\_product\_evaluator\ \&xprEval,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outer)}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ :\ m\_sparseIter(xprEval.m\_sparseXprEval,\ outer),\ m\_diagCoeffNested(xprEval.m\_diagCoeffNested)}
+\DoxyCodeLine{00107\ \ \ \ \ \{\}}
+\DoxyCodeLine{00108\ \ \ \ \ }
+\DoxyCodeLine{00109\ \ \ \ \ \textcolor{keyword}{inline}\ Scalar\ value()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sparseIter.value()\ *\ m\_diagCoeffNested.coeff(index());\ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{inline}\ StorageIndex\ index()\textcolor{keyword}{\ const\ \ }\{\ \textcolor{keywordflow}{return}\ m\_sparseIter.index();\ \}}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outer()\textcolor{keyword}{\ const\ \ }\{\ \textcolor{keywordflow}{return}\ m\_sparseIter.outer();\ \}}
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col()\textcolor{keyword}{\ const\ \ \ \ }\{\ \textcolor{keywordflow}{return}\ SparseXprType::IsRowMajor\ ?\ m\_sparseIter.index()\ :\ m\_sparseIter.outer();\ \}}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ row()\textcolor{keyword}{\ const\ \ \ \ }\{\ \textcolor{keywordflow}{return}\ SparseXprType::IsRowMajor\ ?\ m\_sparseIter.outer()\ :\ m\_sparseIter.index();\ \}}
+\DoxyCodeLine{00114\ \ \ \ \ }
+\DoxyCodeLine{00115\ \ \ \ \ EIGEN\_STRONG\_INLINE\ InnerIterator\&\ operator++()\ \{\ ++m\_sparseIter;\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};\ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{operator}\ bool()\textcolor{keyword}{\ const\ \ }\{\ \textcolor{keywordflow}{return}\ m\_sparseIter;\ \}}
+\DoxyCodeLine{00117\ \ \ \ \ }
+\DoxyCodeLine{00118\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00119\ \ \ \ \ SparseXprIter\ m\_sparseIter;}
+\DoxyCodeLine{00120\ \ \ \ \ DiagCoeffNested\ m\_diagCoeffNested;}
+\DoxyCodeLine{00121\ \ \ \};}
+\DoxyCodeLine{00122\ \ \ }
+\DoxyCodeLine{00123\ \ \ sparse\_diagonal\_product\_evaluator(\textcolor{keyword}{const}\ SparseXprType\ \&sparseXpr,\ \textcolor{keyword}{const}\ DiagCoeffType\ \&diagCoeff)}
+\DoxyCodeLine{00124\ \ \ \ \ :\ m\_sparseXprEval(sparseXpr),\ m\_diagCoeffNested(diagCoeff)}
+\DoxyCodeLine{00125\ \ \ \{\}}
+\DoxyCodeLine{00126\ }
+\DoxyCodeLine{00127\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nonZerosEstimate()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_sparseXprEval.nonZerosEstimate();\ \}}
+\DoxyCodeLine{00128\ \ \ \ \ }
+\DoxyCodeLine{00129\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00130\ \ \ evaluator<SparseXprType>\ m\_sparseXprEval;}
+\DoxyCodeLine{00131\ \ \ DiagCoeffNested\ m\_diagCoeffNested;}
+\DoxyCodeLine{00132\ \};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00135\ }
+\DoxyCodeLine{00136\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SPARSE\_DIAGONAL\_PRODUCT\_H}}
+
+\end{DoxyCode}

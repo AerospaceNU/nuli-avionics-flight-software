@@ -1,0 +1,492 @@
+\doxysection{Aligned\+Box.\+h}
+\hypertarget{AlignedBox_8h_source}{}\label{AlignedBox_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Geometry/AlignedBox.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Geometry/AlignedBox.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{//\ Function\ void\ Eigen::AlignedBox::transform(const\ Transform\&\ transform)}}
+\DoxyCodeLine{00011\ \textcolor{comment}{//\ is\ provided\ under\ the\ following\ license\ agreement:}}
+\DoxyCodeLine{00012\ \textcolor{comment}{//}}
+\DoxyCodeLine{00013\ \textcolor{comment}{//\ Software\ License\ Agreement\ (BSD\ License)}}
+\DoxyCodeLine{00014\ \textcolor{comment}{//}}
+\DoxyCodeLine{00015\ \textcolor{comment}{//\ Copyright\ (c)\ 2011-\/2014,\ Willow\ Garage,\ Inc.}}
+\DoxyCodeLine{00016\ \textcolor{comment}{//\ Copyright\ (c)\ 2014-\/2015,\ Open\ Source\ Robotics\ Foundation}}
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ All\ rights\ reserved.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{//}}
+\DoxyCodeLine{00019\ \textcolor{comment}{//\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without}}
+\DoxyCodeLine{00020\ \textcolor{comment}{//\ modification,\ are\ permitted\ provided\ that\ the\ following\ conditions}}
+\DoxyCodeLine{00021\ \textcolor{comment}{//\ are\ met:}}
+\DoxyCodeLine{00022\ \textcolor{comment}{//}}
+\DoxyCodeLine{00023\ \textcolor{comment}{//\ \ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright}}
+\DoxyCodeLine{00024\ \textcolor{comment}{//\ \ \ \ notice,\ this\ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{//\ \ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above}}
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ \ \ \ copyright\ notice,\ this\ list\ of\ conditions\ and\ the\ following}}
+\DoxyCodeLine{00027\ \textcolor{comment}{//\ \ \ \ disclaimer\ in\ the\ documentation\ and/or\ other\ materials\ provided}}
+\DoxyCodeLine{00028\ \textcolor{comment}{//\ \ \ \ with\ the\ distribution.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{//\ \ *\ Neither\ the\ name\ of\ Open\ Source\ Robotics\ Foundation\ nor\ the\ names\ of\ its}}
+\DoxyCodeLine{00030\ \textcolor{comment}{//\ \ \ \ contributors\ may\ be\ used\ to\ endorse\ or\ promote\ products\ derived}}
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ \ \ \ from\ this\ software\ without\ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS}}
+\DoxyCodeLine{00034\ \textcolor{comment}{//\ "{}AS\ IS"{}\ AND\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT}}
+\DoxyCodeLine{00035\ \textcolor{comment}{//\ LIMITED\ TO,\ THE\ IMPLIED\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS}}
+\DoxyCodeLine{00036\ \textcolor{comment}{//\ FOR\ A\ PARTICULAR\ PURPOSE\ ARE\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE}}
+\DoxyCodeLine{00037\ \textcolor{comment}{//\ COPYRIGHT\ OWNER\ OR\ CONTRIBUTORS\ BE\ LIABLE\ FOR\ ANY\ DIRECT,\ INDIRECT,}}
+\DoxyCodeLine{00038\ \textcolor{comment}{//\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR\ CONSEQUENTIAL\ DAMAGES\ (INCLUDING,}}
+\DoxyCodeLine{00039\ \textcolor{comment}{//\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF\ SUBSTITUTE\ GOODS\ OR\ SERVICES;}}
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS\ INTERRUPTION)\ HOWEVER}}
+\DoxyCodeLine{00041\ \textcolor{comment}{//\ CAUSED\ AND\ ON\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN\ CONTRACT,\ STRICT}}
+\DoxyCodeLine{00042\ \textcolor{comment}{//\ LIABILITY,\ OR\ TORT\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)\ ARISING\ IN}}
+\DoxyCodeLine{00043\ \textcolor{comment}{//\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF\ THE}}
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00045\ }
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_ALIGNEDBOX\_H}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\#define\ EIGEN\_ALIGNEDBOX\_H}}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00050\ \textcolor{comment}{}}
+\DoxyCodeLine{00051\ \textcolor{comment}{/**\ \(\backslash\)geometry\_module\ \(\backslash\)ingroup\ Geometry\_Module}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ AlignedBox}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ An\ axis\ aligned\ box}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Scalar\ the\ type\ of\ the\ scalar\ coefficients}}
+\DoxyCodeLine{00059\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_AmbientDim\ the\ dimension\ of\ the\ ambient\ space,\ can\ be\ a\ compile\ time\ value\ or\ Dynamic.}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ *\ This\ class\ represents\ an\ axis\ aligned\ box\ as\ a\ pair\ of\ the\ minimal\ and\ maximal\ corners.}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ *\ \(\backslash\)warning\ The\ result\ of\ most\ methods\ is\ undefined\ when\ applied\ to\ an\ empty\ box.\ You\ can\ check\ for\ empty\ boxes\ using\ isEmpty().}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ alignedboxtypedefs}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00065\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_AmbientDim>}
+\DoxyCodeLine{00066\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}}
+\DoxyCodeLine{00067\ \{}
+\DoxyCodeLine{00068\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00069\ EIGEN\_MAKE\_ALIGNED\_OPERATOR\_NEW\_IF\_VECTORIZABLE\_FIXED\_SIZE(\_Scalar,\_AmbientDim)}
+\DoxyCodeLine{00070\ \ \ \textcolor{keyword}{enum}\ \{\ AmbientDimAtCompileTime\ =\ \_AmbientDim\ \};}
+\DoxyCodeLine{00071\ \ \ \textcolor{keyword}{typedef}\ \_Scalar\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Scalar;}
+\DoxyCodeLine{00072\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1NumTraits}{NumTraits<Scalar>}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ScalarTraits;}
+\DoxyCodeLine{00073\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}};\ \textcolor{comment}{///<\ \(\backslash\)deprecated\ since\ Eigen\ 3.3}}
+\DoxyCodeLine{00074\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ ScalarTraits::Real\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RealScalar;}
+\DoxyCodeLine{00075\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ ScalarTraits::NonInteger\ \ \ \ \ \ \ \ \ NonInteger;}
+\DoxyCodeLine{00076\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,AmbientDimAtCompileTime,1>}}\ \ VectorType;}
+\DoxyCodeLine{00077\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1CwiseBinaryOp}{CwiseBinaryOp<internal::scalar\_sum\_op<Scalar>}},\ \textcolor{keyword}{const}\ VectorType,\ \textcolor{keyword}{const}\ VectorType>\ VectorTypeSum;}
+\DoxyCodeLine{00078\ \textcolor{comment}{}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ /**\ Define\ constants\ to\ name\ the\ corners\ of\ a\ 1D,\ 2D\ or\ 3D\ axis\ aligned\ bounding\ box\ */}}
+\DoxyCodeLine{00080\ \ \ \textcolor{keyword}{enum}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae4aa935b36004fffc49c7a3a85e2d378}{CornerType}}}
+\DoxyCodeLine{00081\ \ \ \{\textcolor{comment}{}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ /**\ 1D\ names\ @\{\ */}}
+\DoxyCodeLine{00083\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae4aa935b36004fffc49c7a3a85e2d378a600b5a58e77104ef7281dba6dcffb808}{Min}}=0,\ Max=1,\textcolor{comment}{}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ /**\ @\}\ */}}
+\DoxyCodeLine{00085\ \textcolor{comment}{}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ \ \ \ /**\ Identifier\ for\ 2D\ corner\ @\{\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae4aa935b36004fffc49c7a3a85e2d378a384d9fbe2c6b6b69a8ea7c5632a61f5c}{BottomLeft}}=0,\ BottomRight=1,}
+\DoxyCodeLine{00088\ \ \ \ \ TopLeft=2,\ TopRight=3,\textcolor{comment}{}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ \ \ \ /**\ @\}\ */}}
+\DoxyCodeLine{00090\ \textcolor{comment}{}}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ \ \ \ /**\ Identifier\ for\ 3D\ corner\ \ @\{\ */}}
+\DoxyCodeLine{00092\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae4aa935b36004fffc49c7a3a85e2d378a66786d5e4ba263c9725c3476fc421281}{BottomLeftFloor}}=0,\ BottomRightFloor=1,}
+\DoxyCodeLine{00093\ \ \ \ \ TopLeftFloor=2,\ TopRightFloor=3,}
+\DoxyCodeLine{00094\ \ \ \ \ BottomLeftCeil=4,\ BottomRightCeil=5,}
+\DoxyCodeLine{00095\ \ \ \ \ TopLeftCeil=6,\ TopRightCeil=7\textcolor{comment}{}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ /**\ @\}\ */}}
+\DoxyCodeLine{00097\ \ \ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{comment}{}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ /**\ Default\ constructor\ initializing\ a\ null\ box.\ */}}
+\DoxyCodeLine{00101\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}()}
+\DoxyCodeLine{00102\ \ \ \{\ \textcolor{keywordflow}{if}\ (EIGEN\_CONST\_CONDITIONAL(AmbientDimAtCompileTime!=\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}))\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae946a0964de83d4e688fa462fe6d6725}{setEmpty}}();\ \}}
+\DoxyCodeLine{00103\ \textcolor{comment}{}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ /**\ Constructs\ a\ null\ box\ with\ \(\backslash\)a\ \_dim\ the\ dimension\ of\ the\ ambient\ space.\ */}}
+\DoxyCodeLine{00105\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a23c536bbeb17416e4c39b1dd346408f6}{AlignedBox}}(\mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ \_dim)\ :\ m\_min(\_dim),\ m\_max(\_dim)}
+\DoxyCodeLine{00106\ \ \ \{\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae946a0964de83d4e688fa462fe6d6725}{setEmpty}}();\ \}}
+\DoxyCodeLine{00107\ \textcolor{comment}{}}
+\DoxyCodeLine{00108\ \textcolor{comment}{\ \ /**\ Constructs\ a\ box\ with\ extremities\ \(\backslash\)a\ \_min\ and\ \(\backslash\)a\ \_max.}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ *\ \(\backslash\)warning\ If\ either\ component\ of\ \(\backslash\)a\ \_min\ is\ larger\ than\ the\ same\ component\ of\ \(\backslash\)a\ \_max,\ the\ constructed\ box\ is\ empty.\ */}}
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherVectorType1,\ \textcolor{keyword}{typename}\ OtherVectorType2>}
+\DoxyCodeLine{00111\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_afbede45e6cc624de2033d219a158f248}{AlignedBox}}(\textcolor{keyword}{const}\ OtherVectorType1\&\ \_min,\ \textcolor{keyword}{const}\ OtherVectorType2\&\ \_max)\ :\ m\_min(\_min),\ m\_max(\_max)\ \{\}}
+\DoxyCodeLine{00112\ \textcolor{comment}{}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ /**\ Constructs\ a\ box\ containing\ a\ single\ point\ \(\backslash\)a\ p.\ */}}
+\DoxyCodeLine{00114\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00115\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a2d851323bca421a59fb73b1258d130e7}{AlignedBox}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ p)\ :\ m\_min(p),\ m\_max(m\_min)}
+\DoxyCodeLine{00116\ \ \ \{\ \}}
+\DoxyCodeLine{00117\ }
+\DoxyCodeLine{00118\ \ \ EIGEN\_DEVICE\_FUNC\ \mbox{\hyperlink{classEigen_1_1AlignedBox}{\string~AlignedBox}}()\ \{\}}
+\DoxyCodeLine{00119\ \textcolor{comment}{}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ dimension\ in\ which\ the\ box\ holds\ */}}
+\DoxyCodeLine{00121\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ab774df3608d0be913a3aa5d67476a521}{dim}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ AmbientDimAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ m\_min.size()\ :\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}(AmbientDimAtCompileTime);\ \}}
+\DoxyCodeLine{00122\ \textcolor{comment}{}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ /**\ \(\backslash\)deprecated\ use\ isEmpty()\ */}}
+\DoxyCodeLine{00124\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a441638bbddbd4c8924cec736e7af7f96}{isNull}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a0d194e2e56c3bef854e88ca2aba04c9e}{isEmpty}}();\ \}}
+\DoxyCodeLine{00125\ \textcolor{comment}{}}
+\DoxyCodeLine{00126\ \textcolor{comment}{\ \ /**\ \(\backslash\)deprecated\ use\ setEmpty()\ */}}
+\DoxyCodeLine{00127\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a1e0e312d7bd3468d7e15edb4f139fd13}{setNull}}()\ \{\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae946a0964de83d4e688fa462fe6d6725}{setEmpty}}();\ \}}
+\DoxyCodeLine{00128\ \textcolor{comment}{}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ true\ if\ the\ box\ is\ empty.}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ setEmpty\ */}}
+\DoxyCodeLine{00131\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a0d194e2e56c3bef854e88ca2aba04c9e}{isEmpty}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (m\_min.array()\ >\ m\_max.array()).any();\ \}}
+\DoxyCodeLine{00132\ \textcolor{comment}{}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ \ /**\ Makes\ \(\backslash\)c\ *this\ an\ empty\ box.}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ isEmpty\ */}}
+\DoxyCodeLine{00135\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ae946a0964de83d4e688fa462fe6d6725}{setEmpty}}()}
+\DoxyCodeLine{00136\ \ \ \{}
+\DoxyCodeLine{00137\ \ \ \ \ m\_min.setConstant(\ ScalarTraits::highest()\ );}
+\DoxyCodeLine{00138\ \ \ \ \ m\_max.setConstant(\ ScalarTraits::lowest()\ );}
+\DoxyCodeLine{00139\ \ \ \}}
+\DoxyCodeLine{00140\ \textcolor{comment}{}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ minimal\ corner\ */}}
+\DoxyCodeLine{00142\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ VectorType\&\ (\mbox{\hyperlink{classEigen_1_1AlignedBox_a5f396493ffd11b063edf52d3ef3b3d25}{min}})()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_min;\ \}\textcolor{comment}{}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ a\ non\ const\ reference\ to\ the\ minimal\ corner\ */}}
+\DoxyCodeLine{00144\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ VectorType\&\ (\mbox{\hyperlink{classEigen_1_1AlignedBox_a5f396493ffd11b063edf52d3ef3b3d25}{min}})()\ \{\ \textcolor{keywordflow}{return}\ m\_min;\ \}\textcolor{comment}{}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ maximal\ corner\ */}}
+\DoxyCodeLine{00146\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ VectorType\&\ (\mbox{\hyperlink{classEigen_1_1AlignedBox_aef1c70e8d3ab4f00a5440b69066f8e08}{max}})()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_max;\ \}\textcolor{comment}{}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ a\ non\ const\ reference\ to\ the\ maximal\ corner\ */}}
+\DoxyCodeLine{00148\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ VectorType\&\ (\mbox{\hyperlink{classEigen_1_1AlignedBox_aef1c70e8d3ab4f00a5440b69066f8e08}{max}})()\ \{\ \textcolor{keywordflow}{return}\ m\_max;\ \}}
+\DoxyCodeLine{00149\ \textcolor{comment}{}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ center\ of\ the\ box\ */}}
+\DoxyCodeLine{00151\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a53e595641b2d163739098a1983db5414}{EIGEN\_EXPR\_BINARYOP\_SCALAR\_RETURN\_TYPE}}(VectorTypeSum,\ RealScalar,\ quotient)}
+\DoxyCodeLine{00152\ \ \ center()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00153\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ (m\_min+m\_max)/RealScalar(2);\ \}}
+\DoxyCodeLine{00154\ \textcolor{comment}{}}
+\DoxyCodeLine{00155\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ lengths\ of\ the\ sides\ of\ the\ bounding\ box.}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ \ \ *\ Note\ that\ this\ function\ does\ not\ get\ the\ same}}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ \ \ *\ result\ for\ integral\ or\ floating\ scalar\ types:\ see}}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00159\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1CwiseBinaryOp}{CwiseBinaryOp<\ internal::scalar\_difference\_op<Scalar,Scalar>}},\ \textcolor{keyword}{const}\ VectorType,\ \textcolor{keyword}{const}\ VectorType>\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a5b55e9d215c30e0d0d01757d006b4f58}{sizes}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00160\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ m\_max\ -\/\ m\_min;\ \}}
+\DoxyCodeLine{00161\ \textcolor{comment}{}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ volume\ of\ the\ bounding\ box\ */}}
+\DoxyCodeLine{00163\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Scalar\ \mbox{\hyperlink{classEigen_1_1AlignedBox_af737027346c35a1c3027d36c9c891dc5}{volume}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00164\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a5b55e9d215c30e0d0d01757d006b4f58}{sizes}}().prod();\ \}}
+\DoxyCodeLine{00165\ \textcolor{comment}{}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ an\ expression\ for\ the\ bounding\ box\ diagonal\ vector}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ *\ if\ the\ length\ of\ the\ diagonal\ is\ needed:\ diagonal().norm()}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ *\ will\ provide\ it.}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00170\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1CwiseBinaryOp}{CwiseBinaryOp<\ internal::scalar\_difference\_op<Scalar,Scalar>}},\ \textcolor{keyword}{const}\ VectorType,\ \textcolor{keyword}{const}\ VectorType>\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a7c99ed84eaf62ca895cd1bdcbaae9b6d}{diagonal}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00171\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a5b55e9d215c30e0d0d01757d006b4f58}{sizes}}();\ \}}
+\DoxyCodeLine{00172\ \textcolor{comment}{}}
+\DoxyCodeLine{00173\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ vertex\ of\ the\ bounding\ box\ at\ the\ corner\ defined\ by}}
+\DoxyCodeLine{00174\ \textcolor{comment}{\ \ \ \ *\ the\ corner-\/id\ corner.\ It\ works\ only\ for\ a\ 1D,\ 2D\ or\ 3D\ bounding\ box.}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ *\ For\ 1D\ bounding\ boxes\ corners\ are\ named\ by\ 2\ enum\ constants:}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ \ \ *\ BottomLeft\ and\ BottomRight.}}
+\DoxyCodeLine{00177\ \textcolor{comment}{\ \ \ \ *\ For\ 2D\ bounding\ boxes,\ corners\ are\ named\ by\ 4\ enum\ constants:}}
+\DoxyCodeLine{00178\ \textcolor{comment}{\ \ \ \ *\ BottomLeft,\ BottomRight,\ TopLeft,\ TopRight.}}
+\DoxyCodeLine{00179\ \textcolor{comment}{\ \ \ \ *\ For\ 3D\ bounding\ boxes,\ the\ following\ names\ are\ added:}}
+\DoxyCodeLine{00180\ \textcolor{comment}{\ \ \ \ *\ BottomLeftCeil,\ BottomRightCeil,\ TopLeftCeil,\ TopRightCeil.}}
+\DoxyCodeLine{00181\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00182\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ VectorType\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a32e631ff4bfb088e664f696034e63100}{corner}}(\mbox{\hyperlink{classEigen_1_1AlignedBox_ae4aa935b36004fffc49c7a3a85e2d378}{CornerType}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a32e631ff4bfb088e664f696034e63100}{corner}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00183\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00184\ \ \ \ \ EIGEN\_STATIC\_ASSERT(\_AmbientDim\ <=\ 3,\ THIS\_METHOD\_IS\_ONLY\_FOR\_VECTORS\_OF\_A\_SPECIFIC\_SIZE);}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \ \ \ \ VectorType\ res;}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ mult\ =\ 1;}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ d=0;\ d<\mbox{\hyperlink{classEigen_1_1AlignedBox_ab774df3608d0be913a3aa5d67476a521}{dim}}();\ ++d)}
+\DoxyCodeLine{00190\ \ \ \ \ \{}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(\ mult\ \&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a32e631ff4bfb088e664f696034e63100}{corner}}\ )\ res[d]\ =\ m\_max[d];}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ res[d]\ =\ m\_min[d];}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ mult\ *=\ 2;}
+\DoxyCodeLine{00194\ \ \ \ \ \}}
+\DoxyCodeLine{00195\ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00196\ \ \ \}}
+\DoxyCodeLine{00197\ \textcolor{comment}{}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ a\ random\ point\ inside\ the\ bounding\ box\ sampled\ with}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ *\ a\ uniform\ distribution\ */}}
+\DoxyCodeLine{00200\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ VectorType\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a3cd54685b5378b5e77fa2c62ca7e2797}{sample}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00201\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00202\ \ \ \ \ VectorType\ r(\mbox{\hyperlink{classEigen_1_1AlignedBox_ab774df3608d0be913a3aa5d67476a521}{dim}}());}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ d=0;\ d<\mbox{\hyperlink{classEigen_1_1AlignedBox_ab774df3608d0be913a3aa5d67476a521}{dim}}();\ ++d)}
+\DoxyCodeLine{00204\ \ \ \ \ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!ScalarTraits::IsInteger)}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \ \ r[d]\ =\ m\_min[d]\ +\ (m\_max[d]-\/m\_min[d])}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ *\ internal::random<Scalar>(Scalar(0),\ Scalar(1));}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \ \ r[d]\ =\ internal::random(m\_min[d],\ m\_max[d]);}
+\DoxyCodeLine{00212\ \ \ \ \ \}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00214\ \ \ \}}
+\DoxyCodeLine{00215\ \textcolor{comment}{}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ true\ if\ the\ point\ \(\backslash\)a\ p\ is\ inside\ the\ box\ \(\backslash\)c\ *this.\ */}}
+\DoxyCodeLine{00217\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00218\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a1882f21e5e56c877ea35505644ef5833}{contains}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ p)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00219\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keyword}{typename}\ internal::nested\_eval<Derived,2>::type\ p\_n(p.derived());}
+\DoxyCodeLine{00221\ \ \ \ \ \textcolor{keywordflow}{return}\ (m\_min.array()<=p\_n.array()).all()\ \&\&\ (p\_n.array()<=m\_max.array()).all();}
+\DoxyCodeLine{00222\ \ \ \}}
+\DoxyCodeLine{00223\ \textcolor{comment}{}}
+\DoxyCodeLine{00224\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ true\ if\ the\ box\ \(\backslash\)a\ b\ is\ entirely\ inside\ the\ box\ \(\backslash\)c\ *this.\ */}}
+\DoxyCodeLine{00225\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aadae71332cb6be09f93150edb1b6f99a}{contains}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00226\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ (m\_min.array()<=(b.\mbox{\hyperlink{classEigen_1_1AlignedBox_a5f396493ffd11b063edf52d3ef3b3d25}{min}})().array()).all()\ \&\&\ ((b.\mbox{\hyperlink{classEigen_1_1AlignedBox_aef1c70e8d3ab4f00a5440b69066f8e08}{max}})().array()<=m\_max.array()).all();\ \}}
+\DoxyCodeLine{00227\ \textcolor{comment}{}}
+\DoxyCodeLine{00228\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ true\ if\ the\ box\ \(\backslash\)a\ b\ is\ intersecting\ the\ box\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ intersection,\ clamp\ */}}
+\DoxyCodeLine{00230\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a75a5af80f40892bfa267c0245f0d4d12}{intersects}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00231\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ (m\_min.array()<=(b.\mbox{\hyperlink{classEigen_1_1AlignedBox_aef1c70e8d3ab4f00a5440b69066f8e08}{max}})().array()).all()\ \&\&\ ((b.\mbox{\hyperlink{classEigen_1_1AlignedBox_a5f396493ffd11b063edf52d3ef3b3d25}{min}})().array()<=m\_max.array()).all();\ \}}
+\DoxyCodeLine{00232\ \textcolor{comment}{}}
+\DoxyCodeLine{00233\ \textcolor{comment}{\ \ /**\ Extends\ \(\backslash\)c\ *this\ such\ that\ it\ contains\ the\ point\ \(\backslash\)a\ p\ and\ returns\ a\ reference\ to\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00234\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ extend(const\ AlignedBox\&)\ */}}
+\DoxyCodeLine{00235\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00236\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ad038416af09dee9022b7771fe798f78e}{extend}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ p)}
+\DoxyCodeLine{00237\ \ \ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keyword}{typename}\ internal::nested\_eval<Derived,2>::type\ p\_n(p.derived());}
+\DoxyCodeLine{00239\ \ \ \ \ m\_min\ =\ m\_min.cwiseMin(p\_n);}
+\DoxyCodeLine{00240\ \ \ \ \ m\_max\ =\ m\_max.cwiseMax(p\_n);}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00242\ \ \ \}}
+\DoxyCodeLine{00243\ \textcolor{comment}{}}
+\DoxyCodeLine{00244\ \textcolor{comment}{\ \ /**\ Extends\ \(\backslash\)c\ *this\ such\ that\ it\ contains\ the\ box\ \(\backslash\)a\ b\ and\ returns\ a\ reference\ to\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00245\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ merged,\ extend(const\ MatrixBase\&)\ */}}
+\DoxyCodeLine{00246\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a14953660551c7b8f3a190a50cdcc5767}{extend}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)}
+\DoxyCodeLine{00247\ \ \ \{}
+\DoxyCodeLine{00248\ \ \ \ \ m\_min\ =\ m\_min.cwiseMin(b.m\_min);}
+\DoxyCodeLine{00249\ \ \ \ \ m\_max\ =\ m\_max.cwiseMax(b.m\_max);}
+\DoxyCodeLine{00250\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00251\ \ \ \}}
+\DoxyCodeLine{00252\ \textcolor{comment}{}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ /**\ Clamps\ \(\backslash\)c\ *this\ by\ the\ box\ \(\backslash\)a\ b\ and\ returns\ a\ reference\ to\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00254\ \textcolor{comment}{\ \ \ *\ \(\backslash\)note\ If\ the\ boxes\ don't\ intersect,\ the\ resulting\ box\ is\ empty.}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ intersection(),\ intersects()\ */}}
+\DoxyCodeLine{00256\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a36be5aa5744d87612072a518b36ae768}{clamp}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)}
+\DoxyCodeLine{00257\ \ \ \{}
+\DoxyCodeLine{00258\ \ \ \ \ m\_min\ =\ m\_min.cwiseMax(b.m\_min);}
+\DoxyCodeLine{00259\ \ \ \ \ m\_max\ =\ m\_max.cwiseMin(b.m\_max);}
+\DoxyCodeLine{00260\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00261\ \ \ \}}
+\DoxyCodeLine{00262\ \textcolor{comment}{}}
+\DoxyCodeLine{00263\ \textcolor{comment}{\ \ /**\ Returns\ an\ AlignedBox\ that\ is\ the\ intersection\ of\ \(\backslash\)a\ b\ and\ \(\backslash\)c\ *this}}
+\DoxyCodeLine{00264\ \textcolor{comment}{\ \ \ *\ \(\backslash\)note\ If\ the\ boxes\ don't\ intersect,\ the\ resulting\ box\ is\ empty.}}
+\DoxyCodeLine{00265\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ intersects(),\ clamp,\ contains()\ \ */}}
+\DoxyCodeLine{00266\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_ac31024e7fccb025810535eb5a673ed14}{intersection}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00267\ \textcolor{keyword}{\ \ }\{\textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}(m\_min.cwiseMax(b.m\_min),\ m\_max.cwiseMin(b.m\_max));\ \}}
+\DoxyCodeLine{00268\ \textcolor{comment}{}}
+\DoxyCodeLine{00269\ \textcolor{comment}{\ \ /**\ Returns\ an\ AlignedBox\ that\ is\ the\ union\ of\ \(\backslash\)a\ b\ and\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00270\ \textcolor{comment}{\ \ \ *\ \(\backslash\)note\ Merging\ with\ an\ empty\ box\ may\ result\ in\ a\ box\ bigger\ than\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00271\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ extend(const\ AlignedBox\&)\ */}}
+\DoxyCodeLine{00272\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a8182b7661c4b244285ca0f831363b00a}{merged}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00273\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}(m\_min.cwiseMin(b.m\_min),\ m\_max.cwiseMax(b.m\_max));\ \}}
+\DoxyCodeLine{00274\ \textcolor{comment}{}}
+\DoxyCodeLine{00275\ \textcolor{comment}{\ \ /**\ Translate\ \(\backslash\)c\ *this\ by\ the\ vector\ \(\backslash\)a\ t\ and\ returns\ a\ reference\ to\ \(\backslash\)c\ *this.\ */}}
+\DoxyCodeLine{00276\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00277\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a5624ddff348da802e2fce93198c5da5d}{translate}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ a\_t)}
+\DoxyCodeLine{00278\ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ internal::nested\_eval<Derived,2>::type\ t(a\_t.derived());}
+\DoxyCodeLine{00280\ \ \ \ \ m\_min\ +=\ t;}
+\DoxyCodeLine{00281\ \ \ \ \ m\_max\ +=\ t;}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00283\ \ \ \}}
+\DoxyCodeLine{00284\ \textcolor{comment}{}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ a\ copy\ of\ \(\backslash\)c\ *this\ translated\ by\ the\ vector\ \(\backslash\)a\ t.\ */}}
+\DoxyCodeLine{00286\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00287\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a036c5a2403e60c63391f8911a9559c02}{translated}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ a\_t)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00288\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00289\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\ result(m\_min,\ m\_max);}
+\DoxyCodeLine{00290\ \ \ \ \ result.\mbox{\hyperlink{classEigen_1_1AlignedBox_a5624ddff348da802e2fce93198c5da5d}{translate}}(a\_t);}
+\DoxyCodeLine{00291\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00292\ \ \ \}}
+\DoxyCodeLine{00293\ \textcolor{comment}{}}
+\DoxyCodeLine{00294\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ squared\ distance\ between\ the\ point\ \(\backslash\)a\ p\ and\ the\ box\ \(\backslash\)c\ *this,}}
+\DoxyCodeLine{00295\ \textcolor{comment}{\ \ \ \ *\ and\ zero\ if\ \(\backslash\)a\ p\ is\ inside\ the\ box.}}
+\DoxyCodeLine{00296\ \textcolor{comment}{\ \ \ \ *\ \(\backslash\)sa\ exteriorDistance(const\ MatrixBase\&),\ squaredExteriorDistance(const\ AlignedBox\&)}}
+\DoxyCodeLine{00297\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00298\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00299\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aa6d9ffc81bd77da631fef6559f45cf13}{squaredExteriorDistance}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ p)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00300\ \textcolor{comment}{}}
+\DoxyCodeLine{00301\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ squared\ distance\ between\ the\ boxes\ \(\backslash\)a\ b\ and\ \(\backslash\)c\ *this,}}
+\DoxyCodeLine{00302\ \textcolor{comment}{\ \ \ \ *\ and\ zero\ if\ the\ boxes\ intersect.}}
+\DoxyCodeLine{00303\ \textcolor{comment}{\ \ \ \ *\ \(\backslash\)sa\ exteriorDistance(const\ AlignedBox\&),\ squaredExteriorDistance(const\ MatrixBase\&)}}
+\DoxyCodeLine{00304\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00305\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aa6d9ffc81bd77da631fef6559f45cf13}{squaredExteriorDistance}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox}{AlignedBox}}\&\ b)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00306\ \textcolor{comment}{}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ distance\ between\ the\ point\ \(\backslash\)a\ p\ and\ the\ box\ \(\backslash\)c\ *this,}}
+\DoxyCodeLine{00308\ \textcolor{comment}{\ \ \ \ *\ and\ zero\ if\ \(\backslash\)a\ p\ is\ inside\ the\ box.}}
+\DoxyCodeLine{00309\ \textcolor{comment}{\ \ \ \ *\ \(\backslash\)sa\ squaredExteriorDistance(const\ MatrixBase\&),\ exteriorDistance(const\ AlignedBox\&)}}
+\DoxyCodeLine{00310\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00311\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00312\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ NonInteger\ \mbox{\hyperlink{classEigen_1_1AlignedBox_afe02b2ef5cdc1e1cd45eddee33cf1be5}{exteriorDistance}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ p)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00313\ \textcolor{keyword}{\ \ }\{\ EIGEN\_USING\_STD(sqrt)\ \textcolor{keywordflow}{return}\ sqrt(NonInteger(\mbox{\hyperlink{classEigen_1_1AlignedBox_aa6d9ffc81bd77da631fef6559f45cf13}{squaredExteriorDistance}}(p)));\ \}}
+\DoxyCodeLine{00314\ \textcolor{comment}{}}
+\DoxyCodeLine{00315\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ the\ distance\ between\ the\ boxes\ \(\backslash\)a\ b\ and\ \(\backslash\)c\ *this,}}
+\DoxyCodeLine{00316\ \textcolor{comment}{\ \ \ \ *\ and\ zero\ if\ the\ boxes\ intersect.}}
+\DoxyCodeLine{00317\ \textcolor{comment}{\ \ \ \ *\ \(\backslash\)sa\ squaredExteriorDistance(const\ AlignedBox\&),\ exteriorDistance(const\ MatrixBase\&)}}
+\DoxyCodeLine{00318\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00319\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ NonInteger\ \mbox{\hyperlink{classEigen_1_1AlignedBox_adf8c0e000b283ad22f00474356916686}{exteriorDistance}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00320\ \textcolor{keyword}{\ \ }\{\ EIGEN\_USING\_STD(sqrt)\ \textcolor{keywordflow}{return}\ sqrt(NonInteger(\mbox{\hyperlink{classEigen_1_1AlignedBox_aa6d9ffc81bd77da631fef6559f45cf13}{squaredExteriorDistance}}(b)));\ \}}
+\DoxyCodeLine{00321\ \textcolor{comment}{}}
+\DoxyCodeLine{00322\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00323\ \textcolor{comment}{\ \ \ *\ Specialization\ of\ transform\ for\ pure\ translation.}}
+\DoxyCodeLine{00324\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00325\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Mode,\ \textcolor{keywordtype}{int}\ Options>}
+\DoxyCodeLine{00326\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}}(}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1Transform_a6b463d14d8be4c0eda2eed6e943b831f}{Transform<Scalar,\ AmbientDimAtCompileTime,\ Mode,\ Options>::TranslationType}}\&\ translation)}
+\DoxyCodeLine{00328\ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1AlignedBox_a5624ddff348da802e2fce93198c5da5d}{translate}}(translation);}
+\DoxyCodeLine{00330\ \ \ \}}
+\DoxyCodeLine{00331\ \textcolor{comment}{}}
+\DoxyCodeLine{00332\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00333\ \textcolor{comment}{\ \ \ *\ Transforms\ this\ box\ by\ \(\backslash\)a\ transform\ and\ recomputes\ it\ to}}
+\DoxyCodeLine{00334\ \textcolor{comment}{\ \ \ *\ still\ be\ an\ axis-\/aligned\ box.}}
+\DoxyCodeLine{00335\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ \ \ *\ \(\backslash\)note\ This\ method\ is\ provided\ under\ BSD\ license\ (see\ the\ top\ of\ this\ file).}}
+\DoxyCodeLine{00337\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00338\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Mode,\ \textcolor{keywordtype}{int}\ Options>}
+\DoxyCodeLine{00339\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a278887db6a56a95611288412c231e227}{transform}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{Transform<Scalar,\ AmbientDimAtCompileTime,\ Mode,\ Options>}}\&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}})}
+\DoxyCodeLine{00340\ \ \ \{}
+\DoxyCodeLine{00341\ \ \ \ \ \textcolor{comment}{//\ Only\ Affine\ and\ Isometry\ transforms\ are\ currently\ supported.}}
+\DoxyCodeLine{00342\ \ \ \ \ EIGEN\_STATIC\_ASSERT(Mode\ ==\ \mbox{\hyperlink{group__enums_ggaee59a86102f150923b0cac6d4ff05107a0872f0a82453aaae40339c33acbb31fb}{Affine}}\ ||\ Mode\ ==\ \mbox{\hyperlink{group__enums_ggaee59a86102f150923b0cac6d4ff05107a8192e8fdb2ec3ec46d92956cc83ef490}{AffineCompact}}\ ||\ Mode\ ==\ \mbox{\hyperlink{group__enums_ggaee59a86102f150923b0cac6d4ff05107a84413028615d2d718bafd2dfb93dafef}{Isometry}},\ THIS\_METHOD\_IS\_ONLY\_FOR\_SPECIFIC\_TRANSFORMATIONS);}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \ \ \ \ \textcolor{comment}{//\ Method\ adapted\ from\ FCL\ src/shape/geometric\_shapes\_utility.cpp\#computeBV<AABB,\ Box>(...)}}
+\DoxyCodeLine{00345\ \ \ \ \ \textcolor{comment}{//\ https://github.com/flexible-\/collision-\/library/fcl/blob/fcl-\/0.4/src/shape/geometric\_shapes\_utility.cpp\#L292}}
+\DoxyCodeLine{00346\ \ \ \ \ \textcolor{comment}{//}}
+\DoxyCodeLine{00347\ \ \ \ \ \textcolor{comment}{//\ Here's\ a\ nice\ explanation\ why\ it\ works:\ https://zeuxcg.org/2010/10/17/aabb-\/from-\/obb-\/with-\/component-\/wise-\/abs/}}
+\DoxyCodeLine{00348\ }
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{comment}{//\ two\ times\ rotated\ extent}}
+\DoxyCodeLine{00350\ \ \ \ \ \textcolor{keyword}{const}\ VectorType\ rotated\_extent\_2\ =\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}}.linear().cwiseAbs()\ *\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a5b55e9d215c30e0d0d01757d006b4f58}{sizes}}();}
+\DoxyCodeLine{00351\ \ \ \ \ \textcolor{comment}{//\ two\ times\ new\ center}}
+\DoxyCodeLine{00352\ \ \ \ \ \textcolor{keyword}{const}\ VectorType\ rotated\_center\_2\ =\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}}.linear()\ *\ (this-\/>m\_max\ +\ this-\/>m\_min)\ +}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ Scalar(2)\ *\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}}.translation();}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \ \ \ \ this-\/>m\_max\ =\ (rotated\_center\_2\ +\ rotated\_extent\_2)\ /\ Scalar(2);}
+\DoxyCodeLine{00356\ \ \ \ \ this-\/>m\_min\ =\ (rotated\_center\_2\ -\/\ rotated\_extent\_2)\ /\ Scalar(2);}
+\DoxyCodeLine{00357\ \ \ \}}
+\DoxyCodeLine{00358\ \textcolor{comment}{}}
+\DoxyCodeLine{00359\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00360\ \textcolor{comment}{\ \ \ *\ \(\backslash\)returns\ a\ copy\ of\ \(\backslash\)c\ *this\ transformed\ by\ \(\backslash\)a\ transform\ and\ recomputed\ to}}
+\DoxyCodeLine{00361\ \textcolor{comment}{\ \ \ *\ still\ be\ an\ axis-\/aligned\ box.}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00363\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ Mode,\ \textcolor{keywordtype}{int}\ Options>}
+\DoxyCodeLine{00364\ \ \ EIGEN\_DEVICE\_FUNC\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a70cbd58f10719e5348f71e3695b7ad6e}{transformed}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transform}{Transform<Scalar,\ AmbientDimAtCompileTime,\ Mode,\ Options>}}\&\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00365\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00366\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\ result(m\_min,\ m\_max);}
+\DoxyCodeLine{00367\ \ \ \ \ result.\mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}}(\mbox{\hyperlink{classEigen_1_1AlignedBox_a95b9ce55cb1bfd75e6b487d9a33c6679}{transform}});}
+\DoxyCodeLine{00368\ \ \ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00369\ \ \ \}}
+\DoxyCodeLine{00370\ \textcolor{comment}{}}
+\DoxyCodeLine{00371\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ \(\backslash\)c\ *this\ with\ scalar\ type\ casted\ to\ \(\backslash\)a\ NewScalarType}}
+\DoxyCodeLine{00372\ \textcolor{comment}{\ \ \ \ *}}
+\DoxyCodeLine{00373\ \textcolor{comment}{\ \ \ \ *\ Note\ that\ if\ \(\backslash\)a\ NewScalarType\ is\ equal\ to\ the\ current\ scalar\ type\ of\ \(\backslash\)c\ *this}}
+\DoxyCodeLine{00374\ \textcolor{comment}{\ \ \ \ *\ then\ this\ function\ smartly\ returns\ a\ const\ reference\ to\ \(\backslash\)c\ *this.}}
+\DoxyCodeLine{00375\ \textcolor{comment}{\ \ \ \ */}}
+\DoxyCodeLine{00376\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ NewScalarType>}
+\DoxyCodeLine{00377\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cast__return__type}{internal::cast\_return\_type}}<\mbox{\hyperlink{classEigen_1_1AlignedBox}{AlignedBox}},}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox<NewScalarType,AmbientDimAtCompileTime>}}\ >::type\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a8ba23e05b9a8d6f26dfcfae53937d3ad}{cast}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00379\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00380\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1cast__return__type}{internal::cast\_return\_type}}<\mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}},}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox<NewScalarType,AmbientDimAtCompileTime>}}\ >::type(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00382\ \ \ \}}
+\DoxyCodeLine{00383\ \textcolor{comment}{}}
+\DoxyCodeLine{00384\ \textcolor{comment}{\ \ /**\ Copy\ constructor\ with\ scalar\ type\ conversion\ */}}
+\DoxyCodeLine{00385\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherScalarType>}
+\DoxyCodeLine{00386\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_afa9f0963fda762e5ca3633caec7bf8f2}{AlignedBox}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox<OtherScalarType,AmbientDimAtCompileTime>}}\&\ other)}
+\DoxyCodeLine{00387\ \ \ \{}
+\DoxyCodeLine{00388\ \ \ \ \ m\_min\ =\ (other.\mbox{\hyperlink{classEigen_1_1AlignedBox_a5f396493ffd11b063edf52d3ef3b3d25}{min}})().template\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a8ba23e05b9a8d6f26dfcfae53937d3ad}{cast<Scalar>}}();}
+\DoxyCodeLine{00389\ \ \ \ \ m\_max\ =\ (other.\mbox{\hyperlink{classEigen_1_1AlignedBox_aef1c70e8d3ab4f00a5440b69066f8e08}{max}})().template\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a8ba23e05b9a8d6f26dfcfae53937d3ad}{cast<Scalar>}}();}
+\DoxyCodeLine{00390\ \ \ \}}
+\DoxyCodeLine{00391\ \textcolor{comment}{}}
+\DoxyCodeLine{00392\ \textcolor{comment}{\ \ /**\ \(\backslash\)returns\ \(\backslash\)c\ true\ if\ \(\backslash\)c\ *this\ is\ approximately\ equal\ to\ \(\backslash\)a\ other,\ within\ the\ precision}}
+\DoxyCodeLine{00393\ \textcolor{comment}{\ \ \ \ *\ determined\ by\ \(\backslash\)a\ prec.}}
+\DoxyCodeLine{00394\ \textcolor{comment}{\ \ \ \ *}}
+\DoxyCodeLine{00395\ \textcolor{comment}{\ \ \ \ *\ \(\backslash\)sa\ MatrixBase::isApprox()\ */}}
+\DoxyCodeLine{00396\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keywordtype}{bool}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_a9d21b1102d3b6944a80a563d3974c83c}{isApprox}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ other,\ \textcolor{keyword}{const}\ RealScalar\&\ prec\ =\ ScalarTraits::dummy\_precision())\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00397\ \textcolor{keyword}{\ \ }\{\ \textcolor{keywordflow}{return}\ m\_min.isApprox(other.m\_min,\ prec)\ \&\&\ m\_max.isApprox(other.m\_max,\ prec);\ \}}
+\DoxyCodeLine{00398\ }
+\DoxyCodeLine{00399\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00400\ }
+\DoxyCodeLine{00401\ \ \ VectorType\ m\_min,\ m\_max;}
+\DoxyCodeLine{00402\ \};}
+\DoxyCodeLine{00403\ }
+\DoxyCodeLine{00404\ }
+\DoxyCodeLine{00405\ }
+\DoxyCodeLine{00406\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\textcolor{keywordtype}{int}\ AmbientDim>}
+\DoxyCodeLine{00407\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00408\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Scalar\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aa6d9ffc81bd77da631fef6559f45cf13}{AlignedBox<Scalar,AmbientDim>::squaredExteriorDistance}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ a\_p)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00409\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00410\ \ \ \textcolor{keyword}{typename}\ internal::nested\_eval<Derived,2*AmbientDim>::type\ p(a\_p.derived());}
+\DoxyCodeLine{00411\ \ \ Scalar\ dist2(0);}
+\DoxyCodeLine{00412\ \ \ Scalar\ aux;}
+\DoxyCodeLine{00413\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ k=0;\ k<\mbox{\hyperlink{classEigen_1_1AlignedBox_ab774df3608d0be913a3aa5d67476a521}{dim}}();\ ++k)}
+\DoxyCodeLine{00414\ \ \ \{}
+\DoxyCodeLine{00415\ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_min[k]\ >\ p[k]\ )}
+\DoxyCodeLine{00416\ \ \ \ \ \{}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ aux\ =\ m\_min[k]\ -\/\ p[k];}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ dist2\ +=\ aux*aux;}
+\DoxyCodeLine{00419\ \ \ \ \ \}}
+\DoxyCodeLine{00420\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ p[k]\ >\ m\_max[k]\ )}
+\DoxyCodeLine{00421\ \ \ \ \ \{}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ aux\ =\ p[k]\ -\/\ m\_max[k];}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ dist2\ +=\ aux*aux;}
+\DoxyCodeLine{00424\ \ \ \ \ \}}
+\DoxyCodeLine{00425\ \ \ \}}
+\DoxyCodeLine{00426\ \ \ \textcolor{keywordflow}{return}\ dist2;}
+\DoxyCodeLine{00427\ \}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\textcolor{keywordtype}{int}\ AmbientDim>}
+\DoxyCodeLine{00430\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Scalar\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aa6d9ffc81bd77da631fef6559f45cf13}{AlignedBox<Scalar,AmbientDim>::squaredExteriorDistance}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1AlignedBox_aeb7682d3d8676752e9b789b51d950872}{AlignedBox}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00431\ \textcolor{keyword}{}\{}
+\DoxyCodeLine{00432\ \ \ Scalar\ dist2(0);}
+\DoxyCodeLine{00433\ \ \ Scalar\ aux;}
+\DoxyCodeLine{00434\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{classEigen_1_1AlignedBox_a774ef355da13d6bee6a6e7244c15231a}{Index}}\ k=0;\ k<\mbox{\hyperlink{classEigen_1_1AlignedBox_ab774df3608d0be913a3aa5d67476a521}{dim}}();\ ++k)}
+\DoxyCodeLine{00435\ \ \ \{}
+\DoxyCodeLine{00436\ \ \ \ \ \textcolor{keywordflow}{if}(\ m\_min[k]\ >\ b.m\_max[k]\ )}
+\DoxyCodeLine{00437\ \ \ \ \ \{}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ aux\ =\ m\_min[k]\ -\/\ b.m\_max[k];}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ dist2\ +=\ aux*aux;}
+\DoxyCodeLine{00440\ \ \ \ \ \}}
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(\ b.m\_min[k]\ >\ m\_max[k]\ )}
+\DoxyCodeLine{00442\ \ \ \ \ \{}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ aux\ =\ b.m\_min[k]\ -\/\ m\_max[k];}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ dist2\ +=\ aux*aux;}
+\DoxyCodeLine{00445\ \ \ \ \ \}}
+\DoxyCodeLine{00446\ \ \ \}}
+\DoxyCodeLine{00447\ \ \ \textcolor{keywordflow}{return}\ dist2;}
+\DoxyCodeLine{00448\ \}}
+\DoxyCodeLine{00449\ \textcolor{comment}{}}
+\DoxyCodeLine{00450\ \textcolor{comment}{/**\ \(\backslash\)defgroup\ alignedboxtypedefs\ Global\ aligned\ box\ typedefs}}
+\DoxyCodeLine{00451\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00452\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Geometry\_Module}}
+\DoxyCodeLine{00453\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00454\ \textcolor{comment}{\ \ *\ Eigen\ defines\ several\ typedef\ shortcuts\ for\ most\ common\ aligned\ box\ types.}}
+\DoxyCodeLine{00455\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00456\ \textcolor{comment}{\ \ *\ The\ general\ patterns\ are\ the\ following:}}
+\DoxyCodeLine{00457\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00458\ \textcolor{comment}{\ \ *\ \(\backslash\)c\ AlignedBoxSizeType\ where\ \(\backslash\)c\ Size\ can\ be\ \(\backslash\)c\ 1,\ \(\backslash\)c\ 2,\(\backslash\)c\ 3,\(\backslash\)c\ 4\ for\ fixed\ size\ boxes\ or\ \(\backslash\)c\ X\ for\ dynamic\ size,}}
+\DoxyCodeLine{00459\ \textcolor{comment}{\ \ *\ and\ where\ \(\backslash\)c\ Type\ can\ be\ \(\backslash\)c\ i\ for\ integer,\ \(\backslash\)c\ f\ for\ float,\ \(\backslash\)c\ d\ for\ double.}}
+\DoxyCodeLine{00460\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00461\ \textcolor{comment}{\ \ *\ For\ example,\ \(\backslash\)c\ AlignedBox3d\ is\ a\ fixed-\/size\ 3x3\ aligned\ box\ type\ of\ doubles,\ and\ \(\backslash\)c\ AlignedBoxXf\ is\ a\ dynamic-\/size\ aligned\ box\ of\ floats.}}
+\DoxyCodeLine{00462\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00463\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ class\ AlignedBox}}
+\DoxyCodeLine{00464\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ Size,\ SizeSuffix)\ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00467\ \textcolor{preprocessor}{}\textcolor{comment}{/**\ \(\backslash\)ingroup\ alignedboxtypedefs\ */}\textcolor{preprocessor}{\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \(\backslash\)}}
+\DoxyCodeLine{00468\ \textcolor{preprocessor}{typedef\ AlignedBox<Type,\ Size>\ \ \ AlignedBox\#\#SizeSuffix\#\#TypeSuffix;}}
+\DoxyCodeLine{00469\ }
+\DoxyCodeLine{00470\ \textcolor{preprocessor}{\#define\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(Type,\ TypeSuffix)\ \(\backslash\)}}
+\DoxyCodeLine{00471\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 1,\ 1)\ \(\backslash\)}}
+\DoxyCodeLine{00472\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 2,\ 2)\ \(\backslash\)}}
+\DoxyCodeLine{00473\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 3,\ 3)\ \(\backslash\)}}
+\DoxyCodeLine{00474\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ 4,\ 4)\ \(\backslash\)}}
+\DoxyCodeLine{00475\ \textcolor{preprocessor}{EIGEN\_MAKE\_TYPEDEFS(Type,\ TypeSuffix,\ Dynamic,\ X)}}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(\textcolor{keywordtype}{int},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ i)}
+\DoxyCodeLine{00478\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(\textcolor{keywordtype}{float},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ f)}
+\DoxyCodeLine{00479\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES(\textcolor{keywordtype}{double},\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d)}
+\DoxyCodeLine{00480\ }
+\DoxyCodeLine{00481\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_TYPEDEFS\_ALL\_SIZES}}
+\DoxyCodeLine{00482\ \textcolor{preprocessor}{\#undef\ EIGEN\_MAKE\_TYPEDEFS}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_ALIGNEDBOX\_H}}
+
+\end{DoxyCode}

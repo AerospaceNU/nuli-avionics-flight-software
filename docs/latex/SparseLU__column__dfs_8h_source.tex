@@ -1,0 +1,185 @@
+\doxysection{Sparse\+LU\+\_\+column\+\_\+dfs.\+h}
+\hypertarget{SparseLU__column__dfs_8h_source}{}\label{SparseLU__column__dfs_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_column\_dfs.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseLU/SparseLU\_column\_dfs.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Désiré\ Nuentsa-\/Wakam\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{comment}{/*\ }}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ }}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ NOTE:\ This\ file\ is\ the\ modified\ version\ of\ [s,d,c,z]column\_dfs.c\ file\ in\ SuperLU\ }}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ }}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *\ -\/-\/\ SuperLU\ routine\ (version\ 2.0)\ -\/-\/}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ Univ.\ of\ California\ Berkeley,\ Xerox\ Palo\ Alto\ Research\ Center,}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *\ and\ Lawrence\ Berkeley\ National\ Lab.}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ November\ 15,\ 1997}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ Copyright\ (c)\ 1994\ by\ Xerox\ Corporation.\ \ All\ rights\ reserved.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ *\ THIS\ MATERIAL\ IS\ PROVIDED\ AS\ IS,\ WITH\ ABSOLUTELY\ NO\ WARRANTY}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ *\ EXPRESSED\ OR\ IMPLIED.\ \ ANY\ USE\ IS\ AT\ YOUR\ OWN\ RISK.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ *\ Permission\ is\ hereby\ granted\ to\ use\ or\ copy\ this\ program\ for\ any}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ *\ purpose,\ provided\ the\ above\ notices\ are\ retained\ on\ all\ copies.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ *\ Permission\ to\ modify\ the\ code\ and\ to\ distribute\ modified\ code\ is}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ *\ granted,\ provided\ the\ above\ notices\ are\ retained,\ and\ a\ notice\ that}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ the\ code\ was\ modified\ is\ included\ with\ the\ above\ copyright\ notice.}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifndef\ SPARSELU\_COLUMN\_DFS\_H}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ SPARSELU\_COLUMN\_DFS\_H}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ StorageIndex>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classSparseLUImpl}{SparseLUImpl}};}
+\DoxyCodeLine{00034\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ IndexVector,\ \textcolor{keyword}{typename}\ ScalarVector>}
+\DoxyCodeLine{00039\ \textcolor{keyword}{struct\ }column\_dfs\_traits\ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1no__assignment__operator}{no\_assignment\_operator}}}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ ScalarVector::Scalar\ Scalar;}
+\DoxyCodeLine{00042\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ IndexVector::Scalar\ StorageIndex;}
+\DoxyCodeLine{00043\ \ \ column\_dfs\_traits(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ jsuper,\ \textcolor{keyword}{typename}\ SparseLUImpl<Scalar,\ StorageIndex>::GlobalLU\_t\&\ glu,\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl}{SparseLUImpl<Scalar,\ StorageIndex>}}\&\ luImpl)}
+\DoxyCodeLine{00044\ \ \ \ :\ m\_jcol(jcol),\ m\_jsuper\_ref(jsuper),\ m\_glu(glu),\ m\_luImpl(luImpl)}
+\DoxyCodeLine{00045\ \ \{\}}
+\DoxyCodeLine{00046\ \ \ \textcolor{keywordtype}{bool}\ update\_segrep(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \textcolor{comment}{/*krep*/},\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \textcolor{comment}{/*jj*/})}
+\DoxyCodeLine{00047\ \ \ \{}
+\DoxyCodeLine{00048\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00049\ \ \ \}}
+\DoxyCodeLine{00050\ \ \ \textcolor{keywordtype}{void}\ mem\_expand(IndexVector\&\ lsub,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ nextl,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ chmark)}
+\DoxyCodeLine{00051\ \ \ \{}
+\DoxyCodeLine{00052\ \ \ \ \ \textcolor{keywordflow}{if}\ (nextl\ >=\ m\_glu.nzlmax)}
+\DoxyCodeLine{00053\ \ \ \ \ \ \ m\_luImpl.memXpand(lsub,\ m\_glu.nzlmax,\ nextl,\ LSUB,\ m\_glu.num\_expansions);\ }
+\DoxyCodeLine{00054\ \ \ \ \ \textcolor{keywordflow}{if}\ (chmark\ !=\ (m\_jcol-\/1))\ m\_jsuper\_ref\ =\ emptyIdxLU;}
+\DoxyCodeLine{00055\ \ \ \}}
+\DoxyCodeLine{00056\ \ \ \textcolor{keyword}{enum}\ \{\ ExpandMem\ =\ \textcolor{keyword}{true}\ \};}
+\DoxyCodeLine{00057\ \ \ }
+\DoxyCodeLine{00058\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_jcol;}
+\DoxyCodeLine{00059\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ m\_jsuper\_ref;}
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classSparseLUImpl}{SparseLUImpl<Scalar,\ StorageIndex>::GlobalLU\_t}}\&\ m\_glu;}
+\DoxyCodeLine{00061\ \ \ \mbox{\hyperlink{classSparseLUImpl}{SparseLUImpl<Scalar,\ StorageIndex>}}\&\ m\_luImpl;}
+\DoxyCodeLine{00062\ \};}
+\DoxyCodeLine{00063\ }
+\DoxyCodeLine{00064\ \textcolor{comment}{}}
+\DoxyCodeLine{00065\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00066\ \textcolor{comment}{\ *\ \(\backslash\)brief\ Performs\ a\ symbolic\ factorization\ on\ column\ jcol\ and\ decide\ the\ supernode\ boundary}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00068\ \textcolor{comment}{\ *\ A\ supernode\ representative\ is\ the\ last\ column\ of\ a\ supernode.}}
+\DoxyCodeLine{00069\ \textcolor{comment}{\ *\ The\ nonzeros\ in\ U[*,j]\ are\ segments\ that\ end\ at\ supernodes\ representatives.\ }}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ *\ The\ routine\ returns\ a\ list\ of\ the\ supernodal\ representatives\ }}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ *\ in\ topological\ order\ of\ the\ dfs\ that\ generates\ them.\ }}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ *\ The\ location\ of\ the\ first\ nonzero\ in\ each\ supernodal\ segment\ }}
+\DoxyCodeLine{00073\ \textcolor{comment}{\ *\ (supernodal\ entry\ location)\ is\ also\ returned.\ }}
+\DoxyCodeLine{00074\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ *\ \(\backslash\)param\ m\ number\ of\ rows\ in\ the\ matrix}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ *\ \(\backslash\)param\ jcol\ Current\ column\ }}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ *\ \(\backslash\)param\ perm\_r\ Row\ permutation}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ *\ \(\backslash\)param\ maxsuper\ \ Maximum\ number\ of\ column\ allowed\ in\ a\ supernode}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ *\ \(\backslash\)param\ [in,out]\ nseg\ Number\ of\ segments\ in\ current\ U[*,j]\ -\/\ new\ segments\ appended}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ *\ \(\backslash\)param\ lsub\_col\ defines\ the\ rhs\ vector\ to\ start\ the\ dfs}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ *\ \(\backslash\)param\ [in,out]\ segrep\ Segment\ representatives\ -\/\ new\ segments\ appended\ }}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ *\ \(\backslash\)param\ repfnz\ \ First\ nonzero\ location\ in\ each\ row}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ *\ \(\backslash\)param\ xprune\ }}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ *\ \(\backslash\)param\ marker\ \ marker[i]\ ==\ jj,\ if\ i\ was\ visited\ during\ dfs\ of\ current\ column\ jj;}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ *\ \(\backslash\)param\ parent}}
+\DoxyCodeLine{00086\ \textcolor{comment}{\ *\ \(\backslash\)param\ xplore\ working\ array}}
+\DoxyCodeLine{00087\ \textcolor{comment}{\ *\ \(\backslash\)param\ glu\ global\ LU\ data\ }}
+\DoxyCodeLine{00088\ \textcolor{comment}{\ *\ \(\backslash\)return\ 0\ success}}
+\DoxyCodeLine{00089\ \textcolor{comment}{\ *\ \ \ \ \ \ \ \ \ >\ 0\ number\ of\ bytes\ allocated\ when\ run\ out\ of\ space}}
+\DoxyCodeLine{00090\ \textcolor{comment}{\ *\ }}
+\DoxyCodeLine{00091\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00092\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ StorageIndex>}
+\DoxyCodeLine{00093\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1internal_1_1SparseLUImpl_a6f543ae02eb6467e9bcc1e5cec8ccdd2}{SparseLUImpl<Scalar,StorageIndex>::column\_dfs}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcol,\ IndexVector\&\ perm\_r,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ maxsuper,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\&\ nseg,}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ BlockIndexVector\ lsub\_col,\ IndexVector\&\ segrep,\ BlockIndexVector\ repfnz,\ IndexVector\&\ xprune,}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ IndexVector\&\ marker,\ IndexVector\&\ parent,\ IndexVector\&\ xplore,\ GlobalLU\_t\&\ glu)}
+\DoxyCodeLine{00096\ \{}
+\DoxyCodeLine{00097\ \ \ }
+\DoxyCodeLine{00098\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jsuper\ =\ glu.supno(jcol);\ }
+\DoxyCodeLine{00099\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nextl\ =\ glu.xlsub(jcol);\ }
+\DoxyCodeLine{00100\ \ \ \mbox{\hyperlink{classEigen_1_1VectorBlock}{VectorBlock<IndexVector>}}\ marker2(marker,\ 2*m,\ m);\ }
+\DoxyCodeLine{00101\ \ \ }
+\DoxyCodeLine{00102\ \ \ }
+\DoxyCodeLine{00103\ \ \ column\_dfs\_traits<IndexVector,\ ScalarVector>\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}(jcol,\ jsuper,\ glu,\ *\textcolor{keyword}{this});}
+\DoxyCodeLine{00104\ \ \ }
+\DoxyCodeLine{00105\ \ \ \textcolor{comment}{//\ For\ each\ nonzero\ in\ A(*,jcol)\ do\ dfs\ }}
+\DoxyCodeLine{00106\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k\ =\ 0;\ ((k\ <\ m)\ ?\ lsub\_col[k]\ !=\ emptyIdxLU\ :\ \textcolor{keyword}{false})\ ;\ k++)}
+\DoxyCodeLine{00107\ \ \ \{}
+\DoxyCodeLine{00108\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ krow\ =\ lsub\_col(k);\ }
+\DoxyCodeLine{00109\ \ \ \ \ lsub\_col(k)\ =\ emptyIdxLU;\ }
+\DoxyCodeLine{00110\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ kmark\ =\ marker2(krow);\ }
+\DoxyCodeLine{00111\ \ \ \ \ }
+\DoxyCodeLine{00112\ \ \ \ \ \textcolor{comment}{//\ krow\ was\ visited\ before,\ go\ to\ the\ next\ nonz;\ }}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{if}\ (kmark\ ==\ jcol)\ \textcolor{keywordflow}{continue};}
+\DoxyCodeLine{00114\ \ \ \ \ }
+\DoxyCodeLine{00115\ \ \ \ \ dfs\_kernel(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(jcol),\ perm\_r,\ nseg,\ glu.lsub,\ segrep,\ repfnz,\ xprune,\ marker2,\ parent,}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ xplore,\ glu,\ nextl,\ krow,\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}});}
+\DoxyCodeLine{00117\ \ \ \}\ \textcolor{comment}{//\ for\ each\ nonzero\ ...\ }}
+\DoxyCodeLine{00118\ \ \ }
+\DoxyCodeLine{00119\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ fsupc;}
+\DoxyCodeLine{00120\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ nsuper\ =\ glu.supno(jcol);}
+\DoxyCodeLine{00121\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ jcolp1\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(jcol)\ +\ 1;}
+\DoxyCodeLine{00122\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ jcolm1\ =\ jcol\ -\/\ 1;}
+\DoxyCodeLine{00123\ \ \ }
+\DoxyCodeLine{00124\ \ \ \textcolor{comment}{//\ check\ to\ see\ if\ j\ belongs\ in\ the\ same\ supernode\ as\ j-\/1}}
+\DoxyCodeLine{00125\ \ \ \textcolor{keywordflow}{if}\ (\ jcol\ ==\ 0\ )}
+\DoxyCodeLine{00126\ \ \ \{\ \textcolor{comment}{//\ Do\ nothing\ for\ column\ 0\ }}
+\DoxyCodeLine{00127\ \ \ \ \ nsuper\ =\ glu.supno(0)\ =\ 0\ ;}
+\DoxyCodeLine{00128\ \ \ \}}
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordflow}{else}\ }
+\DoxyCodeLine{00130\ \ \ \{}
+\DoxyCodeLine{00131\ \ \ \ \ fsupc\ =\ glu.xsup(nsuper);\ }
+\DoxyCodeLine{00132\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ jptr\ =\ glu.xlsub(jcol);\ \textcolor{comment}{//\ Not\ yet\ compressed}}
+\DoxyCodeLine{00133\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ jm1ptr\ =\ glu.xlsub(jcolm1);\ }
+\DoxyCodeLine{00134\ \ \ \ \ }
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ Use\ supernodes\ of\ type\ T2\ :\ see\ SuperLU\ paper}}
+\DoxyCodeLine{00136\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (nextl-\/jptr\ !=\ jptr-\/jm1ptr-\/1)\ )\ jsuper\ =\ emptyIdxLU;}
+\DoxyCodeLine{00137\ \ \ \ \ }
+\DoxyCodeLine{00138\ \ \ \ \ \textcolor{comment}{//\ Make\ sure\ the\ number\ of\ columns\ in\ a\ supernode\ doesn't}}
+\DoxyCodeLine{00139\ \ \ \ \ \textcolor{comment}{//\ exceed\ threshold}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (jcol\ -\/\ fsupc)\ >=\ maxsuper)\ jsuper\ =\ emptyIdxLU;\ }
+\DoxyCodeLine{00141\ \ \ \ \ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{comment}{/*\ If\ jcol\ starts\ a\ new\ supernode,\ reclaim\ storage\ space\ in}}
+\DoxyCodeLine{00143\ \textcolor{comment}{\ \ \ \ \ *\ glu.lsub\ from\ previous\ supernode.\ Note\ we\ only\ store\ }}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ \ \ \ *\ the\ subscript\ set\ of\ the\ first\ and\ last\ columns\ of\ }}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ \ \ *\ a\ supernode.\ (first\ for\ num\ values,\ last\ for\ pruning)}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00147\ \ \ \ \ \textcolor{keywordflow}{if}\ (jsuper\ ==\ emptyIdxLU)}
+\DoxyCodeLine{00148\ \ \ \ \ \{\ \textcolor{comment}{//\ starts\ a\ new\ supernode\ }}
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (\ (fsupc\ <\ jcolm1-\/1)\ )\ }
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \{\ \textcolor{comment}{//\ >=\ 3\ columns\ in\ nsuper}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ ito\ =\ glu.xlsub(fsupc+1);}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ glu.xlsub(jcolm1)\ =\ ito;\ }
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ istop\ =\ ito\ +\ jptr\ -\/\ jm1ptr;\ }
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ xprune(jcolm1)\ =\ istop;\ \textcolor{comment}{//\ initialize\ xprune(jcol-\/1)}}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ glu.xlsub(jcol)\ =\ istop;\ }
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ }
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}\ ifrom\ =\ jm1ptr;\ ifrom\ <\ nextl;\ ++ifrom,\ ++ito)}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ \ \ \ \ glu.lsub(ito)\ =\ glu.lsub(ifrom);\ }
+\DoxyCodeLine{00159\ \ \ \ \ \ \ \ \ nextl\ =\ ito;\ \ \textcolor{comment}{//\ =\ istop\ +\ length(jcol)}}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ nsuper++;\ }
+\DoxyCodeLine{00162\ \ \ \ \ \ \ glu.supno(jcol)\ =\ nsuper;\ }
+\DoxyCodeLine{00163\ \ \ \ \ \}\ \textcolor{comment}{//\ if\ a\ new\ supernode\ }}
+\DoxyCodeLine{00164\ \ \ \}\ \textcolor{comment}{//\ end\ else:\ \ jcol\ >\ 0}}
+\DoxyCodeLine{00165\ \ \ }
+\DoxyCodeLine{00166\ \ \ \textcolor{comment}{//\ Tidy\ up\ the\ pointers\ before\ exit}}
+\DoxyCodeLine{00167\ \ \ glu.xsup(nsuper+1)\ =\ jcolp1;\ }
+\DoxyCodeLine{00168\ \ \ glu.supno(jcolp1)\ =\ nsuper;\ }
+\DoxyCodeLine{00169\ \ \ xprune(jcol)\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(nextl);\ \ \textcolor{comment}{//\ Initialize\ upper\ bound\ for\ pruning}}
+\DoxyCodeLine{00170\ \ \ glu.xlsub(jcolp1)\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{StorageIndex}}(nextl);\ }
+\DoxyCodeLine{00171\ \ \ }
+\DoxyCodeLine{00172\ \ \ \textcolor{keywordflow}{return}\ 0;\ }
+\DoxyCodeLine{00173\ \}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00178\ }
+\DoxyCodeLine{00179\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

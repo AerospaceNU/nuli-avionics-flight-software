@@ -1,0 +1,181 @@
+\doxysection{Condition\+Estimator.\+h}
+\hypertarget{ConditionEstimator_8h_source}{}\label{ConditionEstimator_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/ConditionEstimator.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/ConditionEstimator.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2016\ Rasmus\ Munk\ Larsen\ (rmlarsen@google.com)}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_CONDITIONESTIMATOR\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_CONDITIONESTIMATOR\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Vector,\ \textcolor{keyword}{typename}\ RealVector,\ \textcolor{keywordtype}{bool}\ IsComplex>}
+\DoxyCodeLine{00018\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1rcond__compute__sign}{rcond\_compute\_sign}}\ \{}
+\DoxyCodeLine{00019\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Vector\ run(\textcolor{keyword}{const}\ Vector\&\ v)\ \{}
+\DoxyCodeLine{00020\ \ \ \ \ \textcolor{keyword}{const}\ RealVector\ v\_abs\ =\ v.cwiseAbs();}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keywordflow}{return}\ (v\_abs.array()\ ==\ \textcolor{keyword}{static\_cast<}typename\ Vector::RealScalar\textcolor{keyword}{>}(0))}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ \ \ \ \ \ \ .select(Vector::Ones(v.size()),\ v.cwiseQuotient(v\_abs));}
+\DoxyCodeLine{00023\ \ \ \}}
+\DoxyCodeLine{00024\ \};}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{comment}{//\ Partial\ specialization\ to\ avoid\ elementwise\ division\ for\ real\ vectors.}}
+\DoxyCodeLine{00027\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Vector>}
+\DoxyCodeLine{00028\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1rcond__compute__sign}{rcond\_compute\_sign}}<Vector,\ Vector,\ false>\ \{}
+\DoxyCodeLine{00029\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ Vector\ run(\textcolor{keyword}{const}\ Vector\&\ v)\ \{}
+\DoxyCodeLine{00030\ \ \ \ \ \textcolor{keywordflow}{return}\ (v.array()\ <\ \textcolor{keyword}{static\_cast<}typename\ Vector::RealScalar\textcolor{keyword}{>}(0))}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \ \ \ \ \ .select(-\/Vector::Ones(v.size()),\ Vector::Ones(v.size()));}
+\DoxyCodeLine{00032\ \ \ \}}
+\DoxyCodeLine{00033\ \};}
+\DoxyCodeLine{00034\ \textcolor{comment}{}}
+\DoxyCodeLine{00035\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ \(\backslash\)returns\ an\ estimate\ of\ ||inv(matrix)||\_1\ given\ a\ decomposition\ of}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ \(\backslash\)a\ matrix\ that\ implements\ .solve()\ and\ .adjoint().solve()\ methods.}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *\ This\ function\ implements\ Algorithms\ 4.1\ and\ 5.1\ from}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ \ \ http://www.maths.manchester.ac.uk/\string~higham/narep/narep135.pdf}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ which\ also\ forms\ the\ basis\ for\ the\ condition\ number\ estimators\ in}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *\ LAPACK.\ Since\ at\ most\ 10\ calls\ to\ the\ solve\ method\ of\ dec\ are}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *\ performed,\ the\ total\ cost\ is\ O(dims\string^2),\ as\ opposed\ to\ O(dims\string^3)}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *\ needed\ to\ compute\ the\ inverse\ matrix\ explicitly.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ *\ The\ most\ common\ usage\ is\ in\ estimating\ the\ condition\ number}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ *\ ||matrix||\_1\ *\ ||inv(matrix)||\_1.\ The\ first\ term\ ||matrix||\_1\ can\ be}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ *\ computed\ directly\ in\ O(n\string^2)\ operations.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ *\ Supports\ the\ following\ decompositions:\ FullPivLU,\ PartialPivLU,\ LDLT,\ and}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ *\ LLT.}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ FullPivLU,\ PartialPivLU,\ LDLT,\ LLT.}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Decomposition>}
+\DoxyCodeLine{00056\ \textcolor{keyword}{typename}\ Decomposition::RealScalar\ rcond\_invmatrix\_L1\_norm\_estimate(\textcolor{keyword}{const}\ Decomposition\&\ dec)}
+\DoxyCodeLine{00057\ \{}
+\DoxyCodeLine{00058\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Decomposition::MatrixType\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{MatrixType}};}
+\DoxyCodeLine{00059\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Decomposition::Scalar\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00060\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Decomposition::RealScalar\ RealScalar;}
+\DoxyCodeLine{00061\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::plain\_col\_type<MatrixType>::type\ Vector;}
+\DoxyCodeLine{00062\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::plain\_col\_type<MatrixType,\ RealScalar>::type\ RealVector;}
+\DoxyCodeLine{00063\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\ is\_complex\ =\ (NumTraits<Scalar>::IsComplex\ !=\ 0);}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ eigen\_assert(dec.rows()\ ==\ dec.cols());}
+\DoxyCodeLine{00066\ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ n\ =\ dec.rows();}
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordflow}{if}\ (n\ ==\ 0)}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keywordflow}{return}\ 0;}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \textcolor{comment}{//\ Disable\ Index\ to\ float\ conversion\ warning}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\#ifdef\ \_\_INTEL\_COMPILER}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\ \ \#pragma\ warning\ push}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\ \ \#pragma\ warning\ (\ disable\ :\ 2259\ )}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00075\ \ \ Vector\ v\ =\ dec.solve(Vector::Ones(n)\ /\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(n));}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\#ifdef\ \_\_INTEL\_COMPILER}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\ \ \#pragma\ warning\ pop}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00079\ }
+\DoxyCodeLine{00080\ \ \ \textcolor{comment}{//\ lower\_bound\ is\ a\ lower\ bound\ on}}
+\DoxyCodeLine{00081\ \ \ \textcolor{comment}{//\ \ \ ||inv(matrix)||\_1\ \ =\ sup\_v\ ||inv(matrix)\ v||\_1\ /\ ||v||\_1}}
+\DoxyCodeLine{00082\ \ \ \textcolor{comment}{//\ and\ is\ the\ objective\ maximized\ by\ the\ ("{}super-\/"{})\ gradient\ ascent}}
+\DoxyCodeLine{00083\ \ \ \textcolor{comment}{//\ algorithm\ below.}}
+\DoxyCodeLine{00084\ \ \ RealScalar\ lower\_bound\ =\ v.template\ lpNorm<1>();}
+\DoxyCodeLine{00085\ \ \ \textcolor{keywordflow}{if}\ (n\ ==\ 1)}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keywordflow}{return}\ lower\_bound;}
+\DoxyCodeLine{00087\ }
+\DoxyCodeLine{00088\ \ \ \textcolor{comment}{//\ Gradient\ ascent\ algorithm\ follows:\ We\ know\ that\ the\ optimum\ is\ achieved\ at}}
+\DoxyCodeLine{00089\ \ \ \textcolor{comment}{//\ one\ of\ the\ simplices\ v\ =\ e\_i,\ so\ in\ each\ iteration\ we\ follow\ a}}
+\DoxyCodeLine{00090\ \ \ \textcolor{comment}{//\ super-\/gradient\ to\ move\ towards\ the\ optimal\ one.}}
+\DoxyCodeLine{00091\ \ \ RealScalar\ old\_lower\_bound\ =\ lower\_bound;}
+\DoxyCodeLine{00092\ \ \ Vector\ sign\_vector(n);}
+\DoxyCodeLine{00093\ \ \ Vector\ old\_sign\_vector;}
+\DoxyCodeLine{00094\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ v\_max\_abs\_index\ =\ -\/1;}
+\DoxyCodeLine{00095\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ old\_v\_max\_abs\_index\ =\ v\_max\_abs\_index;}
+\DoxyCodeLine{00096\ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ k\ =\ 0;\ k\ <\ 4;\ ++k)}
+\DoxyCodeLine{00097\ \ \ \{}
+\DoxyCodeLine{00098\ \ \ \ \ sign\_vector\ =\ internal::rcond\_compute\_sign<Vector,\ RealVector,\ is\_complex>::run(v);}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{if}\ (k\ >\ 0\ \&\&\ !is\_complex\ \&\&\ sign\_vector\ ==\ old\_sign\_vector)\ \{}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \textcolor{comment}{//\ Break\ if\ the\ solution\ stagnated.}}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00102\ \ \ \ \ \}}
+\DoxyCodeLine{00103\ \ \ \ \ \textcolor{comment}{//\ v\_max\_abs\_index\ =\ argmax\ |real(\ inv(matrix)\string^T\ *\ sign\_vector\ )|}}
+\DoxyCodeLine{00104\ \ \ \ \ v\ =\ dec.adjoint().solve(sign\_vector);}
+\DoxyCodeLine{00105\ \ \ \ \ v.real().cwiseAbs().maxCoeff(\&v\_max\_abs\_index);}
+\DoxyCodeLine{00106\ \ \ \ \ \textcolor{keywordflow}{if}\ (v\_max\_abs\_index\ ==\ old\_v\_max\_abs\_index)\ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \textcolor{comment}{//\ Break\ if\ the\ solution\ stagnated.}}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{comment}{//\ Move\ to\ the\ new\ simplex\ e\_j,\ where\ j\ =\ v\_max\_abs\_index.}}
+\DoxyCodeLine{00111\ \ \ \ \ v\ =\ dec.solve(Vector::Unit(n,\ v\_max\_abs\_index));\ \ \textcolor{comment}{//\ v\ =\ inv(matrix)\ *\ e\_j.}}
+\DoxyCodeLine{00112\ \ \ \ \ lower\_bound\ =\ v.template\ lpNorm<1>();}
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keywordflow}{if}\ (lower\_bound\ <=\ old\_lower\_bound)\ \{}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \textcolor{comment}{//\ Break\ if\ the\ gradient\ step\ did\ not\ increase\ the\ lower\_bound.}}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00116\ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \ \ \ \ \textcolor{keywordflow}{if}\ (!is\_complex)\ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ old\_sign\_vector\ =\ sign\_vector;}
+\DoxyCodeLine{00119\ \ \ \ \ \}}
+\DoxyCodeLine{00120\ \ \ \ \ old\_v\_max\_abs\_index\ =\ v\_max\_abs\_index;}
+\DoxyCodeLine{00121\ \ \ \ \ old\_lower\_bound\ =\ lower\_bound;}
+\DoxyCodeLine{00122\ \ \ \}}
+\DoxyCodeLine{00123\ \ \ \textcolor{comment}{//\ The\ following\ calculates\ an\ independent\ estimate\ of\ ||matrix||\_1\ by}}
+\DoxyCodeLine{00124\ \ \ \textcolor{comment}{//\ multiplying\ matrix\ by\ a\ vector\ with\ entries\ of\ slowly\ increasing}}
+\DoxyCodeLine{00125\ \ \ \textcolor{comment}{//\ magnitude\ and\ alternating\ sign:}}
+\DoxyCodeLine{00126\ \ \ \textcolor{comment}{//\ \ \ v\_i\ =\ (-\/1)\string^\{i\}\ (1\ +\ (i\ /\ (dim-\/1))),\ i\ =\ 0,...,dim-\/1.}}
+\DoxyCodeLine{00127\ \ \ \textcolor{comment}{//\ This\ improvement\ to\ Hager's\ algorithm\ above\ is\ due\ to\ Higham.\ It\ was}}
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//\ added\ to\ make\ the\ algorithm\ more\ robust\ in\ certain\ corner\ cases\ where}}
+\DoxyCodeLine{00129\ \ \ \textcolor{comment}{//\ large\ elements\ in\ the\ matrix\ might\ otherwise\ escape\ detection\ due\ to}}
+\DoxyCodeLine{00130\ \ \ \textcolor{comment}{//\ exact\ cancellation\ (especially\ when\ op\ and\ op\_adjoint\ correspond\ to\ a}}
+\DoxyCodeLine{00131\ \ \ \textcolor{comment}{//\ sequence\ of\ backsubstitutions\ and\ permutations),\ which\ could\ cause}}
+\DoxyCodeLine{00132\ \ \ \textcolor{comment}{//\ Hager's\ algorithm\ to\ vastly\ underestimate\ ||matrix||\_1.}}
+\DoxyCodeLine{00133\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ alternating\_sign(RealScalar(1));}
+\DoxyCodeLine{00134\ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ n;\ ++i)\ \{}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{comment}{//\ The\ static\_cast\ is\ needed\ when\ Scalar\ is\ a\ complex\ and\ RealScalar\ implements\ expression\ templates}}
+\DoxyCodeLine{00136\ \ \ \ \ v[i]\ =\ alternating\_sign\ *\ \textcolor{keyword}{static\_cast<}RealScalar\textcolor{keyword}{>}(RealScalar(1)\ +\ (RealScalar(i)\ /\ (RealScalar(n\ -\/\ 1))));}
+\DoxyCodeLine{00137\ \ \ \ \ alternating\_sign\ =\ -\/alternating\_sign;}
+\DoxyCodeLine{00138\ \ \ \}}
+\DoxyCodeLine{00139\ \ \ v\ =\ dec.solve(v);}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{const}\ RealScalar\ alternate\_lower\_bound\ =\ (2\ *\ v.template\ lpNorm<1>())\ /\ (3\ *\ RealScalar(n));}
+\DoxyCodeLine{00141\ \ \ \textcolor{keywordflow}{return}\ numext::maxi(lower\_bound,\ alternate\_lower\_bound);}
+\DoxyCodeLine{00142\ \}}
+\DoxyCodeLine{00143\ \textcolor{comment}{}}
+\DoxyCodeLine{00144\ \textcolor{comment}{/**\ \(\backslash\)brief\ Reciprocal\ condition\ number\ estimator.}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ *\ Computing\ a\ decomposition\ of\ a\ dense\ matrix\ takes\ O(n\string^3)\ operations,\ while}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ *\ this\ method\ estimates\ the\ condition\ number\ quickly\ and\ reliably\ in\ O(n\string^2)}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ *\ operations.}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ *\ \(\backslash\)returns\ an\ estimate\ of\ the\ reciprocal\ condition\ number}}
+\DoxyCodeLine{00151\ \textcolor{comment}{\ \ *\ (1\ /\ (||matrix||\_1\ *\ ||inv(matrix)||\_1))\ of\ matrix,\ given\ ||matrix||\_1\ and}}
+\DoxyCodeLine{00152\ \textcolor{comment}{\ \ *\ its\ decomposition.\ Supports\ the\ following\ decompositions:\ FullPivLU,}}
+\DoxyCodeLine{00153\ \textcolor{comment}{\ \ *\ PartialPivLU,\ LDLT,\ and\ LLT.}}
+\DoxyCodeLine{00154\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00155\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ FullPivLU,\ PartialPivLU,\ LDLT,\ LLT.}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00157\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Decomposition>}
+\DoxyCodeLine{00158\ \textcolor{keyword}{typename}\ Decomposition::RealScalar}
+\DoxyCodeLine{00159\ rcond\_estimate\_helper(\textcolor{keyword}{typename}\ Decomposition::RealScalar\ matrix\_norm,\ \textcolor{keyword}{const}\ Decomposition\&\ dec)}
+\DoxyCodeLine{00160\ \{}
+\DoxyCodeLine{00161\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Decomposition::RealScalar\ RealScalar;}
+\DoxyCodeLine{00162\ \ \ eigen\_assert(dec.rows()\ ==\ dec.cols());}
+\DoxyCodeLine{00163\ \ \ \textcolor{keywordflow}{if}\ (dec.rows()\ ==\ 0)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ NumTraits<RealScalar>::infinity();}
+\DoxyCodeLine{00164\ \ \ \textcolor{keywordflow}{if}\ (matrix\_norm\ ==\ RealScalar(0))\ \textcolor{keywordflow}{return}\ RealScalar(0);}
+\DoxyCodeLine{00165\ \ \ \textcolor{keywordflow}{if}\ (dec.rows()\ ==\ 1)\ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ RealScalar(1);}
+\DoxyCodeLine{00166\ \ \ \textcolor{keyword}{const}\ RealScalar\ inverse\_matrix\_norm\ =\ rcond\_invmatrix\_L1\_norm\_estimate(dec);}
+\DoxyCodeLine{00167\ \ \ \textcolor{keywordflow}{return}\ (inverse\_matrix\_norm\ ==\ RealScalar(0)\ ?\ RealScalar(0)}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ (RealScalar(1)\ /\ inverse\_matrix\_norm)\ /\ matrix\_norm);}
+\DoxyCodeLine{00169\ \}}
+\DoxyCodeLine{00170\ }
+\DoxyCodeLine{00171\ \}\ \ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \}\ \ \textcolor{comment}{//\ namespace\ Eigen}}
+\DoxyCodeLine{00174\ }
+\DoxyCodeLine{00175\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -11,7 +11,7 @@
 #define LIGHT_PIN (1)
 
 #define VOLTAGE_SENSE_PIN (A4)
-#define VOLTAGE_SENSE_SCALE (2.0 * (3.3 / 1023.0))
+#define VOLTAGE_SENSE_SCALE (2.0f * (3.3f / 1023.0f))
 
 #define PYRO1_GATE_PIN (9)
 #define PYRO1_SENSE_PIN (A2)

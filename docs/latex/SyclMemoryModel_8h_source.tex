@@ -1,0 +1,700 @@
+\doxysection{Sycl\+Memory\+Model.\+h}
+\hypertarget{SyclMemoryModel_8h_source}{}\label{SyclMemoryModel_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/SYCL/SyclMemoryModel.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/SYCL/SyclMemoryModel.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ *\ \ Copyright\ (C)\ 2017\ Codeplay\ Software\ Limited}}
+\DoxyCodeLine{00003\ \textcolor{comment}{\ *\ \ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ *\ \ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ *\ \ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00006\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ *\ \ SyclMemoryModel.h}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ *\ \ Description:}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ *\ \ \ \ Interface\ for\ SYCL\ buffers\ to\ behave\ as\ a\ non-\/dereferenceable\ pointer}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ \ \ \ Interface\ for\ Placeholder\ accessor\ to\ behave\ as\ a\ pointer\ on\ both\ host}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ *\ \ \ \ and\ device}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ *\ Authors:}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ *\ \ \ \ Ruyman\ Reyes\ \ \ Codeplay\ Software\ Ltd.}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ *\ \ \ \ Mehdi\ Goli\ \ \ \ \ Codeplay\ Software\ Ltd.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ *\ \ \ \ Vanya\ Yaneva\ \ \ Codeplay\ Software\ Ltd.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ **************************************************************************/}}
+\DoxyCodeLine{00022\ }
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_USE\_SYCL)\ \&\&\ \(\backslash\)}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\ \ \ \ !defined(EIGEN\_CXX11\_TENSOR\_TENSOR\_SYCL\_STORAGE\_MEMORY\_H)}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#define\ EIGEN\_CXX11\_TENSOR\_TENSOR\_SYCL\_STORAGE\_MEMORY\_H}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#include\ <CL/sycl.hpp>}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_EXCEPTIONS}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#include\ <stdexcept>}}
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#include\ <cstddef>}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#include\ <queue>}}
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#include\ <set>}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#include\ <unordered\_map>}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00037\ \textcolor{keyword}{namespace\ }TensorSycl\ \{}
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{keyword}{using\ }sycl\_acc\_target\ =\ cl::sycl::access::target;}
+\DoxyCodeLine{00041\ \textcolor{keyword}{using\ }sycl\_acc\_mode\ =\ cl::sycl::access::mode;}
+\DoxyCodeLine{00042\ \textcolor{comment}{}}
+\DoxyCodeLine{00043\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ *\ Default\ values\ for\ template\ arguments}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00046\ \textcolor{keyword}{using\ }buffer\_data\_type\_t\ =\ uint8\_t;}
+\DoxyCodeLine{00047\ \textcolor{keyword}{const}\ sycl\_acc\_target\ default\_acc\_target\ =\ sycl\_acc\_target::global\_buffer;}
+\DoxyCodeLine{00048\ \textcolor{keyword}{const}\ sycl\_acc\_mode\ default\_acc\_mode\ =\ sycl\_acc\_mode::read\_write;}
+\DoxyCodeLine{00049\ \textcolor{comment}{}}
+\DoxyCodeLine{00050\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ *\ PointerMapper}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ *\ \ Associates\ fake\ pointers\ with\ buffers.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ *}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00055\ \textcolor{keyword}{class\ }PointerMapper\ \{}
+\DoxyCodeLine{00056\ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{using\ }base\_ptr\_t\ =\ std::intptr\_t;}
+\DoxyCodeLine{00058\ }
+\DoxyCodeLine{00059\ \ \ \textcolor{comment}{/*\ Structure\ of\ a\ virtual\ pointer}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ \ *\ |================================================|}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ \ *\ |\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ POINTER\ ADDRESS\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ |}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ \ *\ |================================================|}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{struct\ }virtual\_pointer\_t\ \{}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{comment}{/*\ Type\ for\ the\ pointers}}
+\DoxyCodeLine{00067\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00068\ \ \ \ \ base\_ptr\_t\ m\_contents;}
+\DoxyCodeLine{00069\ \textcolor{comment}{}}
+\DoxyCodeLine{00070\ \textcolor{comment}{\ \ \ \ /**\ Conversions\ from\ virtual\_pointer\_t\ to}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ \ \ \ *\ void\ *\ should\ just\ reinterpret\_cast\ the\ integer\ number}}
+\DoxyCodeLine{00072\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00073\ \ \ \ \ \textcolor{keyword}{operator}\ \textcolor{keywordtype}{void}\ *()\ \textcolor{keyword}{const}\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{void}\ *\textcolor{keyword}{>}(m\_contents);\ \}}
+\DoxyCodeLine{00074\ \textcolor{comment}{}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ \ *\ Convert\ back\ to\ the\ integer\ number.}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00078\ \ \ \ \ \textcolor{keyword}{operator}\ base\_ptr\_t()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_contents;\ \}}
+\DoxyCodeLine{00079\ \textcolor{comment}{}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ \ *\ Add\ a\ certain\ value\ to\ the\ pointer\ to\ create\ a}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ \ *\ new\ pointer\ to\ that\ offset}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00084\ \ \ \ \ virtual\_pointer\_t\ operator+(\textcolor{keywordtype}{size\_t}\ off)\ \{\ \textcolor{keywordflow}{return}\ m\_contents\ +\ off;\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{comment}{/*\ Numerical\ order\ for\ sorting\ pointers\ in\ containers.\ */}}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator<(virtual\_pointer\_t\ rhs)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}base\_ptr\_t\textcolor{keyword}{>}(m\_contents)\ <}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}base\_ptr\_t\textcolor{keyword}{>}(rhs.m\_contents));}
+\DoxyCodeLine{00090\ \ \ \ \ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator>(virtual\_pointer\_t\ rhs)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}base\_ptr\_t\textcolor{keyword}{>}(m\_contents)\ >}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}base\_ptr\_t\textcolor{keyword}{>}(rhs.m\_contents));}
+\DoxyCodeLine{00095\ \ \ \ \ \}}
+\DoxyCodeLine{00096\ \textcolor{comment}{}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ *\ Numerical\ order\ for\ sorting\ pointers\ in\ containers}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator==(virtual\_pointer\_t\ rhs)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}base\_ptr\_t\textcolor{keyword}{>}(m\_contents)\ ==}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}base\_ptr\_t\textcolor{keyword}{>}(rhs.m\_contents));}
+\DoxyCodeLine{00103\ \ \ \ \ \}}
+\DoxyCodeLine{00104\ \textcolor{comment}{}}
+\DoxyCodeLine{00105\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00106\ \textcolor{comment}{\ \ \ \ \ *\ Simple\ forward\ to\ the\ equality\ overload.}}
+\DoxyCodeLine{00107\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00108\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator!=(virtual\_pointer\_t\ rhs)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ !(this-\/>operator==(rhs));}
+\DoxyCodeLine{00110\ \ \ \ \ \}}
+\DoxyCodeLine{00111\ \textcolor{comment}{}}
+\DoxyCodeLine{00112\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00113\ \textcolor{comment}{\ \ \ \ \ *\ Converts\ a\ void\ *\ into\ a\ virtual\ pointer\ structure.}}
+\DoxyCodeLine{00114\ \textcolor{comment}{\ \ \ \ \ *\ Note\ that\ this\ will\ only\ work\ if\ the\ void\ *\ was}}
+\DoxyCodeLine{00115\ \textcolor{comment}{\ \ \ \ \ *\ already\ a\ virtual\_pointer\_t,\ but\ we\ have\ no\ way\ of}}
+\DoxyCodeLine{00116\ \textcolor{comment}{\ \ \ \ \ *\ checking}}
+\DoxyCodeLine{00117\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00118\ \ \ \ \ virtual\_pointer\_t(\textcolor{keyword}{const}\ \textcolor{keywordtype}{void}\ *ptr)}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ \ \ :\ m\_contents(reinterpret\_cast<base\_ptr\_t>(ptr))\{\};}
+\DoxyCodeLine{00120\ \textcolor{comment}{}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ \ \ *\ Creates\ a\ virtual\_pointer\_t\ from\ the\ given\ integer}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ \ \ *\ number}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00125\ \ \ \ \ virtual\_pointer\_t(base\_ptr\_t\ u)\ :\ m\_contents(u)\{\};}
+\DoxyCodeLine{00126\ \ \ \};}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{/*\ Definition\ of\ a\ null\ pointer}}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00130\ \ \ \textcolor{keyword}{const}\ virtual\_pointer\_t\ null\_virtual\_ptr\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00131\ \textcolor{comment}{}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ \ \ *\ Whether\ if\ a\ pointer\ is\ null\ or\ not.}}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ \ *\ A\ pointer\ is\ nullptr\ if\ the\ value\ is\ of\ null\_virtual\_ptr}}
+\DoxyCodeLine{00135\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ is\_nullptr(virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keywordflow}{return}\ (\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}\ *\textcolor{keyword}{>}(ptr)\ ==\ \textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00138\ \ \ \}}
+\DoxyCodeLine{00139\ }
+\DoxyCodeLine{00140\ \ \ \textcolor{comment}{/*\ basic\ type\ for\ all\ buffers}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00142\ \ \ \textcolor{keyword}{using\ }buffer\_t\ =\ cl::sycl::buffer\_mem;}
+\DoxyCodeLine{00143\ \textcolor{comment}{}}
+\DoxyCodeLine{00144\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00145\ \textcolor{comment}{\ \ \ *\ Node\ that\ stores\ information\ about\ a\ device\ allocation.}}
+\DoxyCodeLine{00146\ \textcolor{comment}{\ \ \ *\ Nodes\ are\ sorted\ by\ size\ to\ organise\ a\ free\ list\ of\ nodes}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ *\ that\ can\ be\ recovered.}}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00149\ \ \ \textcolor{keyword}{struct\ }pMapNode\_t\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ buffer\_t\ m\_buffer;}
+\DoxyCodeLine{00151\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ m\_size;}
+\DoxyCodeLine{00152\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_free;}
+\DoxyCodeLine{00153\ }
+\DoxyCodeLine{00154\ \ \ \ \ pMapNode\_t(buffer\_t\ b,\ \textcolor{keywordtype}{size\_t}\ size,\ \textcolor{keywordtype}{bool}\ f)}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ :\ m\_buffer\{b\},\ m\_size\{size\},\ m\_free\{f\}\ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ m\_buffer.set\_final\_data(\textcolor{keyword}{nullptr});}
+\DoxyCodeLine{00157\ \ \ \ \ \}}
+\DoxyCodeLine{00158\ }
+\DoxyCodeLine{00159\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator<=(\textcolor{keyword}{const}\ pMapNode\_t\ \&rhs)\ \{\ \textcolor{keywordflow}{return}\ (m\_size\ <=\ rhs.m\_size);\ \}}
+\DoxyCodeLine{00160\ \ \ \};}
+\DoxyCodeLine{00161\ \textcolor{comment}{}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ /**\ Storage\ of\ the\ pointer\ /\ buffer\ tree}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00164\ \ \ \textcolor{keyword}{using\ }pointerMap\_t\ =\ std::map<virtual\_pointer\_t,\ pMapNode\_t>;}
+\DoxyCodeLine{00165\ \textcolor{comment}{}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ *\ Obtain\ the\ insertion\ point\ in\ the\ pointer\ map\ for}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ *\ a\ pointer\ of\ the\ given\ size.}}
+\DoxyCodeLine{00169\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ requiredSize\ Size\ attemted\ to\ reclaim}}
+\DoxyCodeLine{00170\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00171\ \ \ \textcolor{keyword}{typename}\ pointerMap\_t::iterator\ get\_insertion\_point(\textcolor{keywordtype}{size\_t}\ requiredSize)\ \{}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{typename}\ pointerMap\_t::iterator\ retVal;}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordtype}{bool}\ reuse\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_freeList.empty())\ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ \textcolor{comment}{//\ try\ to\ re-\/use\ an\ existing\ block}}
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keyword}{auto}\ freeElem\ :\ m\_freeList)\ \{}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (freeElem-\/>second.m\_size\ >=\ requiredSize)\ \{}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ retVal\ =\ freeElem;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ \ \ reuse\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Element\ is\ not\ going\ to\ be\ free\ anymore}}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \ \ \ \ m\_freeList.erase(freeElem);}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00185\ \ \ \ \ \}}
+\DoxyCodeLine{00186\ \ \ \ \ \textcolor{keywordflow}{if}\ (!reuse)\ \{}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ retVal\ =\ std::prev(m\_pointerMap.end());}
+\DoxyCodeLine{00188\ \ \ \ \ \}}
+\DoxyCodeLine{00189\ \ \ \ \ \textcolor{keywordflow}{return}\ retVal;}
+\DoxyCodeLine{00190\ \ \ \}}
+\DoxyCodeLine{00191\ \textcolor{comment}{}}
+\DoxyCodeLine{00192\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00193\ \textcolor{comment}{\ \ \ *\ Returns\ an\ iterator\ to\ the\ node\ that\ stores\ the\ information}}
+\DoxyCodeLine{00194\ \textcolor{comment}{\ \ \ *\ of\ the\ given\ virtual\ pointer\ from\ the\ given\ pointer\ map\ structure.}}
+\DoxyCodeLine{00195\ \textcolor{comment}{\ \ \ *\ If\ pointer\ is\ not\ found,\ throws\ std::out\_of\_range.}}
+\DoxyCodeLine{00196\ \textcolor{comment}{\ \ \ *\ If\ the\ pointer\ map\ structure\ is\ empty,\ throws\ std::out\_of\_range}}
+\DoxyCodeLine{00197\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00198\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ pMap\ the\ pointerMap\_t\ structure\ storing\ all\ the\ pointers}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ *\ \(\backslash\)param\ virtual\_pointer\_ptr\ The\ virtual\ pointer\ to\ obtain\ the\ node\ of}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ *\ \(\backslash\)throws\ std::out:of\_range\ if\ the\ pointer\ is\ not\ found\ or\ pMap\ is\ empty}}
+\DoxyCodeLine{00201\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00202\ \ \ \textcolor{keyword}{typename}\ pointerMap\_t::iterator\ get\_node(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00203\ \ \ \ \ \textcolor{keywordflow}{if}\ (this-\/>count()\ ==\ 0)\ \{}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ m\_pointerMap.clear();}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ EIGEN\_THROW\_X(std::out\_of\_range(\textcolor{stringliteral}{"{}There\ are\ no\ pointers\ allocated\(\backslash\)n"{}}));}
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nullptr(ptr))\ \{}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ m\_pointerMap.clear();}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ EIGEN\_THROW\_X(std::out\_of\_range(\textcolor{stringliteral}{"{}Cannot\ access\ null\ pointer\(\backslash\)n"{}}));}
+\DoxyCodeLine{00211\ \ \ \ \ \}}
+\DoxyCodeLine{00212\ \ \ \ \ \textcolor{comment}{//\ The\ previous\ element\ to\ the\ lower\ bound\ is\ the\ node\ that}}
+\DoxyCodeLine{00213\ \ \ \ \ \textcolor{comment}{//\ holds\ this\ memory\ address}}
+\DoxyCodeLine{00214\ \ \ \ \ \textcolor{keyword}{auto}\ node\ =\ m\_pointerMap.lower\_bound(ptr);}
+\DoxyCodeLine{00215\ \ \ \ \ \textcolor{comment}{//\ If\ the\ value\ of\ the\ pointer\ is\ not\ the\ one\ of\ the\ node}}
+\DoxyCodeLine{00216\ \ \ \ \ \textcolor{comment}{//\ then\ we\ return\ the\ previous\ one}}
+\DoxyCodeLine{00217\ \ \ \ \ \textcolor{keywordflow}{if}\ (node\ ==\ std::end(m\_pointerMap))\ \{}
+\DoxyCodeLine{00218\ \ \ \ \ \ \ -\/-\/node;}
+\DoxyCodeLine{00219\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (node-\/>first\ !=\ ptr)\ \{}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (node\ ==\ std::begin(m\_pointerMap))\ \{}
+\DoxyCodeLine{00221\ \ \ \ \ \ \ \ \ m\_pointerMap.clear();}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ EIGEN\_THROW\_X(}
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \ \ \ \ \ \ std::out\_of\_range(\textcolor{stringliteral}{"{}The\ pointer\ is\ not\ registered\ in\ the\ map\(\backslash\)n"{}}));}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ -\/-\/node;}
+\DoxyCodeLine{00227\ \ \ \ \ \}}
+\DoxyCodeLine{00228\ }
+\DoxyCodeLine{00229\ \ \ \ \ \textcolor{keywordflow}{return}\ node;}
+\DoxyCodeLine{00230\ \ \ \}}
+\DoxyCodeLine{00231\ }
+\DoxyCodeLine{00232\ \ \ \textcolor{comment}{/*\ get\_buffer.}}
+\DoxyCodeLine{00233\ \textcolor{comment}{\ \ \ *\ Returns\ a\ buffer\ from\ the\ map\ using\ the\ pointer\ address}}
+\DoxyCodeLine{00234\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00235\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ buffer\_data\_type\ =\ buffer\_data\_type\_t>}
+\DoxyCodeLine{00236\ \ \ cl::sycl::buffer<buffer\_data\_type,\ 1>\ get\_buffer(}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{keyword}{using\ }sycl\_buffer\_t\ =\ cl::sycl::buffer<buffer\_data\_type,\ 1>;}
+\DoxyCodeLine{00239\ }
+\DoxyCodeLine{00240\ \ \ \ \ \textcolor{comment}{//\ get\_node()\ returns\ a\ \`{}buffer\_mem`,\ so\ we\ need\ to\ cast\ it\ to\ a\ \`{}buffer<>`.}}
+\DoxyCodeLine{00241\ \ \ \ \ \textcolor{comment}{//\ We\ can\ do\ this\ without\ the\ \`{}buffer\_mem`\ being\ a\ pointer,\ as\ we}}
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{//\ only\ declare\ member\ variables\ in\ the\ base\ class\ (`buffer\_mem`)\ and\ not\ in}}
+\DoxyCodeLine{00243\ \ \ \ \ \textcolor{comment}{//\ the\ child\ class\ (`buffer<>).}}
+\DoxyCodeLine{00244\ \ \ \ \ \textcolor{keyword}{auto}\ node\ =\ get\_node(ptr);}
+\DoxyCodeLine{00245\ \ \ \ \ eigen\_assert(node-\/>first\ ==\ ptr\ ||\ node-\/>first\ <\ ptr);}
+\DoxyCodeLine{00246\ \ \ \ \ eigen\_assert(ptr\ <\ \textcolor{keyword}{static\_cast<}virtual\_pointer\_t\textcolor{keyword}{>}(node-\/>second.m\_size\ +}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ node-\/>first));}
+\DoxyCodeLine{00248\ \ \ \ \ \textcolor{keywordflow}{return}\ *(\textcolor{keyword}{static\_cast<}sycl\_buffer\_t\ *\textcolor{keyword}{>}(\&node-\/>second.m\_buffer));}
+\DoxyCodeLine{00249\ \ \ \}}
+\DoxyCodeLine{00250\ \textcolor{comment}{}}
+\DoxyCodeLine{00251\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00252\ \textcolor{comment}{\ \ \ *\ @brief\ Returns\ an\ accessor\ to\ the\ buffer\ of\ the\ given\ virtual\ pointer}}
+\DoxyCodeLine{00253\ \textcolor{comment}{\ \ \ *\ @param\ accessMode}}
+\DoxyCodeLine{00254\ \textcolor{comment}{\ \ \ *\ @param\ accessTarget}}
+\DoxyCodeLine{00255\ \textcolor{comment}{\ \ \ *\ @param\ ptr\ The\ virtual\ pointer}}
+\DoxyCodeLine{00256\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00257\ \ \ \textcolor{keyword}{template}\ <sycl\_acc\_mode\ access\_mode\ =\ default\_acc\_mode,}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ sycl\_acc\_target\ access\_target\ =\ default\_acc\_target,}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ buffer\_data\_type\ =\ buffer\_data\_type\_t>}
+\DoxyCodeLine{00260\ \ \ cl::sycl::accessor<buffer\_data\_type,\ 1,\ access\_mode,\ access\_target>}
+\DoxyCodeLine{00261\ \ \ get\_access(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keyword}{auto}\ buf\ =\ get\_buffer<buffer\_data\_type>(ptr);}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keywordflow}{return}\ buf.template\ get\_access<access\_mode,\ access\_target>();}
+\DoxyCodeLine{00264\ \ \ \}}
+\DoxyCodeLine{00265\ \textcolor{comment}{}}
+\DoxyCodeLine{00266\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00267\ \textcolor{comment}{\ \ \ *\ @brief\ Returns\ an\ accessor\ to\ the\ buffer\ of\ the\ given\ virtual\ pointer}}
+\DoxyCodeLine{00268\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ in\ the\ given\ command\ group\ scope}}
+\DoxyCodeLine{00269\ \textcolor{comment}{\ \ \ *\ @param\ accessMode}}
+\DoxyCodeLine{00270\ \textcolor{comment}{\ \ \ *\ @param\ accessTarget}}
+\DoxyCodeLine{00271\ \textcolor{comment}{\ \ \ *\ @param\ ptr\ The\ virtual\ pointer}}
+\DoxyCodeLine{00272\ \textcolor{comment}{\ \ \ *\ @param\ cgh\ Reference\ to\ the\ command\ group\ scope}}
+\DoxyCodeLine{00273\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00274\ \ \ \textcolor{keyword}{template}\ <sycl\_acc\_mode\ access\_mode\ =\ default\_acc\_mode,}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ \ \ \ \ sycl\_acc\_target\ access\_target\ =\ default\_acc\_target,}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ buffer\_data\_type\ =\ buffer\_data\_type\_t>}
+\DoxyCodeLine{00277\ \ \ cl::sycl::accessor<buffer\_data\_type,\ 1,\ access\_mode,\ access\_target>}
+\DoxyCodeLine{00278\ \ \ get\_access(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr,\ cl::sycl::handler\ \&cgh)\ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \textcolor{keyword}{auto}\ buf\ =\ get\_buffer<buffer\_data\_type>(ptr);}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordflow}{return}\ buf.template\ get\_access<access\_mode,\ access\_target>(cgh);}
+\DoxyCodeLine{00281\ \ \ \}}
+\DoxyCodeLine{00282\ }
+\DoxyCodeLine{00283\ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ \ *\ Returns\ the\ offset\ from\ the\ base\ address\ of\ this\ pointer.}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00286\ \ \ \textcolor{keyword}{inline}\ std::ptrdiff\_t\ get\_offset(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{comment}{//\ The\ previous\ element\ to\ the\ lower\ bound\ is\ the\ node\ that}}
+\DoxyCodeLine{00288\ \ \ \ \ \textcolor{comment}{//\ holds\ this\ memory\ address}}
+\DoxyCodeLine{00289\ \ \ \ \ \textcolor{keyword}{auto}\ node\ =\ get\_node(ptr);}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keyword}{auto}\ start\ =\ node-\/>first;}
+\DoxyCodeLine{00291\ \ \ \ \ eigen\_assert(start\ ==\ ptr\ ||\ start\ <\ ptr);}
+\DoxyCodeLine{00292\ \ \ \ \ eigen\_assert(ptr\ <\ start\ +\ node-\/>second.m\_size);}
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keywordflow}{return}\ (ptr\ -\/\ start);}
+\DoxyCodeLine{00294\ \ \ \}}
+\DoxyCodeLine{00295\ }
+\DoxyCodeLine{00296\ \ \ \textcolor{comment}{/*}}
+\DoxyCodeLine{00297\ \textcolor{comment}{\ \ \ *\ Returns\ the\ number\ of\ elements\ by\ which\ the\ given\ pointer\ is\ offset\ from}}
+\DoxyCodeLine{00298\ \textcolor{comment}{\ \ \ *\ the\ base\ address.}}
+\DoxyCodeLine{00299\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00300\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ buffer\_data\_type>}
+\DoxyCodeLine{00301\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{size\_t}\ get\_element\_offset(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \textcolor{keywordflow}{return}\ get\_offset(ptr)\ /\ \textcolor{keyword}{sizeof}(buffer\_data\_type);}
+\DoxyCodeLine{00303\ \ \ \}}
+\DoxyCodeLine{00304\ \textcolor{comment}{}}
+\DoxyCodeLine{00305\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00306\ \textcolor{comment}{\ \ \ *\ Constructs\ the\ PointerMapper\ structure.}}
+\DoxyCodeLine{00307\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00308\ \ \ PointerMapper(base\_ptr\_t\ baseAddress\ =\ 4096)}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ :\ m\_pointerMap\{\},\ m\_freeList\{\},\ m\_baseAddress\{baseAddress\}\ \{}
+\DoxyCodeLine{00310\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_baseAddress\ ==\ 0)\ \{}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ EIGEN\_THROW\_X(std::invalid\_argument(\textcolor{stringliteral}{"{}Base\ address\ cannot\ be\ zero\(\backslash\)n"{}}));}
+\DoxyCodeLine{00312\ \ \ \ \ \}}
+\DoxyCodeLine{00313\ \ \ \};}
+\DoxyCodeLine{00314\ \textcolor{comment}{}}
+\DoxyCodeLine{00315\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00316\ \textcolor{comment}{\ \ \ *\ PointerMapper\ cannot\ be\ copied\ or\ moved}}
+\DoxyCodeLine{00317\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00318\ \ \ PointerMapper(\textcolor{keyword}{const}\ PointerMapper\ \&)\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00319\ \textcolor{comment}{}}
+\DoxyCodeLine{00320\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00321\ \textcolor{comment}{\ \ \ *\ Empty\ the\ pointer\ list}}
+\DoxyCodeLine{00322\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00323\ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ clear()\ \{}
+\DoxyCodeLine{00324\ \ \ \ \ m\_freeList.clear();}
+\DoxyCodeLine{00325\ \ \ \ \ m\_pointerMap.clear();}
+\DoxyCodeLine{00326\ \ \ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \ \ \textcolor{comment}{/*\ add\_pointer.}}
+\DoxyCodeLine{00329\ \textcolor{comment}{\ \ \ *\ Adds\ an\ existing\ pointer\ to\ the\ map\ and\ returns\ the\ virtual\ pointer\ id.}}
+\DoxyCodeLine{00330\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00331\ \ \ \textcolor{keyword}{inline}\ virtual\_pointer\_t\ add\_pointer(\textcolor{keyword}{const}\ buffer\_t\ \&b)\ \{}
+\DoxyCodeLine{00332\ \ \ \ \ \textcolor{keywordflow}{return}\ add\_pointer\_impl(b);}
+\DoxyCodeLine{00333\ \ \ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \ \ \textcolor{comment}{/*\ add\_pointer.}}
+\DoxyCodeLine{00336\ \textcolor{comment}{\ \ \ *\ Adds\ a\ pointer\ to\ the\ map\ and\ returns\ the\ virtual\ pointer\ id.}}
+\DoxyCodeLine{00337\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00338\ \ \ \textcolor{keyword}{inline}\ virtual\_pointer\_t\ add\_pointer(buffer\_t\ \&\&b)\ \{}
+\DoxyCodeLine{00339\ \ \ \ \ \textcolor{keywordflow}{return}\ add\_pointer\_impl(b);}
+\DoxyCodeLine{00340\ \ \ \}}
+\DoxyCodeLine{00341\ \textcolor{comment}{}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00343\ \textcolor{comment}{\ \ \ *\ @brief\ Fuses\ the\ given\ node\ with\ the\ previous\ nodes\ in\ the}}
+\DoxyCodeLine{00344\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ pointer\ map\ if\ they\ are\ free}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00346\ \textcolor{comment}{\ \ \ *\ @param\ node\ A\ reference\ to\ the\ free\ node\ to\ be\ fused}}
+\DoxyCodeLine{00347\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00348\ \ \ \textcolor{keywordtype}{void}\ fuse\_forward(\textcolor{keyword}{typename}\ pointerMap\_t::iterator\ \&node)\ \{}
+\DoxyCodeLine{00349\ \ \ \ \ \textcolor{keywordflow}{while}\ (node\ !=\ std::prev(m\_pointerMap.end()))\ \{}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ following\ node\ is\ free}}
+\DoxyCodeLine{00351\ \ \ \ \ \ \ \textcolor{comment}{//\ remove\ it\ and\ extend\ the\ current\ node\ with\ its\ size}}
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ fwd\_node\ =\ std::next(node);}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!fwd\_node-\/>second.m\_free)\ \{}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ fwd\_size\ =\ fwd\_node-\/>second.m\_size;}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ m\_freeList.erase(fwd\_node);}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ m\_pointerMap.erase(fwd\_node);}
+\DoxyCodeLine{00359\ }
+\DoxyCodeLine{00360\ \ \ \ \ \ \ node-\/>second.m\_size\ +=\ fwd\_size;}
+\DoxyCodeLine{00361\ \ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ \}}
+\DoxyCodeLine{00363\ \textcolor{comment}{}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00365\ \textcolor{comment}{\ \ \ *\ @brief\ Fuses\ the\ given\ node\ with\ the\ following\ nodes\ in\ the}}
+\DoxyCodeLine{00366\ \textcolor{comment}{\ \ \ *\ \ \ \ \ \ \ \ pointer\ map\ if\ they\ are\ free}}
+\DoxyCodeLine{00367\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00368\ \textcolor{comment}{\ \ \ *\ @param\ node\ A\ reference\ to\ the\ free\ node\ to\ be\ fused}}
+\DoxyCodeLine{00369\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00370\ \ \ \textcolor{keywordtype}{void}\ fuse\_backward(\textcolor{keyword}{typename}\ pointerMap\_t::iterator\ \&node)\ \{}
+\DoxyCodeLine{00371\ \ \ \ \ \textcolor{keywordflow}{while}\ (node\ !=\ m\_pointerMap.begin())\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \textcolor{comment}{//\ if\ previous\ node\ is\ free,\ extend\ it}}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \textcolor{comment}{//\ with\ the\ size\ of\ the\ current\ one}}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \textcolor{keyword}{auto}\ prev\_node\ =\ std::prev(node);}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!prev\_node-\/>second.m\_free)\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ prev\_node-\/>second.m\_size\ +=\ node-\/>second.m\_size;}
+\DoxyCodeLine{00379\ }
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \textcolor{comment}{//\ remove\ the\ current\ node}}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ m\_freeList.erase(node);}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ m\_pointerMap.erase(node);}
+\DoxyCodeLine{00383\ }
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \textcolor{comment}{//\ point\ to\ the\ previous\ node}}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ node\ =\ prev\_node;}
+\DoxyCodeLine{00386\ \ \ \ \ \}}
+\DoxyCodeLine{00387\ \ \ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \ \ \textcolor{comment}{/*\ remove\_pointer.}}
+\DoxyCodeLine{00390\ \textcolor{comment}{\ \ \ *\ Removes\ the\ given\ pointer\ from\ the\ map.}}
+\DoxyCodeLine{00391\ \textcolor{comment}{\ \ \ *\ The\ pointer\ is\ allowed\ to\ be\ reused\ only\ if\ ReUse\ if\ true.}}
+\DoxyCodeLine{00392\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00393\ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ ReUse\ =\ true>}
+\DoxyCodeLine{00394\ \ \ \textcolor{keywordtype}{void}\ remove\_pointer(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00395\ \ \ \ \ \textcolor{keywordflow}{if}\ (is\_nullptr(ptr))\ \{}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00397\ \ \ \ \ \}}
+\DoxyCodeLine{00398\ \ \ \ \ \textcolor{keyword}{auto}\ node\ =\ this-\/>get\_node(ptr);}
+\DoxyCodeLine{00399\ }
+\DoxyCodeLine{00400\ \ \ \ \ node-\/>second.m\_free\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00401\ \ \ \ \ m\_freeList.emplace(node);}
+\DoxyCodeLine{00402\ }
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{comment}{//\ Fuse\ the\ node}}
+\DoxyCodeLine{00404\ \ \ \ \ \textcolor{comment}{//\ with\ free\ nodes\ before\ and\ after\ it}}
+\DoxyCodeLine{00405\ \ \ \ \ fuse\_forward(node);}
+\DoxyCodeLine{00406\ \ \ \ \ fuse\_backward(node);}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \textcolor{comment}{//\ If\ after\ fusing\ the\ node\ is\ the\ last\ one}}
+\DoxyCodeLine{00409\ \ \ \ \ \textcolor{comment}{//\ simply\ remove\ it\ (since\ it\ is\ free)}}
+\DoxyCodeLine{00410\ \ \ \ \ \textcolor{keywordflow}{if}\ (node\ ==\ std::prev(m\_pointerMap.end()))\ \{}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ m\_freeList.erase(node);}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ m\_pointerMap.erase(node);}
+\DoxyCodeLine{00413\ \ \ \ \ \}}
+\DoxyCodeLine{00414\ \ \ \}}
+\DoxyCodeLine{00415\ }
+\DoxyCodeLine{00416\ \ \ \textcolor{comment}{/*\ count.}}
+\DoxyCodeLine{00417\ \textcolor{comment}{\ \ \ *\ Return\ the\ number\ of\ active\ pointers\ (i.e,\ pointers\ that}}
+\DoxyCodeLine{00418\ \textcolor{comment}{\ \ \ *\ have\ been\ malloc\ but\ not\ freed).}}
+\DoxyCodeLine{00419\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00420\ \ \ \textcolor{keywordtype}{size\_t}\ count()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ (m\_pointerMap.size()\ -\/\ m\_freeList.size());\ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00423\ \ \ \textcolor{comment}{/*\ add\_pointer\_impl.}}
+\DoxyCodeLine{00424\ \textcolor{comment}{\ \ \ *\ Adds\ a\ pointer\ to\ the\ map\ and\ returns\ the\ virtual\ pointer\ id.}}
+\DoxyCodeLine{00425\ \textcolor{comment}{\ \ \ *\ BufferT\ is\ either\ a\ const\ buffer\_t\&\ or\ a\ buffer\_t\&\&.}}
+\DoxyCodeLine{00426\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00427\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{class}\ BufferT>}
+\DoxyCodeLine{00428\ \ \ virtual\_pointer\_t\ add\_pointer\_impl(BufferT\ b)\ \{}
+\DoxyCodeLine{00429\ \ \ \ \ virtual\_pointer\_t\ retVal\ =\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00430\ \ \ \ \ \textcolor{keywordtype}{size\_t}\ bufSize\ =\ b.get\_count();}
+\DoxyCodeLine{00431\ \ \ \ \ pMapNode\_t\ p\{b,\ bufSize,\ \textcolor{keyword}{false}\};}
+\DoxyCodeLine{00432\ \ \ \ \ \textcolor{comment}{//\ If\ this\ is\ the\ first\ pointer:}}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_pointerMap.empty())\ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ virtual\_pointer\_t\ initialVal\{m\_baseAddress\};}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ m\_pointerMap.emplace(initialVal,\ p);}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ initialVal;}
+\DoxyCodeLine{00437\ \ \ \ \ \}}
+\DoxyCodeLine{00438\ }
+\DoxyCodeLine{00439\ \ \ \ \ \textcolor{keyword}{auto}\ lastElemIter\ =\ get\_insertion\_point(bufSize);}
+\DoxyCodeLine{00440\ \ \ \ \ \textcolor{comment}{//\ We\ are\ recovering\ an\ existing\ free\ node}}
+\DoxyCodeLine{00441\ \ \ \ \ \textcolor{keywordflow}{if}\ (lastElemIter-\/>second.m\_free)\ \{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ lastElemIter-\/>second.m\_buffer\ =\ b;}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ lastElemIter-\/>second.m\_free\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00444\ }
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \textcolor{comment}{//\ If\ the\ recovered\ node\ is\ bigger\ than\ the\ inserted\ one}}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \textcolor{comment}{//\ add\ a\ new\ free\ node\ with\ the\ remaining\ space}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (lastElemIter-\/>second.m\_size\ >\ bufSize)\ \{}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ create\ a\ new\ node\ with\ the\ remaining\ space}}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ remainingSize\ =\ lastElemIter-\/>second.m\_size\ -\/\ bufSize;}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ pMapNode\_t\ p2\{b,\ remainingSize,\ \textcolor{keyword}{true}\};}
+\DoxyCodeLine{00451\ }
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ size\ of\ the\ current\ node}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ lastElemIter-\/>second.m\_size\ =\ bufSize;}
+\DoxyCodeLine{00454\ }
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ add\ the\ new\ free\ node}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ newFreePtr\ =\ lastElemIter-\/>first\ +\ bufSize;}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \textcolor{keyword}{auto}\ freeNode\ =\ m\_pointerMap.emplace(newFreePtr,\ p2).first;}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ m\_freeList.emplace(freeNode);}
+\DoxyCodeLine{00459\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00460\ }
+\DoxyCodeLine{00461\ \ \ \ \ \ \ retVal\ =\ lastElemIter-\/>first;}
+\DoxyCodeLine{00462\ \ \ \ \ \}\ \textcolor{keywordflow}{else}\ \{}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ lastSize\ =\ lastElemIter-\/>second.m\_size;}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ retVal\ =\ lastElemIter-\/>first\ +\ lastSize;}
+\DoxyCodeLine{00465\ \ \ \ \ \ \ m\_pointerMap.emplace(retVal,\ p);}
+\DoxyCodeLine{00466\ \ \ \ \ \}}
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keywordflow}{return}\ retVal;}
+\DoxyCodeLine{00468\ \ \ \}}
+\DoxyCodeLine{00469\ \textcolor{comment}{}}
+\DoxyCodeLine{00470\ \textcolor{comment}{\ \ /**}}
+\DoxyCodeLine{00471\ \textcolor{comment}{\ \ \ *\ Compare\ two\ iterators\ to\ pointer\ map\ entries\ according\ to}}
+\DoxyCodeLine{00472\ \textcolor{comment}{\ \ \ *\ the\ size\ of\ the\ allocation\ on\ the\ device.}}
+\DoxyCodeLine{00473\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00474\ \ \ \textcolor{keyword}{struct\ }SortBySize\ \{}
+\DoxyCodeLine{00475\ \ \ \ \ \textcolor{keywordtype}{bool}\ operator()(\textcolor{keyword}{typename}\ pointerMap\_t::iterator\ a,}
+\DoxyCodeLine{00476\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{typename}\ pointerMap\_t::iterator\ b)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ ((a-\/>first\ <\ b-\/>first)\ \&\&\ (a-\/>second\ <=\ b-\/>second))\ ||}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \ \ \ \ \ \ \ ((a-\/>first\ <\ b-\/>first)\ \&\&\ (b-\/>second\ <=\ a-\/>second));}
+\DoxyCodeLine{00479\ \ \ \ \ \}}
+\DoxyCodeLine{00480\ \ \ \};}
+\DoxyCodeLine{00481\ }
+\DoxyCodeLine{00482\ \ \ \textcolor{comment}{/*\ Maps\ the\ pointer\ addresses\ to\ buffer\ and\ size\ pairs.}}
+\DoxyCodeLine{00483\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00484\ \ \ pointerMap\_t\ m\_pointerMap;}
+\DoxyCodeLine{00485\ }
+\DoxyCodeLine{00486\ \ \ \textcolor{comment}{/*\ List\ of\ free\ nodes\ available\ for\ re-\/using}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00488\ \ \ std::set<typename\ pointerMap\_t::iterator,\ SortBySize>\ m\_freeList;}
+\DoxyCodeLine{00489\ }
+\DoxyCodeLine{00490\ \ \ \textcolor{comment}{/*\ Base\ address\ used\ when\ issuing\ the\ first\ virtual\ pointer,\ allows\ users}}
+\DoxyCodeLine{00491\ \textcolor{comment}{\ \ \ *\ to\ specify\ alignment.\ Cannot\ be\ zero.\ */}}
+\DoxyCodeLine{00492\ \ \ std::intptr\_t\ m\_baseAddress;}
+\DoxyCodeLine{00493\ \};}
+\DoxyCodeLine{00494\ }
+\DoxyCodeLine{00495\ \textcolor{comment}{/*\ remove\_pointer.}}
+\DoxyCodeLine{00496\ \textcolor{comment}{\ *\ Removes\ the\ given\ pointer\ from\ the\ map.}}
+\DoxyCodeLine{00497\ \textcolor{comment}{\ *\ The\ pointer\ is\ allowed\ to\ be\ reused\ only\ if\ ReUse\ if\ true.}}
+\DoxyCodeLine{00498\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00499\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00500\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ PointerMapper::remove\_pointer<false>(\textcolor{keyword}{const}\ virtual\_pointer\_t\ ptr)\ \{}
+\DoxyCodeLine{00501\ \ \ \textcolor{keywordflow}{if}\ (is\_nullptr(ptr))\ \{}
+\DoxyCodeLine{00502\ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00503\ \ \ \}}
+\DoxyCodeLine{00504\ \ \ m\_pointerMap.erase(this-\/>get\_node(ptr));}
+\DoxyCodeLine{00505\ \}}
+\DoxyCodeLine{00506\ \textcolor{comment}{}}
+\DoxyCodeLine{00507\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00508\ \textcolor{comment}{\ *\ Malloc-\/like\ interface\ to\ the\ pointer-\/mapper.}}
+\DoxyCodeLine{00509\ \textcolor{comment}{\ *\ Given\ a\ size,\ creates\ a\ byte-\/typed\ buffer\ and\ returns\ a}}
+\DoxyCodeLine{00510\ \textcolor{comment}{\ *\ fake\ pointer\ to\ keep\ track\ of\ it.}}
+\DoxyCodeLine{00511\ \textcolor{comment}{\ *\ \(\backslash\)param\ size\ Size\ in\ bytes\ of\ the\ desired\ allocation}}
+\DoxyCodeLine{00512\ \textcolor{comment}{\ *\ \(\backslash\)throw\ cl::sycl::exception\ if\ error\ while\ creating\ the\ buffer}}
+\DoxyCodeLine{00513\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00514\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ *SYCLmalloc(\textcolor{keywordtype}{size\_t}\ size,\ PointerMapper\ \&pMap)\ \{}
+\DoxyCodeLine{00515\ \ \ \textcolor{keywordflow}{if}\ (size\ ==\ 0)\ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{nullptr};}
+\DoxyCodeLine{00517\ \ \ \}}
+\DoxyCodeLine{00518\ \ \ \textcolor{comment}{//\ Create\ a\ generic\ buffer\ of\ the\ given\ size}}
+\DoxyCodeLine{00519\ \ \ \textcolor{keyword}{using\ }buffer\_t\ =\ cl::sycl::buffer<buffer\_data\_type\_t,\ 1>;}
+\DoxyCodeLine{00520\ \ \ \textcolor{keyword}{auto}\ thePointer\ =\ pMap.add\_pointer(buffer\_t(cl::sycl::range<1>\{size\}));}
+\DoxyCodeLine{00521\ \ \ \textcolor{comment}{//\ Store\ the\ buffer\ on\ the\ global\ list}}
+\DoxyCodeLine{00522\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}\ *\textcolor{keyword}{>}(thePointer);}
+\DoxyCodeLine{00523\ \}}
+\DoxyCodeLine{00524\ \textcolor{comment}{}}
+\DoxyCodeLine{00525\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00526\ \textcolor{comment}{\ *\ Free-\/like\ interface\ to\ the\ pointer\ mapper.}}
+\DoxyCodeLine{00527\ \textcolor{comment}{\ *\ Given\ a\ fake-\/pointer\ created\ with\ the\ virtual-\/pointer\ malloc,}}
+\DoxyCodeLine{00528\ \textcolor{comment}{\ *\ destroys\ the\ buffer\ and\ remove\ it\ from\ the\ list.}}
+\DoxyCodeLine{00529\ \textcolor{comment}{\ *\ If\ ReUse\ is\ false,\ the\ pointer\ is\ not\ added\ to\ the\ freeList,}}
+\DoxyCodeLine{00530\ \textcolor{comment}{\ *\ it\ should\ be\ false\ only\ for\ sub-\/buffers.}}
+\DoxyCodeLine{00531\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00532\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{bool}\ ReUse\ =\ true,\ \textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erMapper>}
+\DoxyCodeLine{00533\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ SYCLfree(\textcolor{keywordtype}{void}\ *ptr,\ PointerMapper\ \&pMap)\ \{}
+\DoxyCodeLine{00534\ \ \ pMap.template\ remove\_pointer<ReUse>(ptr);}
+\DoxyCodeLine{00535\ \}}
+\DoxyCodeLine{00536\ \textcolor{comment}{}}
+\DoxyCodeLine{00537\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00538\ \textcolor{comment}{\ *\ Clear\ all\ the\ memory\ allocated\ by\ SYCL.}}
+\DoxyCodeLine{00539\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00540\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Po\textcolor{keywordtype}{int}erMapper>}
+\DoxyCodeLine{00541\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ SYCLfreeAll(PointerMapper\ \&pMap)\ \{}
+\DoxyCodeLine{00542\ \ \ pMap.clear();}
+\DoxyCodeLine{00543\ \}}
+\DoxyCodeLine{00544\ }
+\DoxyCodeLine{00545\ \textcolor{keyword}{template}\ <cl::sycl::access::mode\ AcMd,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00546\ \textcolor{keyword}{struct\ }RangeAccess\ \{}
+\DoxyCodeLine{00547\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ global\_access\ =\ cl::sycl::access::target::global\_buffer;}
+\DoxyCodeLine{00548\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \textcolor{keyword}{auto}\ is\_place\_holder\ =\ cl::sycl::access::placeholder::true\_t;}
+\DoxyCodeLine{00549\ \ \ \textcolor{keyword}{typedef}\ T\ scalar\_t;}
+\DoxyCodeLine{00550\ \ \ \textcolor{keyword}{typedef}\ scalar\_t\ \&ref\_t;}
+\DoxyCodeLine{00551\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ cl::sycl::global\_ptr<scalar\_t>::pointer\_t\ ptr\_t;}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \ \ \textcolor{comment}{//\ the\ accessor\ type\ does\ not\ necessarily\ the\ same\ as\ T}}
+\DoxyCodeLine{00554\ \ \ \textcolor{keyword}{typedef}\ cl::sycl::accessor<scalar\_t,\ 1,\ AcMd,\ global\_access,\ is\_place\_holder>}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ accessor;}
+\DoxyCodeLine{00556\ }
+\DoxyCodeLine{00557\ \ \ \textcolor{keyword}{typedef}\ RangeAccess<AcMd,\ T>\ self\_t;}
+\DoxyCodeLine{00558\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ RangeAccess(accessor\ access,}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{size\_t}\ offset,}
+\DoxyCodeLine{00560\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ std::intptr\_t\ virtual\_ptr)}
+\DoxyCodeLine{00561\ \ \ \ \ \ \ :\ access\_(access),\ offset\_(offset),\ virtual\_ptr\_(virtual\_ptr)\ \{\}}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ \ \ RangeAccess(cl::sycl::buffer<scalar\_t,\ 1>\ buff\ =}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ cl::sycl::buffer<scalar\_t,\ 1>(cl::sycl::range<1>(1)))}
+\DoxyCodeLine{00565\ \ \ \ \ \ \ :\ access\_\{accessor\{buff\}\},\ offset\_(0),\ virtual\_ptr\_(-\/1)\ \{\}}
+\DoxyCodeLine{00566\ }
+\DoxyCodeLine{00567\ \ \ \textcolor{comment}{//\ This\ should\ be\ only\ used\ for\ null\ constructor\ on\ the\ host\ side}}
+\DoxyCodeLine{00568\ \ \ RangeAccess(std::nullptr\_t)\ :\ RangeAccess()\ \{\}}
+\DoxyCodeLine{00569\ \ \ \textcolor{comment}{//\ This\ template\ parameter\ must\ be\ removed\ and\ scalar\_t\ should\ be\ replaced}}
+\DoxyCodeLine{00570\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ ptr\_t\ get\_pointer()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{keywordflow}{return}\ (access\_.get\_pointer().get()\ +\ offset\_);}
+\DoxyCodeLine{00572\ \ \ \}}
+\DoxyCodeLine{00573\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00574\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ self\_t\ \&operator+=(Index\ offset)\ \{}
+\DoxyCodeLine{00575\ \ \ \ \ offset\_\ +=\ (offset);}
+\DoxyCodeLine{00576\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00577\ \ \ \}}
+\DoxyCodeLine{00578\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00579\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ self\_t\ operator+(Index\ offset)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00580\ \ \ \ \ \textcolor{keywordflow}{return}\ self\_t(access\_,\ offset\_\ +\ offset,\ virtual\_ptr\_);}
+\DoxyCodeLine{00581\ \ \ \}}
+\DoxyCodeLine{00582\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00583\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ self\_t\ operator-\/(Index\ offset)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00584\ \ \ \ \ \textcolor{keywordflow}{return}\ self\_t(access\_,\ offset\_\ -\/\ offset,\ virtual\_ptr\_);}
+\DoxyCodeLine{00585\ \ \ \}}
+\DoxyCodeLine{00586\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00587\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ self\_t\ \&operator-\/=(Index\ offset)\ \{}
+\DoxyCodeLine{00588\ \ \ \ \ offset\_\ -\/=\ offset;}
+\DoxyCodeLine{00589\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00590\ \ \ \}}
+\DoxyCodeLine{00591\ }
+\DoxyCodeLine{00592\ \ \ \textcolor{comment}{//\ THIS\ IS\ FOR\ NULL\ COMPARISON\ ONLY}}
+\DoxyCodeLine{00593\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ operator==(}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \textcolor{keyword}{const}\ RangeAccess\ \&lhs,\ std::nullptr\_t)\ \{}
+\DoxyCodeLine{00595\ \ \ \ \ \textcolor{keywordflow}{return}\ ((lhs.virtual\_ptr\_\ ==\ -\/1));}
+\DoxyCodeLine{00596\ \ \ \}}
+\DoxyCodeLine{00597\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ operator!=(}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \textcolor{keyword}{const}\ RangeAccess\ \&lhs,\ std::nullptr\_t\ i)\ \{}
+\DoxyCodeLine{00599\ \ \ \ \ \textcolor{keywordflow}{return}\ !(lhs\ ==\ i);}
+\DoxyCodeLine{00600\ \ \ \}}
+\DoxyCodeLine{00601\ }
+\DoxyCodeLine{00602\ \ \ \textcolor{comment}{//\ THIS\ IS\ FOR\ NULL\ COMPARISON\ ONLY}}
+\DoxyCodeLine{00603\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ operator==(}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ std::nullptr\_t,\ \textcolor{keyword}{const}\ RangeAccess\ \&rhs)\ \{}
+\DoxyCodeLine{00605\ \ \ \ \ \textcolor{keywordflow}{return}\ ((rhs.virtual\_ptr\_\ ==\ -\/1));}
+\DoxyCodeLine{00606\ \ \ \}}
+\DoxyCodeLine{00607\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{friend}\ \textcolor{keywordtype}{bool}\ operator!=(}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ std::nullptr\_t\ i,\ \textcolor{keyword}{const}\ RangeAccess\ \&rhs)\ \{}
+\DoxyCodeLine{00609\ \ \ \ \ \textcolor{keywordflow}{return}\ !(i\ ==\ rhs);}
+\DoxyCodeLine{00610\ \ \ \}}
+\DoxyCodeLine{00611\ \ \ \textcolor{comment}{//\ Prefix\ operator\ (Increment\ and\ return\ value)}}
+\DoxyCodeLine{00612\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ self\_t\ \&operator++()\ \{}
+\DoxyCodeLine{00613\ \ \ \ \ offset\_++;}
+\DoxyCodeLine{00614\ \ \ \ \ \textcolor{keywordflow}{return}\ (*\textcolor{keyword}{this});}
+\DoxyCodeLine{00615\ \ \ \}}
+\DoxyCodeLine{00616\ }
+\DoxyCodeLine{00617\ \ \ \textcolor{comment}{//\ Postfix\ operator\ (Return\ value\ and\ increment)}}
+\DoxyCodeLine{00618\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ self\_t\ operator++(\textcolor{keywordtype}{int}\ i)\ \{}
+\DoxyCodeLine{00619\ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(i);}
+\DoxyCodeLine{00620\ \ \ \ \ self\_t\ temp\_iterator(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00621\ \ \ \ \ offset\_++;}
+\DoxyCodeLine{00622\ \ \ \ \ \textcolor{keywordflow}{return}\ temp\_iterator;}
+\DoxyCodeLine{00623\ \ \ \}}
+\DoxyCodeLine{00624\ }
+\DoxyCodeLine{00625\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ std::ptrdiff\_t\ get\_size()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00626\ \ \ \ \ \textcolor{keywordflow}{return}\ (access\_.get\_count()\ -\/\ offset\_);}
+\DoxyCodeLine{00627\ \ \ \}}
+\DoxyCodeLine{00628\ }
+\DoxyCodeLine{00629\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ std::ptrdiff\_t\ get\_offset()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00630\ \ \ \ \ \textcolor{keywordflow}{return}\ offset\_;}
+\DoxyCodeLine{00631\ \ \ \}}
+\DoxyCodeLine{00632\ }
+\DoxyCodeLine{00633\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ set\_offset(std::ptrdiff\_t\ offset)\ \{}
+\DoxyCodeLine{00634\ \ \ \ \ offset\_\ =\ offset;}
+\DoxyCodeLine{00635\ \ \ \}}
+\DoxyCodeLine{00636\ }
+\DoxyCodeLine{00637\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ ref\_t\ operator*()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00638\ \ \ \ \ \textcolor{keywordflow}{return}\ *get\_pointer();}
+\DoxyCodeLine{00639\ \ \ \}}
+\DoxyCodeLine{00640\ }
+\DoxyCodeLine{00641\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ ref\_t\ operator*()\ \{}
+\DoxyCodeLine{00642\ \ \ \ \ \textcolor{keywordflow}{return}\ *get\_pointer();}
+\DoxyCodeLine{00643\ \ \ \}}
+\DoxyCodeLine{00644\ }
+\DoxyCodeLine{00645\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ ptr\_t\ operator-\/>()\ =\ \textcolor{keyword}{delete};}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ ref\_t\ operator[](\textcolor{keywordtype}{int}\ x)\ \{}
+\DoxyCodeLine{00648\ \ \ \ \ \textcolor{keywordflow}{return}\ *(get\_pointer()\ +\ x);}
+\DoxyCodeLine{00649\ \ \ \}}
+\DoxyCodeLine{00650\ }
+\DoxyCodeLine{00651\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ ref\_t\ operator[](\textcolor{keywordtype}{int}\ x)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00652\ \ \ \ \ \textcolor{keywordflow}{return}\ *(get\_pointer()\ +\ x);}
+\DoxyCodeLine{00653\ \ \ \}}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ scalar\_t\ *get\_virtual\_pointer()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00656\ \ \ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{reinterpret\_cast<}scalar\_t\ *\textcolor{keyword}{>}(virtual\_ptr\_\ +}
+\DoxyCodeLine{00657\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ (offset\_\ *\ \textcolor{keyword}{sizeof}(scalar\_t)));}
+\DoxyCodeLine{00658\ \ \ \}}
+\DoxyCodeLine{00659\ }
+\DoxyCodeLine{00660\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{explicit}\ \textcolor{keyword}{operator}\ bool()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00661\ \ \ \ \ \textcolor{keywordflow}{return}\ (virtual\_ptr\_\ !=\ -\/1);}
+\DoxyCodeLine{00662\ \ \ \}}
+\DoxyCodeLine{00663\ }
+\DoxyCodeLine{00664\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{operator}\ RangeAccess<AcMd,\ const\ T>()\ \{}
+\DoxyCodeLine{00665\ \ \ \ \ \textcolor{keywordflow}{return}\ RangeAccess<AcMd,\ const\ T>(access\_,\ offset\_,\ virtual\_ptr\_);}
+\DoxyCodeLine{00666\ \ \ \}}
+\DoxyCodeLine{00667\ }
+\DoxyCodeLine{00668\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00669\ \ \ \textcolor{keyword}{operator}\ RangeAccess<AcMd,\ const\ T>()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00670\ \ \ \ \ \textcolor{keywordflow}{return}\ RangeAccess<AcMd,\ const\ T>(access\_,\ offset\_,\ virtual\_ptr\_);}
+\DoxyCodeLine{00671\ \ \ \}}
+\DoxyCodeLine{00672\ \ \ \textcolor{comment}{//\ binding\ placeholder\ accessors\ to\ a\ command\ group\ handler\ for\ SYCL}}
+\DoxyCodeLine{00673\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ bind(}
+\DoxyCodeLine{00674\ \ \ \ \ \ \ cl::sycl::handler\ \&cgh)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00675\ \ \ \ \ cgh.require(access\_);}
+\DoxyCodeLine{00676\ \ \ \}}
+\DoxyCodeLine{00677\ }
+\DoxyCodeLine{00678\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00679\ \ \ accessor\ access\_;}
+\DoxyCodeLine{00680\ \ \ \textcolor{keywordtype}{size\_t}\ offset\_;}
+\DoxyCodeLine{00681\ \ \ std::intptr\_t\ virtual\_ptr\_;\ \ \textcolor{comment}{//\ the\ location\ of\ the\ buffer\ in\ the\ map}}
+\DoxyCodeLine{00682\ \};}
+\DoxyCodeLine{00683\ }
+\DoxyCodeLine{00684\ \textcolor{keyword}{template}\ <cl::sycl::access::mode\ AcMd,\ \textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00685\ \textcolor{keyword}{struct\ }RangeAccess<AcMd,\ const\ T>\ :\ RangeAccess<AcMd,\ T>\ \{}
+\DoxyCodeLine{00686\ \ \ \textcolor{keyword}{typedef}\ RangeAccess<AcMd,\ T>\ Base;}
+\DoxyCodeLine{00687\ \ \ \textcolor{keyword}{using\ }Base::Base;}
+\DoxyCodeLine{00688\ \};}
+\DoxyCodeLine{00689\ }
+\DoxyCodeLine{00690\ \}\ \ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00691\ \}\ \ \textcolor{comment}{//\ namespace\ TensorSycl}}
+\DoxyCodeLine{00692\ \}\ \ \textcolor{comment}{//\ namespace\ Eigen}}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \textcolor{preprocessor}{\#endif\ \ }\textcolor{comment}{//\ EIGEN\_CXX11\_TENSOR\_TENSOR\_SYCL\_STORAGE\_MEMORY\_H}}
+
+\end{DoxyCode}

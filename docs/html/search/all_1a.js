@@ -1,8 +1,28 @@
 var searchData=
 [
-  ['uart_5fgps_0',['UART_GPS',['../classUART__GPS.html',1,'']]],
-  ['units_1',['Units',['../classUnits.html',1,'']]],
-  ['usage_2',['Usage',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md2',1,'']]],
-  ['use_5fdigital_5fcontinuity_3',['USE_DIGITAL_CONTINUITY',['../classArduinoPyro.html#ae01421f415453706eca68ac1f110a9d4',1,'ArduinoPyro']]],
-  ['user_20guide_4',['Command-Line Interface User Guide',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md0',1,'']]]
+  ['s25fl512_0',['S25FL512',['../classS25FL512.html',1,'S25FL512'],['../classS25FL512.html#a81aac4f7bc78c0336b0b2e3a4dcb0519',1,'S25FL512::S25FL512()']]],
+  ['sample_5ffrequency_1',['SAMPLE_FREQUENCY',['../classAprsTransmitter.html#ac3f6a73f10a751297fa0be8362908bf7',1,'AprsTransmitter']]],
+  ['script_2',['3.1 PlatformIO Installer Script',['../index.html#autotoc_md25',1,'']]],
+  ['send_3',['send',['../classAprsTransmitter.html#aeeaab666c627cf97ccbda807d960bb07',1,'AprsTransmitter']]],
+  ['serialdebug_4',['SerialDebug',['../classSerialDebug.html',1,'']]],
+  ['set_5',['set',['../classConfigurationData.html#af80b98b8ca48d1c150ea48336798c094',1,'ConfigurationData']]],
+  ['setdebouncetime_6',['setDebounceTime',['../classDebounce.html#aadc1bea7f2f342b9c8160ec78c502eab',1,'Debounce']]],
+  ['setdefault_7',['setDefault',['../classConfiguration.html#a64b05c9afb9e541494fb2ed83d5a5442',1,'Configuration']]],
+  ['setdependency_8',['setDependency',['../classBaseFlag.html#ad9fdb88457d6e6df8d8eeb58b843c1c4',1,'BaseFlag']]],
+  ['setosr_9',['setOSR',['../classMS5607Sensor.html#a8fa5631dd4d4995531fb465e5015aa51',1,'MS5607Sensor']]],
+  ['setspiclass_10',['setSpiClass',['../classICM20948Sensor.html#a7b362848bae3009c5aa5d2eae1e3fc57',1,'ICM20948Sensor']]],
+  ['setup_11',['Setup',['../index.html#autotoc_md21',1,'']]],
+  ['setup_12',['setup',['../classConfiguration.html#aa50415a19aaf8bdf9ee91a7084d0246c',1,'Configuration::setup()'],['../classGenericSensor.html#a5a36a9bb47566ccd26ca89ed7a1754ba',1,'GenericSensor::setup()'],['../classPyro.html#a1bad55391631d30871cdf4091ed8aa28',1,'Pyro::setup()'],['../classVoltageSensor.html#ade28bbe10e8f5ff5f5b59815552b19b1',1,'VoltageSensor::setup()'],['../classHardwareAbstraction.html#acc44bbde86f56219189814a3763bffd3',1,'HardwareAbstraction::setup()'],['../classArduinoPyro.html#a8c5497be4ecc09d4e6db04b98e8ccfba',1,'ArduinoPyro::setup()'],['../classICM20602Sensor.html#a07a7e98fcf7553eccd0d9dc0932be150',1,'ICM20602Sensor::setup()'],['../classICM20948Sensor.html#a8255fd6e52237a7e7dbd59b9f6c179bd',1,'ICM20948Sensor::setup()'],['../classMS5607Sensor.html#a415fdfe989c730f65b51b872585233f8',1,'MS5607Sensor::setup()'],['../classMS8607Sensor.html#ab5de03749781ad4518116e36402c6f14',1,'MS8607Sensor::setup()'],['../classRFM9xRadio.html#a85b8e633a244007660e16f13435d2198',1,'RFM9xRadio::setup()'],['../classAprsTransmitter.html#a87cad7a70fc7f201e0cd0ae7e8a3f776',1,'AprsTransmitter::setup()']]],
+  ['sillygooselogdata_13',['SillyGooseLogData',['../structSillyGooseLogData.html',1,'']]],
+  ['simpleflag_14',['SimpleFlag',['../classSimpleFlag.html',1,'SimpleFlag'],['../classSimpleFlag.html#a3c4a035d8c0beadb22508572847b368f',1,'SimpleFlag::SimpleFlag()']]],
+  ['size_15',['size',['../structBaseConfigurationData__s.html#a4b7ed581a9ed78c50cac508f18a4ca41',1,'BaseConfigurationData_s']]],
+  ['software_16',['NULI Avionics Flight Software',['../index.html',1,'']]],
+  ['state1d_5fs_17',['State1D_s',['../structState1D__s.html',1,'']]],
+  ['state6d_5fs_18',['State6D_s',['../structState6D__s.html',1,'']]],
+  ['stateestimator1d_19',['StateEstimator1D',['../classStateEstimator1D.html',1,'']]],
+  ['stateestimatorbasic6d_20',['StateEstimatorBasic6D',['../classStateEstimatorBasic6D.html',1,'']]],
+  ['stopwatch_21',['StopWatch',['../classStopWatch.html',1,'']]],
+  ['string_20concatenation_20in_20macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_22',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
+  ['structs_20enums_20typedefs_20and_20functions_23',['Structs, Enums, Typedefs and Functions',['../index.html#autotoc_md38',1,'']]],
+  ['systemclock_24',['SystemClock',['../classSystemClock.html',1,'']]]
 ];

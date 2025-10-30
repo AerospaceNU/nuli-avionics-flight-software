@@ -1,0 +1,194 @@
+\doxysection{Solve.\+h}
+\hypertarget{Solve_8h_source}{}\label{Solve_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Solve.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/Solve.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SOLVE\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_SOLVE\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType,\ \textcolor{keyword}{typename}\ StorageKind>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1SolveImpl}{SolveImpl}};}
+\DoxyCodeLine{00016\ \textcolor{comment}{}}
+\DoxyCodeLine{00017\ \textcolor{comment}{/**\ \(\backslash\)class\ Solve}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ Core\_Module}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Pseudo\ expression\ representing\ a\ solving\ operation}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Decomposition\ the\ type\ of\ the\ matrix\ or\ decomposition\ object}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Rhstype\ the\ type\ of\ the\ right-\/hand\ side}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *\ This\ class\ represents\ an\ expression\ of\ A.solve(B)}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ *\ and\ most\ of\ the\ time\ this\ is\ the\ only\ way\ it\ is\ used.}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00029\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ this\ solve\_traits\ class\ permits\ to\ determine\ the\ evaluation\ type\ with\ respect\ to\ storage\ kind\ (Dense\ vs\ Sparse)}}
+\DoxyCodeLine{00032\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType,\textcolor{keyword}{typename}\ StorageKind>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1solve__traits}{solve\_traits}};}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType>}
+\DoxyCodeLine{00035\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1solve__traits}{solve\_traits}}<Decomposition,RhsType,\mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00036\ \{}
+\DoxyCodeLine{00037\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{classEigen_1_1internal_1_1make__proper__matrix__type}{make\_proper\_matrix\_type}}<\textcolor{keyword}{typename}\ RhsType::Scalar,}
+\DoxyCodeLine{00038\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Decomposition::ColsAtCompileTime,}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsType::ColsAtCompileTime,}
+\DoxyCodeLine{00040\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsType::PlainObject::Options,}
+\DoxyCodeLine{00041\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Decomposition::MaxColsAtCompileTime,}
+\DoxyCodeLine{00042\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ RhsType::MaxColsAtCompileTime>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ PlainObject;}
+\DoxyCodeLine{00043\ \};}
+\DoxyCodeLine{00044\ }
+\DoxyCodeLine{00045\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType>}
+\DoxyCodeLine{00046\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1Solve}{Solve}}<Decomposition,\ RhsType>\ >}
+\DoxyCodeLine{00047\ \ \ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<typename\ solve\_traits<Decomposition,RhsType,typename\ internal::traits<RhsType>::StorageKind>::PlainObject>}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1solve__traits}{solve\_traits<Decomposition,RhsType,typename\ internal::traits<RhsType>::StorageKind}}>::PlainObject\ PlainObject;}
+\DoxyCodeLine{00050\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ promote\_index\_type<typename\ Decomposition::StorageIndex,\ typename\ RhsType::StorageIndex>::type\ StorageIndex;}
+\DoxyCodeLine{00051\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits<PlainObject>}}\ BaseTraits;}
+\DoxyCodeLine{00052\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00053\ \ \ \ \ Flags\ =\ BaseTraits::Flags\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}},}
+\DoxyCodeLine{00054\ \ \ \ \ CoeffReadCost\ =\ \mbox{\hyperlink{namespaceEigen_a3163430a1c13173faffde69016b48aaf}{HugeCost}}}
+\DoxyCodeLine{00055\ \ \ \};}
+\DoxyCodeLine{00056\ \};}
+\DoxyCodeLine{00057\ }
+\DoxyCodeLine{00058\ \}}
+\DoxyCodeLine{00059\ }
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType>}
+\DoxyCodeLine{00062\ \textcolor{keyword}{class\ }Solve\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SolveImpl}{SolveImpl}}<Decomposition,RhsType,typename\ internal::traits<RhsType>::StorageKind>}
+\DoxyCodeLine{00063\ \{}
+\DoxyCodeLine{00064\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<Solve>::PlainObject}}\ PlainObject;}
+\DoxyCodeLine{00066\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<Solve>::StorageIndex}}\ StorageIndex;}
+\DoxyCodeLine{00067\ }
+\DoxyCodeLine{00068\ \ \ Solve(\textcolor{keyword}{const}\ Decomposition\ \&dec,\ \textcolor{keyword}{const}\ RhsType\ \&rhs)}
+\DoxyCodeLine{00069\ \ \ \ \ :\ m\_dec(dec),\ m\_rhs(rhs)}
+\DoxyCodeLine{00070\ \ \ \{\}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\ \textcolor{keyword}{const}\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_dec.cols();\ \}}
+\DoxyCodeLine{00073\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\ \textcolor{keyword}{const}\ EIGEN\_NOEXCEPT\ \{\ \textcolor{keywordflow}{return}\ m\_rhs.cols();\ \}}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{const}\ Decomposition\&\ dec()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_dec;\ \}}
+\DoxyCodeLine{00076\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{const}\ RhsType\&\ \ \ \ \ \ \ rhs()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_rhs;\ \}}
+\DoxyCodeLine{00077\ }
+\DoxyCodeLine{00078\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00079\ \ \ \textcolor{keyword}{const}\ Decomposition\ \&m\_dec;}
+\DoxyCodeLine{00080\ \ \ \textcolor{keyword}{const}\ RhsType\ \ \ \ \ \ \ \&m\_rhs;}
+\DoxyCodeLine{00081\ \};}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ }
+\DoxyCodeLine{00084\ \textcolor{comment}{//\ Specialization\ of\ the\ Solve\ expression\ for\ dense\ results}}
+\DoxyCodeLine{00085\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType>}
+\DoxyCodeLine{00086\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1SolveImpl}{SolveImpl}}<Decomposition,RhsType,\mbox{\hyperlink{structEigen_1_1Dense}{Dense}}>}
+\DoxyCodeLine{00087\ \ \ :\ \textcolor{keyword}{public}\ MatrixBase<Solve<Decomposition,RhsType>\ >}
+\DoxyCodeLine{00088\ \{}
+\DoxyCodeLine{00089\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<Decomposition,RhsType>}}\ Derived;}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00092\ }
+\DoxyCodeLine{00093\ \ \ \textcolor{keyword}{typedef}\ MatrixBase<Solve<Decomposition,RhsType>\ >\ Base;}
+\DoxyCodeLine{00094\ \ \ EIGEN\_DENSE\_PUBLIC\_INTERFACE(Derived)}
+\DoxyCodeLine{00095\ }
+\DoxyCodeLine{00096\ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ Scalar\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1DenseBase_ac4c69272b7de4fae22f5f13968fb6703}{row}},\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1DenseBase_ad0c05525967c16738c2cd2285b38a91f}{col}})\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00099\ \ \ Scalar\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00100\ \};}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \textcolor{comment}{//\ Generic\ API\ dispatcher}}
+\DoxyCodeLine{00103\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType,\ \textcolor{keyword}{typename}\ StorageKind>}
+\DoxyCodeLine{00104\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1SolveImpl}{SolveImpl}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{internal::generic\_xpr\_base}}<Solve<Decomposition,RhsType>,\ MatrixXpr,\ StorageKind>::type}
+\DoxyCodeLine{00105\ \{}
+\DoxyCodeLine{00106\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1generic__xpr__base}{internal::generic\_xpr\_base<Solve<Decomposition,RhsType>}},\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}},\ StorageKind>::type\ Base;}
+\DoxyCodeLine{00108\ \};}
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00111\ }
+\DoxyCodeLine{00112\ \textcolor{comment}{//\ Evaluator\ of\ Solve\ -\/>\ eval\ into\ a\ temporary}}
+\DoxyCodeLine{00113\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ RhsType>}
+\DoxyCodeLine{00114\ \textcolor{keyword}{struct\ }evaluator<\mbox{\hyperlink{classEigen_1_1Solve}{Solve}}<Decomposition,RhsType>\ >}
+\DoxyCodeLine{00115\ \ \ :\ \textcolor{keyword}{public}\ evaluator<typename\ Solve<Decomposition,RhsType>::PlainObject>}
+\DoxyCodeLine{00116\ \{}
+\DoxyCodeLine{00117\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<Decomposition,RhsType>}}\ SolveType;}
+\DoxyCodeLine{00118\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SolveType::PlainObject\ PlainObject;}
+\DoxyCodeLine{00119\ \ \ \textcolor{keyword}{typedef}\ evaluator<PlainObject>\ Base;}
+\DoxyCodeLine{00120\ }
+\DoxyCodeLine{00121\ \ \ \textcolor{keyword}{enum}\ \{\ Flags\ =\ Base::Flags\ |\ \mbox{\hyperlink{group__flags_gaa34e83bae46a8eeae4e69ebe3aaecbed}{EvalBeforeNestingBit}}\ \};}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{explicit}\ evaluator(\textcolor{keyword}{const}\ SolveType\&\ solve)}
+\DoxyCodeLine{00124\ \ \ \ \ :\ m\_result(solve.rows(),\ solve.cols())}
+\DoxyCodeLine{00125\ \ \ \{}
+\DoxyCodeLine{00126\ \ \ \ \ ::new\ (\textcolor{keyword}{static\_cast<}Base*\textcolor{keyword}{>}(\textcolor{keyword}{this}))\ Base(m\_result);}
+\DoxyCodeLine{00127\ \ \ \ \ solve.dec().\_solve\_impl(solve.rhs(),\ m\_result);}
+\DoxyCodeLine{00128\ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00131\ \ \ PlainObject\ m\_result;}
+\DoxyCodeLine{00132\ \};}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \textcolor{comment}{//\ Specialization\ for\ "{}dst\ =\ dec.solve(rhs)"{}}}
+\DoxyCodeLine{00135\ \textcolor{comment}{//\ NOTE\ we\ need\ to\ specialize\ it\ for\ Dense2Dense\ to\ avoid\ ambiguous\ specialization\ error\ and\ a\ Sparse2Sparse\ specialization\ must\ exist\ somewhere}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DstXprType,\ \textcolor{keyword}{typename}\ DecType,\ \textcolor{keyword}{typename}\ RhsType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00137\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Assignment}{Assignment}}<DstXprType,\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve}}<DecType,RhsType>,\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{assign\_op}}<Scalar,Scalar>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1Dense2Dense}{Dense2Dense}}>}
+\DoxyCodeLine{00138\ \{}
+\DoxyCodeLine{00139\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<DecType,RhsType>}}\ SrcXprType;}
+\DoxyCodeLine{00140\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(DstXprType\ \&dst,\ \textcolor{keyword}{const}\ SrcXprType\ \&src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{internal::assign\_op<Scalar,Scalar>}}\ \&)}
+\DoxyCodeLine{00141\ \ \ \{}
+\DoxyCodeLine{00142\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstRows\ =\ src.rows();}
+\DoxyCodeLine{00143\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstCols\ =\ src.cols();}
+\DoxyCodeLine{00144\ \ \ \ \ \textcolor{keywordflow}{if}((dst.rows()!=dstRows)\ ||\ (dst.cols()!=dstCols))}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ dst.resize(dstRows,\ dstCols);}
+\DoxyCodeLine{00146\ }
+\DoxyCodeLine{00147\ \ \ \ \ src.dec().\_solve\_impl(src.rhs(),\ dst);}
+\DoxyCodeLine{00148\ \ \ \}}
+\DoxyCodeLine{00149\ \};}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{comment}{//\ Specialization\ for\ "{}dst\ =\ dec.transpose().solve(rhs)"{}}}
+\DoxyCodeLine{00152\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DstXprType,\ \textcolor{keyword}{typename}\ DecType,\ \textcolor{keyword}{typename}\ RhsType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00153\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Assignment}{Assignment}}<DstXprType,\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve}}<\mbox{\hyperlink{classEigen_1_1Transpose}{Transpose}}<const\ DecType>,RhsType>,\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{assign\_op}}<Scalar,Scalar>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1Dense2Dense}{Dense2Dense}}>}
+\DoxyCodeLine{00154\ \{}
+\DoxyCodeLine{00155\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<Transpose<const\ DecType>}},RhsType>\ SrcXprType;}
+\DoxyCodeLine{00156\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(DstXprType\ \&dst,\ \textcolor{keyword}{const}\ SrcXprType\ \&src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{internal::assign\_op<Scalar,Scalar>}}\ \&)}
+\DoxyCodeLine{00157\ \ \ \{}
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstRows\ =\ src.rows();}
+\DoxyCodeLine{00159\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstCols\ =\ src.cols();}
+\DoxyCodeLine{00160\ \ \ \ \ \textcolor{keywordflow}{if}((dst.rows()!=dstRows)\ ||\ (dst.cols()!=dstCols))}
+\DoxyCodeLine{00161\ \ \ \ \ \ \ dst.resize(dstRows,\ dstCols);}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \ \ \ \ src.dec().nestedExpression().template\ \_solve\_impl\_transposed<false>(src.rhs(),\ dst);}
+\DoxyCodeLine{00164\ \ \ \}}
+\DoxyCodeLine{00165\ \};}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{comment}{//\ Specialization\ for\ "{}dst\ =\ dec.adjoint().solve(rhs)"{}}}
+\DoxyCodeLine{00168\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ DstXprType,\ \textcolor{keyword}{typename}\ DecType,\ \textcolor{keyword}{typename}\ RhsType,\ \textcolor{keyword}{typename}\ Scalar>}
+\DoxyCodeLine{00169\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Assignment}{Assignment}}<DstXprType,\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve}}<\mbox{\hyperlink{classEigen_1_1CwiseUnaryOp}{CwiseUnaryOp}}<internal::\mbox{\hyperlink{structEigen_1_1internal_1_1scalar__conjugate__op}{scalar\_conjugate\_op}}<typename\ DecType::Scalar>,\ const\ \mbox{\hyperlink{classEigen_1_1Transpose}{Transpose}}<const\ DecType>\ >,RhsType>,}
+\DoxyCodeLine{00170\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{internal::assign\_op}}<Scalar,Scalar>,\ \mbox{\hyperlink{structEigen_1_1internal_1_1Dense2Dense}{Dense2Dense}}>}
+\DoxyCodeLine{00171\ \{}
+\DoxyCodeLine{00172\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<CwiseUnaryOp<internal::scalar\_conjugate\_op<typename\ DecType::Scalar>}},\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Transpose}{Transpose<const\ DecType>}}\ >,RhsType>\ SrcXprType;}
+\DoxyCodeLine{00173\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(DstXprType\ \&dst,\ \textcolor{keyword}{const}\ SrcXprType\ \&src,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1assign__op}{internal::assign\_op<Scalar,Scalar>}}\ \&)}
+\DoxyCodeLine{00174\ \ \ \{}
+\DoxyCodeLine{00175\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstRows\ =\ src.rows();}
+\DoxyCodeLine{00176\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dstCols\ =\ src.cols();}
+\DoxyCodeLine{00177\ \ \ \ \ \textcolor{keywordflow}{if}((dst.rows()!=dstRows)\ ||\ (dst.cols()!=dstCols))}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ dst.resize(dstRows,\ dstCols);}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \ \ \ \ src.dec().nestedExpression().nestedExpression().template\ \_solve\_impl\_transposed<true>(src.rhs(),\ dst);}
+\DoxyCodeLine{00181\ \ \ \}}
+\DoxyCodeLine{00182\ \};}
+\DoxyCodeLine{00183\ }
+\DoxyCodeLine{00184\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00185\ }
+\DoxyCodeLine{00186\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00187\ }
+\DoxyCodeLine{00188\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SOLVE\_H}}
+
+\end{DoxyCode}

@@ -27,7 +27,7 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
             BaseFlag* leaderFlag = flagGroup->getLeader();
 
             // these branches don't represent SimpleFlag or ArgumentFlag
-            if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') {
+            if (argvPos + 1 >= argc || this->isKnownFlag(argv[(argvPos) + 1], *flagGroup)) {
                 leaderFlag->parse(nullptr);
             } else {
                 leaderFlag->parse(argv[argvPos + 1]);
@@ -58,8 +58,7 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
                 matched = true;
 
                 CLIReturnCode_e parseResult;
-                // these branches don't represent SimpleFlag or ArgumentFlag
-                if (argvPos + 1 >= argc || argv[argvPos + 1][0] == '-') {
+                if (argvPos + 1 >= argc || this->isKnownFlag(argv[argvPos + 1], *flagGroup)) {
                     parseResult = flagGroup->flags_s[i]->parse(nullptr);
                 } else {
                     parseResult = flagGroup->flags_s[i]->parse(argv[argvPos + 1]);
@@ -110,6 +109,7 @@ CLIReturnCode_e Parser::parse(char* input) {
     while(*p) {
         switch(*p) {
             case '\t':
+            case '\r':
             case '\n':
             case ' ':
                 *p = '\0';  // mark the end of a string
@@ -285,3 +285,11 @@ int Parser::FlagGroup_s::strcmp(const char* string1, const char* string2) { // N
 
     return *(const unsigned char*)string1 - *(const unsigned char*)string2;
 }
+    bool Parser::isKnownFlag(char* arg, Parser::FlagGroup_s &flagGroupS) {
+        for (int i = 0; i < flagGroupS.numFlags_s; i++) {
+            if (this->strcmp(arg, flagGroupS.flags_s[i]->name()) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }

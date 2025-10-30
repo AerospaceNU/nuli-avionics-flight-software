@@ -1,0 +1,486 @@
+\doxysection{Sparse\+Vector.\+h}
+\hypertarget{SparseVector_8h_source}{}\label{SparseVector_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseVector.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseVector.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008-\/2015\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SPARSEVECTOR\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_SPARSEVECTOR\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ \textcolor{comment}{}}
+\DoxyCodeLine{00015\ \textcolor{comment}{/**\ \(\backslash\)ingroup\ SparseCore\_Module}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ SparseVector}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ a\ sparse\ vector\ class}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_Scalar\ the\ scalar\ type,\ i.e.\ the\ type\ of\ the\ coefficients}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ See\ http://www.netlib.org/linalg/html\_templates/node91.html\ for\ details\ on\ the\ storage\ scheme.}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ *\ This\ class\ can\ be\ extended\ with\ the\ help\ of\ the\ plugin\ mechanism\ described\ on\ the\ page}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ *\ \(\backslash\)ref\ TopicCustomizing\_Plugins\ by\ defining\ the\ preprocessor\ symbol\ \(\backslash\)c\ EIGEN\_SPARSEVECTOR\_PLUGIN.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00027\ }
+\DoxyCodeLine{00028\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00029\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_StorageIndex>}
+\DoxyCodeLine{00030\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{classEigen_1_1SparseVector}{SparseVector}}<\_Scalar,\ \_Options,\ \_StorageIndex>\ >}
+\DoxyCodeLine{00031\ \{}
+\DoxyCodeLine{00032\ \ \ \textcolor{keyword}{typedef}\ \_Scalar\ Scalar;}
+\DoxyCodeLine{00033\ \ \ \textcolor{keyword}{typedef}\ \_StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00034\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1Sparse}{Sparse}}\ StorageKind;}
+\DoxyCodeLine{00035\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1MatrixXpr}{MatrixXpr}}\ XprKind;}
+\DoxyCodeLine{00036\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00037\ \ \ \ \ IsColVector\ =\ (\_Options\ \&\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ ?\ 0\ :\ 1,}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \ \ \ \ RowsAtCompileTime\ =\ IsColVector\ ?\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ :\ 1,}
+\DoxyCodeLine{00040\ \ \ \ \ ColsAtCompileTime\ =\ IsColVector\ ?\ 1\ :\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00041\ \ \ \ \ MaxRowsAtCompileTime\ =\ RowsAtCompileTime,}
+\DoxyCodeLine{00042\ \ \ \ \ MaxColsAtCompileTime\ =\ ColsAtCompileTime,}
+\DoxyCodeLine{00043\ \ \ \ \ Flags\ =\ \_Options\ |\ NestByRefBit\ |\ \mbox{\hyperlink{group__flags_gae2c323957f20dfdc6cb8f44428eaec1a}{LvalueBit}}\ |\ (IsColVector\ ?\ 0\ :\ \mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})\ |\ \mbox{\hyperlink{group__flags_gaed0244284da47a2b8661261431173caf}{CompressedAccessBit}},}
+\DoxyCodeLine{00044\ \ \ \ \ SupportedAccessPatterns\ =\ InnerRandomAccessPattern}
+\DoxyCodeLine{00045\ \ \ \};}
+\DoxyCodeLine{00046\ \};}
+\DoxyCodeLine{00047\ }
+\DoxyCodeLine{00048\ \textcolor{comment}{//\ Sparse-\/Vector-\/Assignment\ kinds:}}
+\DoxyCodeLine{00049\ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00050\ \ \ SVA\_RuntimeSwitch,}
+\DoxyCodeLine{00051\ \ \ SVA\_Inner,}
+\DoxyCodeLine{00052\ \ \ SVA\_Outer}
+\DoxyCodeLine{00053\ \};}
+\DoxyCodeLine{00054\ }
+\DoxyCodeLine{00055\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Src,}
+\DoxyCodeLine{00056\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordtype}{int}\ AssignmentKind\ =\ !bool(Src::IsVectorAtCompileTime)\ ?\ SVA\_RuntimeSwitch}
+\DoxyCodeLine{00057\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ Src::InnerSizeAtCompileTime==1\ ?\ SVA\_Outer}
+\DoxyCodeLine{00058\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ :\ SVA\_Inner>}
+\DoxyCodeLine{00059\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1sparse__vector__assign__selector}{sparse\_vector\_assign\_selector}};}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \}}
+\DoxyCodeLine{00062\ }
+\DoxyCodeLine{00063\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_StorageIndex>}
+\DoxyCodeLine{00064\ \textcolor{keyword}{class\ }SparseVector}
+\DoxyCodeLine{00065\ \ \ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_af79f020db965367d97eb954fc68d8f99}{SparseCompressedBase}}<SparseVector<\_Scalar,\ \_Options,\ \_StorageIndex>\ >}
+\DoxyCodeLine{00066\ \{}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_af79f020db965367d97eb954fc68d8f99}{SparseCompressedBase<SparseVector>}}\ Base;}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keyword}{using\ }Base::convert\_index;}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \ \ \ \ EIGEN\_SPARSE\_PUBLIC\_INTERFACE(SparseVector)}
+\DoxyCodeLine{00071\ \ \ \ \ EIGEN\_SPARSE\_INHERIT\_ASSIGNMENT\_OPERATOR(SparseVector,\ +=)}
+\DoxyCodeLine{00072\ \ \ \ \ EIGEN\_SPARSE\_INHERIT\_ASSIGNMENT\_OPERATOR(SparseVector,\ -\/=)}
+\DoxyCodeLine{00073\ \ \ \ \ }
+\DoxyCodeLine{00074\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1internal_1_1CompressedStorage}{internal::CompressedStorage<Scalar,StorageIndex>}}\ Storage;}
+\DoxyCodeLine{00075\ \ \ \ \ \textcolor{keyword}{enum}\ \{\ IsColVector\ =\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{internal::traits<SparseVector>::IsColVector}}\ \};}
+\DoxyCodeLine{00076\ \ \ \ \ }
+\DoxyCodeLine{00077\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ Options\ =\ \_Options}
+\DoxyCodeLine{00079\ \ \ \ \ \};}
+\DoxyCodeLine{00080\ \ \ \ \ }
+\DoxyCodeLine{00081\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a1944e9fa9ce7937bfc3a87b2cb94371f}{rows}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ IsColVector\ ?\ m\_size\ :\ 1;\ \}}
+\DoxyCodeLine{00082\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_aca7ce296424ef6e478ab0fb19547a7ee}{cols}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ IsColVector\ ?\ 1\ :\ m\_size;\ \}}
+\DoxyCodeLine{00083\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a180fcba1ccf3cdf3252a263bc1de7a1d}{innerSize}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_size;\ \}}
+\DoxyCodeLine{00084\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_ac86cc88a4cfef21db6b64ec0ab4c8f0a}{outerSize}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 1;\ \}}
+\DoxyCodeLine{00085\ }
+\DoxyCodeLine{00086\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_a6373c1dab09c6d3db8fe5e4eea060a86}{valuePtr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_data.valuePtr();\ \}}
+\DoxyCodeLine{00087\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_a6373c1dab09c6d3db8fe5e4eea060a86}{valuePtr}}()\ \{\ \textcolor{keywordflow}{return}\ m\_data.valuePtr();\ \}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_a29104d325f0d4928fa159257183b2f53}{innerIndexPtr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_data.indexPtr();\ \}}
+\DoxyCodeLine{00090\ \ \ \ \ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_a29104d325f0d4928fa159257183b2f53}{innerIndexPtr}}()\ \{\ \textcolor{keywordflow}{return}\ m\_data.indexPtr();\ \}}
+\DoxyCodeLine{00091\ }
+\DoxyCodeLine{00092\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_a90208df76cc1c9b8d6ada53fea913de9}{outerIndexPtr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_a90208df76cc1c9b8d6ada53fea913de9}{outerIndexPtr}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_ab8b0aebe77ad28609e715f84d50b0fb6}{innerNonZeroPtr}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00095\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}*\ \mbox{\hyperlink{classEigen_1_1SparseCompressedBase_ab8b0aebe77ad28609e715f84d50b0fb6}{innerNonZeroPtr}}()\ \{\ \textcolor{keywordflow}{return}\ 0;\ \}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00098\ \ \ \ \ \textcolor{keyword}{inline}\ Storage\&\ data()\ \{\ \textcolor{keywordflow}{return}\ m\_data;\ \}\textcolor{comment}{}}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Storage\&\ data()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_data;\ \}}
+\DoxyCodeLine{00101\ }
+\DoxyCodeLine{00102\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}},\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}})\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00103\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ eigen\_assert(IsColVector\ ?\ (\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}==0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}>=0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}<m\_size)\ :\ (\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}==0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}>=0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}<m\_size));}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ coeff(IsColVector\ ?\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}\ :\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}});}
+\DoxyCodeLine{00106\ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ coeff(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00108\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ eigen\_assert(i>=0\ \&\&\ i<m\_size);}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_data.at(\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}(i));}
+\DoxyCodeLine{00111\ \ \ \ \ \}}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\&\ coeffRef(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}},\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}})}
+\DoxyCodeLine{00114\ \ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ eigen\_assert(IsColVector\ ?\ (\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}==0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}>=0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}<m\_size)\ :\ (\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}==0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}>=0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}<m\_size));}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ coeffRef(IsColVector\ ?\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}\ :\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}});}
+\DoxyCodeLine{00117\ \ \ \ \ \}}
+\DoxyCodeLine{00118\ \textcolor{comment}{}}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ a\ reference\ to\ the\ coefficient\ value\ at\ given\ index\ \(\backslash\)a\ i}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ operation\ involes\ a\ log(rho*size)\ binary\ search.\ If\ the\ coefficient\ does\ not}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ \ \ \ *\ exist\ yet,\ then\ a\ sorted\ insertion\ into\ a\ sequential\ buffer\ is\ performed.}}
+\DoxyCodeLine{00122\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00123\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ insertion\ might\ be\ very\ costly\ if\ the\ number\ of\ nonzeros\ above\ \(\backslash\)a\ i\ is\ large.}}
+\DoxyCodeLine{00124\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\&\ \mbox{\hyperlink{classEigen_1_1SparseVector_a6115473b2e7003fe8d69be82d77f18b5}{coeffRef}}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)}
+\DoxyCodeLine{00126\ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ eigen\_assert(i>=0\ \&\&\ i<m\_size);}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_data.atWithInsertion(\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a0b540ba724726ebe953f8c0df06081ed}{StorageIndex}}(i));}
+\DoxyCodeLine{00130\ \ \ \ \ \}}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::InnerIterator\ \mbox{\hyperlink{classEigen_1_1InnerIterator}{InnerIterator}};}
+\DoxyCodeLine{00135\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Base::ReverseInnerIterator\ ReverseInnerIterator;}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ setZero()\ \{\ m\_data.clear();\ \}}
+\DoxyCodeLine{00138\ \textcolor{comment}{}}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ number\ of\ non\ zero\ coefficients\ */}}
+\DoxyCodeLine{00140\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseVector_aeaa74603bb1405f622726907795c9b5a}{nonZeros}}()\textcolor{keyword}{\ const\ \ }\{\ \textcolor{keywordflow}{return}\ m\_data.size();\ \}}
+\DoxyCodeLine{00141\ }
+\DoxyCodeLine{00142\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ startVec(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outer)}
+\DoxyCodeLine{00143\ \ \ \ \ \{}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(outer);}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ eigen\_assert(outer==0);}
+\DoxyCodeLine{00146\ \ \ \ \ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \ \ \textcolor{keyword}{inline}\ Scalar\&\ insertBackByOuterInner(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ outer,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ inner)}
+\DoxyCodeLine{00149\ \ \ \ \ \{}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(outer);}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ eigen\_assert(outer==0);}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insertBack(inner);}
+\DoxyCodeLine{00153\ \ \ \ \ \}}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{keyword}{inline}\ Scalar\&\ insertBack(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ i)}
+\DoxyCodeLine{00155\ \ \ \ \ \{}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ m\_data.append(0,\ i);}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_data.value(m\_data.size()-\/1);}
+\DoxyCodeLine{00158\ \ \ \ \ \}}
+\DoxyCodeLine{00159\ \ \ \ \ }
+\DoxyCodeLine{00160\ \ \ \ \ Scalar\&\ insertBackByOuterInnerUnordered(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ outer,\ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ inner)}
+\DoxyCodeLine{00161\ \ \ \ \ \{}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ EIGEN\_UNUSED\_VARIABLE(outer);}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ eigen\_assert(outer==0);}
+\DoxyCodeLine{00164\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insertBackUnordered(inner);}
+\DoxyCodeLine{00165\ \ \ \ \ \}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{keyword}{inline}\ Scalar\&\ insertBackUnordered(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ i)}
+\DoxyCodeLine{00167\ \ \ \ \ \{}
+\DoxyCodeLine{00168\ \ \ \ \ \ \ m\_data.append(0,\ i);}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_data.value(m\_data.size()-\/1);}
+\DoxyCodeLine{00170\ \ \ \ \ \}}
+\DoxyCodeLine{00171\ }
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keyword}{inline}\ Scalar\&\ insert(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}},\ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}})}
+\DoxyCodeLine{00173\ \ \ \ \ \{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ eigen\_assert(IsColVector\ ?\ (\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}==0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}>=0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}<m\_size)\ :\ (\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}==0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}>=0\ \&\&\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}<m\_size));}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ }
+\DoxyCodeLine{00176\ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ inner\ =\ IsColVector\ ?\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}}\ :\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}};}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ outer\ =\ IsColVector\ ?\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}\ :\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a4eb3c5bb9f26cf66f992e6d96d384f9a}{row}};}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ EIGEN\_ONLY\_USED\_FOR\_DEBUG(outer);}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ eigen\_assert(outer==0);}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insert(inner);}
+\DoxyCodeLine{00181\ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \ \ \ \ Scalar\&\ insert(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ i)}
+\DoxyCodeLine{00183\ \ \ \ \ \{}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ eigen\_assert(i>=0\ \&\&\ i<m\_size);}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ }
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ startId\ =\ 0;}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ p\ =\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(m\_data.size())\ -\/\ 1;}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \textcolor{comment}{//\ TODO\ smart\ realloc}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ m\_data.resize(p+2,1);}
+\DoxyCodeLine{00190\ }
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (\ (p\ >=\ startId)\ \&\&\ (m\_data.index(p)\ >\ i)\ )}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00193\ \ \ \ \ \ \ \ \ m\_data.index(p+1)\ =\ m\_data.index(p);}
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \ \ m\_data.value(p+1)\ =\ m\_data.value(p);}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \ \ -\/-\/p;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ m\_data.index(p+1)\ =\ convert\_index(i);}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ m\_data.value(p+1)\ =\ 0;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_data.value(p+1);}
+\DoxyCodeLine{00200\ \ \ \ \ \}}
+\DoxyCodeLine{00201\ \textcolor{comment}{}}
+\DoxyCodeLine{00202\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00203\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00204\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ reserve(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ reserveSize)\ \{\ m\_data.reserve(reserveSize);\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ }
+\DoxyCodeLine{00207\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ finalize()\ \{\}}
+\DoxyCodeLine{00208\ \textcolor{comment}{}}
+\DoxyCodeLine{00209\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)copydoc\ SparseMatrix::prune(const\ Scalar\&,const\ RealScalar\&)\ */}}
+\DoxyCodeLine{00210\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseVector_af094e30271da69f865b5d97f338f81d1}{prune}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\&\ reference,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_aaec8ace6efb785c81d442931c3248d88}{RealScalar}}\&\ epsilon\ =\ NumTraits<RealScalar>::dummy\_precision())}
+\DoxyCodeLine{00211\ \ \ \ \ \{}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ m\_data.prune(reference,epsilon);}
+\DoxyCodeLine{00213\ \ \ \ \ \}}
+\DoxyCodeLine{00214\ \textcolor{comment}{}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ \ \ /**\ Resizes\ the\ sparse\ vector\ to\ \(\backslash\)a\ rows\ x\ \(\backslash\)a\ cols}}
+\DoxyCodeLine{00216\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00217\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ method\ is\ provided\ for\ compatibility\ with\ matrices.}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ a\ column\ vector,\ \(\backslash\)a\ cols\ must\ be\ equal\ to\ 1.}}
+\DoxyCodeLine{00219\ \textcolor{comment}{\ \ \ \ \ \ *\ For\ a\ row\ vector,\ \(\backslash\)a\ rows\ must\ be\ equal\ to\ 1.}}
+\DoxyCodeLine{00220\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ resize(Index)}}
+\DoxyCodeLine{00222\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00223\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseVector_a2dc842b3bb2ba3692e210565c48aff3c}{resize}}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols)}
+\DoxyCodeLine{00224\ \ \ \ \ \{}
+\DoxyCodeLine{00225\ \ \ \ \ \ \ eigen\_assert((IsColVector\ ?\ cols\ :\ rows)==1\ \&\&\ \textcolor{stringliteral}{"{}Outer\ dimension\ must\ equal\ 1"{}});}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseVector_a2dc842b3bb2ba3692e210565c48aff3c}{resize}}(IsColVector\ ?\ rows\ :\ cols);}
+\DoxyCodeLine{00227\ \ \ \ \ \}}
+\DoxyCodeLine{00228\ \textcolor{comment}{}}
+\DoxyCodeLine{00229\ \textcolor{comment}{\ \ \ \ /**\ Resizes\ the\ sparse\ vector\ to\ \(\backslash\)a\ newSize}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ \ \ \ \ *\ This\ method\ deletes\ all\ entries,\ thus\ leaving\ an\ empty\ sparse\ vector}}
+\DoxyCodeLine{00231\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00232\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ \ conservativeResize(),\ setZero()\ */}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseVector_a1020011c75fb70b21257c8d04ee07514}{resize}}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ newSize)}
+\DoxyCodeLine{00234\ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ m\_size\ =\ newSize;}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ m\_data.clear();}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \textcolor{comment}{}}
+\DoxyCodeLine{00239\ \textcolor{comment}{\ \ \ \ /**\ Resizes\ the\ sparse\ vector\ to\ \(\backslash\)a\ newSize,\ while\ leaving\ old\ values\ untouched.}}
+\DoxyCodeLine{00240\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00241\ \textcolor{comment}{\ \ \ \ \ \ *\ If\ the\ size\ of\ the\ vector\ is\ decreased,\ then\ the\ storage\ of\ the\ out-\/of\ bounds\ coefficients\ is\ kept\ and\ reserved.}}
+\DoxyCodeLine{00242\ \textcolor{comment}{\ \ \ \ \ \ *\ Call\ .data().squeeze()\ to\ free\ extra\ memory.}}
+\DoxyCodeLine{00243\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00244\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ reserve(),\ setZero()}}
+\DoxyCodeLine{00245\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00246\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseVector_ab8dbb1f73b6250c10c0860eb13ca5cca}{conservativeResize}}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ newSize)}
+\DoxyCodeLine{00247\ \ \ \ \ \{}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (newSize\ <\ m\_size)}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (i<m\_data.size()\ \&\&\ m\_data.index(i)<newSize)\ ++i;}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ m\_data.resize(i);}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ m\_size\ =\ newSize;}
+\DoxyCodeLine{00255\ \ \ \ \ \}}
+\DoxyCodeLine{00256\ }
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keywordtype}{void}\ resizeNonZeros(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a124bc57921775eb9aa2dfd9727e23472}{size}})\ \{\ m\_data.resize(\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a124bc57921775eb9aa2dfd9727e23472}{size}});\ \}}
+\DoxyCodeLine{00258\ }
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector()\ :\ m\_size(0)\ \{\ check\_template\_parameters();\ \mbox{\hyperlink{classEigen_1_1SparseVector_a2dc842b3bb2ba3692e210565c48aff3c}{resize}}(0);\ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keyword}{explicit}\ \textcolor{keyword}{inline}\ SparseVector(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ \mbox{\hyperlink{structEigen_1_1EigenBase_a9f40726259520d7e9c5ce58d19d62e79}{size}})\ :\ m\_size(0)\ \{\ check\_template\_parameters();\ \mbox{\hyperlink{classEigen_1_1SparseVector_a2dc842b3bb2ba3692e210565c48aff3c}{resize}}(\mbox{\hyperlink{structEigen_1_1EigenBase_a9f40726259520d7e9c5ce58d19d62e79}{size}});\ \}}
+\DoxyCodeLine{00262\ }
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ rows,\ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ cols)\ :\ m\_size(0)\ \{\ check\_template\_parameters();\ \mbox{\hyperlink{classEigen_1_1SparseVector_a2dc842b3bb2ba3692e210565c48aff3c}{resize}}(rows,cols);\ \}}
+\DoxyCodeLine{00264\ }
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector(\textcolor{keyword}{const}\ SparseMatrixBase<OtherDerived>\&\ other)}
+\DoxyCodeLine{00267\ \ \ \ \ \ \ :\ m\_size(0)}
+\DoxyCodeLine{00268\ \ \ \ \ \{}
+\DoxyCodeLine{00269\ \textcolor{preprocessor}{\ \ \ \ \ \ \#ifdef\ EIGEN\_SPARSE\_CREATE\_TEMPORARY\_PLUGIN}}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ \ \ EIGEN\_SPARSE\_CREATE\_TEMPORARY\_PLUGIN}
+\DoxyCodeLine{00271\ \textcolor{preprocessor}{\ \ \ \ \ \ \#endif}}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ check\_template\_parameters();}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ *\textcolor{keyword}{this}\ =\ other.derived();}
+\DoxyCodeLine{00274\ \ \ \ \ \}}
+\DoxyCodeLine{00275\ }
+\DoxyCodeLine{00276\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector(\textcolor{keyword}{const}\ SparseVector\&\ other)}
+\DoxyCodeLine{00277\ \ \ \ \ \ \ :\ Base(other),\ m\_size(0)}
+\DoxyCodeLine{00278\ \ \ \ \ \{}
+\DoxyCodeLine{00279\ \ \ \ \ \ \ check\_template\_parameters();}
+\DoxyCodeLine{00280\ \ \ \ \ \ \ *\textcolor{keyword}{this}\ =\ other.derived();}
+\DoxyCodeLine{00281\ \ \ \ \ \}}
+\DoxyCodeLine{00282\ \textcolor{comment}{}}
+\DoxyCodeLine{00283\ \textcolor{comment}{\ \ \ \ /**\ Swaps\ the\ values\ of\ \(\backslash\)c\ *this\ and\ \(\backslash\)a\ other.}}
+\DoxyCodeLine{00284\ \textcolor{comment}{\ \ \ \ \ \ *\ Overloaded\ for\ performance:\ this\ version\ performs\ a\ \(\backslash\)em\ shallow\ swap\ by\ swapping\ pointers\ and\ attributes\ only.}}
+\DoxyCodeLine{00285\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ SparseMatrixBase::swap()}}
+\DoxyCodeLine{00286\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00287\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseVector_a977f1796d4b332a0827c5a1d7b1ed561}{swap}}(SparseVector\&\ other)}
+\DoxyCodeLine{00288\ \ \ \ \ \{}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ std::swap(m\_size,\ other.m\_size);}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ m\_data.swap(other.m\_data);}
+\DoxyCodeLine{00291\ \ \ \ \ \}}
+\DoxyCodeLine{00292\ }
+\DoxyCodeLine{00293\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ OtherOptions>}
+\DoxyCodeLine{00294\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SparseVector_a977f1796d4b332a0827c5a1d7b1ed561}{swap}}(\mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<Scalar,OtherOptions,StorageIndex>}}\&\ other)}
+\DoxyCodeLine{00295\ \ \ \ \ \{}
+\DoxyCodeLine{00296\ \ \ \ \ \ \ eigen\_assert(other.\mbox{\hyperlink{classEigen_1_1SparseMatrix_a4e5f706cfae14d2eaec1ea1e234905f1}{outerSize}}()==1);}
+\DoxyCodeLine{00297\ \ \ \ \ \ \ std::swap(m\_size,\ other.m\_innerSize);}
+\DoxyCodeLine{00298\ \ \ \ \ \ \ m\_data.swap(other.m\_data);}
+\DoxyCodeLine{00299\ \ \ \ \ \}}
+\DoxyCodeLine{00300\ }
+\DoxyCodeLine{00301\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector\&\ operator=(\textcolor{keyword}{const}\ SparseVector\&\ other)}
+\DoxyCodeLine{00302\ \ \ \ \ \{}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (other.isRValue())}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseVector_a977f1796d4b332a0827c5a1d7b1ed561}{swap}}(other.const\_cast\_derived());}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseVector_a2dc842b3bb2ba3692e210565c48aff3c}{resize}}(other.size());}
+\DoxyCodeLine{00310\ \ \ \ \ \ \ \ \ m\_data\ =\ other.m\_data;}
+\DoxyCodeLine{00311\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00312\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00313\ \ \ \ \ \}}
+\DoxyCodeLine{00314\ }
+\DoxyCodeLine{00315\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ OtherDerived>}
+\DoxyCodeLine{00316\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector\&\ operator=(\textcolor{keyword}{const}\ SparseMatrixBase<OtherDerived>\&\ other)}
+\DoxyCodeLine{00317\ \ \ \ \ \{}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ SparseVector\ tmp(other.size());}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ internal::sparse\_vector\_assign\_selector<SparseVector,OtherDerived>::run(tmp,other.derived());}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ this-\/>\mbox{\hyperlink{classEigen_1_1SparseVector_a977f1796d4b332a0827c5a1d7b1ed561}{swap}}(tmp);}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00322\ \ \ \ \ \}}
+\DoxyCodeLine{00323\ }
+\DoxyCodeLine{00324\ \textcolor{preprocessor}{\ \ \ \ \#ifndef\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00325\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Lhs,\ \textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keyword}{inline}\ SparseVector\&\ operator=(\textcolor{keyword}{const}\ SparseSparseProduct<Lhs,Rhs>\&\ product)}
+\DoxyCodeLine{00327\ \ \ \ \ \{}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ Base::operator=(product);}
+\DoxyCodeLine{00329\ \ \ \ \ \}}
+\DoxyCodeLine{00330\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00331\ }
+\DoxyCodeLine{00332\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_NO\_IO}}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keyword}{friend}\ std::ostream\ \&\ operator\ <<\ (std::ostream\ \&\ s,\ \textcolor{keyword}{const}\ SparseVector\&\ m)}
+\DoxyCodeLine{00334\ \ \ \ \ \{}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ i=0;\ i<m.nonZeros();\ ++i)}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ s\ <<\ \textcolor{stringliteral}{"{}("{}}\ <<\ m.m\_data.value(i)\ <<\ \textcolor{stringliteral}{"{},"{}}\ <<\ m.m\_data.index(i)\ <<\ \textcolor{stringliteral}{"{})\ "{}};}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ s\ <<\ std::endl;}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ s;}
+\DoxyCodeLine{00339\ \ \ \ \ \}}
+\DoxyCodeLine{00340\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00341\ \textcolor{comment}{}}
+\DoxyCodeLine{00342\ \textcolor{comment}{\ \ \ \ /**\ Destructor\ */}}
+\DoxyCodeLine{00343\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{classEigen_1_1SparseVector_ad519592c203aedf33c524feb1bdaad1b}{\string~SparseVector}}()\ \{\}}
+\DoxyCodeLine{00344\ \textcolor{comment}{}}
+\DoxyCodeLine{00345\ \textcolor{comment}{\ \ \ \ /**\ Overloaded\ for\ performance\ */}}
+\DoxyCodeLine{00346\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ \mbox{\hyperlink{classEigen_1_1SparseVector_a05e8aff0ba5c4dd4ab69e173d80d1a68}{sum}}()\ \textcolor{keyword}{const};}
+\DoxyCodeLine{00347\ }
+\DoxyCodeLine{00348\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00349\ \textcolor{comment}{}}
+\DoxyCodeLine{00350\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ setZero()\ and\ reserve()\ */}}
+\DoxyCodeLine{00351\ \ \ \ \ EIGEN\_DEPRECATED\ \textcolor{keywordtype}{void}\ startFill(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ reserve)}
+\DoxyCodeLine{00352\ \ \ \ \ \{}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ setZero();}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ m\_data.reserve(reserve);}
+\DoxyCodeLine{00355\ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \textcolor{comment}{}}
+\DoxyCodeLine{00357\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ insertBack(Index,Index)\ */}}
+\DoxyCodeLine{00358\ \ \ \ \ EIGEN\_DEPRECATED\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\&\ fill(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ r,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ c)}
+\DoxyCodeLine{00359\ \ \ \ \ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \ \ eigen\_assert(r==0\ ||\ c==0);}
+\DoxyCodeLine{00361\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ fill(IsColVector\ ?\ r\ :\ c);}
+\DoxyCodeLine{00362\ \ \ \ \ \}}
+\DoxyCodeLine{00363\ \textcolor{comment}{}}
+\DoxyCodeLine{00364\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ insertBack(Index)\ */}}
+\DoxyCodeLine{00365\ \ \ \ \ EIGEN\_DEPRECATED\ Scalar\&\ fill(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)}
+\DoxyCodeLine{00366\ \ \ \ \ \{}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ m\_data.append(0,\ i);}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_data.value(m\_data.size()-\/1);}
+\DoxyCodeLine{00369\ \ \ \ \ \}}
+\DoxyCodeLine{00370\ \textcolor{comment}{}}
+\DoxyCodeLine{00371\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ insert(Index,Index)\ */}}
+\DoxyCodeLine{00372\ \ \ \ \ EIGEN\_DEPRECATED\ Scalar\&\ fillrand(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ r,\ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ c)}
+\DoxyCodeLine{00373\ \ \ \ \ \{}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ eigen\_assert(r==0\ ||\ c==0);}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ fillrand(IsColVector\ ?\ r\ :\ c);}
+\DoxyCodeLine{00376\ \ \ \ \ \}}
+\DoxyCodeLine{00377\ \textcolor{comment}{}}
+\DoxyCodeLine{00378\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ insert(Index)\ */}}
+\DoxyCodeLine{00379\ \ \ \ \ EIGEN\_DEPRECATED\ Scalar\&\ fillrand(\mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ i)}
+\DoxyCodeLine{00380\ \ \ \ \ \{}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ insert(i);}
+\DoxyCodeLine{00382\ \ \ \ \ \}}
+\DoxyCodeLine{00383\ \textcolor{comment}{}}
+\DoxyCodeLine{00384\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ finalize()\ */}}
+\DoxyCodeLine{00385\ \ \ \ \ EIGEN\_DEPRECATED\ \textcolor{keywordtype}{void}\ endFill()\ \{\}}
+\DoxyCodeLine{00386\ \ \ \ \ }
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{comment}{//\ These\ two\ functions\ were\ here\ in\ the\ 3.1\ release,\ so\ let's\ keep\ them\ in\ case\ some\ code\ rely\ on\ them.}\textcolor{comment}{}}
+\DoxyCodeLine{00388\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ data()\ */}}
+\DoxyCodeLine{00389\ \ \ \ \ EIGEN\_DEPRECATED\ Storage\&\ \_data()\ \{\ \textcolor{keywordflow}{return}\ m\_data;\ \}\textcolor{comment}{}}
+\DoxyCodeLine{00390\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ \(\backslash\)deprecated\ use\ data()\ */}}
+\DoxyCodeLine{00391\ \ \ \ \ EIGEN\_DEPRECATED\ \textcolor{keyword}{const}\ Storage\&\ \_data()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_data;\ \}}
+\DoxyCodeLine{00392\ \ \ \ \ }
+\DoxyCodeLine{00393\ \textcolor{preprocessor}{\#\ \ \ ifdef\ EIGEN\_SPARSEVECTOR\_PLUGIN}}
+\DoxyCodeLine{00394\ \textcolor{preprocessor}{\#\ \ \ \ \ include\ EIGEN\_SPARSEVECTOR\_PLUGIN}}
+\DoxyCodeLine{00395\ \textcolor{preprocessor}{\#\ \ \ endif}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00398\ \ \ }
+\DoxyCodeLine{00399\ \ \ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ check\_template\_parameters()}
+\DoxyCodeLine{00400\ \ \ \ \ \{}
+\DoxyCodeLine{00401\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT(NumTraits<StorageIndex>::IsSigned,THE\_INDEX\_TYPE\_MUST\_BE\_A\_SIGNED\_TYPE);}
+\DoxyCodeLine{00402\ \ \ \ \ \ \ EIGEN\_STATIC\_ASSERT((\_Options\&(\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a0103672ae41005ab03b4176c765afd62}{ColMajor}}|\mbox{\hyperlink{group__enums_ggaacded1a18ae58b0f554751f6cdf9eb13a77c993a8d9f6efe5c1159fb2ab07dd4f}{RowMajor}}))==Options,INVALID\_MATRIX\_TEMPLATE\_PARAMETERS);}
+\DoxyCodeLine{00403\ \ \ \ \ \}}
+\DoxyCodeLine{00404\ \ \ \ \ }
+\DoxyCodeLine{00405\ \ \ \ \ Storage\ m\_data;}
+\DoxyCodeLine{00406\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1EigenBase_a554f30542cc2316add4b1ea0a492ff02}{Index}}\ m\_size;}
+\DoxyCodeLine{00407\ \};}
+\DoxyCodeLine{00408\ }
+\DoxyCodeLine{00409\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00410\ }
+\DoxyCodeLine{00411\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_Scalar,\ \textcolor{keywordtype}{int}\ \_Options,\ \textcolor{keyword}{typename}\ \_Index>}
+\DoxyCodeLine{00412\ \textcolor{keyword}{struct\ }evaluator<\mbox{\hyperlink{classEigen_1_1SparseVector}{SparseVector}}<\_Scalar,\_Options,\_Index>\ >}
+\DoxyCodeLine{00413\ \ \ :\ evaluator\_base<SparseVector<\_Scalar,\_Options,\_Index>\ >}
+\DoxyCodeLine{00414\ \{}
+\DoxyCodeLine{00415\ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseVector}{SparseVector<\_Scalar,\_Options,\_Index>}}\ SparseVectorType;}
+\DoxyCodeLine{00416\ \ \ \textcolor{keyword}{typedef}\ evaluator\_base<SparseVectorType>\ Base;}
+\DoxyCodeLine{00417\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseVectorType::InnerIterator\ InnerIterator;}
+\DoxyCodeLine{00418\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SparseVectorType::ReverseInnerIterator\ ReverseInnerIterator;}
+\DoxyCodeLine{00419\ \ \ }
+\DoxyCodeLine{00420\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00421\ \ \ \ \ CoeffReadCost\ =\ NumTraits<\_Scalar>::ReadCost,}
+\DoxyCodeLine{00422\ \ \ \ \ Flags\ =\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase_af5971b1d24ac9039b0b9436d5d87d485a2af043b36fe9e08df0107cf6de496165}{SparseVectorType::Flags}}}
+\DoxyCodeLine{00423\ \ \ \};}
+\DoxyCodeLine{00424\ }
+\DoxyCodeLine{00425\ \ \ evaluator()\ :\ Base()\ \{\}}
+\DoxyCodeLine{00426\ \ \ }
+\DoxyCodeLine{00427\ \ \ \textcolor{keyword}{explicit}\ evaluator(\textcolor{keyword}{const}\ SparseVectorType\ \&mat)\ :\ m\_matrix(\&mat)}
+\DoxyCodeLine{00428\ \ \ \{}
+\DoxyCodeLine{00429\ \ \ \ \ EIGEN\_INTERNAL\_CHECK\_COST\_VALUE(CoeffReadCost);}
+\DoxyCodeLine{00430\ \ \ \}}
+\DoxyCodeLine{00431\ \ \ }
+\DoxyCodeLine{00432\ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ nonZerosEstimate()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00433\ \ \ \ \ \textcolor{keywordflow}{return}\ m\_matrix-\/>nonZeros();}
+\DoxyCodeLine{00434\ \ \ \}}
+\DoxyCodeLine{00435\ \ \ }
+\DoxyCodeLine{00436\ \ \ \textcolor{keyword}{operator}\ SparseVectorType\&()\ \{\ \textcolor{keywordflow}{return}\ m\_matrix-\/>const\_cast\_derived();\ \}}
+\DoxyCodeLine{00437\ \ \ \textcolor{keyword}{operator}\ \textcolor{keyword}{const}\ SparseVectorType\&()\ \textcolor{keyword}{const}\ \{\ \textcolor{keywordflow}{return}\ *m\_matrix;\ \}}
+\DoxyCodeLine{00438\ \ \ }
+\DoxyCodeLine{00439\ \ \ \textcolor{keyword}{const}\ SparseVectorType\ *m\_matrix;}
+\DoxyCodeLine{00440\ \};}
+\DoxyCodeLine{00441\ }
+\DoxyCodeLine{00442\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Src>}
+\DoxyCodeLine{00443\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1sparse__vector__assign__selector}{sparse\_vector\_assign\_selector}}<Dest,Src,SVA\_Inner>\ \{}
+\DoxyCodeLine{00444\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(Dest\&\ dst,\ \textcolor{keyword}{const}\ Src\&\ src)\ \{}
+\DoxyCodeLine{00445\ \ \ \ \ eigen\_internal\_assert(src.innerSize()==src.size());}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{internal::evaluator<Src>}}\ SrcEvaluatorType;}
+\DoxyCodeLine{00447\ \ \ \ \ SrcEvaluatorType\ srcEval(src);}
+\DoxyCodeLine{00448\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keyword}{typename}\ SrcEvaluatorType::InnerIterator\ it(srcEval,\ 0);\ it;\ ++it)}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ dst.insert(it.index())\ =\ it.value();}
+\DoxyCodeLine{00450\ \ \ \}}
+\DoxyCodeLine{00451\ \};}
+\DoxyCodeLine{00452\ }
+\DoxyCodeLine{00453\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Src>}
+\DoxyCodeLine{00454\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1sparse__vector__assign__selector}{sparse\_vector\_assign\_selector}}<Dest,Src,SVA\_Outer>\ \{}
+\DoxyCodeLine{00455\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(Dest\&\ dst,\ \textcolor{keyword}{const}\ Src\&\ src)\ \{}
+\DoxyCodeLine{00456\ \ \ \ \ eigen\_internal\_assert(src.outerSize()==src.size());}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{structEigen_1_1internal_1_1evaluator}{internal::evaluator<Src>}}\ SrcEvaluatorType;}
+\DoxyCodeLine{00458\ \ \ \ \ SrcEvaluatorType\ srcEval(src);}
+\DoxyCodeLine{00459\ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=0;\ i<src.size();\ ++i)}
+\DoxyCodeLine{00460\ \ \ \ \ \{}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ SrcEvaluatorType::InnerIterator\ it(srcEval,\ i);}
+\DoxyCodeLine{00462\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(it)}
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ dst.insert(i)\ =\ it.value();}
+\DoxyCodeLine{00464\ \ \ \ \ \}}
+\DoxyCodeLine{00465\ \ \ \}}
+\DoxyCodeLine{00466\ \};}
+\DoxyCodeLine{00467\ }
+\DoxyCodeLine{00468\ \textcolor{keyword}{template}<\ \textcolor{keyword}{typename}\ Dest,\ \textcolor{keyword}{typename}\ Src>}
+\DoxyCodeLine{00469\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1sparse__vector__assign__selector}{sparse\_vector\_assign\_selector}}<Dest,Src,SVA\_RuntimeSwitch>\ \{}
+\DoxyCodeLine{00470\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{void}\ run(Dest\&\ dst,\ \textcolor{keyword}{const}\ Src\&\ src)\ \{}
+\DoxyCodeLine{00471\ \ \ \ \ \textcolor{keywordflow}{if}(src.outerSize()==1)\ \ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__vector__assign__selector}{sparse\_vector\_assign\_selector<Dest,Src,SVA\_Inner>::run}}(dst,\ src);}
+\DoxyCodeLine{00472\ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1sparse__vector__assign__selector}{sparse\_vector\_assign\_selector<Dest,Src,SVA\_Outer>::run}}(dst,\ src);}
+\DoxyCodeLine{00473\ \ \ \}}
+\DoxyCodeLine{00474\ \};}
+\DoxyCodeLine{00475\ }
+\DoxyCodeLine{00476\ \}}
+\DoxyCodeLine{00477\ }
+\DoxyCodeLine{00478\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00479\ }
+\DoxyCodeLine{00480\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SPARSEVECTOR\_H}}
+
+\end{DoxyCode}

@@ -1,0 +1,341 @@
+\doxysection{Suite\+Sparse\+QRSupport.\+h}
+\hypertarget{SuiteSparseQRSupport_8h_source}{}\label{SuiteSparseQRSupport_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SPQRSupport/SuiteSparseQRSupport.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SPQRSupport/SuiteSparseQRSupport.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Desire\ Nuentsa\ <desire.nuentsa\_wakam@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SUITESPARSEQRSUPPORT\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_SUITESPARSEQRSUPPORT\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ \ \ }
+\DoxyCodeLine{00016\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1SPQR}{SPQR}};\ }
+\DoxyCodeLine{00017\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SPQRType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1SPQRMatrixQReturnType}{SPQRMatrixQReturnType}};\ }
+\DoxyCodeLine{00018\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SPQRType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1SPQRMatrixQTransposeReturnType}{SPQRMatrixQTransposeReturnType}};\ }
+\DoxyCodeLine{00019\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SPQRType,\ \textcolor{keyword}{typename}\ Derived>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct}};}
+\DoxyCodeLine{00020\ \ \ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00021\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SPQRType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{structEigen_1_1SPQRMatrixQReturnType}{SPQRMatrixQReturnType}}<SPQRType>\ >}
+\DoxyCodeLine{00022\ \ \ \ \ \{}
+\DoxyCodeLine{00023\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SPQRType::MatrixType\ ReturnType;}
+\DoxyCodeLine{00024\ \ \ \ \ \};}
+\DoxyCodeLine{00025\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SPQRType>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{structEigen_1_1SPQRMatrixQTransposeReturnType}{SPQRMatrixQTransposeReturnType}}<SPQRType>\ >}
+\DoxyCodeLine{00026\ \ \ \ \ \{}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SPQRType::MatrixType\ ReturnType;}
+\DoxyCodeLine{00028\ \ \ \ \ \};}
+\DoxyCodeLine{00029\ \ \ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SPQRType,\ \textcolor{keyword}{typename}\ Derived>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{traits}}<\mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct}}<SPQRType,\ Derived>\ >}
+\DoxyCodeLine{00030\ \ \ \ \ \{}
+\DoxyCodeLine{00031\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Derived::PlainObject\ ReturnType;}
+\DoxyCodeLine{00032\ \ \ \ \ \};}
+\DoxyCodeLine{00033\ \ \ \}\ \textcolor{comment}{//\ End\ namespace\ internal}}
+\DoxyCodeLine{00034\ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00035\ \textcolor{comment}{/**}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ SPQRSupport\_Module}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ *\ \(\backslash\)class\ SPQR}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ Sparse\ QR\ factorization\ based\ on\ SuiteSparseQR\ library}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ *\ This\ class\ is\ used\ to\ perform\ a\ multithreaded\ and\ multifrontal\ rank-\/revealing\ QR\ decomposition}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ *\ of\ sparse\ matrices.\ The\ result\ is\ then\ used\ to\ solve\ linear\ leasts\_square\ systems.}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ *\ Clearly,\ a\ QR\ factorization\ is\ returned\ such\ that\ A*P\ =\ Q*R\ where\ :}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ *\ P\ is\ the\ column\ permutation.\ Use\ colsPermutation()\ to\ get\ it.}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ *\ Q\ is\ the\ orthogonal\ matrix\ represented\ as\ Householder\ reflectors.}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ *\ Use\ matrixQ()\ to\ get\ an\ expression\ and\ matrixQ().transpose()\ to\ get\ the\ transpose.}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ *\ You\ can\ then\ apply\ it\ to\ a\ vector.}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ *\ R\ is\ the\ sparse\ triangular\ factor.\ Use\ matrixQR()\ to\ get\ it\ as\ SparseMatrix.}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ *\ NOTE\ :\ The\ Index\ type\ of\ R\ is\ always\ SuiteSparse\_long.\ You\ can\ get\ it\ with\ SPQR::Index}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ \_MatrixType\ The\ type\ of\ the\ sparse\ matrix\ A,\ must\ be\ a\ column-\/major\ SparseMatrix<>}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ *\ \(\backslash\)implsparsesolverconcept}}
+\DoxyCodeLine{00056\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00057\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00058\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00059\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>}
+\DoxyCodeLine{00060\ \textcolor{keyword}{class\ }SPQR\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}<SPQR<\_MatrixType>\ >}
+\DoxyCodeLine{00061\ \{}
+\DoxyCodeLine{00062\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00063\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase<SPQR<\_MatrixType>}}\ >\ Base;}
+\DoxyCodeLine{00064\ \ \ \ \ \textcolor{keyword}{using\ }Base::m\_isInitialized;}
+\DoxyCodeLine{00065\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00066\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \_MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00067\ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ \_MatrixType::RealScalar\ RealScalar;}
+\DoxyCodeLine{00068\ \ \ \ \ \textcolor{keyword}{typedef}\ SuiteSparse\_long\ StorageIndex\ ;}
+\DoxyCodeLine{00069\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1SparseMatrix}{SparseMatrix<Scalar,\ ColMajor,\ StorageIndex>}}\ MatrixType;}
+\DoxyCodeLine{00070\ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Map}{Map<PermutationMatrix<Dynamic,\ Dynamic,\ StorageIndex>}}\ >\ PermutationType;}
+\DoxyCodeLine{00071\ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00072\ \ \ \ \ \ \ ColsAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}},}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ \mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}}
+\DoxyCodeLine{00074\ \ \ \ \ \};}
+\DoxyCodeLine{00075\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00076\ \ \ \ \ SPQR()\ }
+\DoxyCodeLine{00077\ \ \ \ \ \ \ :\ m\_analysisIsOk(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00078\ \ \ \ \ \ \ \ \ m\_factorizationIsOk(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00079\ \ \ \ \ \ \ \ \ m\_isRUpToDate(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00080\ \ \ \ \ \ \ \ \ m\_ordering(SPQR\_ORDERING\_DEFAULT),}
+\DoxyCodeLine{00081\ \ \ \ \ \ \ \ \ m\_allow\_tol(SPQR\_DEFAULT\_TOL),}
+\DoxyCodeLine{00082\ \ \ \ \ \ \ \ \ m\_tolerance\ (NumTraits<Scalar>::epsilon()),}
+\DoxyCodeLine{00083\ \ \ \ \ \ \ \ \ m\_cR(0),}
+\DoxyCodeLine{00084\ \ \ \ \ \ \ \ \ m\_E(0),}
+\DoxyCodeLine{00085\ \ \ \ \ \ \ \ \ m\_H(0),}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \ \ m\_HPinv(0),}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ m\_HTau(0),}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ m\_useDefaultThreshold(\textcolor{keyword}{true})}
+\DoxyCodeLine{00089\ \ \ \ \ \{\ }
+\DoxyCodeLine{00090\ \ \ \ \ \ \ cholmod\_l\_start(\&m\_cc);}
+\DoxyCodeLine{00091\ \ \ \ \ \}}
+\DoxyCodeLine{00092\ \ \ \ \ }
+\DoxyCodeLine{00093\ \ \ \ \ \textcolor{keyword}{explicit}\ SPQR(\textcolor{keyword}{const}\ \_MatrixType\&\ matrix)}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ :\ m\_analysisIsOk(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \ \ m\_factorizationIsOk(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00096\ \ \ \ \ \ \ \ \ m\_isRUpToDate(\textcolor{keyword}{false}),}
+\DoxyCodeLine{00097\ \ \ \ \ \ \ \ \ m\_ordering(SPQR\_ORDERING\_DEFAULT),}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ m\_allow\_tol(SPQR\_DEFAULT\_TOL),}
+\DoxyCodeLine{00099\ \ \ \ \ \ \ \ \ m\_tolerance\ (NumTraits<Scalar>::epsilon()),}
+\DoxyCodeLine{00100\ \ \ \ \ \ \ \ \ m\_cR(0),}
+\DoxyCodeLine{00101\ \ \ \ \ \ \ \ \ m\_E(0),}
+\DoxyCodeLine{00102\ \ \ \ \ \ \ \ \ m\_H(0),}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ \ \ m\_HPinv(0),}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ \ \ m\_HTau(0),}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \ \ m\_useDefaultThreshold(\textcolor{keyword}{true})}
+\DoxyCodeLine{00106\ \ \ \ \ \{}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ cholmod\_l\_start(\&m\_cc);}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ compute(matrix);}
+\DoxyCodeLine{00109\ \ \ \ \ \}}
+\DoxyCodeLine{00110\ \ \ \ \ }
+\DoxyCodeLine{00111\ \ \ \ \ \string~SPQR()}
+\DoxyCodeLine{00112\ \ \ \ \ \{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ SPQR\_free();}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ cholmod\_l\_finish(\&m\_cc);}
+\DoxyCodeLine{00115\ \ \ \ \ \}}
+\DoxyCodeLine{00116\ \ \ \ \ \textcolor{keywordtype}{void}\ SPQR\_free()}
+\DoxyCodeLine{00117\ \ \ \ \ \{}
+\DoxyCodeLine{00118\ \ \ \ \ \ \ cholmod\_l\_free\_sparse(\&m\_H,\ \&m\_cc);}
+\DoxyCodeLine{00119\ \ \ \ \ \ \ cholmod\_l\_free\_sparse(\&m\_cR,\ \&m\_cc);}
+\DoxyCodeLine{00120\ \ \ \ \ \ \ cholmod\_l\_free\_dense(\&m\_HTau,\ \&m\_cc);}
+\DoxyCodeLine{00121\ \ \ \ \ \ \ std::free(m\_E);}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ std::free(m\_HPinv);}
+\DoxyCodeLine{00123\ \ \ \ \ \}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ \ \ \ \ \textcolor{keywordtype}{void}\ compute(\textcolor{keyword}{const}\ \_MatrixType\&\ matrix)}
+\DoxyCodeLine{00126\ \ \ \ \ \{}
+\DoxyCodeLine{00127\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_isInitialized)\ SPQR\_free();}
+\DoxyCodeLine{00128\ }
+\DoxyCodeLine{00129\ \ \ \ \ \ \ MatrixType\ mat(matrix);}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ }
+\DoxyCodeLine{00131\ \ \ \ \ \ \ \textcolor{comment}{/*\ Compute\ the\ default\ threshold\ as\ in\ MatLab,\ see:}}
+\DoxyCodeLine{00132\ \textcolor{comment}{\ \ \ \ \ \ \ *\ Tim\ Davis,\ "{}Algorithm\ 915,\ SuiteSparseQR:\ Multifrontal\ Multithreaded\ Rank-\/Revealing}}
+\DoxyCodeLine{00133\ \textcolor{comment}{\ \ \ \ \ \ \ *\ Sparse\ QR\ Factorization,\ ACM\ Trans.\ on\ Math.\ Soft.\ 38(1),\ 2011,\ Page\ 8:3\ }}
+\DoxyCodeLine{00134\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ RealScalar\ pivotThreshold\ =\ m\_tolerance;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_useDefaultThreshold)\ }
+\DoxyCodeLine{00137\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ \ \ \ \ RealScalar\ max2Norm\ =\ 0.0;}
+\DoxyCodeLine{00139\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{int}\ j\ =\ 0;\ j\ <\ mat.\mbox{\hyperlink{classEigen_1_1SparseMatrix_aa391750e3c530227e4a5c3c52e959975}{cols}}();\ j++)\ max2Norm\ =\ numext::maxi(max2Norm,\ mat.\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_afecb59867e6df678c54c4c418365b076}{col}}(j).norm());}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(max2Norm==RealScalar(0))}
+\DoxyCodeLine{00141\ \ \ \ \ \ \ \ \ \ \ max2Norm\ =\ RealScalar(1);}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ pivotThreshold\ =\ 20\ *\ (mat.\mbox{\hyperlink{classEigen_1_1SparseMatrix_a62e61bb861eee306d5b069ce652b5aa5}{rows}}()\ +\ mat.\mbox{\hyperlink{classEigen_1_1SparseMatrix_aa391750e3c530227e4a5c3c52e959975}{cols}}())\ *\ max2Norm\ *\ NumTraits<RealScalar>::epsilon();}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ cholmod\_sparse\ A;\ }
+\DoxyCodeLine{00145\ \ \ \ \ \ \ A\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(mat);}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ m\_rows\ =\ matrix.rows();}
+\DoxyCodeLine{00147\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ col\ =\ matrix.cols();}
+\DoxyCodeLine{00148\ \ \ \ \ \ \ m\_rank\ =\ SuiteSparseQR<Scalar>(m\_ordering,\ pivotThreshold,\ col,\ \&A,\ }
+\DoxyCodeLine{00149\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \&m\_cR,\ \&m\_E,\ \&m\_H,\ \&m\_HPinv,\ \&m\_HTau,\ \&m\_cc);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (!m\_cR)}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea1c6e20706575a629b27a105f07f1883b}{NumericalIssue}};}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00155\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00157\ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00158\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00159\ \ \ \ \ \ \ m\_isRUpToDate\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00160\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ \ \ /**\ }}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ \ *\ Get\ the\ number\ of\ rows\ of\ the\ input\ matrix\ and\ the\ Q\ matrix}}
+\DoxyCodeLine{00163\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00164\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SPQR_a775e28a44fd466638114edbcd17ea50a}{rows}}()\textcolor{keyword}{\ const\ }\{\textcolor{keywordflow}{return}\ m\_rows;\ \}}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ \ \ /**\ }}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ \ *\ Get\ the\ number\ of\ columns\ of\ the\ input\ matrix.\ }}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SPQR_aa006d40963b05c7525b5ca0b02364d84}{cols}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_cR-\/>ncol;\ \}}
+\DoxyCodeLine{00170\ \ \ \ \ }
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00172\ \ \ \ \ \textcolor{keywordtype}{void}\ \_solve\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\ \&b,\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Dest>}}\ \&dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00173\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}\ The\ QR\ factorization\ should\ be\ computed\ first,\ call\ compute()"{}});}
+\DoxyCodeLine{00175\ \ \ \ \ \ \ eigen\_assert(b.cols()==1\ \&\&\ \textcolor{stringliteral}{"{}This\ method\ is\ for\ vectors\ only"{}});}
+\DoxyCodeLine{00176\ }
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \textcolor{comment}{//Compute\ Q\string^T\ *\ b}}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \textcolor{keyword}{typename}\ Dest::PlainObject\ y,\ y2;}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ y\ =\ \mbox{\hyperlink{classEigen_1_1SPQR_ab1e43f45b2b92623725b572793873f13}{matrixQ}}().transpose()\ *\ b;}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ }
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \textcolor{comment}{//\ Solves\ with\ the\ triangular\ matrix\ R}}
+\DoxyCodeLine{00182\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rk\ =\ this-\/>\mbox{\hyperlink{classEigen_1_1SPQR_a539b394ddb4894089e6634c744ea2ddc}{rank}}();}
+\DoxyCodeLine{00183\ \ \ \ \ \ \ y2\ =\ y;}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ y.resize((std::max)(\mbox{\hyperlink{classEigen_1_1SPQR_aa006d40963b05c7525b5ca0b02364d84}{cols}}(),\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(y.rows())),y.cols());}
+\DoxyCodeLine{00185\ \ \ \ \ \ \ y.topRows(rk)\ =\ this-\/>\mbox{\hyperlink{classEigen_1_1SPQR_ad51661be35674dd6a65e27699dbb3fb9}{matrixR}}().\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a3805d5336c251d887f7a56643c15c3af}{topLeftCorner}}(rk,\ rk).template\ triangularView<Upper>().solve(y2.topRows(rk));}
+\DoxyCodeLine{00186\ }
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ the\ column\ permutation\ }}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \textcolor{comment}{//\ colsPermutation()\ performs\ a\ copy\ of\ the\ permutation,}}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \textcolor{comment}{//\ so\ let's\ apply\ it\ manually:}}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ 0;\ i\ <\ rk;\ ++i)\ dest.row(m\_E[i])\ =\ y.row(i);}
+\DoxyCodeLine{00191\ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ rk;\ i\ <\ \mbox{\hyperlink{classEigen_1_1SPQR_aa006d40963b05c7525b5ca0b02364d84}{cols}}();\ ++i)\ dest.row(m\_E[i]).setZero();}
+\DoxyCodeLine{00192\ \ \ \ \ \ \ }
+\DoxyCodeLine{00193\ \textcolor{comment}{//\ \ \ \ \ \ \ y.bottomRows(y.rows()-\/rk).setZero();}}
+\DoxyCodeLine{00194\ \textcolor{comment}{//\ \ \ \ \ \ \ dest\ =\ colsPermutation()\ *\ y.topRows(cols());}}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ }
+\DoxyCodeLine{00196\ \ \ \ \ \ \ m\_info\ =\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}};}
+\DoxyCodeLine{00197\ \ \ \ \ \}}
+\DoxyCodeLine{00198\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00199\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ the\ sparse\ triangular\ factor\ R.\ It\ is\ a\ sparse\ matrix}}
+\DoxyCodeLine{00200\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00201\ \ \ \ \ \textcolor{keyword}{const}\ MatrixType\ \mbox{\hyperlink{classEigen_1_1SPQR_ad51661be35674dd6a65e27699dbb3fb9}{matrixR}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00202\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00203\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}\ The\ QR\ factorization\ should\ be\ computed\ first,\ call\ compute()"{}});}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(!m\_isRUpToDate)\ \{}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \ \ m\_R\ =\ \mbox{\hyperlink{namespaceEigen_af13cf1742b9a7a03703e8e5393bb6f86}{viewAsEigen<Scalar,ColMajor,\ typename\ MatrixType::StorageIndex>}}(*m\_cR);}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \ \ m\_isRUpToDate\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00207\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_R;}
+\DoxyCodeLine{00209\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00210\ \textcolor{comment}{\ \ \ \ ///\ Get\ an\ expression\ of\ the\ matrix\ Q}}
+\DoxyCodeLine{00211\ \ \ \ \ \mbox{\hyperlink{structEigen_1_1SPQRMatrixQReturnType}{SPQRMatrixQReturnType<SPQR>}}\ \mbox{\hyperlink{classEigen_1_1SPQR_ab1e43f45b2b92623725b572793873f13}{matrixQ}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00212\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SPQRMatrixQReturnType}{SPQRMatrixQReturnType<SPQR>}}(*\textcolor{keyword}{this});}
+\DoxyCodeLine{00214\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00215\ \textcolor{comment}{\ \ \ \ ///\ Get\ the\ permutation\ that\ was\ applied\ to\ columns\ of\ A}}
+\DoxyCodeLine{00216\ \ \ \ \ PermutationType\ \mbox{\hyperlink{classEigen_1_1SPQR_ab1b7f54ba1cd8d77506ae676fea4fec0}{colsPermutation}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00217\ \textcolor{keyword}{\ \ \ \ }\{\ }
+\DoxyCodeLine{00218\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Decomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00219\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ PermutationType(m\_E,\ m\_cR-\/>ncol);}
+\DoxyCodeLine{00220\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00221\ \textcolor{comment}{\ \ \ \ /**}}
+\DoxyCodeLine{00222\ \textcolor{comment}{\ \ \ \ \ *\ Gets\ the\ rank\ of\ the\ matrix.\ }}
+\DoxyCodeLine{00223\ \textcolor{comment}{\ \ \ \ \ *\ It\ should\ be\ equal\ to\ matrixQR().cols\ if\ the\ matrix\ is\ full-\/rank}}
+\DoxyCodeLine{00224\ \textcolor{comment}{\ \ \ \ \ */}}
+\DoxyCodeLine{00225\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \mbox{\hyperlink{classEigen_1_1SPQR_a539b394ddb4894089e6634c744ea2ddc}{rank}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00226\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Decomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_cc.SPQR\_istat[4];}
+\DoxyCodeLine{00229\ \ \ \ \ \}\textcolor{comment}{}}
+\DoxyCodeLine{00230\ \textcolor{comment}{\ \ \ \ ///\ Set\ the\ fill-\/reducing\ ordering\ method\ to\ be\ used}}
+\DoxyCodeLine{00231\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SPQR_afa0db7888d808b453c23f62d62a4ad22}{setSPQROrdering}}(\textcolor{keywordtype}{int}\ ord)\ \{\ m\_ordering\ =\ ord;\}\textcolor{comment}{}}
+\DoxyCodeLine{00232\ \textcolor{comment}{\ \ \ \ ///\ Set\ the\ tolerance\ tol\ to\ treat\ columns\ with\ 2-\/norm\ <\ =tol\ as\ zero}}
+\DoxyCodeLine{00233\ \ \ \ \ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{classEigen_1_1SPQR_ab7b42b75f621b0d4b5b0e090e23e2ce6}{setPivotThreshold}}(\textcolor{keyword}{const}\ RealScalar\&\ tol)}
+\DoxyCodeLine{00234\ \ \ \ \ \{}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ m\_useDefaultThreshold\ =\ \textcolor{keyword}{false};}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ m\_tolerance\ =\ tol;}
+\DoxyCodeLine{00237\ \ \ \ \ \}}
+\DoxyCodeLine{00238\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00239\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ a\ pointer\ to\ the\ SPQR\ workspace\ */}}
+\DoxyCodeLine{00240\ \ \ \ \ cholmod\_common\ *\mbox{\hyperlink{classEigen_1_1SPQR_ac44b985bb777788c1c228e77862f4bcf}{cholmodCommon}}()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ \&m\_cc;\ \}}
+\DoxyCodeLine{00241\ \ \ \ \ }
+\DoxyCodeLine{00242\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00243\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)brief\ Reports\ whether\ previous\ computation\ was\ successful.}}
+\DoxyCodeLine{00244\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00245\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)returns\ \(\backslash\)c\ Success\ if\ computation\ was\ successful,}}
+\DoxyCodeLine{00246\ \textcolor{comment}{\ \ \ \ \ \ *\ \ \ \ \ \ \ \ \ \ \(\backslash\)c\ NumericalIssue\ if\ the\ sparse\ QR\ can\ not\ be\ computed}}
+\DoxyCodeLine{00247\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00248\ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ \mbox{\hyperlink{classEigen_1_1SPQR_a3ab7bacba8d2be20adc10b4d5b6c071f}{info}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00249\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Decomposition\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_info;}
+\DoxyCodeLine{00252\ \ \ \ \ \}}
+\DoxyCodeLine{00253\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00254\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_analysisIsOk;}
+\DoxyCodeLine{00255\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_factorizationIsOk;}
+\DoxyCodeLine{00256\ \ \ \ \ \textcolor{keyword}{mutable}\ \textcolor{keywordtype}{bool}\ m\_isRUpToDate;}
+\DoxyCodeLine{00257\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ m\_info;}
+\DoxyCodeLine{00258\ \ \ \ \ \textcolor{keywordtype}{int}\ m\_ordering;\ \textcolor{comment}{//\ Ordering\ method\ to\ use,\ see\ SPQR's\ manual}}
+\DoxyCodeLine{00259\ \ \ \ \ \textcolor{keywordtype}{int}\ m\_allow\_tol;\ \textcolor{comment}{//\ Allow\ to\ use\ some\ tolerance\ during\ numerical\ factorization.}}
+\DoxyCodeLine{00260\ \ \ \ \ RealScalar\ m\_tolerance;\ \textcolor{comment}{//\ treat\ columns\ with\ 2-\/norm\ below\ this\ tolerance\ as\ zero}}
+\DoxyCodeLine{00261\ \ \ \ \ \textcolor{keyword}{mutable}\ cholmod\_sparse\ *m\_cR\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ The\ sparse\ R\ factor\ in\ cholmod\ format}}
+\DoxyCodeLine{00262\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\ m\_R;\ \textcolor{comment}{//\ The\ sparse\ matrix\ R\ in\ Eigen\ format}}
+\DoxyCodeLine{00263\ \ \ \ \ \textcolor{keyword}{mutable}\ StorageIndex\ *m\_E\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ The\ permutation\ applied\ to\ columns}}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keyword}{mutable}\ cholmod\_sparse\ *m\_H\ =\ \textcolor{keyword}{nullptr};\ \ \textcolor{comment}{//The\ householder\ vectors}}
+\DoxyCodeLine{00265\ \ \ \ \ \textcolor{keyword}{mutable}\ StorageIndex\ *m\_HPinv\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ The\ row\ permutation\ of\ H}}
+\DoxyCodeLine{00266\ \ \ \ \ \textcolor{keyword}{mutable}\ cholmod\_dense\ *m\_HTau\ =\ \textcolor{keyword}{nullptr};\ \textcolor{comment}{//\ The\ Householder\ coefficients}}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keyword}{mutable}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_rank;\ \textcolor{comment}{//\ The\ rank\ of\ the\ matrix}}
+\DoxyCodeLine{00268\ \ \ \ \ \textcolor{keyword}{mutable}\ cholmod\_common\ m\_cc;\ \textcolor{comment}{//\ Workspace\ and\ parameters}}
+\DoxyCodeLine{00269\ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_useDefaultThreshold;\ \ \ \ \ \textcolor{comment}{//\ Use\ default\ threshold}}
+\DoxyCodeLine{00270\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_rows;}
+\DoxyCodeLine{00271\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ,\textcolor{keyword}{typename}\ >\ \textcolor{keyword}{friend}\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct}};}
+\DoxyCodeLine{00272\ \};}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SPQRType,\ \textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00275\ \textcolor{keyword}{struct\ }SPQR\_QProduct\ :\ \mbox{\hyperlink{classEigen_1_1ReturnByValue}{ReturnByValue}}<SPQR\_QProduct<SPQRType,Derived>\ >}
+\DoxyCodeLine{00276\ \{}
+\DoxyCodeLine{00277\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SPQRType::Scalar\ Scalar;}
+\DoxyCodeLine{00278\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ SPQRType::StorageIndex\ StorageIndex;}
+\DoxyCodeLine{00279\ \ \ \textcolor{comment}{//Define\ the\ constructor\ to\ get\ reference\ to\ argument\ types}}
+\DoxyCodeLine{00280\ \ \ SPQR\_QProduct(\textcolor{keyword}{const}\ SPQRType\&\ spqr,\ \textcolor{keyword}{const}\ Derived\&\ other,\ \textcolor{keywordtype}{bool}\ transpose)\ :\ m\_spqr(spqr),m\_other(other),m\_transpose(transpose)\ \{\}}
+\DoxyCodeLine{00281\ \ \ }
+\DoxyCodeLine{00282\ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_transpose\ ?\ m\_spqr.rows()\ :\ m\_spqr.cols();\ \}}
+\DoxyCodeLine{00283\ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ m\_other.cols();\ \}}
+\DoxyCodeLine{00284\ \ \ \textcolor{comment}{//\ Assign\ to\ a\ vector}}
+\DoxyCodeLine{00285\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ ResType>}
+\DoxyCodeLine{00286\ \ \ \textcolor{keywordtype}{void}\ evalTo(ResType\&\ res)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00287\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00288\ \ \ \ \ cholmod\_dense\ y\_cd;}
+\DoxyCodeLine{00289\ \ \ \ \ cholmod\_dense\ *x\_cd;\ }
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordtype}{int}\ method\ =\ m\_transpose\ ?\ SPQR\_QTX\ :\ SPQR\_QX;\ }
+\DoxyCodeLine{00291\ \ \ \ \ cholmod\_common\ *cc\ =\ m\_spqr.cholmodCommon();}
+\DoxyCodeLine{00292\ \ \ \ \ y\_cd\ =\ \mbox{\hyperlink{namespaceEigen_ac9fb9e40cfc9ddbdc7da84ee01bb7545}{viewAsCholmod}}(m\_other.const\_cast\_derived());}
+\DoxyCodeLine{00293\ \ \ \ \ x\_cd\ =\ SuiteSparseQR\_qmult<Scalar>(method,\ m\_spqr.m\_H,\ m\_spqr.m\_HTau,\ m\_spqr.m\_HPinv,\ \&y\_cd,\ cc);}
+\DoxyCodeLine{00294\ \ \ \ \ res\ =\ Matrix<Scalar,ResType::RowsAtCompileTime,ResType::ColsAtCompileTime>::Map(\textcolor{keyword}{reinterpret\_cast<}Scalar*\textcolor{keyword}{>}(x\_cd-\/>x),\ x\_cd-\/>nrow,\ x\_cd-\/>ncol);}
+\DoxyCodeLine{00295\ \ \ \ \ cholmod\_l\_free\_dense(\&x\_cd,\ cc);}
+\DoxyCodeLine{00296\ \ \ \}}
+\DoxyCodeLine{00297\ \ \ \textcolor{keyword}{const}\ SPQRType\&\ m\_spqr;\ }
+\DoxyCodeLine{00298\ \ \ \textcolor{keyword}{const}\ Derived\&\ m\_other;\ }
+\DoxyCodeLine{00299\ \ \ \textcolor{keywordtype}{bool}\ m\_transpose;\ }
+\DoxyCodeLine{00300\ \ \ }
+\DoxyCodeLine{00301\ \};}
+\DoxyCodeLine{00302\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SPQRType>}
+\DoxyCodeLine{00303\ \textcolor{keyword}{struct\ }SPQRMatrixQReturnType\{}
+\DoxyCodeLine{00304\ \ \ }
+\DoxyCodeLine{00305\ \ \ SPQRMatrixQReturnType(\textcolor{keyword}{const}\ SPQRType\&\ spqr)\ :\ m\_spqr(spqr)\ \{\}}
+\DoxyCodeLine{00306\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00307\ \ \ \mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct<SPQRType,\ Derived>}}\ operator*(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ other)}
+\DoxyCodeLine{00308\ \ \ \{}
+\DoxyCodeLine{00309\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct<SPQRType,Derived>}}(m\_spqr,other.derived(),\textcolor{keyword}{false});}
+\DoxyCodeLine{00310\ \ \ \}}
+\DoxyCodeLine{00311\ \ \ \mbox{\hyperlink{structEigen_1_1SPQRMatrixQTransposeReturnType}{SPQRMatrixQTransposeReturnType<SPQRType>}}\ adjoint()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00312\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00313\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SPQRMatrixQTransposeReturnType}{SPQRMatrixQTransposeReturnType<SPQRType>}}(m\_spqr);}
+\DoxyCodeLine{00314\ \ \ \}}
+\DoxyCodeLine{00315\ \ \ \textcolor{comment}{//\ To\ use\ for\ operations\ with\ the\ transpose\ of\ Q}}
+\DoxyCodeLine{00316\ \ \ \mbox{\hyperlink{structEigen_1_1SPQRMatrixQTransposeReturnType}{SPQRMatrixQTransposeReturnType<SPQRType>}}\ transpose()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00317\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00318\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SPQRMatrixQTransposeReturnType}{SPQRMatrixQTransposeReturnType<SPQRType>}}(m\_spqr);}
+\DoxyCodeLine{00319\ \ \ \}}
+\DoxyCodeLine{00320\ \ \ \textcolor{keyword}{const}\ SPQRType\&\ m\_spqr;}
+\DoxyCodeLine{00321\ \};}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ SPQRType>}
+\DoxyCodeLine{00324\ \textcolor{keyword}{struct\ }SPQRMatrixQTransposeReturnType\{}
+\DoxyCodeLine{00325\ \ \ SPQRMatrixQTransposeReturnType(\textcolor{keyword}{const}\ SPQRType\&\ spqr)\ :\ m\_spqr(spqr)\ \{\}}
+\DoxyCodeLine{00326\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00327\ \ \ \mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct<SPQRType,Derived>}}\ operator*(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Derived>}}\&\ other)}
+\DoxyCodeLine{00328\ \ \ \{}
+\DoxyCodeLine{00329\ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1SPQR__QProduct}{SPQR\_QProduct<SPQRType,Derived>}}(m\_spqr,other.derived(),\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00330\ \ \ \}}
+\DoxyCodeLine{00331\ \ \ \textcolor{keyword}{const}\ SPQRType\&\ m\_spqr;}
+\DoxyCodeLine{00332\ \};}
+\DoxyCodeLine{00333\ }
+\DoxyCodeLine{00334\ \}\textcolor{comment}{//\ End\ namespace\ Eigen}}
+\DoxyCodeLine{00335\ \textcolor{preprocessor}{\#endif}}
+
+\end{DoxyCode}

@@ -1,0 +1,663 @@
+\doxysection{Real\+QZ.\+h}
+\hypertarget{RealQZ_8h_source}{}\label{RealQZ_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/RealQZ.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Eigenvalues/RealQZ.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2012\ Alexey\ Korepanov\ <kaikaikai@yandex.ru>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_REAL\_QZ\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_REAL\_QZ\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ \textcolor{comment}{}}
+\DoxyCodeLine{00015\ \textcolor{comment}{\ \ /**\ \(\backslash\)eigenvalues\_module\ \(\backslash\)ingroup\ Eigenvalues\_Module}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ \ *\ \(\backslash\)class\ RealQZ}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ \ *\ \(\backslash\)brief\ Performs\ a\ real\ QZ\ decomposition\ of\ a\ pair\ of\ square\ matrices}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ \ *\ \(\backslash\)tparam\ \_MatrixType\ the\ type\ of\ the\ matrix\ of\ which\ we\ are\ computing\ the}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ \ *\ real\ QZ\ decomposition;\ this\ is\ expected\ to\ be\ an\ instantiation\ of\ the}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ \ *\ Matrix\ class\ template.}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00026\ \textcolor{comment}{\ \ \ *\ Given\ a\ real\ square\ matrices\ A\ and\ B,\ this\ class\ computes\ the\ real\ QZ}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ \ \ *\ decomposition:\ \(\backslash\)f\$\ A\ =\ Q\ S\ Z\ \(\backslash\)f\$,\ \(\backslash\)f\$\ B\ =\ Q\ T\ Z\ \(\backslash\)f\$\ where\ Q\ and\ Z\ are}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ \ \ *\ real\ orthogonal\ matrixes,\ T\ is\ upper-\/triangular\ matrix,\ and\ S\ is\ upper}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ \ \ *\ quasi-\/triangular\ matrix.\ An\ orthogonal\ matrix\ is\ a\ matrix\ whose}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ \ \ *\ inverse\ is\ equal\ to\ its\ transpose,\ \(\backslash\)f\$\ U\string^\{-\/1\}\ =\ U\string^T\ \(\backslash\)f\$.\ A\ quasi-\/triangular}}
+\DoxyCodeLine{00031\ \textcolor{comment}{\ \ \ *\ matrix\ is\ a\ block-\/triangular\ matrix\ whose\ diagonal\ consists\ of\ 1-\/by-\/1}}
+\DoxyCodeLine{00032\ \textcolor{comment}{\ \ \ *\ blocks\ and\ 2-\/by-\/2\ blocks\ where\ further\ reduction\ is\ impossible\ due\ to}}
+\DoxyCodeLine{00033\ \textcolor{comment}{\ \ \ *\ complex\ eigenvalues.\ }}
+\DoxyCodeLine{00034\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00035\ \textcolor{comment}{\ \ \ *\ The\ eigenvalues\ of\ the\ pencil\ \(\backslash\)f\$\ A\ -\/\ z\ B\ \(\backslash\)f\$\ can\ be\ obtained\ from}}
+\DoxyCodeLine{00036\ \textcolor{comment}{\ \ \ *\ 1x1\ and\ 2x2\ blocks\ on\ the\ diagonals\ of\ S\ and\ T.}}
+\DoxyCodeLine{00037\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00038\ \textcolor{comment}{\ \ \ *\ Call\ the\ function\ compute()\ to\ compute\ the\ real\ QZ\ decomposition\ of\ a}}
+\DoxyCodeLine{00039\ \textcolor{comment}{\ \ \ *\ given\ pair\ of\ matrices.\ Alternatively,\ you\ can\ use\ the\ }}
+\DoxyCodeLine{00040\ \textcolor{comment}{\ \ \ *\ RealQZ(const\ MatrixType\&\ B,\ const\ MatrixType\&\ B,\ bool\ computeQZ)}}
+\DoxyCodeLine{00041\ \textcolor{comment}{\ \ \ *\ constructor\ which\ computes\ the\ real\ QZ\ decomposition\ at\ construction}}
+\DoxyCodeLine{00042\ \textcolor{comment}{\ \ \ *\ time.\ Once\ the\ decomposition\ is\ computed,\ you\ can\ use\ the\ matrixS(),}}
+\DoxyCodeLine{00043\ \textcolor{comment}{\ \ \ *\ matrixT(),\ matrixQ()\ and\ matrixZ()\ functions\ to\ retrieve\ the\ matrices}}
+\DoxyCodeLine{00044\ \textcolor{comment}{\ \ \ *\ S,\ T,\ Q\ and\ Z\ in\ the\ decomposition.\ If\ computeQZ==false,\ some\ time}}
+\DoxyCodeLine{00045\ \textcolor{comment}{\ \ \ *\ is\ saved\ by\ not\ computing\ matrices\ Q\ and\ Z.}}
+\DoxyCodeLine{00046\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00047\ \textcolor{comment}{\ \ \ *\ Example:\ \(\backslash\)include\ RealQZ\_compute.cpp}}
+\DoxyCodeLine{00048\ \textcolor{comment}{\ \ \ *\ Output:\ \(\backslash\)include\ RealQZ\_compute.out}}
+\DoxyCodeLine{00049\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00050\ \textcolor{comment}{\ \ \ *\ \(\backslash\)note\ The\ implementation\ is\ based\ on\ the\ algorithm\ in\ "{}Matrix\ Computations"{}}}
+\DoxyCodeLine{00051\ \textcolor{comment}{\ \ \ *\ by\ Gene\ H.\ Golub\ and\ Charles\ F.\ Van\ Loan,\ and\ a\ paper\ "{}An\ algorithm\ for}}
+\DoxyCodeLine{00052\ \textcolor{comment}{\ \ \ *\ generalized\ eigenvalue\ problems"{}\ by\ C.B.Moler\ and\ G.W.Stewart.}}
+\DoxyCodeLine{00053\ \textcolor{comment}{\ \ \ *}}
+\DoxyCodeLine{00054\ \textcolor{comment}{\ \ \ *\ \(\backslash\)sa\ class\ RealSchur,\ class\ ComplexSchur,\ class\ EigenSolver,\ class\ ComplexEigenSolver}}
+\DoxyCodeLine{00055\ \textcolor{comment}{\ \ \ */}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ \_MatrixType>\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1RealQZ_ad8fb9235870a8361a2fdd8dcc2e80d01}{RealQZ}}}
+\DoxyCodeLine{00058\ \ \ \{}
+\DoxyCodeLine{00059\ \ \ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00060\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \_MatrixType\ MatrixType;}
+\DoxyCodeLine{00061\ \ \ \ \ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00062\ \ \ \ \ \ \ \ \ RowsAtCompileTime\ =\ MatrixType::RowsAtCompileTime,}
+\DoxyCodeLine{00063\ \ \ \ \ \ \ \ \ ColsAtCompileTime\ =\ MatrixType::ColsAtCompileTime,}
+\DoxyCodeLine{00064\ \ \ \ \ \ \ \ \ Options\ =\ MatrixType::Options,}
+\DoxyCodeLine{00065\ \ \ \ \ \ \ \ \ MaxRowsAtCompileTime\ =\ MatrixType::MaxRowsAtCompileTime,}
+\DoxyCodeLine{00066\ \ \ \ \ \ \ \ \ MaxColsAtCompileTime\ =\ MatrixType::MaxColsAtCompileTime}
+\DoxyCodeLine{00067\ \ \ \ \ \ \ \};}
+\DoxyCodeLine{00068\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ MatrixType::Scalar\ Scalar;}
+\DoxyCodeLine{00069\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ std::complex<typename\ NumTraits<Scalar>::Real>\ ComplexScalar;}
+\DoxyCodeLine{00070\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Eigen::Index}}\ \mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}};\ \textcolor{comment}{///<\ \(\backslash\)deprecated\ since\ Eigen\ 3.3}}
+\DoxyCodeLine{00071\ }
+\DoxyCodeLine{00072\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<ComplexScalar,\ ColsAtCompileTime,\ 1,\ Options\ \&\ \string~RowMajor,\ MaxColsAtCompileTime,\ 1>}}\ EigenvalueType;}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,\ ColsAtCompileTime,\ 1,\ Options\ \&\ \string~RowMajor,\ MaxColsAtCompileTime,\ 1>}}\ ColumnVectorType;}
+\DoxyCodeLine{00074\ \textcolor{comment}{}}
+\DoxyCodeLine{00075\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Default\ constructor.}}
+\DoxyCodeLine{00076\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00077\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param\ [in]\ size\ \ Positive\ integer,\ size\ of\ the\ matrix\ whose\ QZ\ decomposition\ will\ be\ computed.}}
+\DoxyCodeLine{00078\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00079\ \textcolor{comment}{\ \ \ \ \ \ \ *\ The\ default\ constructor\ is\ useful\ in\ cases\ in\ which\ the\ user\ intends\ to}}
+\DoxyCodeLine{00080\ \textcolor{comment}{\ \ \ \ \ \ \ *\ perform\ decompositions\ via\ compute().\ \ The\ \(\backslash\)p\ size\ parameter\ is\ only}}
+\DoxyCodeLine{00081\ \textcolor{comment}{\ \ \ \ \ \ \ *\ used\ as\ a\ hint.\ It\ is\ not\ an\ error\ to\ give\ a\ wrong\ \(\backslash\)p\ size,\ but\ it\ may}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ \ \ \ *\ impair\ performance.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)sa\ compute()\ for\ an\ example.}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00086\ \ \ \ \ \ \ \textcolor{keyword}{explicit}\ \mbox{\hyperlink{classEigen_1_1RealQZ_ad8fb9235870a8361a2fdd8dcc2e80d01}{RealQZ}}(\mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ size\ =\ RowsAtCompileTime==\mbox{\hyperlink{namespaceEigen_ad81fa7195215a0ce30017dfac309f0b2}{Dynamic}}\ ?\ 1\ :\ RowsAtCompileTime)\ :}
+\DoxyCodeLine{00087\ \ \ \ \ \ \ \ \ m\_S(size,\ size),}
+\DoxyCodeLine{00088\ \ \ \ \ \ \ \ \ m\_T(size,\ size),}
+\DoxyCodeLine{00089\ \ \ \ \ \ \ \ \ m\_Q(size,\ size),}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ \ \ m\_Z(size,\ size),}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ \ \ m\_workspace(size*2),}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \ \ m\_maxIters(400),}
+\DoxyCodeLine{00093\ \ \ \ \ \ \ \ \ m\_isInitialized(false),}
+\DoxyCodeLine{00094\ \ \ \ \ \ \ \ \ m\_computeQZ(true)}
+\DoxyCodeLine{00095\ \ \ \ \ \ \ \{\}}
+\DoxyCodeLine{00096\ \textcolor{comment}{}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Constructor;\ computes\ real\ QZ\ decomposition\ of\ given\ matrices}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ \ \ *\ }}
+\DoxyCodeLine{00099\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ A\ \ \ \ \ \ \ \ \ \ Matrix\ A.}}
+\DoxyCodeLine{00100\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ B\ \ \ \ \ \ \ \ \ \ Matrix\ B.}}
+\DoxyCodeLine{00101\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ computeQZ\ \ If\ false,\ A\ and\ Z\ are\ not\ computed.}}
+\DoxyCodeLine{00102\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00103\ \textcolor{comment}{\ \ \ \ \ \ \ *\ This\ constructor\ calls\ compute()\ to\ compute\ the\ QZ\ decomposition.}}
+\DoxyCodeLine{00104\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_ac6e41c839f8dae31c9a3906ea7540119}{RealQZ}}(\textcolor{keyword}{const}\ MatrixType\&\ A,\ \textcolor{keyword}{const}\ MatrixType\&\ B,\ \textcolor{keywordtype}{bool}\ computeQZ\ =\ \textcolor{keyword}{true})\ :}
+\DoxyCodeLine{00106\ \ \ \ \ \ \ \ \ m\_S(A.rows(),A.cols()),}
+\DoxyCodeLine{00107\ \ \ \ \ \ \ \ \ m\_T(A.rows(),A.cols()),}
+\DoxyCodeLine{00108\ \ \ \ \ \ \ \ \ m\_Q(A.rows(),A.cols()),}
+\DoxyCodeLine{00109\ \ \ \ \ \ \ \ \ m\_Z(A.rows(),A.cols()),}
+\DoxyCodeLine{00110\ \ \ \ \ \ \ \ \ m\_workspace(A.rows()*2),}
+\DoxyCodeLine{00111\ \ \ \ \ \ \ \ \ m\_maxIters(400),}
+\DoxyCodeLine{00112\ \ \ \ \ \ \ \ \ m\_isInitialized(false),}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ \ \ m\_computeQZ(true)}
+\DoxyCodeLine{00114\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00115\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_a2b6847964d9f1903193cc3e67c196849}{compute}}(A,\ B,\ computeQZ);}
+\DoxyCodeLine{00116\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00117\ \textcolor{comment}{}}
+\DoxyCodeLine{00118\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Returns\ matrix\ Q\ in\ the\ QZ\ decomposition.\ }}
+\DoxyCodeLine{00119\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00120\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)returns\ A\ const\ reference\ to\ the\ matrix\ Q.}}
+\DoxyCodeLine{00121\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00122\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MatrixType\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_a11cf08e1665270e3fff79d3d2dab2808}{matrixQ}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00123\ \ \ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}RealQZ\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00124\ \ \ \ \ \ \ \ \ eigen\_assert(m\_computeQZ\ \&\&\ \textcolor{stringliteral}{"{}The\ matrices\ Q\ and\ Z\ have\ not\ been\ computed\ during\ the\ QZ\ decomposition."{}});}
+\DoxyCodeLine{00125\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_Q;}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00127\ \textcolor{comment}{}}
+\DoxyCodeLine{00128\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Returns\ matrix\ Z\ in\ the\ QZ\ decomposition.\ }}
+\DoxyCodeLine{00129\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00130\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)returns\ A\ const\ reference\ to\ the\ matrix\ Z.}}
+\DoxyCodeLine{00131\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MatrixType\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_ae7079c9a47adad4481f725b34b128224}{matrixZ}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00133\ \ \ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}RealQZ\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00134\ \ \ \ \ \ \ \ \ eigen\_assert(m\_computeQZ\ \&\&\ \textcolor{stringliteral}{"{}The\ matrices\ Q\ and\ Z\ have\ not\ been\ computed\ during\ the\ QZ\ decomposition."{}});}
+\DoxyCodeLine{00135\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_Z;}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00137\ \textcolor{comment}{}}
+\DoxyCodeLine{00138\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Returns\ matrix\ S\ in\ the\ QZ\ decomposition.\ }}
+\DoxyCodeLine{00139\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00140\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)returns\ A\ const\ reference\ to\ the\ matrix\ S.}}
+\DoxyCodeLine{00141\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MatrixType\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_ad9853b7d5692329aec3d3dd369c91f3c}{matrixS}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00143\ \ \ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}RealQZ\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00144\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_S;}
+\DoxyCodeLine{00145\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00146\ \textcolor{comment}{}}
+\DoxyCodeLine{00147\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Returns\ matrix\ S\ in\ the\ QZ\ decomposition.\ }}
+\DoxyCodeLine{00148\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00149\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)returns\ A\ const\ reference\ to\ the\ matrix\ S.}}
+\DoxyCodeLine{00150\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00151\ \ \ \ \ \ \ \textcolor{keyword}{const}\ MatrixType\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_a8ee4a24f52d983c86b6b3e62f2f9c3cd}{matrixT}}()\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}RealQZ\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00153\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_T;}
+\DoxyCodeLine{00154\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00155\ \textcolor{comment}{}}
+\DoxyCodeLine{00156\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Computes\ QZ\ decomposition\ of\ given\ matrix.\ }}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ \ \ \ \ \ *\ }}
+\DoxyCodeLine{00158\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ A\ \ \ \ \ \ \ \ \ \ Matrix\ A.}}
+\DoxyCodeLine{00159\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ B\ \ \ \ \ \ \ \ \ \ Matrix\ B.}}
+\DoxyCodeLine{00160\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)param[in]\ \ computeQZ\ \ If\ false,\ A\ and\ Z\ are\ not\ computed.}}
+\DoxyCodeLine{00161\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)returns\ \ \ \ Reference\ to\ \(\backslash\)c\ *this}}
+\DoxyCodeLine{00162\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00163\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_ad8fb9235870a8361a2fdd8dcc2e80d01}{RealQZ}}\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_a2b6847964d9f1903193cc3e67c196849}{compute}}(\textcolor{keyword}{const}\ MatrixType\&\ A,\ \textcolor{keyword}{const}\ MatrixType\&\ B,\ \textcolor{keywordtype}{bool}\ computeQZ\ =\ \textcolor{keyword}{true});}
+\DoxyCodeLine{00164\ \textcolor{comment}{}}
+\DoxyCodeLine{00165\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Reports\ whether\ previous\ computation\ was\ successful.}}
+\DoxyCodeLine{00166\ \textcolor{comment}{\ \ \ \ \ \ \ *}}
+\DoxyCodeLine{00167\ \textcolor{comment}{\ \ \ \ \ \ \ *\ \(\backslash\)returns\ \(\backslash\)c\ Success\ if\ computation\ was\ successful,\ \(\backslash\)c\ NoConvergence\ otherwise.}}
+\DoxyCodeLine{00168\ \textcolor{comment}{\ \ \ \ \ \ \ */}}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ \mbox{\hyperlink{classEigen_1_1RealQZ_a36bd77afed89f3f5c110a715e69e4c64}{info}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00170\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00171\ \ \ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}RealQZ\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_info;}
+\DoxyCodeLine{00173\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00174\ \textcolor{comment}{}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ \ \ \ \ \ /**\ \(\backslash\)brief\ Returns\ number\ of\ performed\ QR-\/like\ iterations.}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00177\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ \mbox{\hyperlink{classEigen_1_1RealQZ_afbecc6d0ab1de42be9db79428da48ab6}{iterations}}()\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00178\ \textcolor{keyword}{\ \ \ \ \ \ }\{}
+\DoxyCodeLine{00179\ \ \ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}RealQZ\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00180\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ m\_global\_iter;}
+\DoxyCodeLine{00181\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00182\ \textcolor{comment}{}}
+\DoxyCodeLine{00183\ \textcolor{comment}{\ \ \ \ \ \ /**\ Sets\ the\ maximal\ number\ of\ iterations\ allowed\ to\ converge\ to\ one\ eigenvalue}}
+\DoxyCodeLine{00184\ \textcolor{comment}{\ \ \ \ \ \ \ *\ or\ decouple\ the\ problem.}}
+\DoxyCodeLine{00185\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_ad8fb9235870a8361a2fdd8dcc2e80d01}{RealQZ}}\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_ab23916e1b60f0787cb3eb59a92d9c62b}{setMaxIterations}}(\mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ maxIters)}
+\DoxyCodeLine{00187\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00188\ \ \ \ \ \ \ \ \ m\_maxIters\ =\ maxIters;}
+\DoxyCodeLine{00189\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00191\ }
+\DoxyCodeLine{00192\ \ \ \ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Transform}{MatrixType}}\ m\_S,\ m\_T,\ m\_Q,\ m\_Z;}
+\DoxyCodeLine{00195\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,Dynamic,1>}}\ m\_workspace;}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \mbox{\hyperlink{group__enums_ga85fad7b87587764e5cf6b513a9e0ee5e}{ComputationInfo}}\ m\_info;}
+\DoxyCodeLine{00197\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_maxIters;}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_isInitialized;}
+\DoxyCodeLine{00199\ \ \ \ \ \ \ \textcolor{keywordtype}{bool}\ m\_computeQZ;}
+\DoxyCodeLine{00200\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ m\_normOfT,\ m\_normOfS;}
+\DoxyCodeLine{00201\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ m\_global\_iter;}
+\DoxyCodeLine{00202\ }
+\DoxyCodeLine{00203\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,3,1>}}\ Vector3s;}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,2,1>}}\ Vector2s;}
+\DoxyCodeLine{00205\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1Matrix}{Matrix<Scalar,2,2>}}\ Matrix2s;}
+\DoxyCodeLine{00206\ \ \ \ \ \ \ \textcolor{keyword}{typedef}\ \mbox{\hyperlink{classEigen_1_1JacobiRotation}{JacobiRotation<Scalar>}}\ JRs;}
+\DoxyCodeLine{00207\ }
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ hessenbergTriangular();}
+\DoxyCodeLine{00209\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ computeNorms();}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ findSmallSubdiagEntry(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ iu);}
+\DoxyCodeLine{00211\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ findSmallDiagEntry(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ f,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l);}
+\DoxyCodeLine{00212\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ splitOffTwoRows(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i);}
+\DoxyCodeLine{00213\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ pushDownZero(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ z,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ f,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l);}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \textcolor{keywordtype}{void}\ step(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ f,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ iter);}
+\DoxyCodeLine{00215\ }
+\DoxyCodeLine{00216\ \ \ \};\ \textcolor{comment}{//\ RealQZ}}
+\DoxyCodeLine{00217\ \textcolor{comment}{}}
+\DoxyCodeLine{00218\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ Reduces\ S\ and\ T\ to\ upper\ Hessenberg\ -\/\ triangular\ form\ */}}
+\DoxyCodeLine{00219\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00220\ \ \ \ \ \textcolor{keywordtype}{void}\ RealQZ<MatrixType>::hessenbergTriangular()}
+\DoxyCodeLine{00221\ \ \ \ \ \{}
+\DoxyCodeLine{00222\ }
+\DoxyCodeLine{00223\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dim\ =\ m\_S.cols();}
+\DoxyCodeLine{00224\ }
+\DoxyCodeLine{00225\ \ \ \ \ \ \ \textcolor{comment}{//\ perform\ QR\ decomposition\ of\ T,\ overwrite\ T\ with\ R,\ save\ Q}}
+\DoxyCodeLine{00226\ \ \ \ \ \ \ HouseholderQR<MatrixType>\ qrT(m\_T);}
+\DoxyCodeLine{00227\ \ \ \ \ \ \ m\_T\ =\ qrT.matrixQR();}
+\DoxyCodeLine{00228\ \ \ \ \ \ \ m\_T.template\ triangularView<StrictlyLower>().setZero();}
+\DoxyCodeLine{00229\ \ \ \ \ \ \ m\_Q\ =\ qrT.householderQ();}
+\DoxyCodeLine{00230\ \ \ \ \ \ \ \textcolor{comment}{//\ overwrite\ S\ with\ Q*\ S}}
+\DoxyCodeLine{00231\ \ \ \ \ \ \ m\_S.applyOnTheLeft(m\_Q.adjoint());}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \textcolor{comment}{//\ init\ Z\ as\ Identity}}
+\DoxyCodeLine{00233\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ m\_Z\ =\ MatrixType::Identity(dim,dim);}
+\DoxyCodeLine{00235\ \ \ \ \ \ \ \textcolor{comment}{//\ reduce\ S\ to\ upper\ Hessenberg\ with\ Givens\ rotations}}
+\DoxyCodeLine{00236\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j=0;\ j<=dim-\/3;\ j++)\ \{}
+\DoxyCodeLine{00237\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i=dim-\/1;\ i>=j+2;\ i-\/-\/)\ \{}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ JRs\ G;}
+\DoxyCodeLine{00239\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ kill\ S(i,j)}}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_S.coeff(i,j)\ !=\ 0)}
+\DoxyCodeLine{00241\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00242\ \ \ \ \ \ \ \ \ \ \ \ \ G.makeGivens(m\_S.coeff(i-\/1,j),\ m\_S.coeff(i,j),\ \&m\_S.coeffRef(i-\/1,\ j));}
+\DoxyCodeLine{00243\ \ \ \ \ \ \ \ \ \ \ \ \ m\_S.coeffRef(i,j)\ =\ Scalar(0.0);}
+\DoxyCodeLine{00244\ \ \ \ \ \ \ \ \ \ \ \ \ m\_S.rightCols(dim-\/j-\/1).applyOnTheLeft(i-\/1,i,G.adjoint());}
+\DoxyCodeLine{00245\ \ \ \ \ \ \ \ \ \ \ \ \ m\_T.rightCols(dim-\/i+1).applyOnTheLeft(i-\/1,i,G.adjoint());}
+\DoxyCodeLine{00246\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Q}}
+\DoxyCodeLine{00247\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00248\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_Q.applyOnTheRight(i-\/1,i,G);}
+\DoxyCodeLine{00249\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00250\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ kill\ T(i,i-\/1)}}
+\DoxyCodeLine{00251\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_T.coeff(i,i-\/1)!=\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0))}
+\DoxyCodeLine{00252\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00253\ \ \ \ \ \ \ \ \ \ \ \ \ G.makeGivens(m\_T.coeff(i,i),\ m\_T.coeff(i,i-\/1),\ \&m\_T.coeffRef(i,i));}
+\DoxyCodeLine{00254\ \ \ \ \ \ \ \ \ \ \ \ \ m\_T.coeffRef(i,i-\/1)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00255\ \ \ \ \ \ \ \ \ \ \ \ \ m\_S.applyOnTheRight(i,i-\/1,G);}
+\DoxyCodeLine{00256\ \ \ \ \ \ \ \ \ \ \ \ \ m\_T.topRows(i).applyOnTheRight(i,i-\/1,G);}
+\DoxyCodeLine{00257\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Z}}
+\DoxyCodeLine{00258\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00259\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(i,i-\/1,G.adjoint());}
+\DoxyCodeLine{00260\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00261\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00262\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00263\ \ \ \ \ \}}
+\DoxyCodeLine{00264\ \textcolor{comment}{}}
+\DoxyCodeLine{00265\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ Computes\ vector\ L1\ norms\ of\ S\ and\ T\ when\ in\ Hessenberg-\/Triangular\ form\ already\ */}}
+\DoxyCodeLine{00266\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00267\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ RealQZ<MatrixType>::computeNorms()}
+\DoxyCodeLine{00268\ \ \ \ \ \{}
+\DoxyCodeLine{00269\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ m\_S.cols();}
+\DoxyCodeLine{00270\ \ \ \ \ \ \ m\_normOfS\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00271\ \ \ \ \ \ \ m\_normOfT\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00272\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ 0;\ j\ <\ size;\ ++j)}
+\DoxyCodeLine{00273\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00274\ \ \ \ \ \ \ \ \ m\_normOfS\ +=\ m\_S.col(j).segment(0,\ (std::min)(size,j+2)).cwiseAbs().sum();}
+\DoxyCodeLine{00275\ \ \ \ \ \ \ \ \ m\_normOfT\ +=\ m\_T.row(j).segment(j,\ size\ -\/\ j).cwiseAbs().sum();}
+\DoxyCodeLine{00276\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00277\ \ \ \ \ \}}
+\DoxyCodeLine{00278\ }
+\DoxyCodeLine{00279\ \textcolor{comment}{}}
+\DoxyCodeLine{00280\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ Look\ for\ single\ small\ sub-\/diagonal\ element\ S(res,\ res-\/1)\ and\ return\ res\ (or\ 0)\ */}}
+\DoxyCodeLine{00281\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00282\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ RealQZ<MatrixType>::findSmallSubdiagEntry(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ iu)}
+\DoxyCodeLine{00283\ \ \ \ \ \{}
+\DoxyCodeLine{00284\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00285\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ res\ =\ iu;}
+\DoxyCodeLine{00286\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (res\ >\ 0)}
+\DoxyCodeLine{00287\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00288\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ s\ =\ abs(m\_S.coeff(res-\/1,res-\/1))\ +\ abs(m\_S.coeff(res,res));}
+\DoxyCodeLine{00289\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (s\ ==\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0))}
+\DoxyCodeLine{00290\ \ \ \ \ \ \ \ \ \ \ s\ =\ m\_normOfS;}
+\DoxyCodeLine{00291\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(m\_S.coeff(res,res-\/1))\ <\ NumTraits<Scalar>::epsilon()\ *\ s)}
+\DoxyCodeLine{00292\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00293\ \ \ \ \ \ \ \ \ res-\/-\/;}
+\DoxyCodeLine{00294\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00295\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00296\ \ \ \ \ \}}
+\DoxyCodeLine{00297\ \textcolor{comment}{}}
+\DoxyCodeLine{00298\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ Look\ for\ single\ small\ diagonal\ element\ T(res,\ res)\ for\ res\ between\ f\ and\ l,\ and\ return\ res\ (or\ f-\/1)\ \ */}}
+\DoxyCodeLine{00299\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00300\ \ \ \ \ \textcolor{keyword}{inline}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ RealQZ<MatrixType>::findSmallDiagEntry(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ f,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l)}
+\DoxyCodeLine{00301\ \ \ \ \ \{}
+\DoxyCodeLine{00302\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00303\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ res\ =\ l;}
+\DoxyCodeLine{00304\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (res\ >=\ f)\ \{}
+\DoxyCodeLine{00305\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(m\_T.coeff(res,res))\ <=\ NumTraits<Scalar>::epsilon()\ *\ m\_normOfT)}
+\DoxyCodeLine{00306\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{break};}
+\DoxyCodeLine{00307\ \ \ \ \ \ \ \ \ res-\/-\/;}
+\DoxyCodeLine{00308\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00309\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ res;}
+\DoxyCodeLine{00310\ \ \ \ \ \}}
+\DoxyCodeLine{00311\ \textcolor{comment}{}}
+\DoxyCodeLine{00312\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ decouple\ 2x2\ diagonal\ block\ in\ rows\ i,\ i+1\ if\ eigenvalues\ are\ real\ */}}
+\DoxyCodeLine{00313\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00314\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ RealQZ<MatrixType>::splitOffTwoRows(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i)}
+\DoxyCodeLine{00315\ \ \ \ \ \{}
+\DoxyCodeLine{00316\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00317\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::sqrt;}
+\DoxyCodeLine{00318\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dim=m\_S.cols();}
+\DoxyCodeLine{00319\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (abs(m\_S.coeff(i+1,i))==\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0))}
+\DoxyCodeLine{00320\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{return};}
+\DoxyCodeLine{00321\ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ j\ =\ findSmallDiagEntry(i,i+1);}
+\DoxyCodeLine{00322\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (j==i-\/1)}
+\DoxyCodeLine{00323\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00324\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ block\ of\ (S\ T\string^\{-\/1\})}}
+\DoxyCodeLine{00325\ \ \ \ \ \ \ \ \ Matrix2s\ STi\ =\ m\_T.template\ block<2,2>(i,i).template\ triangularView<Upper>().}
+\DoxyCodeLine{00326\ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{template}\ solve<OnTheRight>(m\_S.template\ block<2,2>(i,i));}
+\DoxyCodeLine{00327\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ p\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.5)*(STi(0,0)-\/STi(1,1));}
+\DoxyCodeLine{00328\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ q\ =\ p*p\ +\ STi(1,0)*STi(0,1);}
+\DoxyCodeLine{00329\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (q>=0)\ \{}
+\DoxyCodeLine{00330\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ z\ =\ sqrt(q);}
+\DoxyCodeLine{00331\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ one\ QR-\/like\ iteration\ for\ ABi\ -\/\ lambda\ I}}
+\DoxyCodeLine{00332\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ is\ enough\ -\/\ when\ we\ know\ exact\ eigenvalue\ in\ advance,}}
+\DoxyCodeLine{00333\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ convergence\ is\ immediate}}
+\DoxyCodeLine{00334\ \ \ \ \ \ \ \ \ \ \ JRs\ G;}
+\DoxyCodeLine{00335\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (p>=0)}
+\DoxyCodeLine{00336\ \ \ \ \ \ \ \ \ \ \ \ \ G.makeGivens(p\ +\ z,\ STi(1,0));}
+\DoxyCodeLine{00337\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00338\ \ \ \ \ \ \ \ \ \ \ \ \ G.makeGivens(p\ -\/\ z,\ STi(1,0));}
+\DoxyCodeLine{00339\ \ \ \ \ \ \ \ \ \ \ m\_S.rightCols(dim-\/i).applyOnTheLeft(i,i+1,G.adjoint());}
+\DoxyCodeLine{00340\ \ \ \ \ \ \ \ \ \ \ m\_T.rightCols(dim-\/i).applyOnTheLeft(i,i+1,G.adjoint());}
+\DoxyCodeLine{00341\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Q}}
+\DoxyCodeLine{00342\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00343\ \ \ \ \ \ \ \ \ \ \ \ \ m\_Q.applyOnTheRight(i,i+1,G);}
+\DoxyCodeLine{00344\ }
+\DoxyCodeLine{00345\ \ \ \ \ \ \ \ \ \ \ G.makeGivens(m\_T.coeff(i+1,i+1),\ m\_T.coeff(i+1,i));}
+\DoxyCodeLine{00346\ \ \ \ \ \ \ \ \ \ \ m\_S.topRows(i+2).applyOnTheRight(i+1,i,G);}
+\DoxyCodeLine{00347\ \ \ \ \ \ \ \ \ \ \ m\_T.topRows(i+2).applyOnTheRight(i+1,i,G);}
+\DoxyCodeLine{00348\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Z}}
+\DoxyCodeLine{00349\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00350\ \ \ \ \ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(i+1,i,G.adjoint());}
+\DoxyCodeLine{00351\ }
+\DoxyCodeLine{00352\ \ \ \ \ \ \ \ \ \ \ m\_S.coeffRef(i+1,i)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00353\ \ \ \ \ \ \ \ \ \ \ m\_T.coeffRef(i+1,i)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00354\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00355\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00356\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00357\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00358\ \ \ \ \ \ \ \ \ pushDownZero(j,i,i+1);}
+\DoxyCodeLine{00359\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00360\ \ \ \ \ \}}
+\DoxyCodeLine{00361\ \textcolor{comment}{}}
+\DoxyCodeLine{00362\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ use\ zero\ in\ T(z,z)\ to\ zero\ S(l,l-\/1),\ working\ in\ block\ f..l\ */}}
+\DoxyCodeLine{00363\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00364\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ RealQZ<MatrixType>::pushDownZero(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ z,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ f,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l)}
+\DoxyCodeLine{00365\ \ \ \ \ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \ \ JRs\ G;}
+\DoxyCodeLine{00367\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dim\ =\ m\_S.cols();}
+\DoxyCodeLine{00368\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ zz=z;\ zz<l;\ zz++)}
+\DoxyCodeLine{00369\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00370\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ push\ 0\ down}}
+\DoxyCodeLine{00371\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ firstColS\ =\ zz>f\ ?\ (zz-\/1)\ :\ zz;}
+\DoxyCodeLine{00372\ \ \ \ \ \ \ \ \ G.makeGivens(m\_T.coeff(zz,\ zz+1),\ m\_T.coeff(zz+1,\ zz+1));}
+\DoxyCodeLine{00373\ \ \ \ \ \ \ \ \ m\_S.rightCols(dim-\/firstColS).applyOnTheLeft(zz,zz+1,G.adjoint());}
+\DoxyCodeLine{00374\ \ \ \ \ \ \ \ \ m\_T.rightCols(dim-\/zz).applyOnTheLeft(zz,zz+1,G.adjoint());}
+\DoxyCodeLine{00375\ \ \ \ \ \ \ \ \ m\_T.coeffRef(zz+1,zz+1)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Q}}
+\DoxyCodeLine{00377\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00378\ \ \ \ \ \ \ \ \ \ \ m\_Q.applyOnTheRight(zz,zz+1,G);}
+\DoxyCodeLine{00379\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ kill\ S(zz+1,\ zz-\/1)}}
+\DoxyCodeLine{00380\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (zz>f)}
+\DoxyCodeLine{00381\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00382\ \ \ \ \ \ \ \ \ \ \ G.makeGivens(m\_S.coeff(zz+1,\ zz),\ m\_S.coeff(zz+1,zz-\/1));}
+\DoxyCodeLine{00383\ \ \ \ \ \ \ \ \ \ \ m\_S.topRows(zz+2).applyOnTheRight(zz,\ zz-\/1,G);}
+\DoxyCodeLine{00384\ \ \ \ \ \ \ \ \ \ \ m\_T.topRows(zz+1).applyOnTheRight(zz,\ zz-\/1,G);}
+\DoxyCodeLine{00385\ \ \ \ \ \ \ \ \ \ \ m\_S.coeffRef(zz+1,zz-\/1)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00386\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Z}}
+\DoxyCodeLine{00387\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(zz,zz-\/1,G.adjoint());}
+\DoxyCodeLine{00389\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00390\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00391\ \ \ \ \ \ \ \textcolor{comment}{//\ finally\ kill\ S(l,l-\/1)}}
+\DoxyCodeLine{00392\ \ \ \ \ \ \ G.makeGivens(m\_S.coeff(l,l),\ m\_S.coeff(l,l-\/1));}
+\DoxyCodeLine{00393\ \ \ \ \ \ \ m\_S.applyOnTheRight(l,l-\/1,G);}
+\DoxyCodeLine{00394\ \ \ \ \ \ \ m\_T.applyOnTheRight(l,l-\/1,G);}
+\DoxyCodeLine{00395\ \ \ \ \ \ \ m\_S.coeffRef(l,l-\/1)=\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00396\ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Z}}
+\DoxyCodeLine{00397\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00398\ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(l,l-\/1,G.adjoint());}
+\DoxyCodeLine{00399\ \ \ \ \ \}}
+\DoxyCodeLine{00400\ \textcolor{comment}{}}
+\DoxyCodeLine{00401\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal\ QR-\/like\ iterative\ step\ for\ block\ f..l\ */}}
+\DoxyCodeLine{00402\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00403\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ RealQZ<MatrixType>::step(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ f,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ l,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ iter)}
+\DoxyCodeLine{00404\ \ \ \ \ \{}
+\DoxyCodeLine{00405\ \ \ \ \ \ \ \textcolor{keyword}{using\ }std::abs;}
+\DoxyCodeLine{00406\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ dim\ =\ m\_S.cols();}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \ \ \ \ \ \ \textcolor{comment}{//\ x,\ y,\ z}}
+\DoxyCodeLine{00409\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ x,\ y,\ z;}
+\DoxyCodeLine{00410\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (iter==10)}
+\DoxyCodeLine{00411\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00412\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Wilkinson\ ad\ hoc\ shift}}
+\DoxyCodeLine{00413\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}}
+\DoxyCodeLine{00414\ \ \ \ \ \ \ \ \ \ \ a11=m\_S.coeff(f+0,f+0),\ a12=m\_S.coeff(f+0,f+1),}
+\DoxyCodeLine{00415\ \ \ \ \ \ \ \ \ \ \ a21=m\_S.coeff(f+1,f+0),\ a22=m\_S.coeff(f+1,f+1),\ a32=m\_S.coeff(f+2,f+1),}
+\DoxyCodeLine{00416\ \ \ \ \ \ \ \ \ \ \ b12=m\_T.coeff(f+0,f+1),}
+\DoxyCodeLine{00417\ \ \ \ \ \ \ \ \ \ \ b11i=\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1.0)/m\_T.coeff(f+0,f+0),}
+\DoxyCodeLine{00418\ \ \ \ \ \ \ \ \ \ \ b22i=\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1.0)/m\_T.coeff(f+1,f+1),}
+\DoxyCodeLine{00419\ \ \ \ \ \ \ \ \ \ \ a87=m\_S.coeff(l-\/1,l-\/2),}
+\DoxyCodeLine{00420\ \ \ \ \ \ \ \ \ \ \ a98=m\_S.coeff(l-\/0,l-\/1),}
+\DoxyCodeLine{00421\ \ \ \ \ \ \ \ \ \ \ b77i=\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1.0)/m\_T.coeff(l-\/2,l-\/2),}
+\DoxyCodeLine{00422\ \ \ \ \ \ \ \ \ \ \ b88i=\mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1.0)/m\_T.coeff(l-\/1,l-\/1);}
+\DoxyCodeLine{00423\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ ss\ =\ abs(a87*b77i)\ +\ abs(a98*b88i),}
+\DoxyCodeLine{00424\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lpl\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(1.5)*ss,}
+\DoxyCodeLine{00425\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ ll\ =\ ss*ss;}
+\DoxyCodeLine{00426\ \ \ \ \ \ \ \ \ x\ =\ ll\ +\ a11*a11*b11i*b11i\ -\/\ lpl*a11*b11i\ +\ a12*a21*b11i*b22i}
+\DoxyCodeLine{00427\ \ \ \ \ \ \ \ \ \ \ -\/\ a11*a21*b12*b11i*b11i*b22i;}
+\DoxyCodeLine{00428\ \ \ \ \ \ \ \ \ y\ =\ a11*a21*b11i*b11i\ -\/\ lpl*a21*b11i\ +\ a21*a22*b11i*b22i\ }
+\DoxyCodeLine{00429\ \ \ \ \ \ \ \ \ \ \ -\/\ a21*a21*b12*b11i*b11i*b22i;}
+\DoxyCodeLine{00430\ \ \ \ \ \ \ \ \ z\ =\ a21*a32*b11i*b22i;}
+\DoxyCodeLine{00431\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00432\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iter==16)}
+\DoxyCodeLine{00433\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00434\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ another\ exceptional\ shift}}
+\DoxyCodeLine{00435\ \ \ \ \ \ \ \ \ x\ =\ m\_S.coeff(f,f)/m\_T.coeff(f,f)-\/m\_S.coeff(l,l)/m\_T.coeff(l,l)\ +\ m\_S.coeff(l,l-\/1)*m\_T.coeff(l-\/1,l)\ /}
+\DoxyCodeLine{00436\ \ \ \ \ \ \ \ \ \ \ (m\_T.coeff(l-\/1,l-\/1)*m\_T.coeff(l,l));}
+\DoxyCodeLine{00437\ \ \ \ \ \ \ \ \ y\ =\ m\_S.coeff(f+1,f)/m\_T.coeff(f,f);}
+\DoxyCodeLine{00438\ \ \ \ \ \ \ \ \ z\ =\ 0;}
+\DoxyCodeLine{00439\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00440\ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (iter>23\ \&\&\ !(iter\%8))}
+\DoxyCodeLine{00441\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00442\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ extremely\ exceptional\ shift}}
+\DoxyCodeLine{00443\ \ \ \ \ \ \ \ \ x\ =\ internal::random<Scalar>(-\/1.0,1.0);}
+\DoxyCodeLine{00444\ \ \ \ \ \ \ \ \ y\ =\ internal::random<Scalar>(-\/1.0,1.0);}
+\DoxyCodeLine{00445\ \ \ \ \ \ \ \ \ z\ =\ internal::random<Scalar>(-\/1.0,1.0);}
+\DoxyCodeLine{00446\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00447\ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00448\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00449\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Compute\ the\ shifts:\ (x,y,z,0...)\ =\ (AB\string^-\/1\ -\/\ l1\ I)\ (AB\string^-\/1\ -\/\ l2\ I)\ e1}}
+\DoxyCodeLine{00450\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ where\ l1\ and\ l2\ are\ the\ eigenvalues\ of\ the\ 2x2\ matrix\ C\ =\ U\ V\string^-\/1\ where}}
+\DoxyCodeLine{00451\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ U\ and\ V\ are\ 2x2\ bottom\ right\ sub\ matrices\ of\ A\ and\ B.\ Thus:}}
+\DoxyCodeLine{00452\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ =\ AB\string^-\/1AB\string^-\/1\ +\ l1\ l2\ I\ -\/\ (l1+l2)(AB\string^-\/1)}}
+\DoxyCodeLine{00453\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ \ =\ AB\string^-\/1AB\string^-\/1\ +\ det(M)\ -\/\ tr(M)(AB\string^-\/1)}}
+\DoxyCodeLine{00454\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Since\ we\ are\ only\ interested\ in\ having\ x,\ y,\ z\ with\ a\ correct\ ratio,\ we\ have:}}
+\DoxyCodeLine{00455\ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}}
+\DoxyCodeLine{00456\ \ \ \ \ \ \ \ \ \ \ a11\ =\ m\_S.coeff(f,f),\ \ \ \ \ a12\ =\ m\_S.coeff(f,f+1),}
+\DoxyCodeLine{00457\ \ \ \ \ \ \ \ \ \ \ a21\ =\ m\_S.coeff(f+1,f),\ \ \ a22\ =\ m\_S.coeff(f+1,f+1),}
+\DoxyCodeLine{00458\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a32\ =\ m\_S.coeff(f+2,f+1),}
+\DoxyCodeLine{00459\ }
+\DoxyCodeLine{00460\ \ \ \ \ \ \ \ \ \ \ a88\ =\ m\_S.coeff(l-\/1,l-\/1),\ a89\ =\ m\_S.coeff(l-\/1,l),}
+\DoxyCodeLine{00461\ \ \ \ \ \ \ \ \ \ \ a98\ =\ m\_S.coeff(l,l-\/1),\ \ \ a99\ =\ m\_S.coeff(l,l),}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ \ \ \ \ \ \ \ \ b11\ =\ m\_T.coeff(f,f),\ \ \ \ \ b12\ =\ m\_T.coeff(f,f+1),}
+\DoxyCodeLine{00464\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b22\ =\ m\_T.coeff(f+1,f+1),}
+\DoxyCodeLine{00465\ }
+\DoxyCodeLine{00466\ \ \ \ \ \ \ \ \ \ \ b88\ =\ m\_T.coeff(l-\/1,l-\/1),\ b89\ =\ m\_T.coeff(l-\/1,l),}
+\DoxyCodeLine{00467\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b99\ =\ m\_T.coeff(l,l);}
+\DoxyCodeLine{00468\ }
+\DoxyCodeLine{00469\ \ \ \ \ \ \ \ \ x\ =\ (\ (a88/b88\ -\/\ a11/b11)*(a99/b99\ -\/\ a11/b11)\ -\/\ (a89/b99)*(a98/b88)\ +\ (a98/b88)*(b89/b99)*(a11/b11)\ )\ *\ (b11/a21)}
+\DoxyCodeLine{00470\ \ \ \ \ \ \ \ \ \ \ +\ a12/b22\ -\/\ (a11/b11)*(b12/b22);}
+\DoxyCodeLine{00471\ \ \ \ \ \ \ \ \ y\ =\ (a22/b22-\/a11/b11)\ -\/\ (a21/b11)*(b12/b22)\ -\/\ (a88/b88-\/a11/b11)\ -\/\ (a99/b99-\/a11/b11)\ +\ (a98/b88)*(b89/b99);}
+\DoxyCodeLine{00472\ \ \ \ \ \ \ \ \ z\ =\ a32/b22;}
+\DoxyCodeLine{00473\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ \ \ \ \ JRs\ G;}
+\DoxyCodeLine{00476\ }
+\DoxyCodeLine{00477\ \ \ \ \ \ \ \textcolor{keywordflow}{for}\ (\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k=f;\ k<=l-\/2;\ k++)}
+\DoxyCodeLine{00478\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00479\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ variables\ for\ Householder\ reflections}}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ Vector2s\ essential2;}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}\ tau,\ beta;}
+\DoxyCodeLine{00482\ }
+\DoxyCodeLine{00483\ \ \ \ \ \ \ \ \ Vector3s\ hr(x,y,z);}
+\DoxyCodeLine{00484\ }
+\DoxyCodeLine{00485\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Q\_k\ to\ annihilate\ S(k+1,k-\/1)\ and\ S(k+2,k-\/1)}}
+\DoxyCodeLine{00486\ \ \ \ \ \ \ \ \ hr.makeHouseholderInPlace(tau,\ beta);}
+\DoxyCodeLine{00487\ \ \ \ \ \ \ \ \ essential2\ =\ hr.template\ bottomRows<2>();}
+\DoxyCodeLine{00488\ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ fc=(std::max)(k-\/1,\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(0));\ \ \textcolor{comment}{//\ first\ col\ to\ update}}
+\DoxyCodeLine{00489\ \ \ \ \ \ \ \ \ m\_S.template\ middleRows<3>(k).rightCols(dim-\/fc).applyHouseholderOnTheLeft(essential2,\ tau,\ m\_workspace.data());}
+\DoxyCodeLine{00490\ \ \ \ \ \ \ \ \ m\_T.template\ middleRows<3>(k).rightCols(dim-\/fc).applyHouseholderOnTheLeft(essential2,\ tau,\ m\_workspace.data());}
+\DoxyCodeLine{00491\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00492\ \ \ \ \ \ \ \ \ \ \ m\_Q.template\ middleCols<3>(k).applyHouseholderOnTheRight(essential2,\ tau,\ m\_workspace.data());}
+\DoxyCodeLine{00493\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (k>f)}
+\DoxyCodeLine{00494\ \ \ \ \ \ \ \ \ \ \ m\_S.coeffRef(k+2,k-\/1)\ =\ m\_S.coeffRef(k+1,k-\/1)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00495\ }
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Z\_\{k1\}\ to\ annihilate\ T(k+2,k+1)\ and\ T(k+2,k)}}
+\DoxyCodeLine{00497\ \ \ \ \ \ \ \ \ hr\ <<\ m\_T.coeff(k+2,k+2),m\_T.coeff(k+2,k),m\_T.coeff(k+2,k+1);}
+\DoxyCodeLine{00498\ \ \ \ \ \ \ \ \ hr.makeHouseholderInPlace(tau,\ beta);}
+\DoxyCodeLine{00499\ \ \ \ \ \ \ \ \ essential2\ =\ hr.template\ bottomRows<2>();}
+\DoxyCodeLine{00500\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00501\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lr\ =\ (std::min)(k+4,dim);\ \textcolor{comment}{//\ last\ row\ to\ update}}
+\DoxyCodeLine{00502\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<Matrix<Scalar,Dynamic,1>}}\ >\ tmp(m\_workspace.data(),lr);}
+\DoxyCodeLine{00503\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ S}}
+\DoxyCodeLine{00504\ \ \ \ \ \ \ \ \ \ \ tmp\ =\ m\_S.template\ middleCols<2>(k).topRows(lr)\ *\ essential2;}
+\DoxyCodeLine{00505\ \ \ \ \ \ \ \ \ \ \ tmp\ +=\ m\_S.col(k+2).head(lr);}
+\DoxyCodeLine{00506\ \ \ \ \ \ \ \ \ \ \ m\_S.col(k+2).head(lr)\ -\/=\ tau*tmp;}
+\DoxyCodeLine{00507\ \ \ \ \ \ \ \ \ \ \ m\_S.template\ middleCols<2>(k).topRows(lr)\ -\/=\ (tau*tmp)\ *\ essential2.adjoint();}
+\DoxyCodeLine{00508\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ T}}
+\DoxyCodeLine{00509\ \ \ \ \ \ \ \ \ \ \ tmp\ =\ m\_T.template\ middleCols<2>(k).topRows(lr)\ *\ essential2;}
+\DoxyCodeLine{00510\ \ \ \ \ \ \ \ \ \ \ tmp\ +=\ m\_T.col(k+2).head(lr);}
+\DoxyCodeLine{00511\ \ \ \ \ \ \ \ \ \ \ m\_T.col(k+2).head(lr)\ -\/=\ tau*tmp;}
+\DoxyCodeLine{00512\ \ \ \ \ \ \ \ \ \ \ m\_T.template\ middleCols<2>(k).topRows(lr)\ -\/=\ (tau*tmp)\ *\ essential2.adjoint();}
+\DoxyCodeLine{00513\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00514\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00515\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00516\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Z}}
+\DoxyCodeLine{00517\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1Map}{Map<Matrix<Scalar,1,Dynamic>}}\ >\ tmp(m\_workspace.data(),dim);}
+\DoxyCodeLine{00518\ \ \ \ \ \ \ \ \ \ \ tmp\ =\ essential2.adjoint()*(m\_Z.template\ middleRows<2>(k));}
+\DoxyCodeLine{00519\ \ \ \ \ \ \ \ \ \ \ tmp\ +=\ m\_Z.row(k+2);}
+\DoxyCodeLine{00520\ \ \ \ \ \ \ \ \ \ \ m\_Z.row(k+2)\ -\/=\ tau*tmp;}
+\DoxyCodeLine{00521\ \ \ \ \ \ \ \ \ \ \ m\_Z.template\ middleRows<2>(k)\ -\/=\ essential2\ *\ (tau*tmp);}
+\DoxyCodeLine{00522\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00523\ \ \ \ \ \ \ \ \ m\_T.coeffRef(k+2,k)\ =\ m\_T.coeffRef(k+2,k+1)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00524\ }
+\DoxyCodeLine{00525\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Z\_\{k2\}\ to\ annihilate\ T(k+1,k)}}
+\DoxyCodeLine{00526\ \ \ \ \ \ \ \ \ G.makeGivens(m\_T.coeff(k+1,k+1),\ m\_T.coeff(k+1,k));}
+\DoxyCodeLine{00527\ \ \ \ \ \ \ \ \ m\_S.applyOnTheRight(k+1,k,G);}
+\DoxyCodeLine{00528\ \ \ \ \ \ \ \ \ m\_T.applyOnTheRight(k+1,k,G);}
+\DoxyCodeLine{00529\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ Z}}
+\DoxyCodeLine{00530\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00531\ \ \ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(k+1,k,G.adjoint());}
+\DoxyCodeLine{00532\ \ \ \ \ \ \ \ \ m\_T.coeffRef(k+1,k)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00533\ }
+\DoxyCodeLine{00534\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ update\ x,y,z}}
+\DoxyCodeLine{00535\ \ \ \ \ \ \ \ \ x\ =\ m\_S.coeff(k+1,k);}
+\DoxyCodeLine{00536\ \ \ \ \ \ \ \ \ y\ =\ m\_S.coeff(k+2,k);}
+\DoxyCodeLine{00537\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (k\ <\ l-\/2)}
+\DoxyCodeLine{00538\ \ \ \ \ \ \ \ \ \ \ z\ =\ m\_S.coeff(k+3,k);}
+\DoxyCodeLine{00539\ \ \ \ \ \ \ \}\ \textcolor{comment}{//\ loop\ over\ k}}
+\DoxyCodeLine{00540\ }
+\DoxyCodeLine{00541\ \ \ \ \ \ \ \textcolor{comment}{//\ Q\_\{n-\/1\}\ to\ annihilate\ y\ =\ S(l,l-\/2)}}
+\DoxyCodeLine{00542\ \ \ \ \ \ \ G.makeGivens(x,y);}
+\DoxyCodeLine{00543\ \ \ \ \ \ \ m\_S.applyOnTheLeft(l-\/1,l,G.adjoint());}
+\DoxyCodeLine{00544\ \ \ \ \ \ \ m\_T.applyOnTheLeft(l-\/1,l,G.adjoint());}
+\DoxyCodeLine{00545\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00546\ \ \ \ \ \ \ \ \ m\_Q.applyOnTheRight(l-\/1,l,G);}
+\DoxyCodeLine{00547\ \ \ \ \ \ \ m\_S.coeffRef(l,l-\/2)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00548\ }
+\DoxyCodeLine{00549\ \ \ \ \ \ \ \textcolor{comment}{//\ Z\_\{n-\/1\}\ to\ annihilate\ T(l,l-\/1)}}
+\DoxyCodeLine{00550\ \ \ \ \ \ \ G.makeGivens(m\_T.coeff(l,l),m\_T.coeff(l,l-\/1));}
+\DoxyCodeLine{00551\ \ \ \ \ \ \ m\_S.applyOnTheRight(l,l-\/1,G);}
+\DoxyCodeLine{00552\ \ \ \ \ \ \ m\_T.applyOnTheRight(l,l-\/1,G);}
+\DoxyCodeLine{00553\ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (m\_computeQZ)}
+\DoxyCodeLine{00554\ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(l,l-\/1,G.adjoint());}
+\DoxyCodeLine{00555\ \ \ \ \ \ \ m\_T.coeffRef(l,l-\/1)\ =\ \mbox{\hyperlink{classEigen_1_1Product}{Scalar}}(0.0);}
+\DoxyCodeLine{00556\ \ \ \ \ \}}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ MatrixType>}
+\DoxyCodeLine{00559\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_ad8fb9235870a8361a2fdd8dcc2e80d01}{RealQZ<MatrixType>}}\&\ \mbox{\hyperlink{classEigen_1_1RealQZ_a2b6847964d9f1903193cc3e67c196849}{RealQZ<MatrixType>::compute}}(\textcolor{keyword}{const}\ MatrixType\&\ A\_in,\ \textcolor{keyword}{const}\ MatrixType\&\ B\_in,\ \textcolor{keywordtype}{bool}\ computeQZ)}
+\DoxyCodeLine{00560\ \ \ \ \ \{}
+\DoxyCodeLine{00561\ }
+\DoxyCodeLine{00562\ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ dim\ =\ A\_in.cols();}
+\DoxyCodeLine{00563\ }
+\DoxyCodeLine{00564\ \ \ \ \ \ \ eigen\_assert\ (A\_in.rows()==dim\ \&\&\ A\_in.cols()==dim\ }
+\DoxyCodeLine{00565\ \ \ \ \ \ \ \ \ \ \ \&\&\ B\_in.rows()==dim\ \&\&\ B\_in.cols()==dim\ }
+\DoxyCodeLine{00566\ \ \ \ \ \ \ \ \ \ \ \&\&\ \textcolor{stringliteral}{"{}Need\ square\ matrices\ of\ the\ same\ dimension"{}});}
+\DoxyCodeLine{00567\ }
+\DoxyCodeLine{00568\ \ \ \ \ \ \ m\_isInitialized\ =\ \textcolor{keyword}{true};}
+\DoxyCodeLine{00569\ \ \ \ \ \ \ m\_computeQZ\ =\ computeQZ;}
+\DoxyCodeLine{00570\ \ \ \ \ \ \ m\_S\ =\ A\_in;\ m\_T\ =\ B\_in;}
+\DoxyCodeLine{00571\ \ \ \ \ \ \ m\_workspace.resize(dim*2);}
+\DoxyCodeLine{00572\ \ \ \ \ \ \ m\_global\_iter\ =\ 0;}
+\DoxyCodeLine{00573\ }
+\DoxyCodeLine{00574\ \ \ \ \ \ \ \textcolor{comment}{//\ entrance\ point:\ hessenberg\ triangular\ decomposition}}
+\DoxyCodeLine{00575\ \ \ \ \ \ \ hessenbergTriangular();}
+\DoxyCodeLine{00576\ \ \ \ \ \ \ \textcolor{comment}{//\ compute\ L1\ vector\ norms\ of\ T,\ S\ into\ m\_normOfS,\ m\_normOfT}}
+\DoxyCodeLine{00577\ \ \ \ \ \ \ computeNorms();}
+\DoxyCodeLine{00578\ }
+\DoxyCodeLine{00579\ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ l\ =\ dim-\/1,\ }
+\DoxyCodeLine{00580\ \ \ \ \ \ \ \ \ \ \ \ \ f,\ }
+\DoxyCodeLine{00581\ \ \ \ \ \ \ \ \ \ \ \ \ local\_iter\ =\ 0;}
+\DoxyCodeLine{00582\ }
+\DoxyCodeLine{00583\ \ \ \ \ \ \ \textcolor{keywordflow}{while}\ (l>0\ \&\&\ local\_iter<m\_maxIters)}
+\DoxyCodeLine{00584\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00585\ \ \ \ \ \ \ \ \ f\ =\ findSmallSubdiagEntry(l);}
+\DoxyCodeLine{00586\ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ now\ rows\ and\ columns\ f..l\ (including)\ decouple\ from\ the\ rest\ of\ the\ problem}}
+\DoxyCodeLine{00587\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (f>0)\ m\_S.coeffRef(f,f-\/1)\ =\ Scalar(0.0);}
+\DoxyCodeLine{00588\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (f\ ==\ l)\ \textcolor{comment}{//\ One\ root\ found}}
+\DoxyCodeLine{00589\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ l-\/-\/;}
+\DoxyCodeLine{00591\ \ \ \ \ \ \ \ \ \ \ local\_iter\ =\ 0;}
+\DoxyCodeLine{00592\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00593\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}\ (f\ ==\ l-\/1)\ \textcolor{comment}{//\ Two\ roots\ found}}
+\DoxyCodeLine{00594\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00595\ \ \ \ \ \ \ \ \ \ \ splitOffTwoRows(f);}
+\DoxyCodeLine{00596\ \ \ \ \ \ \ \ \ \ \ l\ -\/=\ 2;}
+\DoxyCodeLine{00597\ \ \ \ \ \ \ \ \ \ \ local\_iter\ =\ 0;}
+\DoxyCodeLine{00598\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00599\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{comment}{//\ No\ convergence\ yet}}
+\DoxyCodeLine{00600\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00601\ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ if\ there's\ zero\ on\ diagonal\ of\ T,\ we\ can\ isolate\ an\ eigenvalue\ with\ Givens\ rotations}}
+\DoxyCodeLine{00602\ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ z\ =\ findSmallDiagEntry(f,l);}
+\DoxyCodeLine{00603\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}\ (z>=f)}
+\DoxyCodeLine{00604\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00605\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ zero\ found}}
+\DoxyCodeLine{00606\ \ \ \ \ \ \ \ \ \ \ \ \ pushDownZero(z,f,l);}
+\DoxyCodeLine{00607\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00608\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00609\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00610\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ We\ are\ sure\ now\ that\ S.block(f,f,\ l-\/f+1,l-\/f+1)\ is\ underuced\ upper-\/Hessenberg\ }}
+\DoxyCodeLine{00611\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ and\ T.block(f,f,\ l-\/f+1,l-\/f+1)\ is\ invertible\ uper-\/triangular,\ which\ allows\ to}}
+\DoxyCodeLine{00612\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ apply\ a\ QR-\/like\ iteration\ to\ rows\ and\ columns\ f..l.}}
+\DoxyCodeLine{00613\ \ \ \ \ \ \ \ \ \ \ \ \ step(f,l,\ local\_iter);}
+\DoxyCodeLine{00614\ \ \ \ \ \ \ \ \ \ \ \ \ local\_iter++;}
+\DoxyCodeLine{00615\ \ \ \ \ \ \ \ \ \ \ \ \ m\_global\_iter++;}
+\DoxyCodeLine{00616\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00617\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00618\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00619\ \ \ \ \ \ \ \textcolor{comment}{//\ check\ if\ we\ converged\ before\ reaching\ iterations\ limit}}
+\DoxyCodeLine{00620\ \ \ \ \ \ \ m\_info\ =\ (local\_iter<m\_maxIters)\ ?\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}}\ :\ \mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea6a68dfb88a8336108a30588bdf356c57}{NoConvergence}};}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ \ \ \ \ \ \ \textcolor{comment}{//\ For\ each\ non\ triangular\ 2x2\ diagonal\ block\ of\ S,}}
+\DoxyCodeLine{00623\ \ \ \ \ \ \ \textcolor{comment}{//\ \ \ \ reduce\ the\ respective\ 2x2\ diagonal\ block\ of\ T\ to\ positive\ diagonal\ form\ using\ 2x2\ SVD.}}
+\DoxyCodeLine{00624\ \ \ \ \ \ \ \textcolor{comment}{//\ This\ step\ is\ not\ mandatory\ for\ QZ,\ but\ it\ does\ help\ further\ extraction\ of\ eigenvalues/eigenvectors,}}
+\DoxyCodeLine{00625\ \ \ \ \ \ \ \textcolor{comment}{//\ and\ is\ in\ par\ with\ Lapack/Matlab\ QZ.}}
+\DoxyCodeLine{00626\ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_info==\mbox{\hyperlink{group__enums_gga85fad7b87587764e5cf6b513a9e0ee5ea671a2aeb0f527802806a441d58a80fcf}{Success}})}
+\DoxyCodeLine{00627\ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00628\ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{classEigen_1_1RealQZ_a6201e534e901b5f4e66f72c176b534a3}{Index}}\ i=0;\ i<dim-\/1;\ ++i)}
+\DoxyCodeLine{00629\ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00630\ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_S.coeff(i+1,\ i)\ !=\ Scalar(0))}
+\DoxyCodeLine{00631\ \ \ \ \ \ \ \ \ \ \ \{}
+\DoxyCodeLine{00632\ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{classEigen_1_1JacobiRotation}{JacobiRotation<Scalar>}}\ j\_left,\ j\_right;}
+\DoxyCodeLine{00633\ \ \ \ \ \ \ \ \ \ \ \ \ internal::real\_2x2\_jacobi\_svd(m\_T,\ i,\ i+1,\ \&j\_left,\ \&j\_right);}
+\DoxyCodeLine{00634\ }
+\DoxyCodeLine{00635\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{comment}{//\ Apply\ resulting\ Jacobi\ rotations}}
+\DoxyCodeLine{00636\ \ \ \ \ \ \ \ \ \ \ \ \ m\_S.applyOnTheLeft(i,i+1,j\_left);}
+\DoxyCodeLine{00637\ \ \ \ \ \ \ \ \ \ \ \ \ m\_S.applyOnTheRight(i,i+1,j\_right);}
+\DoxyCodeLine{00638\ \ \ \ \ \ \ \ \ \ \ \ \ m\_T.applyOnTheLeft(i,i+1,j\_left);}
+\DoxyCodeLine{00639\ \ \ \ \ \ \ \ \ \ \ \ \ m\_T.applyOnTheRight(i,i+1,j\_right);}
+\DoxyCodeLine{00640\ \ \ \ \ \ \ \ \ \ \ \ \ m\_T(i+1,i)\ =\ m\_T(i,i+1)\ =\ Scalar(0);}
+\DoxyCodeLine{00641\ }
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(m\_computeQZ)\ \{}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_Q.applyOnTheRight(i,i+1,j\_left.\mbox{\hyperlink{classEigen_1_1JacobiRotation_a3ad513485f7426761ab80fc845f9946e}{transpose}}());}
+\DoxyCodeLine{00644\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ m\_Z.applyOnTheLeft(i,i+1,j\_right.\mbox{\hyperlink{classEigen_1_1JacobiRotation_a3ad513485f7426761ab80fc845f9946e}{transpose}}());}
+\DoxyCodeLine{00645\ \ \ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00646\ }
+\DoxyCodeLine{00647\ \ \ \ \ \ \ \ \ \ \ \ \ i++;}
+\DoxyCodeLine{00648\ \ \ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00649\ \ \ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00650\ \ \ \ \ \ \ \}}
+\DoxyCodeLine{00651\ }
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00653\ \ \ \ \ \}\ \textcolor{comment}{//\ end\ compute}}
+\DoxyCodeLine{00654\ }
+\DoxyCodeLine{00655\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00656\ }
+\DoxyCodeLine{00657\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//EIGEN\_REAL\_QZ}}
+
+\end{DoxyCode}

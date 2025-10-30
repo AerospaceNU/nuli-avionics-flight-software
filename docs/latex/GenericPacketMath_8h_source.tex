@@ -1,0 +1,1046 @@
+\doxysection{Generic\+Packet\+Math.\+h}
+\hypertarget{GenericPacketMath_8h_source}{}\label{GenericPacketMath_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/GenericPacketMath.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/GenericPacketMath.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2008\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//\ Copyright\ (C)\ 2006-\/2008\ Benoit\ Jacob\ <jacob.benoit.1@gmail.com>}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00009\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00010\ }
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_GENERIC\_PACKET\_MATH\_H}}
+\DoxyCodeLine{00012\ \textcolor{preprocessor}{\#define\ EIGEN\_GENERIC\_PACKET\_MATH\_H}}
+\DoxyCodeLine{00013\ }
+\DoxyCodeLine{00014\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00015\ }
+\DoxyCodeLine{00016\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00017\ \textcolor{comment}{}}
+\DoxyCodeLine{00018\ \textcolor{comment}{/**\ \(\backslash\)internal}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *\ \(\backslash\)file\ GenericPacketMath.h}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ \ *\ Default\ implementation\ for\ types\ not\ supported\ by\ the\ vectorization.}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ \ *\ In\ practice\ these\ functions\ are\ provided\ to\ make\ easier\ the\ writing}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ \ *\ of\ generic\ vectorized\ code.}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00025\ }
+\DoxyCodeLine{00026\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_DEBUG\_ALIGNED\_LOAD}}
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#define\ EIGEN\_DEBUG\_ALIGNED\_LOAD}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00029\ }
+\DoxyCodeLine{00030\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_DEBUG\_UNALIGNED\_LOAD}}
+\DoxyCodeLine{00031\ \textcolor{preprocessor}{\#define\ EIGEN\_DEBUG\_UNALIGNED\_LOAD}}
+\DoxyCodeLine{00032\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00033\ }
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_DEBUG\_ALIGNED\_STORE}}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\#define\ EIGEN\_DEBUG\_ALIGNED\_STORE}}
+\DoxyCodeLine{00036\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_DEBUG\_UNALIGNED\_STORE}}
+\DoxyCodeLine{00039\ \textcolor{preprocessor}{\#define\ EIGEN\_DEBUG\_UNALIGNED\_STORE}}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1default__packet__traits}{default\_packet\_traits}}}
+\DoxyCodeLine{00043\ \{}
+\DoxyCodeLine{00044\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00045\ \ \ \ \ HasHalfPacket\ =\ 0,}
+\DoxyCodeLine{00046\ }
+\DoxyCodeLine{00047\ \ \ \ \ HasAdd\ \ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00048\ \ \ \ \ HasSub\ \ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00049\ \ \ \ \ HasShift\ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00050\ \ \ \ \ HasMul\ \ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00051\ \ \ \ \ HasNegate\ \ \ \ =\ 1,}
+\DoxyCodeLine{00052\ \ \ \ \ HasAbs\ \ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00053\ \ \ \ \ HasArg\ \ \ \ \ \ \ =\ 0,}
+\DoxyCodeLine{00054\ \ \ \ \ HasAbs2\ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00055\ \ \ \ \ HasAbsDiff\ \ \ =\ 0,}
+\DoxyCodeLine{00056\ \ \ \ \ HasMin\ \ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00057\ \ \ \ \ HasMax\ \ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00058\ \ \ \ \ HasConj\ \ \ \ \ \ =\ 1,}
+\DoxyCodeLine{00059\ \ \ \ \ HasSetLinear\ =\ 1,}
+\DoxyCodeLine{00060\ \ \ \ \ HasBlend\ \ \ \ \ =\ 0,}
+\DoxyCodeLine{00061\ \ \ \ \ \textcolor{comment}{//\ This\ flag\ is\ used\ to\ indicate\ whether\ packet\ comparison\ is\ supported.}}
+\DoxyCodeLine{00062\ \ \ \ \ \textcolor{comment}{//\ pcmp\_eq,\ pcmp\_lt\ and\ pcmp\_le\ should\ be\ defined\ for\ it\ to\ be\ true.}}
+\DoxyCodeLine{00063\ \ \ \ \ HasCmp\ \ \ \ \ \ \ =\ 0,}
+\DoxyCodeLine{00064\ }
+\DoxyCodeLine{00065\ \ \ \ \ HasDiv\ \ \ \ =\ 0,}
+\DoxyCodeLine{00066\ \ \ \ \ HasSqrt\ \ \ =\ 0,}
+\DoxyCodeLine{00067\ \ \ \ \ HasRsqrt\ \ =\ 0,}
+\DoxyCodeLine{00068\ \ \ \ \ HasExp\ \ \ \ =\ 0,}
+\DoxyCodeLine{00069\ \ \ \ \ HasExpm1\ \ =\ 0,}
+\DoxyCodeLine{00070\ \ \ \ \ HasLog\ \ \ \ =\ 0,}
+\DoxyCodeLine{00071\ \ \ \ \ HasLog1p\ \ =\ 0,}
+\DoxyCodeLine{00072\ \ \ \ \ HasLog10\ \ =\ 0,}
+\DoxyCodeLine{00073\ \ \ \ \ HasPow\ \ \ \ =\ 0,}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \ \ \ \ HasSin\ \ \ \ =\ 0,}
+\DoxyCodeLine{00076\ \ \ \ \ HasCos\ \ \ \ =\ 0,}
+\DoxyCodeLine{00077\ \ \ \ \ HasTan\ \ \ \ =\ 0,}
+\DoxyCodeLine{00078\ \ \ \ \ HasASin\ \ \ =\ 0,}
+\DoxyCodeLine{00079\ \ \ \ \ HasACos\ \ \ =\ 0,}
+\DoxyCodeLine{00080\ \ \ \ \ HasATan\ \ \ =\ 0,}
+\DoxyCodeLine{00081\ \ \ \ \ HasSinh\ \ \ =\ 0,}
+\DoxyCodeLine{00082\ \ \ \ \ HasCosh\ \ \ =\ 0,}
+\DoxyCodeLine{00083\ \ \ \ \ HasTanh\ \ \ =\ 0,}
+\DoxyCodeLine{00084\ \ \ \ \ HasLGamma\ =\ 0,}
+\DoxyCodeLine{00085\ \ \ \ \ HasDiGamma\ =\ 0,}
+\DoxyCodeLine{00086\ \ \ \ \ HasZeta\ =\ 0,}
+\DoxyCodeLine{00087\ \ \ \ \ HasPolygamma\ =\ 0,}
+\DoxyCodeLine{00088\ \ \ \ \ HasErf\ =\ 0,}
+\DoxyCodeLine{00089\ \ \ \ \ HasErfc\ =\ 0,}
+\DoxyCodeLine{00090\ \ \ \ \ HasNdtri\ =\ 0,}
+\DoxyCodeLine{00091\ \ \ \ \ HasBessel\ =\ 0,}
+\DoxyCodeLine{00092\ \ \ \ \ HasIGamma\ =\ 0,}
+\DoxyCodeLine{00093\ \ \ \ \ HasIGammaDerA\ =\ 0,}
+\DoxyCodeLine{00094\ \ \ \ \ HasGammaSampleDerAlpha\ =\ 0,}
+\DoxyCodeLine{00095\ \ \ \ \ HasIGammac\ =\ 0,}
+\DoxyCodeLine{00096\ \ \ \ \ HasBetaInc\ =\ 0,}
+\DoxyCodeLine{00097\ }
+\DoxyCodeLine{00098\ \ \ \ \ HasRound\ \ =\ 0,}
+\DoxyCodeLine{00099\ \ \ \ \ HasRint\ \ \ =\ 0,}
+\DoxyCodeLine{00100\ \ \ \ \ HasFloor\ \ =\ 0,}
+\DoxyCodeLine{00101\ \ \ \ \ HasCeil\ \ \ =\ 0,}
+\DoxyCodeLine{00102\ \ \ \ \ HasSign\ \ \ =\ 0}
+\DoxyCodeLine{00103\ \ \ \};}
+\DoxyCodeLine{00104\ \};}
+\DoxyCodeLine{00105\ }
+\DoxyCodeLine{00106\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}}\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1default__packet__traits}{default\_packet\_traits}}}
+\DoxyCodeLine{00107\ \{}
+\DoxyCodeLine{00108\ \ \ \textcolor{keyword}{typedef}\ T\ type;}
+\DoxyCodeLine{00109\ \ \ \textcolor{keyword}{typedef}\ T\ half;}
+\DoxyCodeLine{00110\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00111\ \ \ \ \ Vectorizable\ =\ 0,}
+\DoxyCodeLine{00112\ \ \ \ \ size\ =\ 1,}
+\DoxyCodeLine{00113\ \ \ \ \ AlignedOnScalar\ =\ 0,}
+\DoxyCodeLine{00114\ \ \ \ \ HasHalfPacket\ =\ 0}
+\DoxyCodeLine{00115\ \ \ \};}
+\DoxyCodeLine{00116\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00117\ \ \ \ \ HasAdd\ \ \ \ =\ 0,}
+\DoxyCodeLine{00118\ \ \ \ \ HasSub\ \ \ \ =\ 0,}
+\DoxyCodeLine{00119\ \ \ \ \ HasMul\ \ \ \ =\ 0,}
+\DoxyCodeLine{00120\ \ \ \ \ HasNegate\ =\ 0,}
+\DoxyCodeLine{00121\ \ \ \ \ HasAbs\ \ \ \ =\ 0,}
+\DoxyCodeLine{00122\ \ \ \ \ HasAbs2\ \ \ =\ 0,}
+\DoxyCodeLine{00123\ \ \ \ \ HasMin\ \ \ \ =\ 0,}
+\DoxyCodeLine{00124\ \ \ \ \ HasMax\ \ \ \ =\ 0,}
+\DoxyCodeLine{00125\ \ \ \ \ HasConj\ \ \ =\ 0,}
+\DoxyCodeLine{00126\ \ \ \ \ HasSetLinear\ =\ 0}
+\DoxyCodeLine{00127\ \ \ \};}
+\DoxyCodeLine{00128\ \};}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}}<const\ T>\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}}<T>\ \{\ \};}
+\DoxyCodeLine{00131\ }
+\DoxyCodeLine{00132\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}}
+\DoxyCodeLine{00133\ \{}
+\DoxyCodeLine{00134\ \ \ \textcolor{keyword}{typedef}\ T\ type;}
+\DoxyCodeLine{00135\ \ \ \textcolor{keyword}{typedef}\ T\ half;}
+\DoxyCodeLine{00136\ \ \ \textcolor{keyword}{enum}}
+\DoxyCodeLine{00137\ \ \ \{}
+\DoxyCodeLine{00138\ \ \ \ \ size\ =\ 1,}
+\DoxyCodeLine{00139\ \ \ \ \ alignment\ =\ 1,}
+\DoxyCodeLine{00140\ \ \ \ \ vectorizable\ =\ \textcolor{keyword}{false},}
+\DoxyCodeLine{00141\ \ \ \ \ masked\_load\_available=\textcolor{keyword}{false},}
+\DoxyCodeLine{00142\ \ \ \ \ masked\_store\_available=\textcolor{keyword}{false}}
+\DoxyCodeLine{00143\ \ \ \};}
+\DoxyCodeLine{00144\ \};}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}<const\ T>\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}<T>\ \{\ \};}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Src,\ \textcolor{keyword}{typename}\ Tgt>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1type__casting__traits}{type\_casting\_traits}}\ \{}
+\DoxyCodeLine{00149\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00150\ \ \ \ \ VectorizedCast\ =\ 0,}
+\DoxyCodeLine{00151\ \ \ \ \ SrcCoeffRatio\ =\ 1,}
+\DoxyCodeLine{00152\ \ \ \ \ TgtCoeffRatio\ =\ 1}
+\DoxyCodeLine{00153\ \ \ \};}
+\DoxyCodeLine{00154\ \};}
+\DoxyCodeLine{00155\ \textcolor{comment}{}}
+\DoxyCodeLine{00156\ \textcolor{comment}{/**\ \(\backslash\)internal\ Wrapper\ to\ ensure\ that\ multiple\ packet\ types\ can\ map\ to\ the\ same}}
+\DoxyCodeLine{00157\ \textcolor{comment}{\ \ \ \ same\ underlying\ vector\ type.\ */}}
+\DoxyCodeLine{00158\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keywordtype}{int}\ unique\_\textcolor{keywordtype}{id}\ =\ 0>}
+\DoxyCodeLine{00159\ \textcolor{keyword}{struct\ }eigen\_packet\_wrapper}
+\DoxyCodeLine{00160\ \{}
+\DoxyCodeLine{00161\ \ \ EIGEN\_ALWAYS\_INLINE\ \textcolor{keyword}{operator}\ T\&()\ \{\ \textcolor{keywordflow}{return}\ m\_val;\ \}}
+\DoxyCodeLine{00162\ \ \ EIGEN\_ALWAYS\_INLINE\ \textcolor{keyword}{operator}\ \textcolor{keyword}{const}\ T\&()\ \textcolor{keyword}{const}\ \{\ \textcolor{keywordflow}{return}\ m\_val;\ \}}
+\DoxyCodeLine{00163\ \ \ EIGEN\_ALWAYS\_INLINE\ eigen\_packet\_wrapper()\ \{\};}
+\DoxyCodeLine{00164\ \ \ EIGEN\_ALWAYS\_INLINE\ eigen\_packet\_wrapper(\textcolor{keyword}{const}\ T\ \&v)\ :\ m\_val(v)\ \{\}}
+\DoxyCodeLine{00165\ \ \ EIGEN\_ALWAYS\_INLINE\ eigen\_packet\_wrapper\&\ operator=(\textcolor{keyword}{const}\ T\ \&v)\ \{}
+\DoxyCodeLine{00166\ \ \ \ \ m\_val\ =\ v;}
+\DoxyCodeLine{00167\ \ \ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{this};}
+\DoxyCodeLine{00168\ \ \ \}}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ T\ m\_val;}
+\DoxyCodeLine{00171\ \};}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ \textcolor{comment}{}}
+\DoxyCodeLine{00174\ \textcolor{comment}{/**\ \(\backslash\)internal\ A\ convenience\ utility\ for\ determining\ if\ the\ type\ is\ a\ scalar.}}
+\DoxyCodeLine{00175\ \textcolor{comment}{\ *\ This\ is\ used\ to\ enable\ some\ generic\ packet\ implementations.}}
+\DoxyCodeLine{00176\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00177\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00178\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__scalar}{is\_scalar}}\ \{}
+\DoxyCodeLine{00179\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ Scalar;}
+\DoxyCodeLine{00180\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00181\ \ \ \ \ value\ =\ internal::is\_same<Packet,\ Scalar>::value}
+\DoxyCodeLine{00182\ \ \ \};}
+\DoxyCodeLine{00183\ \};}
+\DoxyCodeLine{00184\ \textcolor{comment}{}}
+\DoxyCodeLine{00185\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ static\_cast<TgtType>(a)\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00186\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SrcPacket,\ \textcolor{keyword}{typename}\ TgtPacket>}
+\DoxyCodeLine{00187\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ TgtPacket}
+\DoxyCodeLine{00188\ pcast(\textcolor{keyword}{const}\ SrcPacket\&\ a)\ \{}
+\DoxyCodeLine{00189\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}TgtPacket\textcolor{keyword}{>}(a);}
+\DoxyCodeLine{00190\ \}}
+\DoxyCodeLine{00191\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SrcPacket,\ \textcolor{keyword}{typename}\ TgtPacket>}
+\DoxyCodeLine{00192\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ TgtPacket}
+\DoxyCodeLine{00193\ pcast(\textcolor{keyword}{const}\ SrcPacket\&\ a,\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*b*/})\ \{}
+\DoxyCodeLine{00194\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}TgtPacket\textcolor{keyword}{>}(a);}
+\DoxyCodeLine{00195\ \}}
+\DoxyCodeLine{00196\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SrcPacket,\ \textcolor{keyword}{typename}\ TgtPacket>}
+\DoxyCodeLine{00197\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ TgtPacket}
+\DoxyCodeLine{00198\ pcast(\textcolor{keyword}{const}\ SrcPacket\&\ a,\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*b*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*c*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*d*/})\ \{}
+\DoxyCodeLine{00199\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}TgtPacket\textcolor{keyword}{>}(a);}
+\DoxyCodeLine{00200\ \}}
+\DoxyCodeLine{00201\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ SrcPacket,\ \textcolor{keyword}{typename}\ TgtPacket>}
+\DoxyCodeLine{00202\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ TgtPacket}
+\DoxyCodeLine{00203\ pcast(\textcolor{keyword}{const}\ SrcPacket\&\ a,\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*b*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*c*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*d*/},}
+\DoxyCodeLine{00204\ \ \ \ \ \ \ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*e*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*f*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*g*/},\ \textcolor{keyword}{const}\ SrcPacket\&\ \textcolor{comment}{/*h*/})\ \{}
+\DoxyCodeLine{00205\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}TgtPacket\textcolor{keyword}{>}(a);}
+\DoxyCodeLine{00206\ \}}
+\DoxyCodeLine{00207\ \textcolor{comment}{}}
+\DoxyCodeLine{00208\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ reinterpret\_cast<Target>(a)\ */}}
+\DoxyCodeLine{00209\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Target,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00210\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Target}
+\DoxyCodeLine{00211\ preinterpret(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a);\ \textcolor{comment}{/*\ \{\ return\ reinterpret\_cast<const\ Target\&>(a);\ \}\ */}}
+\DoxyCodeLine{00212\ \textcolor{comment}{}}
+\DoxyCodeLine{00213\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ +\ b\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00214\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00215\ padd(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a+b;\ \}}
+\DoxyCodeLine{00216\ \textcolor{comment}{//\ Avoid\ compiler\ warning\ for\ boolean\ algebra.}}
+\DoxyCodeLine{00217\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00218\ padd(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a\ ||\ b;\ \}}
+\DoxyCodeLine{00219\ \textcolor{comment}{}}
+\DoxyCodeLine{00220\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ -\/\ b\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00221\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00222\ psub(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a-\/b;\ \}}
+\DoxyCodeLine{00223\ \textcolor{comment}{}}
+\DoxyCodeLine{00224\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ -\/a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00225\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00226\ pnegate(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ -\/a;\ \}}
+\DoxyCodeLine{00227\ }
+\DoxyCodeLine{00228\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00229\ pnegate(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ !a;\ \}}
+\DoxyCodeLine{00230\ \textcolor{comment}{}}
+\DoxyCodeLine{00231\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ conj(a)\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00232\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00233\ pconj(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ numext::conj(a);\ \}}
+\DoxyCodeLine{00234\ \textcolor{comment}{}}
+\DoxyCodeLine{00235\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ *\ b\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00236\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00237\ pmul(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a*b;\ \}}
+\DoxyCodeLine{00238\ \textcolor{comment}{//\ Avoid\ compiler\ warning\ for\ boolean\ algebra.}}
+\DoxyCodeLine{00239\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}}
+\DoxyCodeLine{00240\ pmul(\textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a\ \&\&\ b;\ \}}
+\DoxyCodeLine{00241\ \textcolor{comment}{}}
+\DoxyCodeLine{00242\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ /\ b\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00243\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00244\ pdiv(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a/b;\ \}}
+\DoxyCodeLine{00245\ }
+\DoxyCodeLine{00246\ \textcolor{comment}{//\ In\ the\ generic\ case,\ memset\ to\ all\ one\ bits.}}
+\DoxyCodeLine{00247\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ EnableIf\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00248\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1ptrue__impl}{ptrue\_impl}}\ \{}
+\DoxyCodeLine{00249\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \textcolor{comment}{/*a*/})\{}
+\DoxyCodeLine{00250\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ b;}
+\DoxyCodeLine{00251\ \ \ \ \ memset(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\&b),\ 0xff,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}));}
+\DoxyCodeLine{00252\ \ \ \ \ \textcolor{keywordflow}{return}\ b;}
+\DoxyCodeLine{00253\ \ \ \}}
+\DoxyCodeLine{00254\ \};}
+\DoxyCodeLine{00255\ }
+\DoxyCodeLine{00256\ \textcolor{comment}{//\ For\ non-\/trivial\ scalars,\ set\ to\ Scalar(1)\ (i.e.\ a\ non-\/zero\ value).}}
+\DoxyCodeLine{00257\ \textcolor{comment}{//\ Although\ this\ is\ technically\ not\ a\ valid\ bitmask,\ the\ scalar\ path\ for\ pselect}}
+\DoxyCodeLine{00258\ \textcolor{comment}{//\ uses\ a\ comparison\ to\ zero,\ so\ this\ should\ still\ work\ in\ most\ cases.\ We\ don't}}
+\DoxyCodeLine{00259\ \textcolor{comment}{//\ have\ another\ option,\ since\ the\ scalar\ type\ requires\ initialization.}}
+\DoxyCodeLine{00260\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00261\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1ptrue__impl}{ptrue\_impl}}<T,}
+\DoxyCodeLine{00262\ \ \ \ \ typename\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<is\_scalar<T>::value\ \&\&\ NumTraits<T>::RequireInitialization>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ >\ \{}
+\DoxyCodeLine{00263\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ T\ run(\textcolor{keyword}{const}\ T\&\ \textcolor{comment}{/*a*/})\{}
+\DoxyCodeLine{00264\ \ \ \ \ \textcolor{keywordflow}{return}\ T(1);}
+\DoxyCodeLine{00265\ \ \ \}}
+\DoxyCodeLine{00266\ \};}
+\DoxyCodeLine{00267\ \textcolor{comment}{}}
+\DoxyCodeLine{00268\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ one\ bits.\ */}}
+\DoxyCodeLine{00269\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00270\ ptrue(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00271\ \ \ \textcolor{keywordflow}{return}\ ptrue\_impl<Packet>::run(a);}
+\DoxyCodeLine{00272\ \}}
+\DoxyCodeLine{00273\ }
+\DoxyCodeLine{00274\ \textcolor{comment}{//\ In\ the\ general\ case,\ memset\ to\ zero.}}
+\DoxyCodeLine{00275\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ EnableIf\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00276\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pzero__impl}{pzero\_impl}}\ \{}
+\DoxyCodeLine{00277\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{00278\ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ b;}
+\DoxyCodeLine{00279\ \ \ \ \ memset(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{void}*\textcolor{keyword}{>}(\&b),\ 0x00,\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}));}
+\DoxyCodeLine{00280\ \ \ \ \ \textcolor{keywordflow}{return}\ b;}
+\DoxyCodeLine{00281\ \ \ \}}
+\DoxyCodeLine{00282\ \};}
+\DoxyCodeLine{00283\ }
+\DoxyCodeLine{00284\ \textcolor{comment}{//\ For\ scalars,\ explicitly\ set\ to\ Scalar(0),\ since\ the\ underlying\ representation}}
+\DoxyCodeLine{00285\ \textcolor{comment}{//\ for\ zero\ may\ not\ consist\ of\ all-\/zero\ bits.}}
+\DoxyCodeLine{00286\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00287\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pzero__impl}{pzero\_impl}}<T,}
+\DoxyCodeLine{00288\ \ \ \ \ typename\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<is\_scalar<T>::value>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}>\ \{}
+\DoxyCodeLine{00289\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ T\ run(\textcolor{keyword}{const}\ T\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{00290\ \ \ \ \ \textcolor{keywordflow}{return}\ T(0);}
+\DoxyCodeLine{00291\ \ \ \}}
+\DoxyCodeLine{00292\ \};}
+\DoxyCodeLine{00293\ \textcolor{comment}{}}
+\DoxyCodeLine{00294\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ packet\ of\ zeros\ */}}
+\DoxyCodeLine{00295\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00296\ pzero(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00297\ \ \ \textcolor{keywordflow}{return}\ pzero\_impl<Packet>::run(a);}
+\DoxyCodeLine{00298\ \}}
+\DoxyCodeLine{00299\ \textcolor{comment}{}}
+\DoxyCodeLine{00300\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ <=\ b\ as\ a\ bit\ mask\ */}}
+\DoxyCodeLine{00301\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Packet}
+\DoxyCodeLine{00302\ pcmp\_le(\textcolor{keyword}{const}\ Packet\&\ a,\ \textcolor{keyword}{const}\ Packet\&\ b)\ \ \{\ \textcolor{keywordflow}{return}\ a<=b\ ?\ ptrue(a)\ :\ pzero(a);\ \}}
+\DoxyCodeLine{00303\ \textcolor{comment}{}}
+\DoxyCodeLine{00304\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ <\ b\ as\ a\ bit\ mask\ */}}
+\DoxyCodeLine{00305\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Packet}
+\DoxyCodeLine{00306\ pcmp\_lt(\textcolor{keyword}{const}\ Packet\&\ a,\ \textcolor{keyword}{const}\ Packet\&\ b)\ \ \{\ \textcolor{keywordflow}{return}\ a<b\ ?\ ptrue(a)\ :\ pzero(a);\ \}}
+\DoxyCodeLine{00307\ \textcolor{comment}{}}
+\DoxyCodeLine{00308\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ ==\ b\ as\ a\ bit\ mask\ */}}
+\DoxyCodeLine{00309\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00310\ pcmp\_eq(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a==b\ ?\ ptrue(a)\ :\ pzero(a);\ \}}
+\DoxyCodeLine{00311\ \textcolor{comment}{}}
+\DoxyCodeLine{00312\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ <\ b\ or\ a==NaN\ or\ b==NaN\ as\ a\ bit\ mask\ */}}
+\DoxyCodeLine{00313\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00314\ pcmp\_lt\_or\_nan(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ a>=b\ ?\ pzero(a)\ :\ ptrue(a);\ \}}
+\DoxyCodeLine{00315\ }
+\DoxyCodeLine{00316\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00317\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bit__and}{bit\_and}}\ \{}
+\DoxyCodeLine{00318\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR\ EIGEN\_ALWAYS\_INLINE\ T\ operator()(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00319\ \ \ \ \ \textcolor{keywordflow}{return}\ a\ \&\ b;}
+\DoxyCodeLine{00320\ \ \ \}}
+\DoxyCodeLine{00321\ \};}
+\DoxyCodeLine{00322\ }
+\DoxyCodeLine{00323\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00324\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bit__or}{bit\_or}}\ \{}
+\DoxyCodeLine{00325\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR\ EIGEN\_ALWAYS\_INLINE\ T\ operator()(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00326\ \ \ \ \ \textcolor{keywordflow}{return}\ a\ |\ b;}
+\DoxyCodeLine{00327\ \ \ \}}
+\DoxyCodeLine{00328\ \};}
+\DoxyCodeLine{00329\ }
+\DoxyCodeLine{00330\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00331\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bit__xor}{bit\_xor}}\ \{}
+\DoxyCodeLine{00332\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR\ EIGEN\_ALWAYS\_INLINE\ T\ operator()(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00333\ \ \ \ \ \textcolor{keywordflow}{return}\ a\ \string^\ b;}
+\DoxyCodeLine{00334\ \ \ \}}
+\DoxyCodeLine{00335\ \};}
+\DoxyCodeLine{00336\ }
+\DoxyCodeLine{00337\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00338\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bit__not}{bit\_not}}\ \{}
+\DoxyCodeLine{00339\ \ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_CONSTEXPR\ EIGEN\_ALWAYS\_INLINE\ T\ operator()(\textcolor{keyword}{const}\ T\&\ a)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00340\ \ \ \ \ \textcolor{keywordflow}{return}\ \string~a;}
+\DoxyCodeLine{00341\ \ \ \}}
+\DoxyCodeLine{00342\ \};}
+\DoxyCodeLine{00343\ }
+\DoxyCodeLine{00344\ \textcolor{comment}{//\ Use\ operators\ \&,\ |,\ \string^,\ \string~.}}
+\DoxyCodeLine{00345\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00346\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1operator__bitwise__helper}{operator\_bitwise\_helper}}\ \{}
+\DoxyCodeLine{00347\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_and(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__and}{bit\_and<T>}}()(a,\ b);\ \}}
+\DoxyCodeLine{00348\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_or(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__or}{bit\_or<T>}}()(a,\ b);\ \}}
+\DoxyCodeLine{00349\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_xor(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__xor}{bit\_xor<T>}}()(a,\ b);\ \}}
+\DoxyCodeLine{00350\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_not(\textcolor{keyword}{const}\ T\&\ a)\ \{\ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__not}{bit\_not<T>}}()(a);\ \}}
+\DoxyCodeLine{00351\ \};}
+\DoxyCodeLine{00352\ }
+\DoxyCodeLine{00353\ \textcolor{comment}{//\ Apply\ binary\ operations\ byte-\/by-\/byte}}
+\DoxyCodeLine{00354\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00355\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bytewise__bitwise__helper}{bytewise\_bitwise\_helper}}\ \{}
+\DoxyCodeLine{00356\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_and(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\ \{}
+\DoxyCodeLine{00357\ \ \ \ \ \textcolor{keywordflow}{return}\ binary(a,\ b,\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__and}{bit\_and<unsigned\ char>}}());}
+\DoxyCodeLine{00358\ \ \ \}}
+\DoxyCodeLine{00359\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_or(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\ \{}
+\DoxyCodeLine{00360\ \ \ \ \ \textcolor{keywordflow}{return}\ binary(a,\ b,\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__or}{bit\_or<unsigned\ char>}}());}
+\DoxyCodeLine{00361\ \ \ \ \}}
+\DoxyCodeLine{00362\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_xor(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b)\ \{}
+\DoxyCodeLine{00363\ \ \ \ \ \textcolor{keywordflow}{return}\ binary(a,\ b,\ \mbox{\hyperlink{structEigen_1_1internal_1_1bit__xor}{bit\_xor<unsigned\ char>}}());}
+\DoxyCodeLine{00364\ \ \ \}}
+\DoxyCodeLine{00365\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ bitwise\_not(\textcolor{keyword}{const}\ T\&\ a)\ \{}
+\DoxyCodeLine{00366\ \ \ \ \ \textcolor{keywordflow}{return}\ unary(a,\mbox{\hyperlink{structEigen_1_1internal_1_1bit__not}{bit\_not<unsigned\ char>}}());}
+\DoxyCodeLine{00367\ \ \ \ \}}
+\DoxyCodeLine{00368\ }
+\DoxyCodeLine{00369\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00370\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00371\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ unary(\textcolor{keyword}{const}\ T\&\ a,\ Op\ op)\ \{}
+\DoxyCodeLine{00372\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ a\_ptr\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{00373\ \ \ \ \ T\ c;}
+\DoxyCodeLine{00374\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ c\_ptr\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&c);}
+\DoxyCodeLine{00375\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \textcolor{keyword}{sizeof}(T);\ ++i)\ \{}
+\DoxyCodeLine{00376\ \ \ \ \ \ \ *c\_ptr++\ =\ op(*a\_ptr++);}
+\DoxyCodeLine{00377\ \ \ \ \ \}}
+\DoxyCodeLine{00378\ \ \ \ \ \textcolor{keywordflow}{return}\ c;}
+\DoxyCodeLine{00379\ \ \ \}}
+\DoxyCodeLine{00380\ }
+\DoxyCodeLine{00381\ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00382\ \ \ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{static}\ \textcolor{keyword}{inline}\ T\ binary(\textcolor{keyword}{const}\ T\&\ a,\ \textcolor{keyword}{const}\ T\&\ b,\ Op\ op)\ \{}
+\DoxyCodeLine{00383\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ a\_ptr\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{00384\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ b\_ptr\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{00385\ \ \ \ \ T\ c;}
+\DoxyCodeLine{00386\ \ \ \ \ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\ c\_ptr\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{char}*\textcolor{keyword}{>}(\&c);}
+\DoxyCodeLine{00387\ \ \ \ \ \textcolor{keywordflow}{for}\ (\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ \textcolor{keyword}{sizeof}(T);\ ++i)\ \{}
+\DoxyCodeLine{00388\ \ \ \ \ \ \ *c\_ptr++\ =\ op(*a\_ptr++,\ *b\_ptr++);}
+\DoxyCodeLine{00389\ \ \ \ \ \}}
+\DoxyCodeLine{00390\ \ \ \ \ \textcolor{keywordflow}{return}\ c;}
+\DoxyCodeLine{00391\ \ \ \}}
+\DoxyCodeLine{00392\ \};}
+\DoxyCodeLine{00393\ }
+\DoxyCodeLine{00394\ \textcolor{comment}{//\ In\ the\ general\ case,\ use\ byte-\/by-\/byte\ manipulation.}}
+\DoxyCodeLine{00395\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T,\ \textcolor{keyword}{typename}\ EnableIf\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00396\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bitwise__helper}{bitwise\_helper}}\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1bytewise__bitwise__helper}{bytewise\_bitwise\_helper}}<T>\ \{\};}
+\DoxyCodeLine{00397\ }
+\DoxyCodeLine{00398\ \textcolor{comment}{//\ For\ integers\ or\ non-\/trivial\ scalars,\ use\ binary\ operators.}}
+\DoxyCodeLine{00399\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ T>}
+\DoxyCodeLine{00400\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1bitwise__helper}{bitwise\_helper}}<T,}
+\DoxyCodeLine{00401\ \ \ typename\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<}
+\DoxyCodeLine{00402\ \ \ \ \ is\_scalar<T>::value\ \&\&\ (NumTraits<T>::IsInteger\ ||\ NumTraits<T>::RequireInitialization)>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}}
+\DoxyCodeLine{00403\ \ \ >\ :\ \textcolor{keyword}{public}\ \mbox{\hyperlink{structEigen_1_1internal_1_1operator__bitwise__helper}{operator\_bitwise\_helper}}<T>\ \{\};}
+\DoxyCodeLine{00404\ \textcolor{comment}{}}
+\DoxyCodeLine{00405\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ bitwise\ and\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ */}}
+\DoxyCodeLine{00406\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00407\ pand(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{}
+\DoxyCodeLine{00408\ \ \ \textcolor{keywordflow}{return}\ bitwise\_helper<Packet>::bitwise\_and(a,\ b);}
+\DoxyCodeLine{00409\ \}}
+\DoxyCodeLine{00410\ \textcolor{comment}{}}
+\DoxyCodeLine{00411\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ bitwise\ or\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ */}}
+\DoxyCodeLine{00412\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Packet}
+\DoxyCodeLine{00413\ por(\textcolor{keyword}{const}\ Packet\&\ a,\ \textcolor{keyword}{const}\ Packet\&\ b)\ \{}
+\DoxyCodeLine{00414\ \ \ \textcolor{keywordflow}{return}\ bitwise\_helper<Packet>::bitwise\_or(a,\ b);}
+\DoxyCodeLine{00415\ \}}
+\DoxyCodeLine{00416\ \textcolor{comment}{}}
+\DoxyCodeLine{00417\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ bitwise\ xor\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ */}}
+\DoxyCodeLine{00418\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Packet}
+\DoxyCodeLine{00419\ pxor(\textcolor{keyword}{const}\ Packet\&\ a,\ \textcolor{keyword}{const}\ Packet\&\ b)\ \{}
+\DoxyCodeLine{00420\ \ \ \textcolor{keywordflow}{return}\ bitwise\_helper<Packet>::bitwise\_xor(a,\ b);}
+\DoxyCodeLine{00421\ \}}
+\DoxyCodeLine{00422\ \textcolor{comment}{}}
+\DoxyCodeLine{00423\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ bitwise\ not\ of\ \(\backslash\)a\ a\ */}}
+\DoxyCodeLine{00424\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00425\ pnot(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00426\ \ \ \textcolor{keywordflow}{return}\ bitwise\_helper<Packet>::bitwise\_not(a);}
+\DoxyCodeLine{00427\ \}}
+\DoxyCodeLine{00428\ \textcolor{comment}{}}
+\DoxyCodeLine{00429\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ bitwise\ and\ of\ \(\backslash\)a\ a\ and\ not\ \(\backslash\)a\ b\ */}}
+\DoxyCodeLine{00430\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00431\ pandnot(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ pand(a,\ pnot(b));\ \}}
+\DoxyCodeLine{00432\ }
+\DoxyCodeLine{00433\ \textcolor{comment}{//\ In\ the\ general\ case,\ use\ bitwise\ select.}}
+\DoxyCodeLine{00434\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ EnableIf\ =\ \textcolor{keywordtype}{void}>}
+\DoxyCodeLine{00435\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pselect__impl}{pselect\_impl}}\ \{}
+\DoxyCodeLine{00436\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ mask,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{}
+\DoxyCodeLine{00437\ \ \ \ \ \textcolor{keywordflow}{return}\ por(pand(a,mask),pandnot(b,mask));}
+\DoxyCodeLine{00438\ \ \ \}}
+\DoxyCodeLine{00439\ \};}
+\DoxyCodeLine{00440\ }
+\DoxyCodeLine{00441\ \textcolor{comment}{//\ For\ scalars,\ use\ ternary\ select.}}
+\DoxyCodeLine{00442\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00443\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pselect__impl}{pselect\_impl}}<\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},}
+\DoxyCodeLine{00444\ \ \ \ \ typename\ internal::\mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if}}<is\_scalar<Packet>::value>\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{::type}}\ >\ \{}
+\DoxyCodeLine{00445\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ mask,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{}
+\DoxyCodeLine{00446\ \ \ \ \ \textcolor{keywordflow}{return}\ numext::equal\_strict(mask,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(0))\ ?\ b\ :\ a;}
+\DoxyCodeLine{00447\ \ \ \}}
+\DoxyCodeLine{00448\ \};}
+\DoxyCodeLine{00449\ \textcolor{comment}{}}
+\DoxyCodeLine{00450\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ \(\backslash\)a\ or\ \(\backslash\)b\ for\ each\ field\ in\ packet\ according\ to\ \(\backslash\)mask\ */}}
+\DoxyCodeLine{00451\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00452\ pselect(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ mask,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{}
+\DoxyCodeLine{00453\ \ \ \textcolor{keywordflow}{return}\ pselect\_impl<Packet>::run(mask,\ a,\ b);}
+\DoxyCodeLine{00454\ \}}
+\DoxyCodeLine{00455\ }
+\DoxyCodeLine{00456\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ pselect<bool>(}
+\DoxyCodeLine{00457\ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ cond,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ a,\ \textcolor{keyword}{const}\ \textcolor{keywordtype}{bool}\&\ b)\ \{}
+\DoxyCodeLine{00458\ \ \ \textcolor{keywordflow}{return}\ cond\ ?\ a\ :\ b;}
+\DoxyCodeLine{00459\ \}}
+\DoxyCodeLine{00460\ \textcolor{comment}{}}
+\DoxyCodeLine{00461\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ or\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ (coeff-\/wise)}}
+\DoxyCodeLine{00462\ \textcolor{comment}{\ \ \ \ If\ either\ \(\backslash\)a\ a\ or\ \(\backslash\)a\ b\ are\ NaN,\ the\ result\ is\ implementation\ defined.\ */}}
+\DoxyCodeLine{00463\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ NaNPropagation>}
+\DoxyCodeLine{00464\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pminmax__impl}{pminmax\_impl}}\ \{}
+\DoxyCodeLine{00465\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00466\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b,\ Op\ op)\ \{}
+\DoxyCodeLine{00467\ \ \ \ \ \textcolor{keywordflow}{return}\ op(a,b);}
+\DoxyCodeLine{00468\ \ \ \}}
+\DoxyCodeLine{00469\ \};}
+\DoxyCodeLine{00470\ \textcolor{comment}{}}
+\DoxyCodeLine{00471\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ or\ max\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ (coeff-\/wise)}}
+\DoxyCodeLine{00472\ \textcolor{comment}{\ \ \ \ If\ either\ \(\backslash\)a\ a\ or\ \(\backslash\)a\ b\ are\ NaN,\ NaN\ is\ returned.\ */}}
+\DoxyCodeLine{00473\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00474\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pminmax__impl}{pminmax\_impl}}<\mbox{\hyperlink{group__enums_gga7f4e3f96895bdb325eab1a0b651e211fa1d414f9966ecba69cd840b8def472c4a}{PropagateNaN}}>\ \{}
+\DoxyCodeLine{00475\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00476\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b,\ Op\ op)\ \{}
+\DoxyCodeLine{00477\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ not\_nan\_mask\_a\ =\ pcmp\_eq(a,\ a);}
+\DoxyCodeLine{00478\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ not\_nan\_mask\_b\ =\ pcmp\_eq(b,\ b);}
+\DoxyCodeLine{00479\ \ \ \textcolor{keywordflow}{return}\ pselect(not\_nan\_mask\_a,}
+\DoxyCodeLine{00480\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(not\_nan\_mask\_b,\ op(a,\ b),\ b),}
+\DoxyCodeLine{00481\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ a);}
+\DoxyCodeLine{00482\ \ \ \}}
+\DoxyCodeLine{00483\ \};}
+\DoxyCodeLine{00484\ \textcolor{comment}{}}
+\DoxyCodeLine{00485\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ or\ max\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ (coeff-\/wise)}}
+\DoxyCodeLine{00486\ \textcolor{comment}{\ \ \ \ If\ both\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ are\ NaN,\ NaN\ is\ returned.}}
+\DoxyCodeLine{00487\ \textcolor{comment}{\ \ \ \ Equivalent\ to\ std::fmin(a,\ b).\ \ */}}
+\DoxyCodeLine{00488\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00489\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1pminmax__impl}{pminmax\_impl}}<\mbox{\hyperlink{group__enums_gga7f4e3f96895bdb325eab1a0b651e211fa5bfaff916ad4913fd04fe2e92c5c32ae}{PropagateNumbers}}>\ \{}
+\DoxyCodeLine{00490\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00491\ \ \ \textcolor{keyword}{static}\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ run(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b,\ Op\ op)\ \{}
+\DoxyCodeLine{00492\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ not\_nan\_mask\_a\ =\ pcmp\_eq(a,\ a);}
+\DoxyCodeLine{00493\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ not\_nan\_mask\_b\ =\ pcmp\_eq(b,\ b);}
+\DoxyCodeLine{00494\ \ \ \textcolor{keywordflow}{return}\ pselect(not\_nan\_mask\_a,}
+\DoxyCodeLine{00495\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pselect(not\_nan\_mask\_b,\ op(a,\ b),\ a),}
+\DoxyCodeLine{00496\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ b);}
+\DoxyCodeLine{00497\ \ \ \}}
+\DoxyCodeLine{00498\ \};}
+\DoxyCodeLine{00499\ }
+\DoxyCodeLine{00500\ }
+\DoxyCodeLine{00501\ \textcolor{preprocessor}{\#ifndef\ SYCL\_DEVICE\_ONLY}}
+\DoxyCodeLine{00502\ \textcolor{preprocessor}{\#define\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(Type,\ Func)\ Func}}
+\DoxyCodeLine{00503\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00504\ \textcolor{preprocessor}{\#define\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(Type,\ Func)\ \(\backslash\)}}
+\DoxyCodeLine{00505\ \textcolor{preprocessor}{[](const\ Type\&\ a,\ const\ Type\&\ b)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00506\ \textcolor{preprocessor}{\ \ \ \ \ \ \ \ return\ Func(a,\ b);\}}}
+\DoxyCodeLine{00507\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00508\ \textcolor{comment}{}}
+\DoxyCodeLine{00509\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ \ (coeff-\/wise).}}
+\DoxyCodeLine{00510\ \textcolor{comment}{\ \ \ \ If\ \(\backslash\)a\ a\ or\ \(\backslash\)b\ b\ is\ NaN,\ the\ return\ value\ is\ implementation\ defined.\ */}}
+\DoxyCodeLine{00511\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00512\ pmin(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ numext::mini(a,b);\ \}}
+\DoxyCodeLine{00513\ \textcolor{comment}{}}
+\DoxyCodeLine{00514\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ \ (coeff-\/wise).}}
+\DoxyCodeLine{00515\ \textcolor{comment}{\ \ \ \ NaNPropagation\ determines\ the\ NaN\ propagation\ semantics.\ */}}
+\DoxyCodeLine{00516\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NaNPropagation,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00517\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Packet\ pmin(\textcolor{keyword}{const}\ Packet\&\ a,\ \textcolor{keyword}{const}\ Packet\&\ b)\ \{}
+\DoxyCodeLine{00518\ \ \ \textcolor{keywordflow}{return}\ pminmax\_impl<NaNPropagation>::run(a,\ b,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(Packet,\ (pmin<Packet>)));}
+\DoxyCodeLine{00519\ \}}
+\DoxyCodeLine{00520\ \textcolor{comment}{}}
+\DoxyCodeLine{00521\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ max\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ \ (coeff-\/wise)}}
+\DoxyCodeLine{00522\ \textcolor{comment}{\ \ \ \ If\ \(\backslash\)a\ a\ or\ \(\backslash\)b\ b\ is\ NaN,\ the\ return\ value\ is\ implementation\ defined.\ */}}
+\DoxyCodeLine{00523\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ Packet}
+\DoxyCodeLine{00524\ pmax(\textcolor{keyword}{const}\ Packet\&\ a,\ \textcolor{keyword}{const}\ Packet\&\ b)\ \{\ \textcolor{keywordflow}{return}\ numext::maxi(a,\ b);\ \}}
+\DoxyCodeLine{00525\ \textcolor{comment}{}}
+\DoxyCodeLine{00526\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ max\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ \ (coeff-\/wise).}}
+\DoxyCodeLine{00527\ \textcolor{comment}{\ \ \ \ NaNPropagation\ determines\ the\ NaN\ propagation\ semantics.\ */}}
+\DoxyCodeLine{00528\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NaNPropagation,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00529\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pmax(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{}
+\DoxyCodeLine{00530\ \ \ \textcolor{keywordflow}{return}\ pminmax\_impl<NaNPropagation>::run(a,\ b,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}},(pmax<Packet>)));}
+\DoxyCodeLine{00531\ \}}
+\DoxyCodeLine{00532\ \textcolor{comment}{}}
+\DoxyCodeLine{00533\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ absolute\ value\ of\ \(\backslash\)a\ a\ */}}
+\DoxyCodeLine{00534\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00535\ pabs(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ numext::abs(a);\ \}}
+\DoxyCodeLine{00536\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00537\ pabs(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00538\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}}
+\DoxyCodeLine{00539\ pabs(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00540\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}}
+\DoxyCodeLine{00541\ pabs(\textcolor{keyword}{const}\ \textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{long}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00542\ \textcolor{comment}{}}
+\DoxyCodeLine{00543\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ addsub\ value\ of\ \(\backslash\)a\ a,b\ */}}
+\DoxyCodeLine{00544\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00545\ paddsub(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{}
+\DoxyCodeLine{00546\ \ \ \textcolor{keywordflow}{return}\ pselect(peven\_mask(a),\ padd(a,\ b),\ psub(a,\ b));}
+\DoxyCodeLine{00547\ \ \}}
+\DoxyCodeLine{00548\ \textcolor{comment}{}}
+\DoxyCodeLine{00549\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ phase\ angle\ of\ \(\backslash\)a\ a\ */}}
+\DoxyCodeLine{00550\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00551\ parg(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keyword}{using\ }numext::arg;\ \textcolor{keywordflow}{return}\ arg(a);\ \}}
+\DoxyCodeLine{00552\ }
+\DoxyCodeLine{00553\ \textcolor{comment}{}}
+\DoxyCodeLine{00554\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ \(\backslash\)a\ a\ logically\ shifted\ by\ N\ bits\ to\ the\ right\ */}}
+\DoxyCodeLine{00555\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00556\ parithmetic\_shift\_right(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a\ >>\ N;\ \}}
+\DoxyCodeLine{00557\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00558\ parithmetic\_shift\_right(\textcolor{keyword}{const}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a\ >>\ N;\ \}}
+\DoxyCodeLine{00559\ \textcolor{comment}{}}
+\DoxyCodeLine{00560\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ \(\backslash\)a\ a\ arithmetically\ shifted\ by\ N\ bits\ to\ the\ right\ */}}
+\DoxyCodeLine{00561\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00562\ plogical\_shift\_right(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{int}\textcolor{keyword}{>}(a)\ >>\ N);\ \}}
+\DoxyCodeLine{00563\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00564\ plogical\_shift\_right(\textcolor{keyword}{const}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{long}\textcolor{keyword}{>}(\textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{unsigned}\ \textcolor{keywordtype}{long}\textcolor{keyword}{>}(a)\ >>\ N);\ \}}
+\DoxyCodeLine{00565\ \textcolor{comment}{}}
+\DoxyCodeLine{00566\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ \(\backslash\)a\ a\ shifted\ by\ N\ bits\ to\ the\ left\ */}}
+\DoxyCodeLine{00567\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00568\ plogical\_shift\_left(\textcolor{keyword}{const}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a\ <<\ N;\ \}}
+\DoxyCodeLine{00569\ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ N>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}}
+\DoxyCodeLine{00570\ plogical\_shift\_left(\textcolor{keyword}{const}\ \textcolor{keywordtype}{long}\ \textcolor{keywordtype}{int}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a\ <<\ N;\ \}}
+\DoxyCodeLine{00571\ \textcolor{comment}{}}
+\DoxyCodeLine{00572\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ significant\ and\ exponent\ of\ the\ underlying\ floating\ point\ numbers}}
+\DoxyCodeLine{00573\ \textcolor{comment}{\ \ *\ See\ https://en.cppreference.com/w/cpp/numeric/math/frexp}}
+\DoxyCodeLine{00574\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00575\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00576\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pfrexp(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ exponent)\ \{}
+\DoxyCodeLine{00577\ \ \ \textcolor{keywordtype}{int}\ exp;}
+\DoxyCodeLine{00578\ \ \ EIGEN\_USING\_STD(frexp);}
+\DoxyCodeLine{00579\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ result\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\textcolor{keyword}{>}(frexp(a,\ \&exp));}
+\DoxyCodeLine{00580\ \ \ exponent\ =\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\textcolor{keyword}{>}(exp);}
+\DoxyCodeLine{00581\ \ \ \textcolor{keywordflow}{return}\ result;}
+\DoxyCodeLine{00582\ \}}
+\DoxyCodeLine{00583\ \textcolor{comment}{}}
+\DoxyCodeLine{00584\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ *\ 2\string^((int)exponent)}}
+\DoxyCodeLine{00585\ \textcolor{comment}{\ \ *\ See\ https://en.cppreference.com/w/cpp/numeric/math/ldexp}}
+\DoxyCodeLine{00586\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00587\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00588\ pldexp(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&exponent)\ \{}
+\DoxyCodeLine{00589\ \ \ EIGEN\_USING\_STD(ldexp)}
+\DoxyCodeLine{00590\ \ \ \textcolor{keywordflow}{return}\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\textcolor{keyword}{>}(ldexp(a,\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{int}\textcolor{keyword}{>}(exponent)));}
+\DoxyCodeLine{00591\ \}}
+\DoxyCodeLine{00592\ \textcolor{comment}{}}
+\DoxyCodeLine{00593\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ of\ \(\backslash\)a\ a\ and\ \(\backslash\)a\ b\ \ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00594\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00595\ pabsdiff(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ b)\ \{\ \textcolor{keywordflow}{return}\ pselect(pcmp\_lt(a,\ b),\ psub(b,\ a),\ psub(a,\ b));\ \}}
+\DoxyCodeLine{00596\ \textcolor{comment}{}}
+\DoxyCodeLine{00597\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ version\ of\ \(\backslash\)a\ *from,\ from\ must\ be\ 16\ bytes\ aligned\ */}}
+\DoxyCodeLine{00598\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00599\ pload(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from)\ \{\ \textcolor{keywordflow}{return}\ *from;\ \}}
+\DoxyCodeLine{00600\ \textcolor{comment}{}}
+\DoxyCodeLine{00601\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ version\ of\ \(\backslash\)a\ *from,\ (un-\/aligned\ load)\ */}}
+\DoxyCodeLine{00602\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00603\ ploadu(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from)\ \{\ \textcolor{keywordflow}{return}\ *from;\ \}}
+\DoxyCodeLine{00604\ \textcolor{comment}{}}
+\DoxyCodeLine{00605\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ version\ of\ \(\backslash\)a\ *from,\ (un-\/aligned\ masked\ load)}}
+\DoxyCodeLine{00606\ \textcolor{comment}{\ *\ There\ is\ no\ generic\ implementation.\ We\ only\ have\ implementations\ for\ specialized}}
+\DoxyCodeLine{00607\ \textcolor{comment}{\ *\ cases.\ Generic\ case\ should\ not\ be\ called.}}
+\DoxyCodeLine{00608\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00609\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}}
+\DoxyCodeLine{00610\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if<unpacket\_traits<Packet>::masked\_load\_available}},\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}>::type}
+\DoxyCodeLine{00611\ ploadu(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::mask\_t}}\ umask);}
+\DoxyCodeLine{00612\ \textcolor{comment}{}}
+\DoxyCodeLine{00613\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ with\ constant\ coefficients\ \(\backslash\)a\ a,\ e.g.:\ (a,a,a,a)\ */}}
+\DoxyCodeLine{00614\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00615\ pset1(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00616\ \textcolor{comment}{}}
+\DoxyCodeLine{00617\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ with\ constant\ coefficients\ set\ from\ bits\ */}}
+\DoxyCodeLine{00618\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet,\textcolor{keyword}{typename}\ BitsType>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00619\ pset1frombits(BitsType\ a);}
+\DoxyCodeLine{00620\ \textcolor{comment}{}}
+\DoxyCodeLine{00621\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ with\ constant\ coefficients\ \(\backslash\)a\ a[0],\ e.g.:\ (a[0],a[0],a[0],a[0])\ */}}
+\DoxyCodeLine{00622\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00623\ pload1(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \ *a)\ \{\ \textcolor{keywordflow}{return}\ pset1<Packet>(*a);\ \}}
+\DoxyCodeLine{00624\ \textcolor{comment}{}}
+\DoxyCodeLine{00625\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ with\ elements\ of\ \(\backslash\)a\ *from\ duplicated.}}
+\DoxyCodeLine{00626\ \textcolor{comment}{\ \ *\ For\ instance,\ for\ a\ packet\ of\ 8\ elements,\ 4\ scalars\ will\ be\ read\ from\ \(\backslash\)a\ *from\ and}}
+\DoxyCodeLine{00627\ \textcolor{comment}{\ \ *\ duplicated\ to\ form:\ \{from[0],from[0],from[1],from[1],from[2],from[2],from[3],from[3]\}}}
+\DoxyCodeLine{00628\ \textcolor{comment}{\ \ *\ Currently,\ this\ function\ is\ only\ used\ for\ scalar\ *\ complex\ products.}}
+\DoxyCodeLine{00629\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00630\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00631\ ploaddup(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from)\ \{\ \textcolor{keywordflow}{return}\ *from;\ \}}
+\DoxyCodeLine{00632\ \textcolor{comment}{}}
+\DoxyCodeLine{00633\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ with\ elements\ of\ \(\backslash\)a\ *from\ quadrupled.}}
+\DoxyCodeLine{00634\ \textcolor{comment}{\ \ *\ For\ instance,\ for\ a\ packet\ of\ 8\ elements,\ 2\ scalars\ will\ be\ read\ from\ \(\backslash\)a\ *from\ and}}
+\DoxyCodeLine{00635\ \textcolor{comment}{\ \ *\ replicated\ to\ form:\ \{from[0],from[0],from[0],from[0],from[1],from[1],from[1],from[1]\}}}
+\DoxyCodeLine{00636\ \textcolor{comment}{\ \ *\ Currently,\ this\ function\ is\ only\ used\ in\ matrix\ products.}}
+\DoxyCodeLine{00637\ \textcolor{comment}{\ \ *\ For\ packet-\/size\ smaller\ or\ equal\ to\ 4,\ this\ function\ is\ equivalent\ to\ pload1}}
+\DoxyCodeLine{00638\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00639\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00640\ ploadquad(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from)}
+\DoxyCodeLine{00641\ \{\ \textcolor{keywordflow}{return}\ pload1<Packet>(from);\ \}}
+\DoxyCodeLine{00642\ \textcolor{comment}{}}
+\DoxyCodeLine{00643\ \textcolor{comment}{/**\ \(\backslash\)internal\ equivalent\ to}}
+\DoxyCodeLine{00644\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00645\ \textcolor{comment}{\ \ *\ a0\ =\ pload1(a+0);}}
+\DoxyCodeLine{00646\ \textcolor{comment}{\ \ *\ a1\ =\ pload1(a+1);}}
+\DoxyCodeLine{00647\ \textcolor{comment}{\ \ *\ a2\ =\ pload1(a+2);}}
+\DoxyCodeLine{00648\ \textcolor{comment}{\ \ *\ a3\ =\ pload1(a+3);}}
+\DoxyCodeLine{00649\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00650\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ pset1,\ pload1,\ ploaddup,\ pbroadcast2}}
+\DoxyCodeLine{00651\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00652\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00653\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pbroadcast4(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ *a,}
+\DoxyCodeLine{00654\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a0,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a1,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a2,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a3)}
+\DoxyCodeLine{00655\ \{}
+\DoxyCodeLine{00656\ \ \ a0\ =\ pload1<Packet>(a+0);}
+\DoxyCodeLine{00657\ \ \ a1\ =\ pload1<Packet>(a+1);}
+\DoxyCodeLine{00658\ \ \ a2\ =\ pload1<Packet>(a+2);}
+\DoxyCodeLine{00659\ \ \ a3\ =\ pload1<Packet>(a+3);}
+\DoxyCodeLine{00660\ \}}
+\DoxyCodeLine{00661\ \textcolor{comment}{}}
+\DoxyCodeLine{00662\ \textcolor{comment}{/**\ \(\backslash\)internal\ equivalent\ to}}
+\DoxyCodeLine{00663\ \textcolor{comment}{\ \ *\ \(\backslash\)code}}
+\DoxyCodeLine{00664\ \textcolor{comment}{\ \ *\ a0\ =\ pload1(a+0);}}
+\DoxyCodeLine{00665\ \textcolor{comment}{\ \ *\ a1\ =\ pload1(a+1);}}
+\DoxyCodeLine{00666\ \textcolor{comment}{\ \ *\ \(\backslash\)endcode}}
+\DoxyCodeLine{00667\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ pset1,\ pload1,\ ploaddup,\ pbroadcast4}}
+\DoxyCodeLine{00668\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00669\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC}
+\DoxyCodeLine{00670\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pbroadcast2(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ *a,}
+\DoxyCodeLine{00671\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a0,\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a1)}
+\DoxyCodeLine{00672\ \{}
+\DoxyCodeLine{00673\ \ \ a0\ =\ pload1<Packet>(a+0);}
+\DoxyCodeLine{00674\ \ \ a1\ =\ pload1<Packet>(a+1);}
+\DoxyCodeLine{00675\ \}}
+\DoxyCodeLine{00676\ \textcolor{comment}{}}
+\DoxyCodeLine{00677\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)brief\ Returns\ a\ packet\ with\ coefficients\ (a,a+1,...,a+packet\_size-\/1).\ */}}
+\DoxyCodeLine{00678\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00679\ plset(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00680\ \textcolor{comment}{}}
+\DoxyCodeLine{00681\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ with\ constant\ coefficients\ \(\backslash\)a\ a,\ e.g.:\ (x,\ 0,\ x,\ 0),}}
+\DoxyCodeLine{00682\ \textcolor{comment}{\ \ \ \ \ where\ x\ is\ the\ value\ of\ all\ 1-\/bits.\ */}}
+\DoxyCodeLine{00683\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00684\ peven\_mask(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{00685\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00686\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ n\ =\ unpacket\_traits<Packet>::size;}
+\DoxyCodeLine{00687\ \ \ EIGEN\_ALIGN\_TO\_BOUNDARY(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}))\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ elements[n];}
+\DoxyCodeLine{00688\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ n;\ ++i)\ \{}
+\DoxyCodeLine{00689\ \ \ \ \ memset(elements+i,\ ((i\ \&\ 1)\ ==\ 0\ ?\ 0xff\ :\ 0),\ \textcolor{keyword}{sizeof}(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}));}
+\DoxyCodeLine{00690\ \ \ \}}
+\DoxyCodeLine{00691\ \ \ \textcolor{keywordflow}{return}\ ploadu<Packet>(elements);}
+\DoxyCodeLine{00692\ \}}
+\DoxyCodeLine{00693\ }
+\DoxyCodeLine{00694\ \textcolor{comment}{}}
+\DoxyCodeLine{00695\ \textcolor{comment}{/**\ \(\backslash\)internal\ copy\ the\ packet\ \(\backslash\)a\ from\ to\ \(\backslash\)a\ *to,\ \(\backslash\)a\ to\ must\ be\ 16\ bytes\ aligned\ */}}
+\DoxyCodeLine{00696\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pstore(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ to,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ from)}
+\DoxyCodeLine{00697\ \{\ (*to)\ =\ from;\ \}}
+\DoxyCodeLine{00698\ \textcolor{comment}{}}
+\DoxyCodeLine{00699\ \textcolor{comment}{/**\ \(\backslash\)internal\ copy\ the\ packet\ \(\backslash\)a\ from\ to\ \(\backslash\)a\ *to,\ (un-\/aligned\ store)\ */}}
+\DoxyCodeLine{00700\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pstoreu(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ to,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ from)}
+\DoxyCodeLine{00701\ \{\ \ (*to)\ =\ from;\ \}}
+\DoxyCodeLine{00702\ \textcolor{comment}{}}
+\DoxyCodeLine{00703\ \textcolor{comment}{/**\ \(\backslash\)internal\ copy\ the\ packet\ \(\backslash\)a\ from\ to\ \(\backslash\)a\ *to,\ (un-\/aligned\ store\ with\ a\ mask)}}
+\DoxyCodeLine{00704\ \textcolor{comment}{\ *\ There\ is\ no\ generic\ implementation.\ We\ only\ have\ implementations\ for\ specialized}}
+\DoxyCodeLine{00705\ \textcolor{comment}{\ *\ cases.\ Generic\ case\ should\ not\ be\ called.}}
+\DoxyCodeLine{00706\ \textcolor{comment}{\ */}}
+\DoxyCodeLine{00707\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00708\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}}
+\DoxyCodeLine{00709\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if<unpacket\_traits<Packet>::masked\_store\_available}},\ \textcolor{keywordtype}{void}>::type}
+\DoxyCodeLine{00710\ pstoreu(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ to,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ from,\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits<Packet>::mask\_t}}\ umask);}
+\DoxyCodeLine{00711\ }
+\DoxyCodeLine{00712\ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pgather(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \textcolor{comment}{/*stride*/})}
+\DoxyCodeLine{00713\ \ \{\ \textcolor{keywordflow}{return}\ ploadu<Packet>(from);\ \}}
+\DoxyCodeLine{00714\ }
+\DoxyCodeLine{00715\ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pscatter(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ to,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \textcolor{comment}{/*stride*/})}
+\DoxyCodeLine{00716\ \ \{\ pstore(to,\ from);\ \}}
+\DoxyCodeLine{00717\ \textcolor{comment}{}}
+\DoxyCodeLine{00718\ \textcolor{comment}{/**\ \(\backslash\)internal\ tries\ to\ do\ cache\ prefetching\ of\ \(\backslash\)a\ addr\ */}}
+\DoxyCodeLine{00719\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ prefetch(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ addr)}
+\DoxyCodeLine{00720\ \{}
+\DoxyCodeLine{00721\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HIP\_DEVICE\_COMPILE)}}
+\DoxyCodeLine{00722\ \ \ \textcolor{comment}{//\ do\ nothing}}
+\DoxyCodeLine{00723\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_CUDA\_ARCH)}}
+\DoxyCodeLine{00724\ \textcolor{preprocessor}{\#if\ defined(\_\_LP64\_\_)\ ||\ EIGEN\_OS\_WIN64}}
+\DoxyCodeLine{00725\ \ \ \textcolor{comment}{//\ 64-\/bit\ pointer\ operand\ constraint\ for\ inlined\ asm}}
+\DoxyCodeLine{00726\ \ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}\ prefetch.L1\ [\ \%1\ ];"{}}\ :\ \textcolor{stringliteral}{"{}=l"{}}(addr)\ :\ \textcolor{stringliteral}{"{}l"{}}(addr));}
+\DoxyCodeLine{00727\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00728\ \ \ \textcolor{comment}{//\ 32-\/bit\ pointer\ operand\ constraint\ for\ inlined\ asm}}
+\DoxyCodeLine{00729\ \ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}\ prefetch.L1\ [\ \%1\ ];"{}}\ :\ \textcolor{stringliteral}{"{}=r"{}}(addr)\ :\ \textcolor{stringliteral}{"{}r"{}}(addr));}
+\DoxyCodeLine{00730\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00731\ \textcolor{preprocessor}{\#elif\ (!EIGEN\_COMP\_MSVC)\ \&\&\ (EIGEN\_COMP\_GNUC\ ||\ EIGEN\_COMP\_CLANG\ ||\ EIGEN\_COMP\_ICC)}}
+\DoxyCodeLine{00732\ \ \ \_\_builtin\_prefetch(addr);}
+\DoxyCodeLine{00733\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00734\ \}}
+\DoxyCodeLine{00735\ \textcolor{comment}{}}
+\DoxyCodeLine{00736\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ reversed\ elements\ of\ \(\backslash\)a\ a*/}}
+\DoxyCodeLine{00737\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ preverse(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)}
+\DoxyCodeLine{00738\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00739\ \textcolor{comment}{}}
+\DoxyCodeLine{00740\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ \(\backslash\)a\ a\ with\ real\ and\ imaginary\ part\ flipped\ (for\ complex\ type\ only)\ */}}
+\DoxyCodeLine{00741\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pcplxflip(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)}
+\DoxyCodeLine{00742\ \{}
+\DoxyCodeLine{00743\ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}(numext::imag(a),numext::real(a));}
+\DoxyCodeLine{00744\ \}}
+\DoxyCodeLine{00745\ }
+\DoxyCodeLine{00746\ \textcolor{comment}{/**************************}}
+\DoxyCodeLine{00747\ \textcolor{comment}{*\ Special\ math\ functions}}
+\DoxyCodeLine{00748\ \textcolor{comment}{***************************/}}
+\DoxyCodeLine{00749\ \textcolor{comment}{}}
+\DoxyCodeLine{00750\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ sine\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00751\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00752\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ psin(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(sin);\ \textcolor{keywordflow}{return}\ sin(a);\ \}}
+\DoxyCodeLine{00753\ \textcolor{comment}{}}
+\DoxyCodeLine{00754\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ cosine\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00755\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00756\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pcos(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(cos);\ \textcolor{keywordflow}{return}\ cos(a);\ \}}
+\DoxyCodeLine{00757\ \textcolor{comment}{}}
+\DoxyCodeLine{00758\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ tan\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00759\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00760\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ ptan(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(tan);\ \textcolor{keywordflow}{return}\ tan(a);\ \}}
+\DoxyCodeLine{00761\ \textcolor{comment}{}}
+\DoxyCodeLine{00762\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ arc\ sine\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00763\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00764\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pasin(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(asin);\ \textcolor{keywordflow}{return}\ asin(a);\ \}}
+\DoxyCodeLine{00765\ \textcolor{comment}{}}
+\DoxyCodeLine{00766\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ arc\ cosine\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00767\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00768\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pacos(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(acos);\ \textcolor{keywordflow}{return}\ acos(a);\ \}}
+\DoxyCodeLine{00769\ \textcolor{comment}{}}
+\DoxyCodeLine{00770\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ arc\ tangent\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00771\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00772\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ patan(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(atan);\ \textcolor{keywordflow}{return}\ atan(a);\ \}}
+\DoxyCodeLine{00773\ \textcolor{comment}{}}
+\DoxyCodeLine{00774\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ hyperbolic\ sine\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00775\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00776\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ psinh(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(sinh);\ \textcolor{keywordflow}{return}\ sinh(a);\ \}}
+\DoxyCodeLine{00777\ \textcolor{comment}{}}
+\DoxyCodeLine{00778\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ hyperbolic\ cosine\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00779\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00780\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pcosh(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(cosh);\ \textcolor{keywordflow}{return}\ cosh(a);\ \}}
+\DoxyCodeLine{00781\ \textcolor{comment}{}}
+\DoxyCodeLine{00782\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ hyperbolic\ tan\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00783\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00784\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ ptanh(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(tanh);\ \textcolor{keywordflow}{return}\ tanh(a);\ \}}
+\DoxyCodeLine{00785\ \textcolor{comment}{}}
+\DoxyCodeLine{00786\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ exp\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00787\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00788\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pexp(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(exp);\ \textcolor{keywordflow}{return}\ exp(a);\ \}}
+\DoxyCodeLine{00789\ \textcolor{comment}{}}
+\DoxyCodeLine{00790\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ expm1\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00791\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00792\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pexpm1(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ numext::expm1(a);\ \}}
+\DoxyCodeLine{00793\ \textcolor{comment}{}}
+\DoxyCodeLine{00794\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ log\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00795\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00796\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(log);\ \textcolor{keywordflow}{return}\ log(a);\ \}}
+\DoxyCodeLine{00797\ \textcolor{comment}{}}
+\DoxyCodeLine{00798\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ log1p\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00799\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00800\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog1p(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ numext::log1p(a);\ \}}
+\DoxyCodeLine{00801\ \textcolor{comment}{}}
+\DoxyCodeLine{00802\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ log10\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00803\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00804\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog10(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ EIGEN\_USING\_STD(log10);\ \textcolor{keywordflow}{return}\ log10(a);\ \}}
+\DoxyCodeLine{00805\ \textcolor{comment}{}}
+\DoxyCodeLine{00806\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ log10\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00807\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00808\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ plog2(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00809\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00810\ \ \ \textcolor{keywordflow}{return}\ pmul(pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(EIGEN\_LOG2E)),\ plog(a));}
+\DoxyCodeLine{00811\ \}}
+\DoxyCodeLine{00812\ \textcolor{comment}{}}
+\DoxyCodeLine{00813\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ square-\/root\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00814\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00815\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ psqrt(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keywordflow}{return}\ numext::sqrt(a);\ \}}
+\DoxyCodeLine{00816\ \textcolor{comment}{}}
+\DoxyCodeLine{00817\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ reciprocal\ square-\/root\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00818\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00819\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ prsqrt(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00820\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ internal::unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00821\ \ \ \textcolor{keywordflow}{return}\ pdiv(pset1<Packet>(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(1)),\ psqrt(a));}
+\DoxyCodeLine{00822\ \}}
+\DoxyCodeLine{00823\ \textcolor{comment}{}}
+\DoxyCodeLine{00824\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ rounded\ value\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00825\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00826\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pround(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keyword}{using\ }numext::round;\ \textcolor{keywordflow}{return}\ round(a);\ \}}
+\DoxyCodeLine{00827\ \textcolor{comment}{}}
+\DoxyCodeLine{00828\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ floor\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00829\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00830\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pfloor(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keyword}{using\ }numext::floor;\ \textcolor{keywordflow}{return}\ floor(a);\ \}}
+\DoxyCodeLine{00831\ \textcolor{comment}{}}
+\DoxyCodeLine{00832\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ rounded\ value\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ with\ current}}
+\DoxyCodeLine{00833\ \textcolor{comment}{\ *\ rounding\ mode\ */}}
+\DoxyCodeLine{00834\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00835\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ print(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keyword}{using\ }numext::rint;\ \textcolor{keywordflow}{return}\ rint(a);\ \}}
+\DoxyCodeLine{00836\ \textcolor{comment}{}}
+\DoxyCodeLine{00837\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ ceil\ of\ \(\backslash\)a\ a\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00838\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DECLARE\_FUNCTION\_ALLOWING\_MULTIPLE\_DEFINITIONS}
+\DoxyCodeLine{00839\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ pceil(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{\ \textcolor{keyword}{using\ }numext::ceil;\ \textcolor{keywordflow}{return}\ ceil(a);\ \}}
+\DoxyCodeLine{00840\ \textcolor{comment}{}}
+\DoxyCodeLine{00841\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ first\ element\ of\ a\ packet\ */}}
+\DoxyCodeLine{00842\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00843\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type}
+\DoxyCodeLine{00844\ pfirst(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)}
+\DoxyCodeLine{00845\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00846\ \textcolor{comment}{}}
+\DoxyCodeLine{00847\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ sum\ of\ the\ elements\ of\ upper\ and\ lower\ half\ of\ \(\backslash\)a\ a\ if\ \(\backslash\)a\ a\ is\ larger\ than\ 4.}}
+\DoxyCodeLine{00848\ \textcolor{comment}{\ \ *\ For\ a\ packet\ \{a0,\ a1,\ a2,\ a3,\ a4,\ a5,\ a6,\ a7\},\ it\ returns\ a\ half\ packet\ \{a0+a4,\ a1+a5,\ a2+a6,\ a3+a7\}}}
+\DoxyCodeLine{00849\ \textcolor{comment}{\ \ *\ For\ packet-\/size\ smaller\ or\ equal\ to\ 4,\ this\ boils\ down\ to\ a\ noop.}}
+\DoxyCodeLine{00850\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00851\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00852\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1conditional}{conditional}}<(unpacket\_traits<Packet>::size\%8)==0,\textcolor{keyword}{typename}\ unpacket\_traits<Packet>::half,\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}>::type}
+\DoxyCodeLine{00853\ predux\_half\_dowto4(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)}
+\DoxyCodeLine{00854\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00855\ }
+\DoxyCodeLine{00856\ \textcolor{comment}{//\ Slow\ generic\ implementation\ of\ Packet\ reduction.}}
+\DoxyCodeLine{00857\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet,\ \textcolor{keyword}{typename}\ Op>}
+\DoxyCodeLine{00858\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type}
+\DoxyCodeLine{00859\ predux\_helper(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a,\ Op\ op)\ \{}
+\DoxyCodeLine{00860\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00861\ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{size\_t}\ n\ =\ unpacket\_traits<Packet>::size;}
+\DoxyCodeLine{00862\ \ \ EIGEN\_ALIGN\_TO\_BOUNDARY(\textcolor{keyword}{sizeof}(\mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}))\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}\ elements[n];}
+\DoxyCodeLine{00863\ \ \ pstoreu<Scalar>(elements,\ a);}
+\DoxyCodeLine{00864\ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ k\ =\ n\ /\ 2;\ k\ >\ 0;\ k\ /=\ 2)\ \ \{}
+\DoxyCodeLine{00865\ \ \ \ \ \textcolor{keywordflow}{for}(\textcolor{keywordtype}{size\_t}\ i\ =\ 0;\ i\ <\ k;\ ++i)\ \{}
+\DoxyCodeLine{00866\ \ \ \ \ \ \ elements[i]\ =\ op(elements[i],\ elements[i\ +\ k]);}
+\DoxyCodeLine{00867\ \ \ \ \ \}}
+\DoxyCodeLine{00868\ \ \ \}}
+\DoxyCodeLine{00869\ \ \ \textcolor{keywordflow}{return}\ elements[0];}
+\DoxyCodeLine{00870\ \}}
+\DoxyCodeLine{00871\ \textcolor{comment}{}}
+\DoxyCodeLine{00872\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ sum\ of\ the\ elements\ of\ \(\backslash\)a\ a*/}}
+\DoxyCodeLine{00873\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00874\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type}
+\DoxyCodeLine{00875\ predux(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)}
+\DoxyCodeLine{00876\ \{}
+\DoxyCodeLine{00877\ \ \ \textcolor{keywordflow}{return}\ a;}
+\DoxyCodeLine{00878\ \}}
+\DoxyCodeLine{00879\ \textcolor{comment}{}}
+\DoxyCodeLine{00880\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ product\ of\ the\ elements\ of\ \(\backslash\)a\ a\ */}}
+\DoxyCodeLine{00881\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00882\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ predux\_mul(}
+\DoxyCodeLine{00883\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00884\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00885\ \ \ \textcolor{keywordflow}{return}\ predux\_helper(a,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ (pmul<Scalar>)));}
+\DoxyCodeLine{00886\ \}}
+\DoxyCodeLine{00887\ \textcolor{comment}{}}
+\DoxyCodeLine{00888\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ of\ the\ elements\ of\ \(\backslash\)a\ a\ */}}
+\DoxyCodeLine{00889\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00890\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ predux\_min(}
+\DoxyCodeLine{00891\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&a)\ \{}
+\DoxyCodeLine{00892\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00893\ \ \ \textcolor{keywordflow}{return}\ predux\_helper(a,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ (pmin<PropagateFast,\ Scalar>)));}
+\DoxyCodeLine{00894\ \}}
+\DoxyCodeLine{00895\ }
+\DoxyCodeLine{00896\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NaNPropagation,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00897\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ predux\_min(}
+\DoxyCodeLine{00898\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00899\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00900\ \ \ \textcolor{keywordflow}{return}\ predux\_helper(a,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ (pmin<NaNPropagation,\ Scalar>)));}
+\DoxyCodeLine{00901\ \}}
+\DoxyCodeLine{00902\ \textcolor{comment}{}}
+\DoxyCodeLine{00903\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ the\ min\ of\ the\ elements\ of\ \(\backslash\)a\ a\ */}}
+\DoxyCodeLine{00904\ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00905\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ predux\_max(}
+\DoxyCodeLine{00906\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ \&a)\ \{}
+\DoxyCodeLine{00907\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00908\ \ \ \textcolor{keywordflow}{return}\ predux\_helper(a,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ (pmax<PropagateFast,\ Scalar>)));}
+\DoxyCodeLine{00909\ \}}
+\DoxyCodeLine{00910\ }
+\DoxyCodeLine{00911\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ NaNPropagation,\ \textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00912\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ predux\_max(}
+\DoxyCodeLine{00913\ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)\ \{}
+\DoxyCodeLine{00914\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00915\ \ \ \textcolor{keywordflow}{return}\ predux\_helper(a,\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}},\ (pmax<NaNPropagation,\ Scalar>)));}
+\DoxyCodeLine{00916\ \}}
+\DoxyCodeLine{00917\ }
+\DoxyCodeLine{00918\ \textcolor{preprocessor}{\#undef\ EIGEN\_BINARY\_OP\_NAN\_PROPAGATION}}
+\DoxyCodeLine{00919\ \textcolor{comment}{}}
+\DoxyCodeLine{00920\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ true\ if\ all\ coeffs\ of\ \(\backslash\)a\ a\ means\ "{}true"{}}}
+\DoxyCodeLine{00921\ \textcolor{comment}{\ \ *\ It\ is\ supposed\ to\ be\ called\ on\ values\ returned\ by\ pcmp\_*.}}
+\DoxyCodeLine{00922\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00923\ \textcolor{comment}{//\ not\ needed\ yet}}
+\DoxyCodeLine{00924\ \textcolor{comment}{//\ template<typename\ Packet>\ EIGEN\_DEVICE\_FUNC\ inline\ bool\ predux\_all(const\ Packet\&\ a)}}
+\DoxyCodeLine{00925\ \textcolor{comment}{//\ \{\ return\ bool(a);\ \}}}
+\DoxyCodeLine{00926\ \textcolor{comment}{}}
+\DoxyCodeLine{00927\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ true\ if\ any\ coeffs\ of\ \(\backslash\)a\ a\ means\ "{}true"{}}}
+\DoxyCodeLine{00928\ \textcolor{comment}{\ \ *\ It\ is\ supposed\ to\ be\ called\ on\ values\ returned\ by\ pcmp\_*.}}
+\DoxyCodeLine{00929\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00930\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{bool}\ predux\_any(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ a)}
+\DoxyCodeLine{00931\ \{}
+\DoxyCodeLine{00932\ \ \ \textcolor{comment}{//\ Dirty\ but\ generic\ implementation\ where\ "{}true"{}\ is\ assumed\ to\ be\ non\ 0\ and\ all\ the\ sames.}}
+\DoxyCodeLine{00933\ \ \ \textcolor{comment}{//\ It\ is\ expected\ that\ "{}true"{}\ is\ either:}}
+\DoxyCodeLine{00934\ \ \ \textcolor{comment}{//\ \ -\/\ Scalar(1)}}
+\DoxyCodeLine{00935\ \ \ \textcolor{comment}{//\ \ -\/\ bits\ full\ of\ ones\ (NaN\ for\ floats),}}
+\DoxyCodeLine{00936\ \ \ \textcolor{comment}{//\ \ -\/\ or\ first\ bit\ equals\ to\ 1\ (1\ for\ ints,\ smallest\ denormal\ for\ floats).}}
+\DoxyCodeLine{00937\ \ \ \textcolor{comment}{//\ For\ all\ these\ cases,\ taking\ the\ sum\ is\ just\ fine,\ and\ this\ boils\ down\ to\ a\ no-\/op\ for\ scalars.}}
+\DoxyCodeLine{00938\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}};}
+\DoxyCodeLine{00939\ \ \ \textcolor{keywordflow}{return}\ numext::not\_equal\_strict(predux(a),\ \mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}(0));}
+\DoxyCodeLine{00940\ \}}
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00943\ \textcolor{comment}{*\ The\ following\ functions\ might\ not\ have\ to\ be\ overwritten\ for\ vectorized\ types}}
+\DoxyCodeLine{00944\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{00945\ \textcolor{comment}{}}
+\DoxyCodeLine{00946\ \textcolor{comment}{/**\ \(\backslash\)internal\ copy\ a\ packet\ with\ constant\ coefficient\ \(\backslash\)a\ a\ (e.g.,\ [a,a,a,a])\ to\ \(\backslash\)a\ *to.\ \(\backslash\)a\ to\ must\ be\ 16\ bytes\ aligned\ */}}
+\DoxyCodeLine{00947\ \textcolor{comment}{//\ NOTE:\ this\ function\ must\ really\ be\ templated\ on\ the\ packet\ type\ (think\ about\ different\ packet\ types\ for\ the\ same\ scalar\ type)}}
+\DoxyCodeLine{00948\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>}
+\DoxyCodeLine{00949\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pstore1(\textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ to,\ \textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type\&\ a)}
+\DoxyCodeLine{00950\ \{}
+\DoxyCodeLine{00951\ \ \ pstore(to,\ pset1<Packet>(a));}
+\DoxyCodeLine{00952\ \}}
+\DoxyCodeLine{00953\ \textcolor{comment}{}}
+\DoxyCodeLine{00954\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ *\ b\ +\ c\ (coeff-\/wise)\ */}}
+\DoxyCodeLine{00955\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{00956\ pmadd(\textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \ a,}
+\DoxyCodeLine{00957\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \ b,}
+\DoxyCodeLine{00958\ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ \ c)}
+\DoxyCodeLine{00959\ \{\ \textcolor{keywordflow}{return}\ padd(pmul(a,\ b),c);\ \}}
+\DoxyCodeLine{00960\ \textcolor{comment}{}}
+\DoxyCodeLine{00961\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ version\ of\ \(\backslash\)a\ *from.}}
+\DoxyCodeLine{00962\ \textcolor{comment}{\ \ *\ The\ pointer\ \(\backslash\)a\ from\ must\ be\ aligned\ on\ a\ \(\backslash\)a\ Alignment\ bytes\ boundary.\ */}}
+\DoxyCodeLine{00963\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{int}\ Alignment>}
+\DoxyCodeLine{00964\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ ploadt(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from)}
+\DoxyCodeLine{00965\ \{}
+\DoxyCodeLine{00966\ \ \ \textcolor{keywordflow}{if}(Alignment\ >=\ unpacket\_traits<Packet>::alignment)}
+\DoxyCodeLine{00967\ \ \ \ \ \textcolor{keywordflow}{return}\ pload<Packet>(from);}
+\DoxyCodeLine{00968\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00969\ \ \ \ \ \textcolor{keywordflow}{return}\ ploadu<Packet>(from);}
+\DoxyCodeLine{00970\ \}}
+\DoxyCodeLine{00971\ \textcolor{comment}{}}
+\DoxyCodeLine{00972\ \textcolor{comment}{/**\ \(\backslash\)internal\ copy\ the\ packet\ \(\backslash\)a\ from\ to\ \(\backslash\)a\ *to.}}
+\DoxyCodeLine{00973\ \textcolor{comment}{\ \ *\ The\ pointer\ \(\backslash\)a\ from\ must\ be\ aligned\ on\ a\ \(\backslash\)a\ Alignment\ bytes\ boundary.\ */}}
+\DoxyCodeLine{00974\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Scalar,\ \textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{int}\ Alignment>}
+\DoxyCodeLine{00975\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \textcolor{keywordtype}{void}\ pstoret(\mbox{\hyperlink{structEigen_1_1internal_1_1traits}{Scalar}}*\ to,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ from)}
+\DoxyCodeLine{00976\ \{}
+\DoxyCodeLine{00977\ \ \ \textcolor{keywordflow}{if}(Alignment\ >=\ unpacket\_traits<Packet>::alignment)}
+\DoxyCodeLine{00978\ \ \ \ \ pstore(to,\ from);}
+\DoxyCodeLine{00979\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00980\ \ \ \ \ pstoreu(to,\ from);}
+\DoxyCodeLine{00981\ \}}
+\DoxyCodeLine{00982\ \textcolor{comment}{}}
+\DoxyCodeLine{00983\ \textcolor{comment}{/**\ \(\backslash\)internal\ \(\backslash\)returns\ a\ packet\ version\ of\ \(\backslash\)a\ *from.}}
+\DoxyCodeLine{00984\ \textcolor{comment}{\ \ *\ Unlike\ ploadt,\ ploadt\_ro\ takes\ advantage\ of\ the\ read-\/only\ memory\ path\ on\ the}}
+\DoxyCodeLine{00985\ \textcolor{comment}{\ \ *\ hardware\ if\ available\ to\ speedup\ the\ loading\ of\ data\ that\ won't\ be\ modified}}
+\DoxyCodeLine{00986\ \textcolor{comment}{\ \ *\ by\ the\ current\ computation.}}
+\DoxyCodeLine{00987\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00988\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet,\ \textcolor{keywordtype}{int}\ LoadMode>}
+\DoxyCodeLine{00989\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ ploadt\_ro(\textcolor{keyword}{const}\ \textcolor{keyword}{typename}\ unpacket\_traits<Packet>::type*\ from)}
+\DoxyCodeLine{00990\ \{}
+\DoxyCodeLine{00991\ \ \ \textcolor{keywordflow}{return}\ ploadt<Packet,\ LoadMode>(from);}
+\DoxyCodeLine{00992\ \}}
+\DoxyCodeLine{00993\ }
+\DoxyCodeLine{00994\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{00995\ \textcolor{comment}{*\ Fast\ complex\ products\ (GCC\ generates\ a\ function\ call\ which\ is\ very\ slow)}}
+\DoxyCodeLine{00996\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{00997\ }
+\DoxyCodeLine{00998\ \textcolor{comment}{//\ Eigen+CUDA\ does\ not\ support\ complexes.}}
+\DoxyCodeLine{00999\ \textcolor{preprocessor}{\#if\ !defined(EIGEN\_GPUCC)}}
+\DoxyCodeLine{01000\ }
+\DoxyCodeLine{01001\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{inline}\ std::complex<float>\ pmul(\textcolor{keyword}{const}\ std::complex<float>\&\ a,\ \textcolor{keyword}{const}\ std::complex<float>\&\ b)}
+\DoxyCodeLine{01002\ \{\ \textcolor{keywordflow}{return}\ std::complex<float>(a.real()*b.real()\ -\/\ a.imag()*b.imag(),\ a.imag()*b.real()\ +\ a.real()*b.imag());\ \}}
+\DoxyCodeLine{01003\ }
+\DoxyCodeLine{01004\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{inline}\ std::complex<double>\ pmul(\textcolor{keyword}{const}\ std::complex<double>\&\ a,\ \textcolor{keyword}{const}\ std::complex<double>\&\ b)}
+\DoxyCodeLine{01005\ \{\ \textcolor{keywordflow}{return}\ std::complex<double>(a.real()*b.real()\ -\/\ a.imag()*b.imag(),\ a.imag()*b.real()\ +\ a.real()*b.imag());\ \}}
+\DoxyCodeLine{01006\ }
+\DoxyCodeLine{01007\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01008\ }
+\DoxyCodeLine{01009\ }
+\DoxyCodeLine{01010\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{01011\ \textcolor{comment}{\ *\ PacketBlock,\ that\ is\ a\ collection\ of\ N\ packets\ where\ the\ number\ of\ words}}
+\DoxyCodeLine{01012\ \textcolor{comment}{\ *\ in\ the\ packet\ is\ a\ multiple\ of\ N.}}
+\DoxyCodeLine{01013\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{01014\ template\ <typename\ Packet,int\ N=unpacket\_traits<Packet>::size>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock}}\ \{}
+\DoxyCodeLine{01015\ \ \ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\ packet[N];}
+\DoxyCodeLine{01016\ \};}
+\DoxyCodeLine{01017\ }
+\DoxyCodeLine{01018\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01019\ ptranspose(\mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet,1>}}\&\ \textcolor{comment}{/*kernel*/})\ \{}
+\DoxyCodeLine{01020\ \ \ \textcolor{comment}{//\ Nothing\ to\ do\ in\ the\ scalar\ case,\ i.e.\ a\ 1x1\ matrix.}}
+\DoxyCodeLine{01021\ \}}
+\DoxyCodeLine{01022\ }
+\DoxyCodeLine{01023\ \textcolor{comment}{/***************************************************************************}}
+\DoxyCodeLine{01024\ \textcolor{comment}{\ *\ Selector,\ i.e.\ vector\ of\ N\ boolean\ values\ used\ to\ select\ (i.e.\ blend)}}
+\DoxyCodeLine{01025\ \textcolor{comment}{\ *\ words\ from\ 2\ packets.}}
+\DoxyCodeLine{01026\ \textcolor{comment}{***************************************************************************/}}
+\DoxyCodeLine{01027\ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{size\_t}\ N>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1Selector}{Selector}}\ \{}
+\DoxyCodeLine{01028\ \ \ \textcolor{keywordtype}{bool}\ select[N];}
+\DoxyCodeLine{01029\ \};}
+\DoxyCodeLine{01030\ }
+\DoxyCodeLine{01031\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Packet>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}}
+\DoxyCodeLine{01032\ pblend(\textcolor{keyword}{const}\ \mbox{\hyperlink{structEigen_1_1internal_1_1Selector}{Selector}}<unpacket\_traits<Packet>::size>\&\ ifPacket,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ thenPacket,\ \textcolor{keyword}{const}\ \mbox{\hyperlink{unionEigen_1_1internal_1_1Packet}{Packet}}\&\ elsePacket)\ \{}
+\DoxyCodeLine{01033\ \ \ \textcolor{keywordflow}{return}\ ifPacket.select[0]\ ?\ thenPacket\ :\ elsePacket;}
+\DoxyCodeLine{01034\ \}}
+\DoxyCodeLine{01035\ }
+\DoxyCodeLine{01036\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{01037\ }
+\DoxyCodeLine{01038\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{01039\ }
+\DoxyCodeLine{01040\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_GENERIC\_PACKET\_MATH\_H}}
+
+\end{DoxyCode}

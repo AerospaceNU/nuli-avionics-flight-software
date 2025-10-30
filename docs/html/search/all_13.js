@@ -1,23 +1,13 @@
 var searchData=
 [
-  ['m_5faccelerationsmss_0',['m_accelerationsMSS',['../classAccelerometer.html#a78821003e7d8d22cb683a46047d5ae0b',1,'Accelerometer']]],
-  ['m_5ffullscalemss_1',['m_fullScaleMSS',['../classAccelerometer.html#aa0497cd6fb69fff0333a4fb7862a4593',1,'Accelerometer']]],
-  ['m_5fhelptext_2',['m_helpText',['../classBaseFlag.html#a85e0c94da56902a9dae9edc3d817dbbc',1,'BaseFlag']]],
-  ['m_5fhumiditypercent_3',['m_humidityPercent',['../classBarometer.html#a37825423e93b14fe0703c5a39fd40e01',1,'Barometer']]],
-  ['m_5fidentifier_4',['m_identifier',['../classBaseFlag.html#ab99693df0f63ada5a977f8433ec731a3',1,'BaseFlag']]],
-  ['m_5fisupdated_5',['m_isUpdated',['../structBaseConfigurationData__s.html#a19241e4e5035b0d50284e348cfd22c6b',1,'BaseConfigurationData_s']]],
-  ['m_5fmagneticfieldtesla_6',['m_magneticFieldTesla',['../classMagnetometer.html#aa63c5ee0937a23083271af9a40d659a2',1,'Magnetometer']]],
-  ['m_5fname_7',['m_name',['../classBaseFlag.html#a7cf3ec3a6f778cdf769c6e82112359d3',1,'BaseFlag']]],
-  ['m_5fpressurepa_8',['m_pressurePa',['../classBarometer.html#a5c4dc84bd69992626a8685a323665c37',1,'Barometer']]],
-  ['m_5frequired_9',['m_required',['../classBaseFlag.html#ae4c01b7ee1761e154085a07e6fda9390',1,'BaseFlag']]],
-  ['m_5fset_10',['m_set',['../classBaseFlag.html#a0a7410b273ea0f785bacd3b30f9aba1d',1,'BaseFlag']]],
-  ['m_5ftemperaturek_11',['m_temperatureK',['../classAccelerometer.html#abf7ecea12e18ff7251117da535ea2a5e',1,'Accelerometer::m_temperatureK'],['../classBarometer.html#afa5e2a1030d50c1948424856e3dda506',1,'Barometer::m_temperatureK'],['../classGyroscope.html#ad2edd794992e3b519b1220148d97b7d1',1,'Gyroscope::m_temperatureK'],['../classMagnetometer.html#a15a8d17c386e0bf5deb15f96ddb9d36b',1,'Magnetometer::m_temperatureK']]],
-  ['m_5fvelocitiesrads_12',['m_velocitiesRadS',['../classGyroscope.html#afe6003bb25f78698360f876b47579780',1,'Gyroscope']]],
-  ['macos_13',['Windows/MacOS',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md18',1,'']]],
-  ['macos_20linux_14',['MacOS / Linux',['../index.html#autotoc_md26',1,'']]],
-  ['macros_20allowing_20for_20the_20type_20name_20to_20be_20injected_20into_20the_20method_20names_15',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['magnetometer_16',['Magnetometer',['../classMagnetometer.html',1,'']]],
-  ['method_20names_17',['works as string concatenation in macros, allowing for the type name to be injected into the method names',['../HardwareAbstraction_8h.html#autotoc_md19',1,'']]],
-  ['ms5607sensor_18',['MS5607Sensor',['../classMS5607Sensor.html',1,'']]],
-  ['ms8607sensor_19',['MS8607Sensor',['../classMS8607Sensor.html',1,'']]]
+  ['latitudedeg_0',['latitudeDeg',['../structCoordinates__s.html#ad50d1aa1ee81e4ea1e3964e9d2bb7998',1,'Coordinates_s']]],
+  ['line_20interface_20user_20guide_1',['Command-Line Interface User Guide',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md0',1,'']]],
+  ['linereader_2',['LineReader',['../classLineReader.html',1,'']]],
+  ['linux_3',['Linux',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md16',1,'Linux'],['../index.html#autotoc_md26',1,'MacOS / Linux']]],
+  ['list_4',['Todo List',['../todo.html',1,'']]],
+  ['list_20of_20flags_5',['3. Add Flags to list of flags',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md8',1,'']]],
+  ['list_20to_20parser_6',['4. Add flag list to Parser',['../C:/Users/patri/Documents/Software/nuli-avionics-flight-software/platformio_nuli_avionics_flight_software/src/core/cli/README.md#autotoc_md9',1,'']]],
+  ['longitudedeg_7',['longitudeDeg',['../structCoordinates__s.html#ac349887e277394550b67e9786a78b230',1,'Coordinates_s']]],
+  ['looponce_8',['loopOnce',['../classRFM9xRadio.html#a29abd9c35e030f68da556234773b9228',1,'RFM9xRadio']]],
+  ['lowpass_9',['LowPass',['../classLowPass.html',1,'']]]
 ];

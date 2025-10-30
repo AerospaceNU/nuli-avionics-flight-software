@@ -1,0 +1,186 @@
+\doxysection{Parallelizer.\+h}
+\hypertarget{Parallelizer_8h_source}{}\label{Parallelizer_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/products/Parallelizer.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/products/Parallelizer.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2010\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_PARALLELIZER\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_PARALLELIZER\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{preprocessor}{\#if\ EIGEN\_HAS\_CXX11\_ATOMIC}}
+\DoxyCodeLine{00014\ \textcolor{preprocessor}{\#include\ <atomic>}}
+\DoxyCodeLine{00015\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00018\ }
+\DoxyCodeLine{00019\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00020\ \textcolor{comment}{}}
+\DoxyCodeLine{00021\ \textcolor{comment}{/**\ \(\backslash\)internal\ */}}
+\DoxyCodeLine{00022\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ manage\_multi\_threading(Action\ action,\ \textcolor{keywordtype}{int}*\ v)}
+\DoxyCodeLine{00023\ \{}
+\DoxyCodeLine{00024\ \ \ \textcolor{keyword}{static}\ \textcolor{keywordtype}{int}\ m\_maxThreads\ =\ -\/1;}
+\DoxyCodeLine{00025\ \ \ EIGEN\_UNUSED\_VARIABLE(m\_maxThreads)}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \ \ \textcolor{keywordflow}{if}(action==SetAction)}
+\DoxyCodeLine{00028\ \ \ \{}
+\DoxyCodeLine{00029\ \ \ \ \ eigen\_internal\_assert(v!=0);}
+\DoxyCodeLine{00030\ \ \ \ \ m\_maxThreads\ =\ *v;}
+\DoxyCodeLine{00031\ \ \ \}}
+\DoxyCodeLine{00032\ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(action==GetAction)}
+\DoxyCodeLine{00033\ \ \ \{}
+\DoxyCodeLine{00034\ \ \ \ \ eigen\_internal\_assert(v!=0);}
+\DoxyCodeLine{00035\ \textcolor{preprocessor}{\ \ \ \ \#ifdef\ EIGEN\_HAS\_OPENMP}}
+\DoxyCodeLine{00036\ \ \ \ \ \textcolor{keywordflow}{if}(m\_maxThreads>0)}
+\DoxyCodeLine{00037\ \ \ \ \ \ \ *v\ =\ m\_maxThreads;}
+\DoxyCodeLine{00038\ \ \ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00039\ \ \ \ \ \ \ *v\ =\ omp\_get\_max\_threads();}
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00041\ \ \ \ \ *v\ =\ 1;}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00043\ \ \ \}}
+\DoxyCodeLine{00044\ \ \ \textcolor{keywordflow}{else}}
+\DoxyCodeLine{00045\ \ \ \{}
+\DoxyCodeLine{00046\ \ \ \ \ eigen\_internal\_assert(\textcolor{keyword}{false});}
+\DoxyCodeLine{00047\ \ \ \}}
+\DoxyCodeLine{00048\ \}}
+\DoxyCodeLine{00049\ }
+\DoxyCodeLine{00050\ \}}
+\DoxyCodeLine{00051\ \textcolor{comment}{}}
+\DoxyCodeLine{00052\ \textcolor{comment}{/**\ Must\ be\ call\ first\ when\ calling\ Eigen\ from\ multiple\ threads\ */}}
+\DoxyCodeLine{00053\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceEigen_a820c0e0460934cc17eb6dacbad54a9f5}{initParallel}}()}
+\DoxyCodeLine{00054\ \{}
+\DoxyCodeLine{00055\ \ \ \textcolor{keywordtype}{int}\ nbt;}
+\DoxyCodeLine{00056\ \ \ internal::manage\_multi\_threading(GetAction,\ \&nbt);}
+\DoxyCodeLine{00057\ \ \ std::ptrdiff\_t\ l1,\ l2,\ l3;}
+\DoxyCodeLine{00058\ \ \ internal::manage\_caching\_sizes(GetAction,\ \&l1,\ \&l2,\ \&l3);}
+\DoxyCodeLine{00059\ \}}
+\DoxyCodeLine{00060\ \textcolor{comment}{}}
+\DoxyCodeLine{00061\ \textcolor{comment}{/**\ \(\backslash\)returns\ the\ max\ number\ of\ threads\ reserved\ for\ Eigen}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ setNbThreads\ */}}
+\DoxyCodeLine{00063\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{int}\ \mbox{\hyperlink{namespaceEigen_a9aca97d83e21b91a04ec079360dfffeb}{nbThreads}}()}
+\DoxyCodeLine{00064\ \{}
+\DoxyCodeLine{00065\ \ \ \textcolor{keywordtype}{int}\ ret;}
+\DoxyCodeLine{00066\ \ \ internal::manage\_multi\_threading(GetAction,\ \&ret);}
+\DoxyCodeLine{00067\ \ \ \textcolor{keywordflow}{return}\ ret;}
+\DoxyCodeLine{00068\ \}}
+\DoxyCodeLine{00069\ \textcolor{comment}{}}
+\DoxyCodeLine{00070\ \textcolor{comment}{/**\ Sets\ the\ max\ number\ of\ threads\ reserved\ for\ Eigen}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ *\ \(\backslash\)sa\ nbThreads\ */}}
+\DoxyCodeLine{00072\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ \mbox{\hyperlink{namespaceEigen_af9cd17c2fe18204239cd11c88c120b50}{setNbThreads}}(\textcolor{keywordtype}{int}\ v)}
+\DoxyCodeLine{00073\ \{}
+\DoxyCodeLine{00074\ \ \ internal::manage\_multi\_threading(SetAction,\ \&v);}
+\DoxyCodeLine{00075\ \}}
+\DoxyCodeLine{00076\ }
+\DoxyCodeLine{00077\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Index>\ \textcolor{keyword}{struct\ }GemmParallelInfo}
+\DoxyCodeLine{00080\ \{}
+\DoxyCodeLine{00081\ \ \ GemmParallelInfo()\ :\ sync(-\/1),\ users(0),\ lhs\_start(0),\ lhs\_length(0)\ \{\}}
+\DoxyCodeLine{00082\ }
+\DoxyCodeLine{00083\ \ \ \textcolor{comment}{//\ volatile\ is\ not\ enough\ on\ all\ architectures\ (see\ bug\ 1572)}}
+\DoxyCodeLine{00084\ \ \ \textcolor{comment}{//\ to\ guarantee\ that\ when\ thread\ A\ says\ to\ thread\ B\ that\ it\ is}}
+\DoxyCodeLine{00085\ \ \ \textcolor{comment}{//\ done\ with\ packing\ a\ block,\ then\ all\ writes\ have\ been\ really}}
+\DoxyCodeLine{00086\ \ \ \textcolor{comment}{//\ carried\ out...\ C++11\ memory\ model+atomic\ guarantees\ this.}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\#if\ EIGEN\_HAS\_CXX11\_ATOMIC}}
+\DoxyCodeLine{00088\ \ \ std::atomic<Index>\ sync;}
+\DoxyCodeLine{00089\ \ \ std::atomic<int>\ users;}
+\DoxyCodeLine{00090\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00091\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ \textcolor{keyword}{volatile}\ sync;}
+\DoxyCodeLine{00092\ \ \ \textcolor{keywordtype}{int}\ \textcolor{keyword}{volatile}\ users;}
+\DoxyCodeLine{00093\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00094\ }
+\DoxyCodeLine{00095\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lhs\_start;}
+\DoxyCodeLine{00096\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ lhs\_length;}
+\DoxyCodeLine{00097\ \};}
+\DoxyCodeLine{00098\ }
+\DoxyCodeLine{00099\ \textcolor{keyword}{template}<\textcolor{keywordtype}{bool}\ Condition,\ \textcolor{keyword}{typename}\ Functor,\ \textcolor{keyword}{typename}\ Index>}
+\DoxyCodeLine{00100\ \textcolor{keywordtype}{void}\ parallelize\_gemm(\textcolor{keyword}{const}\ Functor\&\ func,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rows,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ cols,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ depth,\ \textcolor{keywordtype}{bool}\ transpose)}
+\DoxyCodeLine{00101\ \{}
+\DoxyCodeLine{00102\ \ \ \textcolor{comment}{//\ TODO\ when\ EIGEN\_USE\_BLAS\ is\ defined,}}
+\DoxyCodeLine{00103\ \ \ \textcolor{comment}{//\ we\ should\ still\ enable\ OMP\ for\ other\ scalar\ types}}
+\DoxyCodeLine{00104\ \ \ \textcolor{comment}{//\ Without\ C++11,\ we\ have\ to\ disable\ GEMM's\ parallelization\ on}}
+\DoxyCodeLine{00105\ \ \ \textcolor{comment}{//\ non\ x86\ architectures\ because\ there\ volatile\ is\ not\ enough\ for\ our\ purpose.}}
+\DoxyCodeLine{00106\ \ \ \textcolor{comment}{//\ See\ bug\ 1572.}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\#if\ (!\ defined(EIGEN\_HAS\_OPENMP))\ ||\ defined(EIGEN\_USE\_BLAS)\ ||\ ((!EIGEN\_HAS\_CXX11\_ATOMIC)\ \&\&\ !(EIGEN\_ARCH\_i386\_OR\_x86\_64))}}
+\DoxyCodeLine{00108\ \ \ \textcolor{comment}{//\ FIXME\ the\ transpose\ variable\ is\ only\ needed\ to\ properly\ split}}
+\DoxyCodeLine{00109\ \ \ \textcolor{comment}{//\ the\ matrix\ product\ when\ multithreading\ is\ enabled.\ This\ is\ a\ temporary}}
+\DoxyCodeLine{00110\ \ \ \textcolor{comment}{//\ fix\ to\ support\ row-\/major\ destination\ matrices.\ This\ whole}}
+\DoxyCodeLine{00111\ \ \ \textcolor{comment}{//\ parallelizer\ mechanism\ has\ to\ be\ redesigned\ anyway.}}
+\DoxyCodeLine{00112\ \ \ EIGEN\_UNUSED\_VARIABLE(depth);}
+\DoxyCodeLine{00113\ \ \ EIGEN\_UNUSED\_VARIABLE(transpose);}
+\DoxyCodeLine{00114\ \ \ func(0,rows,\ 0,cols);}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{comment}{//\ Dynamically\ check\ whether\ we\ should\ enable\ or\ disable\ OpenMP.}}
+\DoxyCodeLine{00118\ \ \ \textcolor{comment}{//\ The\ conditions\ are:}}
+\DoxyCodeLine{00119\ \ \ \textcolor{comment}{//\ -\/\ the\ max\ number\ of\ threads\ we\ can\ create\ is\ greater\ than\ 1}}
+\DoxyCodeLine{00120\ \ \ \textcolor{comment}{//\ -\/\ we\ are\ not\ already\ in\ a\ parallel\ code}}
+\DoxyCodeLine{00121\ \ \ \textcolor{comment}{//\ -\/\ the\ sizes\ are\ large\ enough}}
+\DoxyCodeLine{00122\ }
+\DoxyCodeLine{00123\ \ \ \textcolor{comment}{//\ compute\ the\ maximal\ number\ of\ threads\ from\ the\ size\ of\ the\ product:}}
+\DoxyCodeLine{00124\ \ \ \textcolor{comment}{//\ This\ first\ heuristic\ takes\ into\ account\ that\ the\ product\ kernel\ is\ fully\ optimized\ when\ working\ with\ nr\ columns\ at\ once.}}
+\DoxyCodeLine{00125\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ transpose\ ?\ rows\ :\ cols;}
+\DoxyCodeLine{00126\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ pb\_max\_threads\ =\ std::max<Index>(1,size\ /\ Functor::Traits::nr);}
+\DoxyCodeLine{00127\ }
+\DoxyCodeLine{00128\ \ \ \textcolor{comment}{//\ compute\ the\ maximal\ number\ of\ threads\ from\ the\ total\ amount\ of\ work:}}
+\DoxyCodeLine{00129\ \ \ \textcolor{keywordtype}{double}\ work\ =\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(rows)\ *\ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(cols)\ *}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \textcolor{keyword}{static\_cast<}\textcolor{keywordtype}{double}\textcolor{keyword}{>}(depth);}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordtype}{double}\ kMinTaskSize\ =\ 50000;\ \ \textcolor{comment}{//\ FIXME\ improve\ this\ heuristic.}}
+\DoxyCodeLine{00132\ \ \ pb\_max\_threads\ =\ std::max<Index>(1,\ std::min<Index>(pb\_max\_threads,\ \textcolor{keyword}{static\_cast<}\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\textcolor{keyword}{>}(\ work\ /\ kMinTaskSize\ )\ ));}
+\DoxyCodeLine{00133\ }
+\DoxyCodeLine{00134\ \ \ \textcolor{comment}{//\ compute\ the\ number\ of\ threads\ we\ are\ going\ to\ use}}
+\DoxyCodeLine{00135\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ threads\ =\ std::min<Index>(\mbox{\hyperlink{namespaceEigen_a9aca97d83e21b91a04ec079360dfffeb}{nbThreads}}(),\ pb\_max\_threads);}
+\DoxyCodeLine{00136\ }
+\DoxyCodeLine{00137\ \ \ \textcolor{comment}{//\ if\ multi-\/threading\ is\ explicitly\ disabled,\ not\ useful,\ or\ if\ we\ already\ are\ in\ a\ parallel\ session,}}
+\DoxyCodeLine{00138\ \ \ \textcolor{comment}{//\ then\ abort\ multi-\/threading}}
+\DoxyCodeLine{00139\ \ \ \textcolor{comment}{//\ FIXME\ omp\_get\_num\_threads()>1\ only\ works\ for\ openmp,\ what\ if\ the\ user\ does\ not\ use\ openmp?}}
+\DoxyCodeLine{00140\ \ \ \textcolor{keywordflow}{if}((!Condition)\ ||\ (threads==1)\ ||\ (omp\_get\_num\_threads()>1))}
+\DoxyCodeLine{00141\ \ \ \ \ \textcolor{keywordflow}{return}\ func(0,rows,\ 0,cols);}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ \mbox{\hyperlink{namespaceEigen_a820c0e0460934cc17eb6dacbad54a9f5}{Eigen::initParallel}}();}
+\DoxyCodeLine{00144\ \ \ func.initParallelSession(threads);}
+\DoxyCodeLine{00145\ }
+\DoxyCodeLine{00146\ \ \ \textcolor{keywordflow}{if}(transpose)}
+\DoxyCodeLine{00147\ \ \ \ \ std::swap(rows,cols);}
+\DoxyCodeLine{00148\ }
+\DoxyCodeLine{00149\ \ \ ei\_declare\_aligned\_stack\_constructed\_variable(\mbox{\hyperlink{structEigen_1_1internal_1_1GemmParallelInfo}{GemmParallelInfo<Index>}},info,threads,0);}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\ \ \#pragma\ omp\ parallel\ num\_threads(threads)}}
+\DoxyCodeLine{00152\ \ \ \{}
+\DoxyCodeLine{00153\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ i\ =\ omp\_get\_thread\_num();}
+\DoxyCodeLine{00154\ \ \ \ \ \textcolor{comment}{//\ Note\ that\ the\ actual\ number\ of\ threads\ might\ be\ lower\ than\ the\ number\ of\ request\ ones.}}
+\DoxyCodeLine{00155\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ actual\_threads\ =\ omp\_get\_num\_threads();}
+\DoxyCodeLine{00156\ }
+\DoxyCodeLine{00157\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ blockCols\ =\ (cols\ /\ actual\_threads)\ \&\ \string~\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}(0x3);}
+\DoxyCodeLine{00158\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ blockRows\ =\ (rows\ /\ actual\_threads);}
+\DoxyCodeLine{00159\ \ \ \ \ blockRows\ =\ (blockRows/Functor::Traits::mr)*Functor::Traits::mr;}
+\DoxyCodeLine{00160\ }
+\DoxyCodeLine{00161\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ r0\ =\ i*blockRows;}
+\DoxyCodeLine{00162\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ actualBlockRows\ =\ (i+1==actual\_threads)\ ?\ rows-\/r0\ :\ blockRows;}
+\DoxyCodeLine{00163\ }
+\DoxyCodeLine{00164\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ c0\ =\ i*blockCols;}
+\DoxyCodeLine{00165\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ actualBlockCols\ =\ (i+1==actual\_threads)\ ?\ cols-\/c0\ :\ blockCols;}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \ \ \ \ info[i].lhs\_start\ =\ r0;}
+\DoxyCodeLine{00168\ \ \ \ \ info[i].lhs\_length\ =\ actualBlockRows;}
+\DoxyCodeLine{00169\ }
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{if}(transpose)\ func(c0,\ actualBlockCols,\ 0,\ rows,\ info);}
+\DoxyCodeLine{00171\ \ \ \ \ \textcolor{keywordflow}{else}\ \ \ \ \ \ \ \ \ \ func(0,\ rows,\ c0,\ actualBlockCols,\ info);}
+\DoxyCodeLine{00172\ \ \ \}}
+\DoxyCodeLine{00173\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00174\ \}}
+\DoxyCodeLine{00175\ }
+\DoxyCodeLine{00176\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00177\ }
+\DoxyCodeLine{00178\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_PARALLELIZER\_H}}
+
+\end{DoxyCode}

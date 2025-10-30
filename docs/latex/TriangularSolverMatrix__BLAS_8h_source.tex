@@ -1,0 +1,173 @@
+\doxysection{Triangular\+Solver\+Matrix\+\_\+\+BLAS.\+h}
+\hypertarget{TriangularSolverMatrix__BLAS_8h_source}{}\label{TriangularSolverMatrix__BLAS_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/products/TriangularSolverMatrix\_BLAS.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/products/TriangularSolverMatrix\_BLAS.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{/*}}
+\DoxyCodeLine{00002\ \textcolor{comment}{\ Copyright\ (c)\ 2011,\ Intel\ Corporation.\ All\ rights\ reserved.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{}}
+\DoxyCodeLine{00004\ \textcolor{comment}{\ Redistribution\ and\ use\ in\ source\ and\ binary\ forms,\ with\ or\ without\ modification,}}
+\DoxyCodeLine{00005\ \textcolor{comment}{\ are\ permitted\ provided\ that\ the\ following\ conditions\ are\ met:}}
+\DoxyCodeLine{00006\ \textcolor{comment}{}}
+\DoxyCodeLine{00007\ \textcolor{comment}{\ *\ Redistributions\ of\ source\ code\ must\ retain\ the\ above\ copyright\ notice,\ this}}
+\DoxyCodeLine{00008\ \textcolor{comment}{\ \ \ list\ of\ conditions\ and\ the\ following\ disclaimer.}}
+\DoxyCodeLine{00009\ \textcolor{comment}{\ *\ Redistributions\ in\ binary\ form\ must\ reproduce\ the\ above\ copyright\ notice,}}
+\DoxyCodeLine{00010\ \textcolor{comment}{\ \ \ this\ list\ of\ conditions\ and\ the\ following\ disclaimer\ in\ the\ documentation}}
+\DoxyCodeLine{00011\ \textcolor{comment}{\ \ \ and/or\ other\ materials\ provided\ with\ the\ distribution.}}
+\DoxyCodeLine{00012\ \textcolor{comment}{\ *\ Neither\ the\ name\ of\ Intel\ Corporation\ nor\ the\ names\ of\ its\ contributors\ may}}
+\DoxyCodeLine{00013\ \textcolor{comment}{\ \ \ be\ used\ to\ endorse\ or\ promote\ products\ derived\ from\ this\ software\ without}}
+\DoxyCodeLine{00014\ \textcolor{comment}{\ \ \ specific\ prior\ written\ permission.}}
+\DoxyCodeLine{00015\ \textcolor{comment}{}}
+\DoxyCodeLine{00016\ \textcolor{comment}{\ THIS\ SOFTWARE\ IS\ PROVIDED\ BY\ THE\ COPYRIGHT\ HOLDERS\ AND\ CONTRIBUTORS\ "{}AS\ IS"{}\ AND}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ ANY\ EXPRESS\ OR\ IMPLIED\ WARRANTIES,\ INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ THE\ IMPLIED}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ WARRANTIES\ OF\ MERCHANTABILITY\ AND\ FITNESS\ FOR\ A\ PARTICULAR\ PURPOSE\ ARE}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ DISCLAIMED.\ IN\ NO\ EVENT\ SHALL\ THE\ COPYRIGHT\ OWNER\ OR\ CONTRIBUTORS\ BE\ LIABLE\ FOR}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ ANY\ DIRECT,\ INDIRECT,\ INCIDENTAL,\ SPECIAL,\ EXEMPLARY,\ OR\ CONSEQUENTIAL\ DAMAGES}}
+\DoxyCodeLine{00021\ \textcolor{comment}{\ (INCLUDING,\ BUT\ NOT\ LIMITED\ TO,\ PROCUREMENT\ OF\ SUBSTITUTE\ GOODS\ OR\ SERVICES;}}
+\DoxyCodeLine{00022\ \textcolor{comment}{\ LOSS\ OF\ USE,\ DATA,\ OR\ PROFITS;\ OR\ BUSINESS\ INTERRUPTION)\ HOWEVER\ CAUSED\ AND\ ON}}
+\DoxyCodeLine{00023\ \textcolor{comment}{\ ANY\ THEORY\ OF\ LIABILITY,\ WHETHER\ IN\ CONTRACT,\ STRICT\ LIABILITY,\ OR\ TORT}}
+\DoxyCodeLine{00024\ \textcolor{comment}{\ (INCLUDING\ NEGLIGENCE\ OR\ OTHERWISE)\ ARISING\ IN\ ANY\ WAY\ OUT\ OF\ THE\ USE\ OF\ THIS}}
+\DoxyCodeLine{00025\ \textcolor{comment}{\ SOFTWARE,\ EVEN\ IF\ ADVISED\ OF\ THE\ POSSIBILITY\ OF\ SUCH\ DAMAGE.}}
+\DoxyCodeLine{00026\ \textcolor{comment}{}}
+\DoxyCodeLine{00027\ \textcolor{comment}{\ ********************************************************************************}}
+\DoxyCodeLine{00028\ \textcolor{comment}{\ *\ \ \ Content\ :\ Eigen\ bindings\ to\ BLAS\ F77}}
+\DoxyCodeLine{00029\ \textcolor{comment}{\ *\ \ \ Triangular\ matrix\ *\ matrix\ product\ functionality\ based\ on\ ?TRMM.}}
+\DoxyCodeLine{00030\ \textcolor{comment}{\ ********************************************************************************}}
+\DoxyCodeLine{00031\ \textcolor{comment}{*/}}
+\DoxyCodeLine{00032\ }
+\DoxyCodeLine{00033\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_TRIANGULAR\_SOLVER\_MATRIX\_BLAS\_H}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#define\ EIGEN\_TRIANGULAR\_SOLVER\_MATRIX\_BLAS\_H}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00037\ }
+\DoxyCodeLine{00038\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{comment}{//\ implements\ LeftSide\ op(triangular)\string^-\/1\ *\ general}}
+\DoxyCodeLine{00041\ \textcolor{preprocessor}{\#define\ EIGEN\_BLAS\_TRSM\_L(EIGTYPE,\ BLASTYPE,\ BLASFUNC)\ \(\backslash\)}}
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{template\ <typename\ Index,\ int\ Mode,\ bool\ Conjugate,\ int\ TriStorageOrder>\ \(\backslash\)}}
+\DoxyCodeLine{00043\ \textcolor{preprocessor}{struct\ triangular\_solve\_matrix<EIGTYPE,Index,OnTheLeft,Mode,Conjugate,TriStorageOrder,ColMajor,1>\ \(\backslash\)}}
+\DoxyCodeLine{00044\ \textcolor{preprocessor}{\{\ \(\backslash\)}}
+\DoxyCodeLine{00045\ \textcolor{preprocessor}{\ \ enum\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00046\ \textcolor{preprocessor}{\ \ \ \ IsLower\ =\ (Mode\&Lower)\ ==\ Lower,\ \(\backslash\)}}
+\DoxyCodeLine{00047\ \textcolor{preprocessor}{\ \ \ \ IsUnitDiag\ \ =\ (Mode\&UnitDiag)\ ?\ 1\ :\ 0,\ \(\backslash\)}}
+\DoxyCodeLine{00048\ \textcolor{preprocessor}{\ \ \ \ IsZeroDiag\ \ =\ (Mode\&ZeroDiag)\ ?\ 1\ :\ 0,\ \(\backslash\)}}
+\DoxyCodeLine{00049\ \textcolor{preprocessor}{\ \ \ \ conjA\ =\ ((TriStorageOrder==ColMajor)\ \&\&\ Conjugate)\ ?\ 1\ :\ 0\ \(\backslash\)}}
+\DoxyCodeLine{00050\ \textcolor{preprocessor}{\ \ \};\ \(\backslash\)}}
+\DoxyCodeLine{00051\ \textcolor{preprocessor}{\ \ static\ void\ run(\ \(\backslash\)}}
+\DoxyCodeLine{00052\ \textcolor{preprocessor}{\ \ \ \ \ \ Index\ size,\ Index\ otherSize,\ \(\backslash\)}}
+\DoxyCodeLine{00053\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ EIGTYPE*\ \_tri,\ Index\ triStride,\ \(\backslash\)}}
+\DoxyCodeLine{00054\ \textcolor{preprocessor}{\ \ \ \ \ \ EIGTYPE*\ \_other,\ Index\ otherIncr,\ Index\ otherStride,\ level3\_blocking<EIGTYPE,EIGTYPE>\&\ }\textcolor{comment}{/*blocking*/}\textcolor{preprocessor}{)\ \(\backslash\)}}
+\DoxyCodeLine{00055\ \textcolor{preprocessor}{\ \ \{\ \(\backslash\)}}
+\DoxyCodeLine{00056\ \textcolor{preprocessor}{\ \ \ EIGEN\_ONLY\_USED\_FOR\_DEBUG(otherIncr);\ \(\backslash\)}}
+\DoxyCodeLine{00057\ \textcolor{preprocessor}{\ \ \ eigen\_assert(otherIncr\ ==\ 1);\ \(\backslash\)}}
+\DoxyCodeLine{00058\ \textcolor{preprocessor}{\ \ \ BlasIndex\ m\ =\ convert\_index<BlasIndex>(size),\ n\ =\ convert\_index<BlasIndex>(otherSize),\ lda,\ ldb;\ \(\backslash\)}}
+\DoxyCodeLine{00059\ \textcolor{preprocessor}{\ \ \ char\ side\ =\ 'L',\ uplo,\ diag='N',\ transa;\ \(\backslash\)}}
+\DoxyCodeLine{00060\ \textcolor{preprocessor}{\ \ \ }\textcolor{comment}{/*\ Set\ alpha\_\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00061\ \textcolor{preprocessor}{\ \ \ EIGTYPE\ alpha(1);\ \(\backslash\)}}
+\DoxyCodeLine{00062\ \textcolor{preprocessor}{\ \ \ ldb\ =\ convert\_index<BlasIndex>(otherStride);\(\backslash\)}}
+\DoxyCodeLine{00063\ \textcolor{preprocessor}{\(\backslash\)}}
+\DoxyCodeLine{00064\ \textcolor{preprocessor}{\ \ \ const\ EIGTYPE\ *a;\ \(\backslash\)}}
+\DoxyCodeLine{00065\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ Set\ trans\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00066\ \textcolor{preprocessor}{\ \ \ transa\ =\ (TriStorageOrder==RowMajor)\ ?\ ((Conjugate)\ ?\ 'C'\ :\ 'T')\ :\ 'N';\ \(\backslash\)}}
+\DoxyCodeLine{00067\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ Set\ uplo\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00068\ \textcolor{preprocessor}{\ \ \ uplo\ =\ IsLower\ ?\ 'L'\ :\ 'U';\ \(\backslash\)}}
+\DoxyCodeLine{00069\ \textcolor{preprocessor}{\ \ \ if\ (TriStorageOrder==RowMajor)\ uplo\ =\ (uplo\ ==\ 'L')\ ?\ 'U'\ :\ 'L';\ \(\backslash\)}}
+\DoxyCodeLine{00070\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ Set\ a,\ lda\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00071\ \textcolor{preprocessor}{\ \ \ typedef\ Matrix<EIGTYPE,\ Dynamic,\ Dynamic,\ TriStorageOrder>\ MatrixTri;\ \(\backslash\)}}
+\DoxyCodeLine{00072\ \textcolor{preprocessor}{\ \ \ Map<const\ MatrixTri,\ 0,\ OuterStride<>\ >\ tri(\_tri,size,size,OuterStride<>(triStride));\ \(\backslash\)}}
+\DoxyCodeLine{00073\ \textcolor{preprocessor}{\ \ \ MatrixTri\ a\_tmp;\ \(\backslash\)}}
+\DoxyCodeLine{00074\ \textcolor{preprocessor}{\(\backslash\)}}
+\DoxyCodeLine{00075\ \textcolor{preprocessor}{\ \ \ if\ (conjA)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00076\ \textcolor{preprocessor}{\ \ \ \ \ a\_tmp\ =\ tri.conjugate();\ \(\backslash\)}}
+\DoxyCodeLine{00077\ \textcolor{preprocessor}{\ \ \ \ \ a\ =\ a\_tmp.data();\ \(\backslash\)}}
+\DoxyCodeLine{00078\ \textcolor{preprocessor}{\ \ \ \ \ lda\ =\ convert\_index<BlasIndex>(a\_tmp.outerStride());\ \(\backslash\)}}
+\DoxyCodeLine{00079\ \textcolor{preprocessor}{\ \ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00080\ \textcolor{preprocessor}{\ \ \ \ \ a\ =\ \_tri;\ \(\backslash\)}}
+\DoxyCodeLine{00081\ \textcolor{preprocessor}{\ \ \ \ \ lda\ =\ convert\_index<BlasIndex>(triStride);\ \(\backslash\)}}
+\DoxyCodeLine{00082\ \textcolor{preprocessor}{\ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00083\ \textcolor{preprocessor}{\ \ \ if\ (IsUnitDiag)\ diag='U';\ \(\backslash\)}}
+\DoxyCodeLine{00084\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ call\ ?trsm*/}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00085\ \textcolor{preprocessor}{\ \ \ BLASFUNC(\&side,\ \&uplo,\ \&transa,\ \&diag,\ \&m,\ \&n,\ (const\ BLASTYPE*)\&numext::real\_ref(alpha),\ (const\ BLASTYPE*)a,\ \&lda,\ (BLASTYPE*)\_other,\ \&ldb);\ \(\backslash\)}}
+\DoxyCodeLine{00086\ \textcolor{preprocessor}{\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00087\ \textcolor{preprocessor}{\};}}
+\DoxyCodeLine{00088\ }
+\DoxyCodeLine{00089\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_USE\_MKL}}
+\DoxyCodeLine{00090\ EIGEN\_BLAS\_TRSM\_L(\textcolor{keywordtype}{double},\ \ \ \textcolor{keywordtype}{double},\ dtrsm)}
+\DoxyCodeLine{00091\ EIGEN\_BLAS\_TRSM\_L(dcomplex,\ MKL\_Complex16,\ ztrsm)}
+\DoxyCodeLine{00092\ EIGEN\_BLAS\_TRSM\_L(\textcolor{keywordtype}{float},\ \ \ \ \textcolor{keywordtype}{float},\ \ strsm)}
+\DoxyCodeLine{00093\ EIGEN\_BLAS\_TRSM\_L(scomplex,\ MKL\_Complex8,\ ctrsm)}
+\DoxyCodeLine{00094\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00095\ EIGEN\_BLAS\_TRSM\_L(\textcolor{keywordtype}{double},\ \ \ \textcolor{keywordtype}{double},\ dtrsm\_)}
+\DoxyCodeLine{00096\ EIGEN\_BLAS\_TRSM\_L(dcomplex,\ \textcolor{keywordtype}{double},\ ztrsm\_)}
+\DoxyCodeLine{00097\ EIGEN\_BLAS\_TRSM\_L(\textcolor{keywordtype}{float},\ \ \ \ \textcolor{keywordtype}{float},\ \ strsm\_)}
+\DoxyCodeLine{00098\ EIGEN\_BLAS\_TRSM\_L(scomplex,\ \textcolor{keywordtype}{float},\ \ ctrsm\_)}
+\DoxyCodeLine{00099\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00100\ }
+\DoxyCodeLine{00101\ \textcolor{comment}{//\ implements\ RightSide\ general\ *\ op(triangular)\string^-\/1}}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\#define\ EIGEN\_BLAS\_TRSM\_R(EIGTYPE,\ BLASTYPE,\ BLASFUNC)\ \(\backslash\)}}
+\DoxyCodeLine{00103\ \textcolor{preprocessor}{template\ <typename\ Index,\ int\ Mode,\ bool\ Conjugate,\ int\ TriStorageOrder>\ \(\backslash\)}}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{struct\ triangular\_solve\_matrix<EIGTYPE,Index,OnTheRight,Mode,Conjugate,TriStorageOrder,ColMajor,1>\ \(\backslash\)}}
+\DoxyCodeLine{00105\ \textcolor{preprocessor}{\{\ \(\backslash\)}}
+\DoxyCodeLine{00106\ \textcolor{preprocessor}{\ \ enum\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00107\ \textcolor{preprocessor}{\ \ \ \ IsLower\ =\ (Mode\&Lower)\ ==\ Lower,\ \(\backslash\)}}
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \ \ IsUnitDiag\ \ =\ (Mode\&UnitDiag)\ ?\ 1\ :\ 0,\ \(\backslash\)}}
+\DoxyCodeLine{00109\ \textcolor{preprocessor}{\ \ \ \ IsZeroDiag\ \ =\ (Mode\&ZeroDiag)\ ?\ 1\ :\ 0,\ \(\backslash\)}}
+\DoxyCodeLine{00110\ \textcolor{preprocessor}{\ \ \ \ conjA\ =\ ((TriStorageOrder==ColMajor)\ \&\&\ Conjugate)\ ?\ 1\ :\ 0\ \(\backslash\)}}
+\DoxyCodeLine{00111\ \textcolor{preprocessor}{\ \ \};\ \(\backslash\)}}
+\DoxyCodeLine{00112\ \textcolor{preprocessor}{\ \ static\ void\ run(\ \(\backslash\)}}
+\DoxyCodeLine{00113\ \textcolor{preprocessor}{\ \ \ \ \ \ Index\ size,\ Index\ otherSize,\ \(\backslash\)}}
+\DoxyCodeLine{00114\ \textcolor{preprocessor}{\ \ \ \ \ \ const\ EIGTYPE*\ \_tri,\ Index\ triStride,\ \(\backslash\)}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \ \ \ EIGTYPE*\ \_other,\ Index\ otherIncr,\ Index\ otherStride,\ level3\_blocking<EIGTYPE,EIGTYPE>\&\ }\textcolor{comment}{/*blocking*/}\textcolor{preprocessor}{)\ \(\backslash\)}}
+\DoxyCodeLine{00116\ \textcolor{preprocessor}{\ \ \{\ \(\backslash\)}}
+\DoxyCodeLine{00117\ \textcolor{preprocessor}{\ \ \ EIGEN\_ONLY\_USED\_FOR\_DEBUG(otherIncr);\ \(\backslash\)}}
+\DoxyCodeLine{00118\ \textcolor{preprocessor}{\ \ \ eigen\_assert(otherIncr\ ==\ 1);\ \(\backslash\)}}
+\DoxyCodeLine{00119\ \textcolor{preprocessor}{\ \ \ BlasIndex\ m\ =\ convert\_index<BlasIndex>(otherSize),\ n\ =\ convert\_index<BlasIndex>(size),\ lda,\ ldb;\ \(\backslash\)}}
+\DoxyCodeLine{00120\ \textcolor{preprocessor}{\ \ \ char\ side\ =\ 'R',\ uplo,\ diag='N',\ transa;\ \(\backslash\)}}
+\DoxyCodeLine{00121\ \textcolor{preprocessor}{\ \ \ }\textcolor{comment}{/*\ Set\ alpha\_\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00122\ \textcolor{preprocessor}{\ \ \ EIGTYPE\ alpha(1);\ \(\backslash\)}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\ \ \ ldb\ =\ convert\_index<BlasIndex>(otherStride);\(\backslash\)}}
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\(\backslash\)}}
+\DoxyCodeLine{00125\ \textcolor{preprocessor}{\ \ \ const\ EIGTYPE\ *a;\ \(\backslash\)}}
+\DoxyCodeLine{00126\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ Set\ trans\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00127\ \textcolor{preprocessor}{\ \ \ transa\ =\ (TriStorageOrder==RowMajor)\ ?\ ((Conjugate)\ ?\ 'C'\ :\ 'T')\ :\ 'N';\ \(\backslash\)}}
+\DoxyCodeLine{00128\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ Set\ uplo\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00129\ \textcolor{preprocessor}{\ \ \ uplo\ =\ IsLower\ ?\ 'L'\ :\ 'U';\ \(\backslash\)}}
+\DoxyCodeLine{00130\ \textcolor{preprocessor}{\ \ \ if\ (TriStorageOrder==RowMajor)\ uplo\ =\ (uplo\ ==\ 'L')\ ?\ 'U'\ :\ 'L';\ \(\backslash\)}}
+\DoxyCodeLine{00131\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ Set\ a,\ lda\ */}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00132\ \textcolor{preprocessor}{\ \ \ typedef\ Matrix<EIGTYPE,\ Dynamic,\ Dynamic,\ TriStorageOrder>\ MatrixTri;\ \(\backslash\)}}
+\DoxyCodeLine{00133\ \textcolor{preprocessor}{\ \ \ Map<const\ MatrixTri,\ 0,\ OuterStride<>\ >\ tri(\_tri,size,size,OuterStride<>(triStride));\ \(\backslash\)}}
+\DoxyCodeLine{00134\ \textcolor{preprocessor}{\ \ \ MatrixTri\ a\_tmp;\ \(\backslash\)}}
+\DoxyCodeLine{00135\ \textcolor{preprocessor}{\(\backslash\)}}
+\DoxyCodeLine{00136\ \textcolor{preprocessor}{\ \ \ if\ (conjA)\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00137\ \textcolor{preprocessor}{\ \ \ \ \ a\_tmp\ =\ tri.conjugate();\ \(\backslash\)}}
+\DoxyCodeLine{00138\ \textcolor{preprocessor}{\ \ \ \ \ a\ =\ a\_tmp.data();\ \(\backslash\)}}
+\DoxyCodeLine{00139\ \textcolor{preprocessor}{\ \ \ \ \ lda\ =\ convert\_index<BlasIndex>(a\_tmp.outerStride());\ \(\backslash\)}}
+\DoxyCodeLine{00140\ \textcolor{preprocessor}{\ \ \ \}\ else\ \{\ \(\backslash\)}}
+\DoxyCodeLine{00141\ \textcolor{preprocessor}{\ \ \ \ \ a\ =\ \_tri;\ \(\backslash\)}}
+\DoxyCodeLine{00142\ \textcolor{preprocessor}{\ \ \ \ \ lda\ =\ convert\_index<BlasIndex>(triStride);\ \(\backslash\)}}
+\DoxyCodeLine{00143\ \textcolor{preprocessor}{\ \ \ \}\ \(\backslash\)}}
+\DoxyCodeLine{00144\ \textcolor{preprocessor}{\ \ \ if\ (IsUnitDiag)\ diag='U';\ \(\backslash\)}}
+\DoxyCodeLine{00145\ \textcolor{preprocessor}{}\textcolor{comment}{/*\ call\ ?trsm*/}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00146\ \textcolor{preprocessor}{\ \ \ BLASFUNC(\&side,\ \&uplo,\ \&transa,\ \&diag,\ \&m,\ \&n,\ (const\ BLASTYPE*)\&numext::real\_ref(alpha),\ (const\ BLASTYPE*)a,\ \&lda,\ (BLASTYPE*)\_other,\ \&ldb);\ \(\backslash\)}}
+\DoxyCodeLine{00147\ \textcolor{preprocessor}{\ \ \ }\textcolor{comment}{/*std::cout\ <<\ "{}TRMS\_L\ specialization!\(\backslash\)n"{};*/}\textcolor{preprocessor}{\ \(\backslash\)}}
+\DoxyCodeLine{00148\ \textcolor{preprocessor}{\ \}\ \(\backslash\)}}
+\DoxyCodeLine{00149\ \textcolor{preprocessor}{\};}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \textcolor{preprocessor}{\#ifdef\ EIGEN\_USE\_MKL}}
+\DoxyCodeLine{00152\ EIGEN\_BLAS\_TRSM\_R(\textcolor{keywordtype}{double},\ \ \ \textcolor{keywordtype}{double},\ dtrsm)}
+\DoxyCodeLine{00153\ EIGEN\_BLAS\_TRSM\_R(dcomplex,\ MKL\_Complex16,\ ztrsm)}
+\DoxyCodeLine{00154\ EIGEN\_BLAS\_TRSM\_R(\textcolor{keywordtype}{float},\ \ \ \ \textcolor{keywordtype}{float},\ \ strsm)}
+\DoxyCodeLine{00155\ EIGEN\_BLAS\_TRSM\_R(scomplex,\ MKL\_Complex8,\ \ ctrsm)}
+\DoxyCodeLine{00156\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00157\ EIGEN\_BLAS\_TRSM\_R(\textcolor{keywordtype}{double},\ \ \ \textcolor{keywordtype}{double},\ dtrsm\_)}
+\DoxyCodeLine{00158\ EIGEN\_BLAS\_TRSM\_R(dcomplex,\ \textcolor{keywordtype}{double},\ ztrsm\_)}
+\DoxyCodeLine{00159\ EIGEN\_BLAS\_TRSM\_R(\textcolor{keywordtype}{float},\ \ \ \ \textcolor{keywordtype}{float},\ \ strsm\_)}
+\DoxyCodeLine{00160\ EIGEN\_BLAS\_TRSM\_R(scomplex,\ \textcolor{keywordtype}{float},\ \ ctrsm\_)}
+\DoxyCodeLine{00161\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00162\ }
+\DoxyCodeLine{00163\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00164\ }
+\DoxyCodeLine{00165\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00166\ }
+\DoxyCodeLine{00167\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_TRIANGULAR\_SOLVER\_MATRIX\_BLAS\_H}}
+
+\end{DoxyCode}

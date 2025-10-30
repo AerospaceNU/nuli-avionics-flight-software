@@ -1,0 +1,189 @@
+\doxysection{General\+Block\+Panel\+Kernel.\+h}
+\hypertarget{arch_2NEON_2GeneralBlockPanelKernel_8h_source}{}\label{arch_2NEON_2GeneralBlockPanelKernel_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/NEON/GeneralBlockPanelKernel.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/NEON/GeneralBlockPanelKernel.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00002\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00003\ \ \ }
+\DoxyCodeLine{00004\ \textcolor{preprocessor}{\#if\ EIGEN\_ARCH\_ARM\ \&\&\ EIGEN\_COMP\_CLANG}}
+\DoxyCodeLine{00005\ }
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ Clang\ seems\ to\ excessively\ spill\ registers\ in\ the\ GEBP\ kernel\ on\ 32-\/bit\ arm.}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Here\ we\ specialize\ gebp\_traits\ to\ eliminate\ these\ register\ spills.}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ See\ \#2138.}}
+\DoxyCodeLine{00009\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00010\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{classEigen_1_1internal_1_1gebp__traits}{gebp\_traits}}\ <float,float,false,false,Architecture::NEON,GEBPPacketFull>}
+\DoxyCodeLine{00011\ \ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1gebp__traits}{gebp\_traits}}<float,float,false,false,Architecture::Generic,GEBPPacketFull>}
+\DoxyCodeLine{00012\ \{}
+\DoxyCodeLine{00013\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ acc(\textcolor{keyword}{const}\ AccPacket\&\ c,\ \textcolor{keyword}{const}\ ResPacket\&\ alpha,\ ResPacket\&\ r)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00014\ \textcolor{keyword}{\ \ }\{\ }
+\DoxyCodeLine{00015\ \ \ \ \ \textcolor{comment}{//\ This\ volatile\ inline\ ASM\ both\ acts\ as\ a\ barrier\ to\ prevent\ reordering,}}
+\DoxyCodeLine{00016\ \ \ \ \ \textcolor{comment}{//\ as\ well\ as\ enforces\ strict\ register\ use.}}
+\DoxyCodeLine{00017\ \ \ \ \ \textcolor{keyword}{asm}\ \textcolor{keyword}{volatile}(}
+\DoxyCodeLine{00018\ \ \ \ \ \ \ \textcolor{stringliteral}{"{}vmla.f32\ \%q[r],\ \%q[c],\ \%q[alpha]"{}}}
+\DoxyCodeLine{00019\ \ \ \ \ \ \ :\ [r]\ \textcolor{stringliteral}{"{}+w"{}}\ (r)}
+\DoxyCodeLine{00020\ \ \ \ \ \ \ :\ [c]\ \textcolor{stringliteral}{"{}w"{}}\ (c),}
+\DoxyCodeLine{00021\ \ \ \ \ \ \ \ \ [alpha]\ \textcolor{stringliteral}{"{}w"{}}\ (alpha)}
+\DoxyCodeLine{00022\ \ \ \ \ \ \ :\ );}
+\DoxyCodeLine{00023\ \ \ \}}
+\DoxyCodeLine{00024\ }
+\DoxyCodeLine{00025\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LaneIdType>}
+\DoxyCodeLine{00026\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ Packet4f\&\ a,\ \textcolor{keyword}{const}\ Packet4f\&\ b,}
+\DoxyCodeLine{00027\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Packet4f\&\ c,\ Packet4f\&,}
+\DoxyCodeLine{00028\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LaneIdType\&)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00029\ \ \ \ \ acc(a,\ b,\ c);}
+\DoxyCodeLine{00030\ \ \ \}}
+\DoxyCodeLine{00031\ \ \ }
+\DoxyCodeLine{00032\ \ \ \textcolor{keyword}{template}\ <\textcolor{keyword}{typename}\ LaneIdType>}
+\DoxyCodeLine{00033\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ Packet4f\&\ a,\ \textcolor{keyword}{const}\ QuadPacket<Packet4f>\&\ b,}
+\DoxyCodeLine{00034\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ Packet4f\&\ c,\ Packet4f\&\ tmp,}
+\DoxyCodeLine{00035\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ LaneIdType\&\ lane)\textcolor{keyword}{\ const\ }\{}
+\DoxyCodeLine{00036\ \ \ \ \ madd(a,\ b.get(lane),\ c,\ tmp,\ lane);}
+\DoxyCodeLine{00037\ \ \ \}}
+\DoxyCodeLine{00038\ \};}
+\DoxyCodeLine{00039\ }
+\DoxyCodeLine{00040\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_ARCH\_ARM\ \&\&\ EIGEN\_COMP\_CLANG}}
+\DoxyCodeLine{00041\ }
+\DoxyCodeLine{00042\ \textcolor{preprocessor}{\#if\ EIGEN\_ARCH\_ARM64}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00045\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{classEigen_1_1internal_1_1gebp__traits}{gebp\_traits}}\ <float,float,false,false,Architecture::NEON,GEBPPacketFull>}
+\DoxyCodeLine{00046\ \ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1gebp__traits}{gebp\_traits}}<float,float,false,false,Architecture::Generic,GEBPPacketFull>}
+\DoxyCodeLine{00047\ \{}
+\DoxyCodeLine{00048\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{float}\ RhsPacket;}
+\DoxyCodeLine{00049\ \ \ \textcolor{keyword}{typedef}\ float32x4\_t\ RhsPacketx4;}
+\DoxyCodeLine{00050\ }
+\DoxyCodeLine{00051\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ loadRhs(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacket\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00052\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00053\ \ \ \ \ dest\ =\ *b;}
+\DoxyCodeLine{00054\ \ \ \}}
+\DoxyCodeLine{00055\ }
+\DoxyCodeLine{00056\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ loadRhs(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacketx4\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00057\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00058\ \ \ \ \ dest\ =\ vld1q\_f32(b);}
+\DoxyCodeLine{00059\ \ \ \}}
+\DoxyCodeLine{00060\ }
+\DoxyCodeLine{00061\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ updateRhs(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacket\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00062\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00063\ \ \ \ \ dest\ =\ *b;}
+\DoxyCodeLine{00064\ \ \ \}}
+\DoxyCodeLine{00065\ }
+\DoxyCodeLine{00066\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ updateRhs(\textcolor{keyword}{const}\ RhsScalar*,\ RhsPacketx4\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00067\ \textcolor{keyword}{\ \ }\{\}}
+\DoxyCodeLine{00068\ }
+\DoxyCodeLine{00069\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ loadRhsQuad(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacket\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00070\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00071\ \ \ \ \ loadRhs(b,dest);}
+\DoxyCodeLine{00072\ \ \ \}}
+\DoxyCodeLine{00073\ }
+\DoxyCodeLine{00074\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacket\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<0>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00075\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00076\ \ \ \ \ c\ =\ vfmaq\_n\_f32(c,\ a,\ b);}
+\DoxyCodeLine{00077\ \ \ \}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \textcolor{comment}{//\ NOTE:\ Template\ parameter\ inference\ failed\ when\ compiled\ with\ Android\ NDK:}}
+\DoxyCodeLine{00080\ \ \ \textcolor{comment}{//\ "{}candidate\ template\ ignored:\ could\ not\ match\ 'FixedInt<N>'\ against\ 'Eigen::internal::FixedInt<0>"{}.}}
+\DoxyCodeLine{00081\ }
+\DoxyCodeLine{00082\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<0>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00083\ \textcolor{keyword}{\ \ }\{\ madd\_helper<0>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00084\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<1>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00085\ \textcolor{keyword}{\ \ }\{\ madd\_helper<1>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00086\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<2>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00087\ \textcolor{keyword}{\ \ }\{\ madd\_helper<2>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00088\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<3>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00089\ \textcolor{keyword}{\ \ }\{\ madd\_helper<3>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00090\ }
+\DoxyCodeLine{00091\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00092\ \ \ \textcolor{keyword}{template}<\textcolor{keywordtype}{int}\ LaneID>}
+\DoxyCodeLine{00093\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd\_helper(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00094\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00095\ \textcolor{preprocessor}{\ \ \ \ \#if\ EIGEN\_COMP\_GNUC\_STRICT\ \&\&\ !(EIGEN\_GNUC\_AT\_LEAST(9,0))}}
+\DoxyCodeLine{00096\ \ \ \ \ \textcolor{comment}{//\ workaround\ gcc\ issue\ https://gcc.gnu.org/bugzilla/show\_bug.cgi?id=89101}}
+\DoxyCodeLine{00097\ \ \ \ \ \textcolor{comment}{//\ vfmaq\_laneq\_f32\ is\ implemented\ through\ a\ costly\ dup}}
+\DoxyCodeLine{00098\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(LaneID==0)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.4s,\ \%1.4s,\ \%2.s[0]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b)\ :\ \ );}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==1)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.4s,\ \%1.4s,\ \%2.s[1]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b)\ :\ \ );}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==2)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.4s,\ \%1.4s,\ \%2.s[2]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b)\ :\ \ );}
+\DoxyCodeLine{00101\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==3)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.4s,\ \%1.4s,\ \%2.s[3]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b)\ :\ \ );}
+\DoxyCodeLine{00102\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00103\ \ \ \ \ c\ =\ vfmaq\_laneq\_f32(c,\ a,\ b,\ LaneID);}
+\DoxyCodeLine{00104\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00105\ \ \ \}}
+\DoxyCodeLine{00106\ \};}
+\DoxyCodeLine{00107\ }
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00110\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{classEigen_1_1internal_1_1gebp__traits}{gebp\_traits}}\ <double,double,false,false,Architecture::NEON>}
+\DoxyCodeLine{00111\ \ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1gebp__traits}{gebp\_traits}}<double,double,false,false,Architecture::Generic>}
+\DoxyCodeLine{00112\ \{}
+\DoxyCodeLine{00113\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{double}\ RhsPacket;}
+\DoxyCodeLine{00114\ }
+\DoxyCodeLine{00115\ \ \ \textcolor{keyword}{struct\ }RhsPacketx4\ \{}
+\DoxyCodeLine{00116\ \ \ \ \ float64x2\_t\ B\_0,\ B\_1;}
+\DoxyCodeLine{00117\ \ \ \};}
+\DoxyCodeLine{00118\ }
+\DoxyCodeLine{00119\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ loadRhs(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacket\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00120\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00121\ \ \ \ \ dest\ =\ *b;}
+\DoxyCodeLine{00122\ \ \ \}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ loadRhs(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacketx4\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00125\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00126\ \ \ \ \ dest.B\_0\ =\ vld1q\_f64(b);}
+\DoxyCodeLine{00127\ \ \ \ \ dest.B\_1\ =\ vld1q\_f64(b+2);}
+\DoxyCodeLine{00128\ \ \ \}}
+\DoxyCodeLine{00129\ }
+\DoxyCodeLine{00130\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ updateRhs(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacket\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00131\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00132\ \ \ \ \ loadRhs(b,dest);}
+\DoxyCodeLine{00133\ \ \ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ updateRhs(\textcolor{keyword}{const}\ RhsScalar*,\ RhsPacketx4\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00136\ \textcolor{keyword}{\ \ }\{\}}
+\DoxyCodeLine{00137\ }
+\DoxyCodeLine{00138\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ loadRhsQuad(\textcolor{keyword}{const}\ RhsScalar*\ b,\ RhsPacket\&\ dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00139\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00140\ \ \ \ \ loadRhs(b,dest);}
+\DoxyCodeLine{00141\ \ \ \}}
+\DoxyCodeLine{00142\ }
+\DoxyCodeLine{00143\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacket\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<0>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00144\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00145\ \ \ \ \ c\ =\ vfmaq\_n\_f64(c,\ a,\ b);}
+\DoxyCodeLine{00146\ \ \ \}}
+\DoxyCodeLine{00147\ }
+\DoxyCodeLine{00148\ \ \ \textcolor{comment}{//\ NOTE:\ Template\ parameter\ inference\ failed\ when\ compiled\ with\ Android\ NDK:}}
+\DoxyCodeLine{00149\ \ \ \textcolor{comment}{//\ "{}candidate\ template\ ignored:\ could\ not\ match\ 'FixedInt<N>'\ against\ 'Eigen::internal::FixedInt<0>"{}.}}
+\DoxyCodeLine{00150\ }
+\DoxyCodeLine{00151\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<0>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00152\ \textcolor{keyword}{\ \ }\{\ madd\_helper<0>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00153\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<1>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00154\ \textcolor{keyword}{\ \ }\{\ madd\_helper<1>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00155\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<2>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00156\ \textcolor{keyword}{\ \ }\{\ madd\_helper<2>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00157\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c,\ RhsPacket\&\ \textcolor{comment}{/*tmp*/},\ \textcolor{keyword}{const}\ FixedInt<3>\&)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00158\ \textcolor{keyword}{\ \ }\{\ madd\_helper<3>(a,\ b,\ c);\ \}}
+\DoxyCodeLine{00159\ }
+\DoxyCodeLine{00160\ \ \textcolor{keyword}{private}:}
+\DoxyCodeLine{00161\ \ \ \textcolor{keyword}{template}\ <\textcolor{keywordtype}{int}\ LaneID>}
+\DoxyCodeLine{00162\ \ \ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ madd\_helper(\textcolor{keyword}{const}\ LhsPacket\&\ a,\ \textcolor{keyword}{const}\ RhsPacketx4\&\ b,\ AccPacket\&\ c)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00163\ \textcolor{keyword}{\ \ }\{}
+\DoxyCodeLine{00164\ \textcolor{preprocessor}{\ \ \ \ \#if\ EIGEN\_COMP\_GNUC\_STRICT\ \&\&\ !(EIGEN\_GNUC\_AT\_LEAST(9,0))}}
+\DoxyCodeLine{00165\ \ \ \ \ \textcolor{comment}{//\ workaround\ gcc\ issue\ https://gcc.gnu.org/bugzilla/show\_bug.cgi?id=89101}}
+\DoxyCodeLine{00166\ \ \ \ \ \textcolor{comment}{//\ vfmaq\_laneq\_f64\ is\ implemented\ through\ a\ costly\ dup}}
+\DoxyCodeLine{00167\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(LaneID==0)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.2d,\ \%1.2d,\ \%2.d[0]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b.B\_0)\ :\ \ );}
+\DoxyCodeLine{00168\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==1)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.2d,\ \%1.2d,\ \%2.d[1]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b.B\_0)\ :\ \ );}
+\DoxyCodeLine{00169\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==2)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.2d,\ \%1.2d,\ \%2.d[0]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b.B\_1)\ :\ \ );}
+\DoxyCodeLine{00170\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==3)\ \ \textcolor{keyword}{asm}(\textcolor{stringliteral}{"{}fmla\ \%0.2d,\ \%1.2d,\ \%2.d[1]\(\backslash\)n"{}}\ :\ \textcolor{stringliteral}{"{}+w"{}}\ (c)\ :\ \textcolor{stringliteral}{"{}w"{}}\ (a),\ \textcolor{stringliteral}{"{}w"{}}\ (b.B\_1)\ :\ \ );}
+\DoxyCodeLine{00171\ \textcolor{preprocessor}{\ \ \ \ \#else}}
+\DoxyCodeLine{00172\ \ \ \ \ \ \ \ \ \ \textcolor{keywordflow}{if}(LaneID==0)\ c\ =\ vfmaq\_laneq\_f64(c,\ a,\ b.B\_0,\ 0);}
+\DoxyCodeLine{00173\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==1)\ c\ =\ vfmaq\_laneq\_f64(c,\ a,\ b.B\_0,\ 1);}
+\DoxyCodeLine{00174\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==2)\ c\ =\ vfmaq\_laneq\_f64(c,\ a,\ b.B\_1,\ 0);}
+\DoxyCodeLine{00175\ \ \ \ \ \textcolor{keywordflow}{else}\ \textcolor{keywordflow}{if}(LaneID==3)\ c\ =\ vfmaq\_laneq\_f64(c,\ a,\ b.B\_1,\ 1);}
+\DoxyCodeLine{00176\ \textcolor{preprocessor}{\ \ \ \ \#endif}}
+\DoxyCodeLine{00177\ \ \ \}}
+\DoxyCodeLine{00178\ \};}
+\DoxyCodeLine{00179\ }
+\DoxyCodeLine{00180\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_ARCH\_ARM64}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \}\ \ \textcolor{comment}{//\ namespace\ internal}}
+\DoxyCodeLine{00183\ \}\ \ \textcolor{comment}{//\ namespace\ Eigen}}
+
+\end{DoxyCode}

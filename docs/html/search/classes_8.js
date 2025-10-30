@@ -1,5 +1,4 @@
 var searchData=
 [
-  ['linereader_0',['LineReader',['../classLineReader.html',1,'']]],
-  ['lowpass_1',['LowPass',['../classLowPass.html',1,'']]]
+  ['kalmanfilter1d_0',['KalmanFilter1D',['../classKalmanFilter1D.html',1,'']]]
 ];

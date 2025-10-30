@@ -2,8 +2,10 @@
 #include "../../src/core/cli/Parser.h"
 #include "../../src/core/cli/SimpleFlag.h"
 #include "../../src/core/cli/ArgumentFlag.h"
+#include "../../src/core/cli/ReturnCodes.h"
 
-void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag *dependency) { }
+//void callback(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag *dependency) { }
+void callback() {}
 
 
 TEST(ParserTest, TestBasic) {
@@ -42,7 +44,7 @@ TEST(ParserTest, TestMultiple) {
     testParserA.addFlagGroup(testGroupA);
 
     char argsA[14] = "--testA -a -b";
-    ASSERT_EQ(testParserA.parse(argsA), 0);
+    ASSERT_EQ(testParserA.parse(argsA), CLI_SUCCESS);
     // expecting all flags to be set
     EXPECT_TRUE(testA_1.isSet());
     EXPECT_TRUE(testA_2.isSet());
@@ -57,7 +59,7 @@ TEST(ParserTest, TestMultiple) {
     BaseFlag* testGroupB[] = {&testB_1, &testB_2, &testB_3};
     testParserB.addFlagGroup(testGroupB);
 
-    char argsB[20] = "--testB 5 -a -b 5.2";
+    char argsB[21] = "--testB 5 -a -b -5.2";
     ASSERT_EQ(testParserB.parse(argsB), 0);
 }
 

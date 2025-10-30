@@ -5,6 +5,12 @@ var searchData=
   ['readsensors_2',['readSensors',['../classHardwareAbstraction.html#a48a0d194e011882e3169837fedb0192c',1,'HardwareAbstraction']]],
   ['reset_3',['reset',['../classArgumentFlag.html#a0e8cab89d936644b4ed33725aaea0d0d',1,'ArgumentFlag::reset()'],['../classBaseFlag.html#a2f4138383aea63878e750422156e0bea',1,'BaseFlag::reset()'],['../classSimpleFlag.html#abb91d35acb548126f7c8a0f34c1d5a9f',1,'SimpleFlag::reset()'],['../classDebounce.html#a2f5c17db075b09ac587afa080e6e85ff',1,'Debounce::reset()']]],
   ['resetflags_4',['resetFlags',['../classParser.html#ae9740c4dfc29fdaed4bf463187e44462',1,'Parser']]],
-  ['run_5',['run',['../classArgumentFlag.html#a429c109af5352cb489f9a8e1f0fdd5ec',1,'ArgumentFlag::run()'],['../classBaseFlag.html#aeeae5de67e9cc39ee0b455dde007897a',1,'BaseFlag::run()'],['../classSimpleFlag.html#ae9f71f8d2fe6ed3ffe6f3a2d56556d13',1,'SimpleFlag::run()']]],
-  ['runflags_6',['runFlags',['../classParser.html#a0a3343f5aa8ef7f8e6584e73b113e258',1,'Parser']]]
+  ['rotatex90local_5',['rotateX90local',['../classDiscreteRotation.html#a44d4ea0a2eda54b6293d00f29adffac0',1,'DiscreteRotation']]],
+  ['rotatexneg90local_6',['rotateXNeg90local',['../classDiscreteRotation.html#ac810cc7e3094e67e2b2005e3bf7534df',1,'DiscreteRotation']]],
+  ['rotatey90local_7',['rotateY90local',['../classDiscreteRotation.html#a53c148356b9babb22c202d6023b0a7dd',1,'DiscreteRotation']]],
+  ['rotateyneg90local_8',['rotateYNeg90local',['../classDiscreteRotation.html#ae32a0fb47dbf32bc270fc56c3736ffab',1,'DiscreteRotation']]],
+  ['rotatez90local_9',['rotateZ90local',['../classDiscreteRotation.html#a21f0a223a81691b92d90eec8bb17f829',1,'DiscreteRotation']]],
+  ['rotatezneg90local_10',['rotateZNeg90local',['../classDiscreteRotation.html#a99748c8f720db846a9647d872bb783a9',1,'DiscreteRotation']]],
+  ['run_11',['run',['../classArgumentFlag.html#a429c109af5352cb489f9a8e1f0fdd5ec',1,'ArgumentFlag::run()'],['../classBaseFlag.html#aeeae5de67e9cc39ee0b455dde007897a',1,'BaseFlag::run()'],['../classSimpleFlag.html#ae9f71f8d2fe6ed3ffe6f3a2d56556d13',1,'SimpleFlag::run()']]],
+  ['runflags_12',['runFlags',['../classParser.html#a0a3343f5aa8ef7f8e6584e73b113e258',1,'Parser']]]
 ];

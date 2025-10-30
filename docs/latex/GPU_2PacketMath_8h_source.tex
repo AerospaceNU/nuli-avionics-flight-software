@@ -1,0 +1,1652 @@
+\doxysection{Packet\+Math.\+h}
+\hypertarget{GPU_2PacketMath_8h_source}{}\label{GPU_2PacketMath_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/GPU/PacketMath.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/Core/arch/GPU/PacketMath.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Benoit\ Steiner\ <benoit.steiner.goog@gmail.com>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_PACKET\_MATH\_GPU\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_PACKET\_MATH\_GPU\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{}
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ }
+\DoxyCodeLine{00017\ \textcolor{comment}{//\ Read-\/only\ data\ cached\ load\ available.}}
+\DoxyCodeLine{00018\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HIP\_DEVICE\_COMPILE)\ ||\ (defined(EIGEN\_CUDA\_ARCH)\ \&\&\ EIGEN\_CUDA\_ARCH\ >=\ 350)}}
+\DoxyCodeLine{00019\ \textcolor{preprocessor}{\#define\ EIGEN\_GPU\_HAS\_LDG\ 1}}
+\DoxyCodeLine{00020\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00021\ }
+\DoxyCodeLine{00022\ \textcolor{comment}{//\ FP16\ math\ available.}}
+\DoxyCodeLine{00023\ \textcolor{preprocessor}{\#if\ (defined(EIGEN\_CUDA\_ARCH)\ \&\&\ EIGEN\_CUDA\_ARCH\ >=\ 530)}}
+\DoxyCodeLine{00024\ \textcolor{preprocessor}{\#define\ EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC\ 1}}
+\DoxyCodeLine{00025\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00026\ }
+\DoxyCodeLine{00027\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HIP\_DEVICE\_COMPILE)\ ||\ defined(EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00028\ \textcolor{preprocessor}{\#define\ EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC\ 1}}
+\DoxyCodeLine{00029\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00030\ }
+\DoxyCodeLine{00031\ \textcolor{comment}{//\ Make\ sure\ this\ is\ only\ available\ when\ targeting\ a\ GPU:\ we\ don't\ want\ to}}
+\DoxyCodeLine{00032\ \textcolor{comment}{//\ introduce\ conflicts\ between\ these\ packet\_traits\ definitions\ and\ the\ ones}}
+\DoxyCodeLine{00033\ \textcolor{comment}{//\ we'll\ use\ on\ the\ host\ side\ (SSE,\ AVX,\ ...)}}
+\DoxyCodeLine{00034\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPUCC)\ \&\&\ defined(EIGEN\_USE\_GPU)}}
+\DoxyCodeLine{00035\ }
+\DoxyCodeLine{00036\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__arithmetic}{is\_arithmetic}}<float4>\ \ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00037\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__arithmetic}{is\_arithmetic}}<double2>\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00038\ }
+\DoxyCodeLine{00039\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}}<float>\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1default__packet__traits}{default\_packet\_traits}}}
+\DoxyCodeLine{00040\ \{}
+\DoxyCodeLine{00041\ \ \ \textcolor{keyword}{typedef}\ float4\ type;}
+\DoxyCodeLine{00042\ \ \ \textcolor{keyword}{typedef}\ float4\ half;}
+\DoxyCodeLine{00043\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00044\ \ \ \ \ Vectorizable\ =\ 1,}
+\DoxyCodeLine{00045\ \ \ \ \ AlignedOnScalar\ =\ 1,}
+\DoxyCodeLine{00046\ \ \ \ \ size=4,}
+\DoxyCodeLine{00047\ \ \ \ \ HasHalfPacket\ =\ 0,}
+\DoxyCodeLine{00048\ }
+\DoxyCodeLine{00049\ \ \ \ \ HasDiv\ \ =\ 1,}
+\DoxyCodeLine{00050\ \ \ \ \ HasSin\ \ =\ 0,}
+\DoxyCodeLine{00051\ \ \ \ \ HasCos\ \ =\ 0,}
+\DoxyCodeLine{00052\ \ \ \ \ HasLog\ \ =\ 1,}
+\DoxyCodeLine{00053\ \ \ \ \ HasExp\ \ =\ 1,}
+\DoxyCodeLine{00054\ \ \ \ \ HasSqrt\ =\ 1,}
+\DoxyCodeLine{00055\ \ \ \ \ HasRsqrt\ =\ 1,}
+\DoxyCodeLine{00056\ \ \ \ \ HasLGamma\ =\ 1,}
+\DoxyCodeLine{00057\ \ \ \ \ HasDiGamma\ =\ 1,}
+\DoxyCodeLine{00058\ \ \ \ \ HasZeta\ =\ 1,}
+\DoxyCodeLine{00059\ \ \ \ \ HasPolygamma\ =\ 1,}
+\DoxyCodeLine{00060\ \ \ \ \ HasErf\ =\ 1,}
+\DoxyCodeLine{00061\ \ \ \ \ HasErfc\ =\ 1,}
+\DoxyCodeLine{00062\ \ \ \ \ HasNdtri\ =\ 1,}
+\DoxyCodeLine{00063\ \ \ \ \ HasBessel\ =\ 1,}
+\DoxyCodeLine{00064\ \ \ \ \ HasIGamma\ =\ 1,}
+\DoxyCodeLine{00065\ \ \ \ \ HasIGammaDerA\ =\ 1,}
+\DoxyCodeLine{00066\ \ \ \ \ HasGammaSampleDerAlpha\ =\ 1,}
+\DoxyCodeLine{00067\ \ \ \ \ HasIGammac\ =\ 1,}
+\DoxyCodeLine{00068\ \ \ \ \ HasBetaInc\ =\ 1,}
+\DoxyCodeLine{00069\ }
+\DoxyCodeLine{00070\ \ \ \ \ HasBlend\ =\ 0,}
+\DoxyCodeLine{00071\ \ \ \ \ HasFloor\ =\ 1,}
+\DoxyCodeLine{00072\ \ \ \};}
+\DoxyCodeLine{00073\ \};}
+\DoxyCodeLine{00074\ }
+\DoxyCodeLine{00075\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}}<double>\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1default__packet__traits}{default\_packet\_traits}}}
+\DoxyCodeLine{00076\ \{}
+\DoxyCodeLine{00077\ \ \ \textcolor{keyword}{typedef}\ double2\ type;}
+\DoxyCodeLine{00078\ \ \ \textcolor{keyword}{typedef}\ double2\ half;}
+\DoxyCodeLine{00079\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00080\ \ \ \ \ Vectorizable\ =\ 1,}
+\DoxyCodeLine{00081\ \ \ \ \ AlignedOnScalar\ =\ 1,}
+\DoxyCodeLine{00082\ \ \ \ \ size=2,}
+\DoxyCodeLine{00083\ \ \ \ \ HasHalfPacket\ =\ 0,}
+\DoxyCodeLine{00084\ }
+\DoxyCodeLine{00085\ \ \ \ \ HasDiv\ \ =\ 1,}
+\DoxyCodeLine{00086\ \ \ \ \ HasLog\ \ =\ 1,}
+\DoxyCodeLine{00087\ \ \ \ \ HasExp\ \ =\ 1,}
+\DoxyCodeLine{00088\ \ \ \ \ HasSqrt\ =\ 1,}
+\DoxyCodeLine{00089\ \ \ \ \ HasRsqrt\ =\ 1,}
+\DoxyCodeLine{00090\ \ \ \ \ HasLGamma\ =\ 1,}
+\DoxyCodeLine{00091\ \ \ \ \ HasDiGamma\ =\ 1,}
+\DoxyCodeLine{00092\ \ \ \ \ HasZeta\ =\ 1,}
+\DoxyCodeLine{00093\ \ \ \ \ HasPolygamma\ =\ 1,}
+\DoxyCodeLine{00094\ \ \ \ \ HasErf\ =\ 1,}
+\DoxyCodeLine{00095\ \ \ \ \ HasErfc\ =\ 1,}
+\DoxyCodeLine{00096\ \ \ \ \ HasNdtri\ =\ 1,}
+\DoxyCodeLine{00097\ \ \ \ \ HasBessel\ =\ 1,}
+\DoxyCodeLine{00098\ \ \ \ \ HasIGamma\ =\ 1,}
+\DoxyCodeLine{00099\ \ \ \ \ HasIGammaDerA\ =\ 1,}
+\DoxyCodeLine{00100\ \ \ \ \ HasGammaSampleDerAlpha\ =\ 1,}
+\DoxyCodeLine{00101\ \ \ \ \ HasIGammac\ =\ 1,}
+\DoxyCodeLine{00102\ \ \ \ \ HasBetaInc\ =\ 1,}
+\DoxyCodeLine{00103\ }
+\DoxyCodeLine{00104\ \ \ \ \ HasBlend\ =\ 0,}
+\DoxyCodeLine{00105\ \ \ \ \ HasFloor\ =\ 1,}
+\DoxyCodeLine{00106\ \ \ \};}
+\DoxyCodeLine{00107\ \};}
+\DoxyCodeLine{00108\ }
+\DoxyCodeLine{00109\ }
+\DoxyCodeLine{00110\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}<float4>\ \ \{\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{float}\ \ type;\ \textcolor{keyword}{enum}\ \{size=4,\ alignment=\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ad0b140cd97bc74365b51843d28379655}{Aligned16}},\ vectorizable=\textcolor{keyword}{true},\ masked\_load\_available=\textcolor{keyword}{false},\ masked\_store\_available=\textcolor{keyword}{false}\};\ \textcolor{keyword}{typedef}\ float4\ half;\ \};}
+\DoxyCodeLine{00111\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}<double2>\ \{\ \textcolor{keyword}{typedef}\ \textcolor{keywordtype}{double}\ type;\ \textcolor{keyword}{enum}\ \{size=2,\ alignment=\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ad0b140cd97bc74365b51843d28379655}{Aligned16}},\ vectorizable=\textcolor{keyword}{true},\ masked\_load\_available=\textcolor{keyword}{false},\ masked\_store\_available=\textcolor{keyword}{false}\};\ \textcolor{keyword}{typedef}\ double2\ half;\ \};}
+\DoxyCodeLine{00112\ }
+\DoxyCodeLine{00113\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pset1<float4>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ \ from)\ \{}
+\DoxyCodeLine{00114\ \ \ \textcolor{keywordflow}{return}\ make\_float4(from,\ from,\ from,\ from);}
+\DoxyCodeLine{00115\ \}}
+\DoxyCodeLine{00116\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pset1<double2>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ from)\ \{}
+\DoxyCodeLine{00117\ \ \ \textcolor{keywordflow}{return}\ make\_double2(from,\ from);}
+\DoxyCodeLine{00118\ \}}
+\DoxyCodeLine{00119\ }
+\DoxyCodeLine{00120\ \textcolor{comment}{//\ We\ need\ to\ distinguish\ ‘clang\ as\ the\ CUDA\ compiler’\ from\ ‘clang\ as\ the\ host\ compiler,}}
+\DoxyCodeLine{00121\ \textcolor{comment}{//\ invoked\ by\ NVCC’\ (e.g.\ on\ MacOS).\ The\ former\ needs\ to\ see\ both\ host\ and\ device\ implementation}}
+\DoxyCodeLine{00122\ \textcolor{comment}{//\ of\ the\ functions,\ while\ the\ latter\ can\ only\ deal\ with\ one\ of\ them.}}
+\DoxyCodeLine{00123\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_CUDA\_ARCH)\ ||\ defined(EIGEN\_HIPCC)\ ||\ (defined(EIGEN\_CUDACC)\ \&\&\ EIGEN\_COMP\_CLANG\ \&\&\ !EIGEN\_COMP\_NVCC)}}
+\DoxyCodeLine{00124\ }
+\DoxyCodeLine{00125\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{float}\ bitwise\_and(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a,}
+\DoxyCodeLine{00126\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ b)\ \{}
+\DoxyCodeLine{00127\ \ \ \textcolor{keywordflow}{return}\ \_\_int\_as\_float(\_\_float\_as\_int(a)\ \&\ \_\_float\_as\_int(b));}
+\DoxyCodeLine{00128\ \}}
+\DoxyCodeLine{00129\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{double}\ bitwise\_and(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a,}
+\DoxyCodeLine{00130\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ b)\ \{}
+\DoxyCodeLine{00131\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(\_\_double\_as\_longlong(a)\ \&}
+\DoxyCodeLine{00132\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_double\_as\_longlong(b));}
+\DoxyCodeLine{00133\ \}}
+\DoxyCodeLine{00134\ }
+\DoxyCodeLine{00135\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{float}\ bitwise\_or(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a,}
+\DoxyCodeLine{00136\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ b)\ \{}
+\DoxyCodeLine{00137\ \ \ \textcolor{keywordflow}{return}\ \_\_int\_as\_float(\_\_float\_as\_int(a)\ |\ \_\_float\_as\_int(b));}
+\DoxyCodeLine{00138\ \}}
+\DoxyCodeLine{00139\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{double}\ bitwise\_or(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a,}
+\DoxyCodeLine{00140\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ b)\ \{}
+\DoxyCodeLine{00141\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(\_\_double\_as\_longlong(a)\ |}
+\DoxyCodeLine{00142\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_double\_as\_longlong(b));}
+\DoxyCodeLine{00143\ \}}
+\DoxyCodeLine{00144\ }
+\DoxyCodeLine{00145\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{float}\ bitwise\_xor(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a,}
+\DoxyCodeLine{00146\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ b)\ \{}
+\DoxyCodeLine{00147\ \ \ \textcolor{keywordflow}{return}\ \_\_int\_as\_float(\_\_float\_as\_int(a)\ \string^\ \_\_float\_as\_int(b));}
+\DoxyCodeLine{00148\ \}}
+\DoxyCodeLine{00149\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{double}\ bitwise\_xor(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a,}
+\DoxyCodeLine{00150\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ b)\ \{}
+\DoxyCodeLine{00151\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(\_\_double\_as\_longlong(a)\ \string^}
+\DoxyCodeLine{00152\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_double\_as\_longlong(b));}
+\DoxyCodeLine{00153\ \}}
+\DoxyCodeLine{00154\ }
+\DoxyCodeLine{00155\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{float}\ bitwise\_andnot(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a,}
+\DoxyCodeLine{00156\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ b)\ \{}
+\DoxyCodeLine{00157\ \ \ \textcolor{keywordflow}{return}\ \_\_int\_as\_float(\_\_float\_as\_int(a)\ \&\ \string~\_\_float\_as\_int(b));}
+\DoxyCodeLine{00158\ \}}
+\DoxyCodeLine{00159\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{double}\ bitwise\_andnot(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a,}
+\DoxyCodeLine{00160\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ b)\ \{}
+\DoxyCodeLine{00161\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(\_\_double\_as\_longlong(a)\ \&}
+\DoxyCodeLine{00162\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \string~\_\_double\_as\_longlong(b));}
+\DoxyCodeLine{00163\ \}}
+\DoxyCodeLine{00164\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{float}\ eq\_mask(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a,}
+\DoxyCodeLine{00165\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ b)\ \{}
+\DoxyCodeLine{00166\ \ \ \textcolor{keywordflow}{return}\ \_\_int\_as\_float(a\ ==\ b\ ?\ 0xffffffffu\ :\ 0u);}
+\DoxyCodeLine{00167\ \}}
+\DoxyCodeLine{00168\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{double}\ eq\_mask(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a,}
+\DoxyCodeLine{00169\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ b)\ \{}
+\DoxyCodeLine{00170\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(a\ ==\ b\ ?\ 0xffffffffffffffffull\ :\ 0ull);}
+\DoxyCodeLine{00171\ \}}
+\DoxyCodeLine{00172\ }
+\DoxyCodeLine{00173\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{float}\ lt\_mask(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a,}
+\DoxyCodeLine{00174\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ b)\ \{}
+\DoxyCodeLine{00175\ \ \ \textcolor{keywordflow}{return}\ \_\_int\_as\_float(a\ <\ b\ ?\ 0xffffffffu\ :\ 0u);}
+\DoxyCodeLine{00176\ \}}
+\DoxyCodeLine{00177\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{double}\ lt\_mask(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a,}
+\DoxyCodeLine{00178\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ b)\ \{}
+\DoxyCodeLine{00179\ \ \ \textcolor{keywordflow}{return}\ \_\_longlong\_as\_double(a\ <\ b\ ?\ 0xffffffffffffffffull\ :\ 0ull);}
+\DoxyCodeLine{00180\ \}}
+\DoxyCodeLine{00181\ }
+\DoxyCodeLine{00182\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00183\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pand<float4>(\textcolor{keyword}{const}\ float4\&\ a,}
+\DoxyCodeLine{00184\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00185\ \ \ \textcolor{keywordflow}{return}\ make\_float4(bitwise\_and(a.x,\ b.x),\ bitwise\_and(a.y,\ b.y),}
+\DoxyCodeLine{00186\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitwise\_and(a.z,\ b.z),\ bitwise\_and(a.w,\ b.w));}
+\DoxyCodeLine{00187\ \}}
+\DoxyCodeLine{00188\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00189\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pand<double2>(\textcolor{keyword}{const}\ double2\&\ a,}
+\DoxyCodeLine{00190\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00191\ \ \ \textcolor{keywordflow}{return}\ make\_double2(bitwise\_and(a.x,\ b.x),\ bitwise\_and(a.y,\ b.y));}
+\DoxyCodeLine{00192\ \}}
+\DoxyCodeLine{00193\ }
+\DoxyCodeLine{00194\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00195\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ por<float4>(\textcolor{keyword}{const}\ float4\&\ a,}
+\DoxyCodeLine{00196\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00197\ \ \ \textcolor{keywordflow}{return}\ make\_float4(bitwise\_or(a.x,\ b.x),\ bitwise\_or(a.y,\ b.y),}
+\DoxyCodeLine{00198\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitwise\_or(a.z,\ b.z),\ bitwise\_or(a.w,\ b.w));}
+\DoxyCodeLine{00199\ \}}
+\DoxyCodeLine{00200\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00201\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ por<double2>(\textcolor{keyword}{const}\ double2\&\ a,}
+\DoxyCodeLine{00202\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00203\ \ \ \textcolor{keywordflow}{return}\ make\_double2(bitwise\_or(a.x,\ b.x),\ bitwise\_or(a.y,\ b.y));}
+\DoxyCodeLine{00204\ \}}
+\DoxyCodeLine{00205\ }
+\DoxyCodeLine{00206\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00207\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pxor<float4>(\textcolor{keyword}{const}\ float4\&\ a,}
+\DoxyCodeLine{00208\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00209\ \ \ \textcolor{keywordflow}{return}\ make\_float4(bitwise\_xor(a.x,\ b.x),\ bitwise\_xor(a.y,\ b.y),}
+\DoxyCodeLine{00210\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitwise\_xor(a.z,\ b.z),\ bitwise\_xor(a.w,\ b.w));}
+\DoxyCodeLine{00211\ \}}
+\DoxyCodeLine{00212\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00213\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pxor<double2>(\textcolor{keyword}{const}\ double2\&\ a,}
+\DoxyCodeLine{00214\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00215\ \ \ \textcolor{keywordflow}{return}\ make\_double2(bitwise\_xor(a.x,\ b.x),\ bitwise\_xor(a.y,\ b.y));}
+\DoxyCodeLine{00216\ \}}
+\DoxyCodeLine{00217\ }
+\DoxyCodeLine{00218\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00219\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pandnot<float4>(\textcolor{keyword}{const}\ float4\&\ a,}
+\DoxyCodeLine{00220\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00221\ \ \ \textcolor{keywordflow}{return}\ make\_float4(bitwise\_andnot(a.x,\ b.x),\ bitwise\_andnot(a.y,\ b.y),}
+\DoxyCodeLine{00222\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ bitwise\_andnot(a.z,\ b.z),\ bitwise\_andnot(a.w,\ b.w));}
+\DoxyCodeLine{00223\ \}}
+\DoxyCodeLine{00224\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00225\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2}
+\DoxyCodeLine{00226\ pandnot<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00227\ \ \ \textcolor{keywordflow}{return}\ make\_double2(bitwise\_andnot(a.x,\ b.x),\ bitwise\_andnot(a.y,\ b.y));}
+\DoxyCodeLine{00228\ \}}
+\DoxyCodeLine{00229\ }
+\DoxyCodeLine{00230\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00231\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pcmp\_eq<float4>(\textcolor{keyword}{const}\ float4\&\ a,}
+\DoxyCodeLine{00232\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00233\ \ \ \textcolor{keywordflow}{return}\ make\_float4(eq\_mask(a.x,\ b.x),\ eq\_mask(a.y,\ b.y),\ eq\_mask(a.z,\ b.z),}
+\DoxyCodeLine{00234\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ eq\_mask(a.w,\ b.w));}
+\DoxyCodeLine{00235\ \}}
+\DoxyCodeLine{00236\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00237\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pcmp\_lt<float4>(\textcolor{keyword}{const}\ float4\&\ a,}
+\DoxyCodeLine{00238\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00239\ \ \ \textcolor{keywordflow}{return}\ make\_float4(lt\_mask(a.x,\ b.x),\ lt\_mask(a.y,\ b.y),\ lt\_mask(a.z,\ b.z),}
+\DoxyCodeLine{00240\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ lt\_mask(a.w,\ b.w));}
+\DoxyCodeLine{00241\ \}}
+\DoxyCodeLine{00242\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00243\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2}
+\DoxyCodeLine{00244\ pcmp\_eq<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00245\ \ \ \textcolor{keywordflow}{return}\ make\_double2(eq\_mask(a.x,\ b.x),\ eq\_mask(a.y,\ b.y));}
+\DoxyCodeLine{00246\ \}}
+\DoxyCodeLine{00247\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00248\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2}
+\DoxyCodeLine{00249\ pcmp\_lt<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00250\ \ \ \textcolor{keywordflow}{return}\ make\_double2(lt\_mask(a.x,\ b.x),\ lt\_mask(a.y,\ b.y));}
+\DoxyCodeLine{00251\ \}}
+\DoxyCodeLine{00252\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined(EIGEN\_CUDA\_ARCH)\ ||\ defined(EIGEN\_HIPCC)\ ||\ (defined(EIGEN\_CUDACC)\ \&\&\ EIGEN\_COMP\_CLANG\ \&\&\ !EIGEN\_COMP\_NVCC)}}
+\DoxyCodeLine{00253\ }
+\DoxyCodeLine{00254\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ plset<float4>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}\&\ a)\ \{}
+\DoxyCodeLine{00255\ \ \ \textcolor{keywordflow}{return}\ make\_float4(a,\ a+1,\ a+2,\ a+3);}
+\DoxyCodeLine{00256\ \}}
+\DoxyCodeLine{00257\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ plset<double2>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}\&\ a)\ \{}
+\DoxyCodeLine{00258\ \ \ \textcolor{keywordflow}{return}\ make\_double2(a,\ a+1);}
+\DoxyCodeLine{00259\ \}}
+\DoxyCodeLine{00260\ }
+\DoxyCodeLine{00261\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ padd<float4>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00262\ \ \ \textcolor{keywordflow}{return}\ make\_float4(a.x+b.x,\ a.y+b.y,\ a.z+b.z,\ a.w+b.w);}
+\DoxyCodeLine{00263\ \}}
+\DoxyCodeLine{00264\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ padd<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00265\ \ \ \textcolor{keywordflow}{return}\ make\_double2(a.x+b.x,\ a.y+b.y);}
+\DoxyCodeLine{00266\ \}}
+\DoxyCodeLine{00267\ }
+\DoxyCodeLine{00268\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ psub<float4>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00269\ \ \ \textcolor{keywordflow}{return}\ make\_float4(a.x-\/b.x,\ a.y-\/b.y,\ a.z-\/b.z,\ a.w-\/b.w);}
+\DoxyCodeLine{00270\ \}}
+\DoxyCodeLine{00271\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ psub<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00272\ \ \ \textcolor{keywordflow}{return}\ make\_double2(a.x-\/b.x,\ a.y-\/b.y);}
+\DoxyCodeLine{00273\ \}}
+\DoxyCodeLine{00274\ }
+\DoxyCodeLine{00275\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pnegate(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00276\ \ \ \textcolor{keywordflow}{return}\ make\_float4(-\/a.x,\ -\/a.y,\ -\/a.z,\ -\/a.w);}
+\DoxyCodeLine{00277\ \}}
+\DoxyCodeLine{00278\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pnegate(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00279\ \ \ \textcolor{keywordflow}{return}\ make\_double2(-\/a.x,\ -\/a.y);}
+\DoxyCodeLine{00280\ \}}
+\DoxyCodeLine{00281\ }
+\DoxyCodeLine{00282\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pconj(\textcolor{keyword}{const}\ float4\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00283\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pconj(\textcolor{keyword}{const}\ double2\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00284\ }
+\DoxyCodeLine{00285\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pmul<float4>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00286\ \ \ \textcolor{keywordflow}{return}\ make\_float4(a.x*b.x,\ a.y*b.y,\ a.z*b.z,\ a.w*b.w);}
+\DoxyCodeLine{00287\ \}}
+\DoxyCodeLine{00288\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pmul<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00289\ \ \ \textcolor{keywordflow}{return}\ make\_double2(a.x*b.x,\ a.y*b.y);}
+\DoxyCodeLine{00290\ \}}
+\DoxyCodeLine{00291\ }
+\DoxyCodeLine{00292\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pdiv<float4>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00293\ \ \ \textcolor{keywordflow}{return}\ make\_float4(a.x/b.x,\ a.y/b.y,\ a.z/b.z,\ a.w/b.w);}
+\DoxyCodeLine{00294\ \}}
+\DoxyCodeLine{00295\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pdiv<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00296\ \ \ \textcolor{keywordflow}{return}\ make\_double2(a.x/b.x,\ a.y/b.y);}
+\DoxyCodeLine{00297\ \}}
+\DoxyCodeLine{00298\ }
+\DoxyCodeLine{00299\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pmin<float4>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00300\ \ \ \textcolor{keywordflow}{return}\ make\_float4(fminf(a.x,\ b.x),\ fminf(a.y,\ b.y),\ fminf(a.z,\ b.z),\ fminf(a.w,\ b.w));}
+\DoxyCodeLine{00301\ \}}
+\DoxyCodeLine{00302\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pmin<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00303\ \ \ \textcolor{keywordflow}{return}\ make\_double2(fmin(a.x,\ b.x),\ fmin(a.y,\ b.y));}
+\DoxyCodeLine{00304\ \}}
+\DoxyCodeLine{00305\ }
+\DoxyCodeLine{00306\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pmax<float4>(\textcolor{keyword}{const}\ float4\&\ a,\ \textcolor{keyword}{const}\ float4\&\ b)\ \{}
+\DoxyCodeLine{00307\ \ \ \textcolor{keywordflow}{return}\ make\_float4(fmaxf(a.x,\ b.x),\ fmaxf(a.y,\ b.y),\ fmaxf(a.z,\ b.z),\ fmaxf(a.w,\ b.w));}
+\DoxyCodeLine{00308\ \}}
+\DoxyCodeLine{00309\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pmax<double2>(\textcolor{keyword}{const}\ double2\&\ a,\ \textcolor{keyword}{const}\ double2\&\ b)\ \{}
+\DoxyCodeLine{00310\ \ \ \textcolor{keywordflow}{return}\ make\_double2(fmax(a.x,\ b.x),\ fmax(a.y,\ b.y));}
+\DoxyCodeLine{00311\ \}}
+\DoxyCodeLine{00312\ }
+\DoxyCodeLine{00313\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ pload<float4>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ from)\ \{}
+\DoxyCodeLine{00314\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }float4*\textcolor{keyword}{>}(from);}
+\DoxyCodeLine{00315\ \}}
+\DoxyCodeLine{00316\ }
+\DoxyCodeLine{00317\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ pload<double2>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ from)\ \{}
+\DoxyCodeLine{00318\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }double2*\textcolor{keyword}{>}(from);}
+\DoxyCodeLine{00319\ \}}
+\DoxyCodeLine{00320\ }
+\DoxyCodeLine{00321\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ ploadu<float4>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ from)\ \{}
+\DoxyCodeLine{00322\ \ \ \textcolor{keywordflow}{return}\ make\_float4(from[0],\ from[1],\ from[2],\ from[3]);}
+\DoxyCodeLine{00323\ \}}
+\DoxyCodeLine{00324\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ ploadu<double2>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ from)\ \{}
+\DoxyCodeLine{00325\ \ \ \textcolor{keywordflow}{return}\ make\_double2(from[0],\ from[1]);}
+\DoxyCodeLine{00326\ \}}
+\DoxyCodeLine{00327\ }
+\DoxyCodeLine{00328\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ float4\ ploaddup<float4>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ \ \ from)\ \{}
+\DoxyCodeLine{00329\ \ \ \textcolor{keywordflow}{return}\ make\_float4(from[0],\ from[0],\ from[1],\ from[1]);}
+\DoxyCodeLine{00330\ \}}
+\DoxyCodeLine{00331\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ double2\ ploaddup<double2>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ \ from)\ \{}
+\DoxyCodeLine{00332\ \ \ \textcolor{keywordflow}{return}\ make\_double2(from[0],\ from[0]);}
+\DoxyCodeLine{00333\ \}}
+\DoxyCodeLine{00334\ }
+\DoxyCodeLine{00335\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstore<float>(\textcolor{keywordtype}{float}*\ \ \ to,\ \textcolor{keyword}{const}\ float4\&\ from)\ \{}
+\DoxyCodeLine{00336\ \ \ *\textcolor{keyword}{reinterpret\_cast<}float4*\textcolor{keyword}{>}(to)\ =\ from;}
+\DoxyCodeLine{00337\ \}}
+\DoxyCodeLine{00338\ }
+\DoxyCodeLine{00339\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstore<double>(\textcolor{keywordtype}{double}*\ to,\ \textcolor{keyword}{const}\ double2\&\ from)\ \{}
+\DoxyCodeLine{00340\ \ \ *\textcolor{keyword}{reinterpret\_cast<}double2*\textcolor{keyword}{>}(to)\ =\ from;}
+\DoxyCodeLine{00341\ \}}
+\DoxyCodeLine{00342\ }
+\DoxyCodeLine{00343\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstoreu<float>(\textcolor{keywordtype}{float}*\ \ to,\ \textcolor{keyword}{const}\ float4\&\ from)\ \{}
+\DoxyCodeLine{00344\ \ \ to[0]\ =\ from.x;}
+\DoxyCodeLine{00345\ \ \ to[1]\ =\ from.y;}
+\DoxyCodeLine{00346\ \ \ to[2]\ =\ from.z;}
+\DoxyCodeLine{00347\ \ \ to[3]\ =\ from.w;}
+\DoxyCodeLine{00348\ \}}
+\DoxyCodeLine{00349\ }
+\DoxyCodeLine{00350\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstoreu<double>(\textcolor{keywordtype}{double}*\ to,\ \textcolor{keyword}{const}\ double2\&\ from)\ \{}
+\DoxyCodeLine{00351\ \ \ to[0]\ =\ from.x;}
+\DoxyCodeLine{00352\ \ \ to[1]\ =\ from.y;}
+\DoxyCodeLine{00353\ \}}
+\DoxyCodeLine{00354\ }
+\DoxyCodeLine{00355\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00356\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ float4\ ploadt\_ro<float4,\ Aligned>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ from)\ \{}
+\DoxyCodeLine{00357\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{00358\ \ \ \textcolor{keywordflow}{return}\ \_\_ldg((\textcolor{keyword}{const}\ float4*)from);}
+\DoxyCodeLine{00359\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00360\ \ \ \textcolor{keywordflow}{return}\ make\_float4(from[0],\ from[1],\ from[2],\ from[3]);}
+\DoxyCodeLine{00361\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00362\ \}}
+\DoxyCodeLine{00363\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00364\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ double2\ ploadt\_ro<double2,\ Aligned>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ from)\ \{}
+\DoxyCodeLine{00365\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{00366\ \ \ \textcolor{keywordflow}{return}\ \_\_ldg((\textcolor{keyword}{const}\ double2*)from);}
+\DoxyCodeLine{00367\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00368\ \ \ \textcolor{keywordflow}{return}\ make\_double2(from[0],\ from[1]);}
+\DoxyCodeLine{00369\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00370\ \}}
+\DoxyCodeLine{00371\ }
+\DoxyCodeLine{00372\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00373\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ float4\ ploadt\_ro<float4,\ Unaligned>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ from)\ \{}
+\DoxyCodeLine{00374\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{00375\ \ \ \textcolor{keywordflow}{return}\ make\_float4(\_\_ldg(from+0),\ \_\_ldg(from+1),\ \_\_ldg(from+2),\ \_\_ldg(from+3));}
+\DoxyCodeLine{00376\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00377\ \ \ \textcolor{keywordflow}{return}\ make\_float4(from[0],\ from[1],\ from[2],\ from[3]);}
+\DoxyCodeLine{00378\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00379\ \}}
+\DoxyCodeLine{00380\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00381\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ double2\ ploadt\_ro<double2,\ Unaligned>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ from)\ \{}
+\DoxyCodeLine{00382\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{00383\ \ \ \textcolor{keywordflow}{return}\ make\_double2(\_\_ldg(from+0),\ \_\_ldg(from+1));}
+\DoxyCodeLine{00384\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00385\ \ \ \textcolor{keywordflow}{return}\ make\_double2(from[0],\ from[1]);}
+\DoxyCodeLine{00386\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00387\ \}}
+\DoxyCodeLine{00388\ }
+\DoxyCodeLine{00389\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ float4\ pgather<float,\ float4>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{float}*\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{00390\ \ \ \textcolor{keywordflow}{return}\ make\_float4(from[0*stride],\ from[1*stride],\ from[2*stride],\ from[3*stride]);}
+\DoxyCodeLine{00391\ \}}
+\DoxyCodeLine{00392\ }
+\DoxyCodeLine{00393\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ double2\ pgather<double,\ double2>(\textcolor{keyword}{const}\ \textcolor{keywordtype}{double}*\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{00394\ \ \ \textcolor{keywordflow}{return}\ make\_double2(from[0*stride],\ from[1*stride]);}
+\DoxyCodeLine{00395\ \}}
+\DoxyCodeLine{00396\ }
+\DoxyCodeLine{00397\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pscatter<float,\ float4>(\textcolor{keywordtype}{float}*\ to,\ \textcolor{keyword}{const}\ float4\&\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{00398\ \ \ to[stride*0]\ =\ from.x;}
+\DoxyCodeLine{00399\ \ \ to[stride*1]\ =\ from.y;}
+\DoxyCodeLine{00400\ \ \ to[stride*2]\ =\ from.z;}
+\DoxyCodeLine{00401\ \ \ to[stride*3]\ =\ from.w;}
+\DoxyCodeLine{00402\ \}}
+\DoxyCodeLine{00403\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}\ pscatter<double,\ double2>(\textcolor{keywordtype}{double}*\ to,\ \textcolor{keyword}{const}\ double2\&\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{00404\ \ \ to[stride*0]\ =\ from.x;}
+\DoxyCodeLine{00405\ \ \ to[stride*1]\ =\ from.y;}
+\DoxyCodeLine{00406\ \}}
+\DoxyCodeLine{00407\ }
+\DoxyCodeLine{00408\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{float}\ \ pfirst<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00409\ \ \ \textcolor{keywordflow}{return}\ a.x;}
+\DoxyCodeLine{00410\ \}}
+\DoxyCodeLine{00411\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{double}\ pfirst<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00412\ \ \ \textcolor{keywordflow}{return}\ a.x;}
+\DoxyCodeLine{00413\ \}}
+\DoxyCodeLine{00414\ }
+\DoxyCodeLine{00415\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{float}\ \ predux<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00416\ \ \ \textcolor{keywordflow}{return}\ a.x\ +\ a.y\ +\ a.z\ +\ a.w;}
+\DoxyCodeLine{00417\ \}}
+\DoxyCodeLine{00418\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{double}\ predux<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00419\ \ \ \textcolor{keywordflow}{return}\ a.x\ +\ a.y;}
+\DoxyCodeLine{00420\ \}}
+\DoxyCodeLine{00421\ }
+\DoxyCodeLine{00422\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{float}\ \ predux\_max<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00423\ \ \ \textcolor{keywordflow}{return}\ fmaxf(fmaxf(a.x,\ a.y),\ fmaxf(a.z,\ a.w));}
+\DoxyCodeLine{00424\ \}}
+\DoxyCodeLine{00425\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{double}\ predux\_max<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00426\ \ \ \textcolor{keywordflow}{return}\ fmax(a.x,\ a.y);}
+\DoxyCodeLine{00427\ \}}
+\DoxyCodeLine{00428\ }
+\DoxyCodeLine{00429\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{float}\ \ predux\_min<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00430\ \ \ \textcolor{keywordflow}{return}\ fminf(fminf(a.x,\ a.y),\ fminf(a.z,\ a.w));}
+\DoxyCodeLine{00431\ \}}
+\DoxyCodeLine{00432\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{double}\ predux\_min<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00433\ \ \ \textcolor{keywordflow}{return}\ fmin(a.x,\ a.y);}
+\DoxyCodeLine{00434\ \}}
+\DoxyCodeLine{00435\ }
+\DoxyCodeLine{00436\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{float}\ \ predux\_mul<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00437\ \ \ \textcolor{keywordflow}{return}\ a.x\ *\ a.y\ *\ a.z\ *\ a.w;}
+\DoxyCodeLine{00438\ \}}
+\DoxyCodeLine{00439\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{double}\ predux\_mul<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00440\ \ \ \textcolor{keywordflow}{return}\ a.x\ *\ a.y;}
+\DoxyCodeLine{00441\ \}}
+\DoxyCodeLine{00442\ }
+\DoxyCodeLine{00443\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ float4\ \ pabs<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00444\ \ \ \textcolor{keywordflow}{return}\ make\_float4(fabsf(a.x),\ fabsf(a.y),\ fabsf(a.z),\ fabsf(a.w));}
+\DoxyCodeLine{00445\ \}}
+\DoxyCodeLine{00446\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ double2\ pabs<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00447\ \ \ \textcolor{keywordflow}{return}\ make\_double2(fabs(a.x),\ fabs(a.y));}
+\DoxyCodeLine{00448\ \}}
+\DoxyCodeLine{00449\ }
+\DoxyCodeLine{00450\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ float4\ \ pfloor<float4>(\textcolor{keyword}{const}\ float4\&\ a)\ \{}
+\DoxyCodeLine{00451\ \ \ \textcolor{keywordflow}{return}\ make\_float4(floorf(a.x),\ floorf(a.y),\ floorf(a.z),\ floorf(a.w));}
+\DoxyCodeLine{00452\ \}}
+\DoxyCodeLine{00453\ \textcolor{keyword}{template}<>\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ double2\ pfloor<double2>(\textcolor{keyword}{const}\ double2\&\ a)\ \{}
+\DoxyCodeLine{00454\ \ \ \textcolor{keywordflow}{return}\ make\_double2(floor(a.x),\ floor(a.y));}
+\DoxyCodeLine{00455\ \}}
+\DoxyCodeLine{00456\ }
+\DoxyCodeLine{00457\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00458\ ptranspose(\mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<float4,4>}}\&\ kernel)\ \{}
+\DoxyCodeLine{00459\ \ \ \textcolor{keywordtype}{float}\ tmp\ =\ kernel.packet[0].y;}
+\DoxyCodeLine{00460\ \ \ kernel.packet[0].y\ =\ kernel.packet[1].x;}
+\DoxyCodeLine{00461\ \ \ kernel.packet[1].x\ =\ tmp;}
+\DoxyCodeLine{00462\ }
+\DoxyCodeLine{00463\ \ \ tmp\ =\ kernel.packet[0].z;}
+\DoxyCodeLine{00464\ \ \ kernel.packet[0].z\ =\ kernel.packet[2].x;}
+\DoxyCodeLine{00465\ \ \ kernel.packet[2].x\ =\ tmp;}
+\DoxyCodeLine{00466\ }
+\DoxyCodeLine{00467\ \ \ tmp\ =\ kernel.packet[0].w;}
+\DoxyCodeLine{00468\ \ \ kernel.packet[0].w\ =\ kernel.packet[3].x;}
+\DoxyCodeLine{00469\ \ \ kernel.packet[3].x\ =\ tmp;}
+\DoxyCodeLine{00470\ }
+\DoxyCodeLine{00471\ \ \ tmp\ =\ kernel.packet[1].z;}
+\DoxyCodeLine{00472\ \ \ kernel.packet[1].z\ =\ kernel.packet[2].y;}
+\DoxyCodeLine{00473\ \ \ kernel.packet[2].y\ =\ tmp;}
+\DoxyCodeLine{00474\ }
+\DoxyCodeLine{00475\ \ \ tmp\ =\ kernel.packet[1].w;}
+\DoxyCodeLine{00476\ \ \ kernel.packet[1].w\ =\ kernel.packet[3].y;}
+\DoxyCodeLine{00477\ \ \ kernel.packet[3].y\ =\ tmp;}
+\DoxyCodeLine{00478\ }
+\DoxyCodeLine{00479\ \ \ tmp\ =\ kernel.packet[2].w;}
+\DoxyCodeLine{00480\ \ \ kernel.packet[2].w\ =\ kernel.packet[3].z;}
+\DoxyCodeLine{00481\ \ \ kernel.packet[3].z\ =\ tmp;}
+\DoxyCodeLine{00482\ \}}
+\DoxyCodeLine{00483\ }
+\DoxyCodeLine{00484\ EIGEN\_DEVICE\_FUNC\ \textcolor{keyword}{inline}\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00485\ ptranspose(\mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<double2,2>}}\&\ kernel)\ \{}
+\DoxyCodeLine{00486\ \ \ \textcolor{keywordtype}{double}\ tmp\ =\ kernel.packet[0].y;}
+\DoxyCodeLine{00487\ \ \ kernel.packet[0].y\ =\ kernel.packet[1].x;}
+\DoxyCodeLine{00488\ \ \ kernel.packet[1].x\ =\ tmp;}
+\DoxyCodeLine{00489\ \}}
+\DoxyCodeLine{00490\ }
+\DoxyCodeLine{00491\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ defined(EIGEN\_GPUCC)\ \&\&\ defined(EIGEN\_USE\_GPU)}}
+\DoxyCodeLine{00492\ }
+\DoxyCodeLine{00493\ \textcolor{comment}{//\ Half-\/packet\ functions\ are\ not\ available\ on\ the\ host\ for\ CUDA\ 9.0-\/9.2,\ only}}
+\DoxyCodeLine{00494\ \textcolor{comment}{//\ on\ device.\ There\ is\ no\ benefit\ to\ using\ them\ on\ the\ host\ anyways,\ since\ they\ are}}
+\DoxyCodeLine{00495\ \textcolor{comment}{//\ emulated.}}
+\DoxyCodeLine{00496\ \textcolor{preprocessor}{\#if\ (defined(EIGEN\_HAS\_CUDA\_FP16)\ ||\ defined(EIGEN\_HAS\_HIP\_FP16))\ \&\&\ defined(EIGEN\_GPU\_COMPILE\_PHASE)}}
+\DoxyCodeLine{00497\ }
+\DoxyCodeLine{00498\ \textcolor{keyword}{typedef}\ ulonglong2\ Packet4h2;}
+\DoxyCodeLine{00499\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}<Packet4h2>\ \{\ \textcolor{keyword}{typedef}\ Eigen::half\ type;\ \textcolor{keyword}{enum}\ \{size=8,\ alignment=\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ad0b140cd97bc74365b51843d28379655}{Aligned16}},\ vectorizable=\textcolor{keyword}{true},\ masked\_load\_available=\textcolor{keyword}{false},\ masked\_store\_available=\textcolor{keyword}{false}\};\ \textcolor{keyword}{typedef}\ Packet4h2\ half;\ \};}
+\DoxyCodeLine{00500\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__arithmetic}{is\_arithmetic}}<Packet4h2>\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00501\ }
+\DoxyCodeLine{00502\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{unpacket\_traits}}<half2>\ \{\ \textcolor{keyword}{typedef}\ Eigen::half\ type;\ \textcolor{keyword}{enum}\ \{size=2,\ alignment=\mbox{\hyperlink{group__enums_gga45fe06e29902b7a2773de05ba27b47a1ad0b140cd97bc74365b51843d28379655}{Aligned16}},\ vectorizable=\textcolor{keyword}{true},\ masked\_load\_available=\textcolor{keyword}{false},\ masked\_store\_available=\textcolor{keyword}{false}\};\ \textcolor{keyword}{typedef}\ half2\ half;\ \};}
+\DoxyCodeLine{00503\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1is__arithmetic}{is\_arithmetic}}<half2>\ \{\ \textcolor{keyword}{enum}\ \{\ value\ =\ \textcolor{keyword}{true}\ \};\ \};}
+\DoxyCodeLine{00504\ }
+\DoxyCodeLine{00505\ \textcolor{keyword}{template}<>\ \textcolor{keyword}{struct\ }\mbox{\hyperlink{structEigen_1_1internal_1_1packet__traits}{packet\_traits}}<Eigen::\mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}>\ :\ \mbox{\hyperlink{structEigen_1_1internal_1_1default__packet__traits}{default\_packet\_traits}}}
+\DoxyCodeLine{00506\ \{}
+\DoxyCodeLine{00507\ \ \ \textcolor{keyword}{typedef}\ Packet4h2\ type;}
+\DoxyCodeLine{00508\ \ \ \textcolor{keyword}{typedef}\ Packet4h2\ half;}
+\DoxyCodeLine{00509\ \ \ \textcolor{keyword}{enum}\ \{}
+\DoxyCodeLine{00510\ \ \ \ \ Vectorizable\ =\ 1,}
+\DoxyCodeLine{00511\ \ \ \ \ AlignedOnScalar\ =\ 1,}
+\DoxyCodeLine{00512\ \ \ \ \ size=8,}
+\DoxyCodeLine{00513\ \ \ \ \ HasHalfPacket\ =\ 0,}
+\DoxyCodeLine{00514\ \ \ \ \ HasAdd\ \ \ \ =\ 1,}
+\DoxyCodeLine{00515\ \ \ \ \ HasSub\ \ \ \ =\ 1,}
+\DoxyCodeLine{00516\ \ \ \ \ HasMul\ \ \ \ =\ 1,}
+\DoxyCodeLine{00517\ \ \ \ \ HasDiv\ \ \ \ =\ 1,}
+\DoxyCodeLine{00518\ \ \ \ \ HasSqrt\ \ \ =\ 1,}
+\DoxyCodeLine{00519\ \ \ \ \ HasRsqrt\ \ =\ 1,}
+\DoxyCodeLine{00520\ \ \ \ \ HasExp\ \ \ \ =\ 1,}
+\DoxyCodeLine{00521\ \ \ \ \ HasExpm1\ \ =\ 1,}
+\DoxyCodeLine{00522\ \ \ \ \ HasLog\ \ \ \ =\ 1,}
+\DoxyCodeLine{00523\ \ \ \ \ HasLog1p\ \ =\ 1}
+\DoxyCodeLine{00524\ \ \ \};}
+\DoxyCodeLine{00525\ \};}
+\DoxyCodeLine{00526\ }
+\DoxyCodeLine{00527\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{00528\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pset1<half2>(\textcolor{keyword}{const}\ Eigen::half\&\ from)\ \{}
+\DoxyCodeLine{00529\ \ \ \textcolor{keywordflow}{return}\ \_\_half2half2(from);}
+\DoxyCodeLine{00530\ \}}
+\DoxyCodeLine{00531\ }
+\DoxyCodeLine{00532\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00533\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{00534\ pset1<Packet4h2>(\textcolor{keyword}{const}\ Eigen::half\&\ from)\ \{}
+\DoxyCodeLine{00535\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{00536\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{00537\ \ \ p\_alias[0]\ =\ pset1<half2>(from);}
+\DoxyCodeLine{00538\ \ \ p\_alias[1]\ =\ pset1<half2>(from);}
+\DoxyCodeLine{00539\ \ \ p\_alias[2]\ =\ pset1<half2>(from);}
+\DoxyCodeLine{00540\ \ \ p\_alias[3]\ =\ pset1<half2>(from);}
+\DoxyCodeLine{00541\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00542\ \}}
+\DoxyCodeLine{00543\ }
+\DoxyCodeLine{00544\ \textcolor{keyword}{namespace\ }\{}
+\DoxyCodeLine{00545\ }
+\DoxyCodeLine{00546\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pload(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00547\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(from);}
+\DoxyCodeLine{00548\ \}}
+\DoxyCodeLine{00549\ }
+\DoxyCodeLine{00550\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ ploadu(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00551\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(from[0],\ from[1]);}
+\DoxyCodeLine{00552\ \}}
+\DoxyCodeLine{00553\ }
+\DoxyCodeLine{00554\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ ploaddup(\textcolor{keyword}{const}\ Eigen::half*\ \ from)\ \{}
+\DoxyCodeLine{00555\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(from[0],\ from[0]);}
+\DoxyCodeLine{00556\ \}}
+\DoxyCodeLine{00557\ }
+\DoxyCodeLine{00558\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstore(Eigen::half*\ to,}
+\DoxyCodeLine{00559\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ from)\ \{}
+\DoxyCodeLine{00560\ \ \ *\textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(to)\ =\ from;}
+\DoxyCodeLine{00561\ \}}
+\DoxyCodeLine{00562\ }
+\DoxyCodeLine{00563\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstoreu(Eigen::half*\ to,}
+\DoxyCodeLine{00564\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ from)\ \{}
+\DoxyCodeLine{00565\ \ \ to[0]\ =\ \_\_low2half(from);}
+\DoxyCodeLine{00566\ \ \ to[1]\ =\ \_\_high2half(from);}
+\DoxyCodeLine{00567\ \}}
+\DoxyCodeLine{00568\ }
+\DoxyCodeLine{00569\ }
+\DoxyCodeLine{00570\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ half2\ ploadt\_ro\_aligned(}
+\DoxyCodeLine{00571\ \ \ \ \ \textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00572\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{00573\ \ \ \textcolor{comment}{//\ Input\ is\ guaranteed\ to\ be\ properly\ aligned.}}
+\DoxyCodeLine{00574\ \ \ \textcolor{keywordflow}{return}\ \_\_ldg(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(from));}
+\DoxyCodeLine{00575\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00576\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(*(from+0),\ *(from+1));}
+\DoxyCodeLine{00577\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00578\ \}}
+\DoxyCodeLine{00579\ }
+\DoxyCodeLine{00580\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ half2\ ploadt\_ro\_unaligned(}
+\DoxyCodeLine{00581\ \ \ \ \ \textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00582\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{00583\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(\_\_ldg(from+0),\ \_\_ldg(from+1));}
+\DoxyCodeLine{00584\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00585\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(*(from+0),\ *(from+1));}
+\DoxyCodeLine{00586\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00587\ \}}
+\DoxyCodeLine{00588\ }
+\DoxyCodeLine{00589\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pgather(\textcolor{keyword}{const}\ Eigen::half*\ from,}
+\DoxyCodeLine{00590\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{00591\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(from[0*stride],\ from[1*stride]);}
+\DoxyCodeLine{00592\ \}}
+\DoxyCodeLine{00593\ }
+\DoxyCodeLine{00594\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pscatter(}
+\DoxyCodeLine{00595\ \ \ \ \ Eigen::half*\ to,\ \textcolor{keyword}{const}\ half2\&\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{00596\ \ \ to[stride*0]\ =\ \_\_low2half(from);}
+\DoxyCodeLine{00597\ \ \ to[stride*1]\ =\ \_\_high2half(from);}
+\DoxyCodeLine{00598\ \}}
+\DoxyCodeLine{00599\ }
+\DoxyCodeLine{00600\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ pfirst(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00601\ \ \ \textcolor{keywordflow}{return}\ \_\_low2half(a);}
+\DoxyCodeLine{00602\ \}}
+\DoxyCodeLine{00603\ }
+\DoxyCodeLine{00604\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pabs(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00605\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00606\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00607\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result1\ =\ half\_impl::raw\_uint16\_to\_half(a1.x\ \&\ 0x7FFF);}
+\DoxyCodeLine{00608\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result2\ =\ half\_impl::raw\_uint16\_to\_half(a2.x\ \&\ 0x7FFF);}
+\DoxyCodeLine{00609\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(result1,\ result2);}
+\DoxyCodeLine{00610\ \}}
+\DoxyCodeLine{00611\ }
+\DoxyCodeLine{00612\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ ptrue(\textcolor{keyword}{const}\ half2\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{00613\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ true\_half\ =\ half\_impl::raw\_uint16\_to\_half(0xffffu);}
+\DoxyCodeLine{00614\ \ \ \textcolor{keywordflow}{return}\ pset1<half2>(true\_half);}
+\DoxyCodeLine{00615\ \}}
+\DoxyCodeLine{00616\ }
+\DoxyCodeLine{00617\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pzero(\textcolor{keyword}{const}\ half2\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{00618\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ false\_half\ =\ half\_impl::raw\_uint16\_to\_half(0x0000u);}
+\DoxyCodeLine{00619\ \ \ \textcolor{keywordflow}{return}\ pset1<half2>(false\_half);}
+\DoxyCodeLine{00620\ \}}
+\DoxyCodeLine{00621\ }
+\DoxyCodeLine{00622\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{00623\ ptranspose(\mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<half2,2>}}\&\ kernel)\ \{}
+\DoxyCodeLine{00624\ \ \ \_\_half\ a1\ =\ \_\_low2half(kernel.packet[0]);}
+\DoxyCodeLine{00625\ \ \ \_\_half\ a2\ =\ \_\_high2half(kernel.packet[0]);}
+\DoxyCodeLine{00626\ \ \ \_\_half\ b1\ =\ \_\_low2half(kernel.packet[1]);}
+\DoxyCodeLine{00627\ \ \ \_\_half\ b2\ =\ \_\_high2half(kernel.packet[1]);}
+\DoxyCodeLine{00628\ \ \ kernel.packet[0]\ =\ \_\_halves2half2(a1,\ b1);}
+\DoxyCodeLine{00629\ \ \ kernel.packet[1]\ =\ \_\_halves2half2(a2,\ b2);}
+\DoxyCodeLine{00630\ \}}
+\DoxyCodeLine{00631\ }
+\DoxyCodeLine{00632\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ plset(\textcolor{keyword}{const}\ Eigen::half\&\ a)\ \{}
+\DoxyCodeLine{00633\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00634\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(a,\ \_\_hadd(a,\ \_\_float2half(1.0f)));}
+\DoxyCodeLine{00635\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00636\ \ \ \textcolor{keywordtype}{float}\ f\ =\ \_\_half2float(a)\ +\ 1.0f;}
+\DoxyCodeLine{00637\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(a,\ \_\_float2half(f));}
+\DoxyCodeLine{00638\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00639\ \}}
+\DoxyCodeLine{00640\ }
+\DoxyCodeLine{00641\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pselect(\textcolor{keyword}{const}\ half2\&\ mask,}
+\DoxyCodeLine{00642\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00643\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00644\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ mask\_low\ =\ \_\_low2half(mask);}
+\DoxyCodeLine{00645\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ mask\_high\ =\ \_\_high2half(mask);}
+\DoxyCodeLine{00646\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result\_low\ =\ mask\_low\ ==\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}(0)\ ?\ \_\_low2half(b)\ :\ \_\_low2half(a);}
+\DoxyCodeLine{00647\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result\_high\ =\ mask\_high\ ==\ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}(0)\ ?\ \_\_high2half(b)\ :\ \_\_high2half(a);}
+\DoxyCodeLine{00648\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(result\_low,\ result\_high);}
+\DoxyCodeLine{00649\ \}}
+\DoxyCodeLine{00650\ }
+\DoxyCodeLine{00651\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pcmp\_eq(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00652\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00653\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ true\_half\ =\ half\_impl::raw\_uint16\_to\_half(0xffffu);}
+\DoxyCodeLine{00654\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ false\_half\ =\ half\_impl::raw\_uint16\_to\_half(0x0000u);}
+\DoxyCodeLine{00655\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00656\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00657\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b1\ =\ \_\_low2half(b);}
+\DoxyCodeLine{00658\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b2\ =\ \_\_high2half(b);}
+\DoxyCodeLine{00659\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ eq1\ =\ \_\_half2float(a1)\ ==\ \_\_half2float(b1)\ ?\ true\_half\ :\ false\_half;}
+\DoxyCodeLine{00660\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ eq2\ =\ \_\_half2float(a2)\ ==\ \_\_half2float(b2)\ ?\ true\_half\ :\ false\_half;}
+\DoxyCodeLine{00661\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(eq1,\ eq2);}
+\DoxyCodeLine{00662\ \}}
+\DoxyCodeLine{00663\ }
+\DoxyCodeLine{00664\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pcmp\_lt(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00665\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00666\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ true\_half\ =\ half\_impl::raw\_uint16\_to\_half(0xffffu);}
+\DoxyCodeLine{00667\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ false\_half\ =\ half\_impl::raw\_uint16\_to\_half(0x0000u);}
+\DoxyCodeLine{00668\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00669\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00670\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b1\ =\ \_\_low2half(b);}
+\DoxyCodeLine{00671\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b2\ =\ \_\_high2half(b);}
+\DoxyCodeLine{00672\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ eq1\ =\ \_\_half2float(a1)\ <\ \_\_half2float(b1)\ ?\ true\_half\ :\ false\_half;}
+\DoxyCodeLine{00673\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ eq2\ =\ \_\_half2float(a2)\ <\ \_\_half2float(b2)\ ?\ true\_half\ :\ false\_half;}
+\DoxyCodeLine{00674\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(eq1,\ eq2);}
+\DoxyCodeLine{00675\ \}}
+\DoxyCodeLine{00676\ }
+\DoxyCodeLine{00677\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pand(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00678\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00679\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00680\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00681\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b1\ =\ \_\_low2half(b);}
+\DoxyCodeLine{00682\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b2\ =\ \_\_high2half(b);}
+\DoxyCodeLine{00683\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result1\ =\ half\_impl::raw\_uint16\_to\_half(a1.x\ \&\ b1.x);}
+\DoxyCodeLine{00684\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result2\ =\ half\_impl::raw\_uint16\_to\_half(a2.x\ \&\ b2.x);}
+\DoxyCodeLine{00685\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(result1,\ result2);}
+\DoxyCodeLine{00686\ \}}
+\DoxyCodeLine{00687\ }
+\DoxyCodeLine{00688\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ por(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00689\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00690\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00691\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00692\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b1\ =\ \_\_low2half(b);}
+\DoxyCodeLine{00693\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b2\ =\ \_\_high2half(b);}
+\DoxyCodeLine{00694\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result1\ =\ half\_impl::raw\_uint16\_to\_half(a1.x\ |\ b1.x);}
+\DoxyCodeLine{00695\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result2\ =\ half\_impl::raw\_uint16\_to\_half(a2.x\ |\ b2.x);}
+\DoxyCodeLine{00696\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(result1,\ result2);}
+\DoxyCodeLine{00697\ \}}
+\DoxyCodeLine{00698\ }
+\DoxyCodeLine{00699\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pxor(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00700\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00701\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00702\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00703\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b1\ =\ \_\_low2half(b);}
+\DoxyCodeLine{00704\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b2\ =\ \_\_high2half(b);}
+\DoxyCodeLine{00705\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result1\ =\ half\_impl::raw\_uint16\_to\_half(a1.x\ \string^\ b1.x);}
+\DoxyCodeLine{00706\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result2\ =\ half\_impl::raw\_uint16\_to\_half(a2.x\ \string^\ b2.x);}
+\DoxyCodeLine{00707\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(result1,\ result2);}
+\DoxyCodeLine{00708\ \}}
+\DoxyCodeLine{00709\ }
+\DoxyCodeLine{00710\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pandnot(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00711\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00712\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a1\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00713\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ a2\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00714\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b1\ =\ \_\_low2half(b);}
+\DoxyCodeLine{00715\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ b2\ =\ \_\_high2half(b);}
+\DoxyCodeLine{00716\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result1\ =\ half\_impl::raw\_uint16\_to\_half(a1.x\ \&\ \string~b1.x);}
+\DoxyCodeLine{00717\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ result2\ =\ half\_impl::raw\_uint16\_to\_half(a2.x\ \&\ \string~b2.x);}
+\DoxyCodeLine{00718\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(result1,\ result2);}
+\DoxyCodeLine{00719\ \}}
+\DoxyCodeLine{00720\ }
+\DoxyCodeLine{00721\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ padd(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00722\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00723\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00724\ \ \ \textcolor{keywordflow}{return}\ \_\_hadd2(a,\ b);}
+\DoxyCodeLine{00725\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00726\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00727\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00728\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00729\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00730\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ +\ b1;}
+\DoxyCodeLine{00731\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ +\ b2;}
+\DoxyCodeLine{00732\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00733\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00734\ \}}
+\DoxyCodeLine{00735\ }
+\DoxyCodeLine{00736\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ psub(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00737\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00738\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00739\ \ \ \textcolor{keywordflow}{return}\ \_\_hsub2(a,\ b);}
+\DoxyCodeLine{00740\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00741\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00742\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00743\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00744\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00745\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ -\/\ b1;}
+\DoxyCodeLine{00746\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ -\/\ b2;}
+\DoxyCodeLine{00747\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00748\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00749\ \}}
+\DoxyCodeLine{00750\ }
+\DoxyCodeLine{00751\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pnegate(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00752\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00753\ \ \ \textcolor{keywordflow}{return}\ \_\_hneg2(a);}
+\DoxyCodeLine{00754\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00755\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00756\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00757\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(-\/a1,\ -\/a2);}
+\DoxyCodeLine{00758\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00759\ \}}
+\DoxyCodeLine{00760\ }
+\DoxyCodeLine{00761\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pconj(\textcolor{keyword}{const}\ half2\&\ a)\ \{\ \textcolor{keywordflow}{return}\ a;\ \}}
+\DoxyCodeLine{00762\ }
+\DoxyCodeLine{00763\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmul(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00764\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00765\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00766\ \ \ \textcolor{keywordflow}{return}\ \_\_hmul2(a,\ b);}
+\DoxyCodeLine{00767\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00768\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00769\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00770\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00771\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00772\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ *\ b1;}
+\DoxyCodeLine{00773\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ *\ b2;}
+\DoxyCodeLine{00774\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00775\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00776\ \}}
+\DoxyCodeLine{00777\ }
+\DoxyCodeLine{00778\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmadd(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00779\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b,}
+\DoxyCodeLine{00780\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ c)\ \{}
+\DoxyCodeLine{00781\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00782\ \ \ \ \textcolor{keywordflow}{return}\ \_\_hfma2(a,\ b,\ c);}
+\DoxyCodeLine{00783\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00784\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00785\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00786\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00787\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00788\ \ \ \textcolor{keywordtype}{float}\ c1\ =\ \_\_low2float(c);}
+\DoxyCodeLine{00789\ \ \ \textcolor{keywordtype}{float}\ c2\ =\ \_\_high2float(c);}
+\DoxyCodeLine{00790\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ *\ b1\ +\ c1;}
+\DoxyCodeLine{00791\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ *\ b2\ +\ c2;}
+\DoxyCodeLine{00792\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00793\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00794\ \}}
+\DoxyCodeLine{00795\ }
+\DoxyCodeLine{00796\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pdiv(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00797\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00798\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00799\ \ \ \textcolor{keywordflow}{return}\ \_\_h2div(a,\ b);}
+\DoxyCodeLine{00800\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00801\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00802\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00803\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00804\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00805\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ /\ b1;}
+\DoxyCodeLine{00806\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ /\ b2;}
+\DoxyCodeLine{00807\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00808\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00809\ \}}
+\DoxyCodeLine{00810\ }
+\DoxyCodeLine{00811\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmin(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00812\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00813\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00814\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00815\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00816\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00817\ \ \ \_\_half\ r1\ =\ a1\ <\ b1\ ?\ \_\_low2half(a)\ :\ \_\_low2half(b);}
+\DoxyCodeLine{00818\ \ \ \_\_half\ r2\ =\ a2\ <\ b2\ ?\ \_\_high2half(a)\ :\ \_\_high2half(b);}
+\DoxyCodeLine{00819\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(r1,\ r2);}
+\DoxyCodeLine{00820\ \}}
+\DoxyCodeLine{00821\ }
+\DoxyCodeLine{00822\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmax(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{00823\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{00824\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00825\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00826\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{00827\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{00828\ \ \ \_\_half\ r1\ =\ a1\ >\ b1\ ?\ \_\_low2half(a)\ :\ \_\_low2half(b);}
+\DoxyCodeLine{00829\ \ \ \_\_half\ r2\ =\ a2\ >\ b2\ ?\ \_\_high2half(a)\ :\ \_\_high2half(b);}
+\DoxyCodeLine{00830\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(r1,\ r2);}
+\DoxyCodeLine{00831\ \}}
+\DoxyCodeLine{00832\ }
+\DoxyCodeLine{00833\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00834\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00835\ \ \ \textcolor{keywordflow}{return}\ \_\_hadd(\_\_low2half(a),\ \_\_high2half(a));}
+\DoxyCodeLine{00836\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00837\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00838\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00839\ \ \ \textcolor{keywordflow}{return}\ Eigen::half(\_\_float2half(a1\ +\ a2));}
+\DoxyCodeLine{00840\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00841\ \}}
+\DoxyCodeLine{00842\ }
+\DoxyCodeLine{00843\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux\_max(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00844\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00845\ \ \ \_\_half\ first\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00846\ \ \ \_\_half\ second\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00847\ \ \ \textcolor{keywordflow}{return}\ \_\_hgt(first,\ second)\ ?\ first\ :\ second;}
+\DoxyCodeLine{00848\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00849\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00850\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00851\ \ \ \textcolor{keywordflow}{return}\ a1\ >\ a2\ ?\ \_\_low2half(a)\ :\ \_\_high2half(a);}
+\DoxyCodeLine{00852\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00853\ \}}
+\DoxyCodeLine{00854\ }
+\DoxyCodeLine{00855\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux\_min(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00856\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00857\ \ \ \_\_half\ first\ =\ \_\_low2half(a);}
+\DoxyCodeLine{00858\ \ \ \_\_half\ second\ =\ \_\_high2half(a);}
+\DoxyCodeLine{00859\ \ \ \textcolor{keywordflow}{return}\ \_\_hlt(first,\ second)\ ?\ first\ :\ second;}
+\DoxyCodeLine{00860\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00861\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00862\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00863\ \ \ \textcolor{keywordflow}{return}\ a1\ <\ a2\ ?\ \_\_low2half(a)\ :\ \_\_high2half(a);}
+\DoxyCodeLine{00864\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00865\ \}}
+\DoxyCodeLine{00866\ }
+\DoxyCodeLine{00867\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux\_mul(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00868\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{00869\ \ \ \textcolor{keywordflow}{return}\ \_\_hmul(\_\_low2half(a),\ \_\_high2half(a));}
+\DoxyCodeLine{00870\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00871\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00872\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00873\ \ \ \textcolor{keywordflow}{return}\ Eigen::half(\_\_float2half(a1\ *\ a2));}
+\DoxyCodeLine{00874\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00875\ \}}
+\DoxyCodeLine{00876\ }
+\DoxyCodeLine{00877\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ plog1p(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00878\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00879\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00880\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ log1pf(a1);}
+\DoxyCodeLine{00881\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ log1pf(a2);}
+\DoxyCodeLine{00882\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00883\ \}}
+\DoxyCodeLine{00884\ }
+\DoxyCodeLine{00885\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pexpm1(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00886\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00887\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00888\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ expm1f(a1);}
+\DoxyCodeLine{00889\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ expm1f(a2);}
+\DoxyCodeLine{00890\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00891\ \}}
+\DoxyCodeLine{00892\ }
+\DoxyCodeLine{00893\ \textcolor{preprocessor}{\#if\ (EIGEN\_CUDA\_SDK\_VER\ >=\ 80000\ \&\&\ defined(EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC))\ ||\ \(\backslash\)}}
+\DoxyCodeLine{00894\ \textcolor{preprocessor}{\ \ defined(EIGEN\_HIP\_DEVICE\_COMPILE)}}
+\DoxyCodeLine{00895\ }
+\DoxyCodeLine{00896\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00897\ half2\ plog(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00898\ \ \ \textcolor{keywordflow}{return}\ h2log(a);}
+\DoxyCodeLine{00899\ \}}
+\DoxyCodeLine{00900\ }
+\DoxyCodeLine{00901\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00902\ half2\ pexp(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00903\ \ \ \textcolor{keywordflow}{return}\ h2exp(a);}
+\DoxyCodeLine{00904\ \}}
+\DoxyCodeLine{00905\ }
+\DoxyCodeLine{00906\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00907\ half2\ psqrt(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00908\ \ \ \textcolor{keywordflow}{return}\ h2sqrt(a);}
+\DoxyCodeLine{00909\ \}}
+\DoxyCodeLine{00910\ }
+\DoxyCodeLine{00911\ \ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE}
+\DoxyCodeLine{00912\ half2\ prsqrt(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00913\ \ \ \textcolor{keywordflow}{return}\ h2rsqrt(a);}
+\DoxyCodeLine{00914\ \}}
+\DoxyCodeLine{00915\ }
+\DoxyCodeLine{00916\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{00917\ }
+\DoxyCodeLine{00918\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ plog(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00919\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00920\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00921\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ logf(a1);}
+\DoxyCodeLine{00922\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ logf(a2);}
+\DoxyCodeLine{00923\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00924\ \}}
+\DoxyCodeLine{00925\ }
+\DoxyCodeLine{00926\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pexp(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00927\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00928\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00929\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ expf(a1);}
+\DoxyCodeLine{00930\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ expf(a2);}
+\DoxyCodeLine{00931\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00932\ \}}
+\DoxyCodeLine{00933\ }
+\DoxyCodeLine{00934\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ psqrt(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00935\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00936\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00937\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ sqrtf(a1);}
+\DoxyCodeLine{00938\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ sqrtf(a2);}
+\DoxyCodeLine{00939\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00940\ \}}
+\DoxyCodeLine{00941\ }
+\DoxyCodeLine{00942\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ prsqrt(\textcolor{keyword}{const}\ half2\&\ a)\ \{}
+\DoxyCodeLine{00943\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{00944\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{00945\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ rsqrtf(a1);}
+\DoxyCodeLine{00946\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ rsqrtf(a2);}
+\DoxyCodeLine{00947\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{00948\ \}}
+\DoxyCodeLine{00949\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{00950\ \}\ \textcolor{comment}{//\ namespace}}
+\DoxyCodeLine{00951\ }
+\DoxyCodeLine{00952\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00953\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{00954\ pload<Packet4h2>(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00955\ \ \ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }Packet4h2*\textcolor{keyword}{>}(from);}
+\DoxyCodeLine{00956\ \}}
+\DoxyCodeLine{00957\ }
+\DoxyCodeLine{00958\ \textcolor{comment}{//\ unaligned\ load;}}
+\DoxyCodeLine{00959\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00960\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{00961\ ploadu<Packet4h2>(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00962\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{00963\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{00964\ \ \ p\_alias[0]\ =\ ploadu(from\ +\ 0);}
+\DoxyCodeLine{00965\ \ \ p\_alias[1]\ =\ ploadu(from\ +\ 2);}
+\DoxyCodeLine{00966\ \ \ p\_alias[2]\ =\ ploadu(from\ +\ 4);}
+\DoxyCodeLine{00967\ \ \ p\_alias[3]\ =\ ploadu(from\ +\ 6);}
+\DoxyCodeLine{00968\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00969\ \}}
+\DoxyCodeLine{00970\ }
+\DoxyCodeLine{00971\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00972\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{00973\ ploaddup<Packet4h2>(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{00974\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{00975\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{00976\ \ \ p\_alias[0]\ =\ ploaddup(from\ +\ 0);}
+\DoxyCodeLine{00977\ \ \ p\_alias[1]\ =\ ploaddup(from\ +\ 1);}
+\DoxyCodeLine{00978\ \ \ p\_alias[2]\ =\ ploaddup(from\ +\ 2);}
+\DoxyCodeLine{00979\ \ \ p\_alias[3]\ =\ ploaddup(from\ +\ 3);}
+\DoxyCodeLine{00980\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{00981\ \}}
+\DoxyCodeLine{00982\ }
+\DoxyCodeLine{00983\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00984\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstore<Eigen::half>(}
+\DoxyCodeLine{00985\ \ \ \ \ Eigen::half*\ to,\ \textcolor{keyword}{const}\ Packet4h2\&\ from)\ \{}
+\DoxyCodeLine{00986\ \ \ *\textcolor{keyword}{reinterpret\_cast<}Packet4h2*\textcolor{keyword}{>}(to)\ =\ from;}
+\DoxyCodeLine{00987\ \}}
+\DoxyCodeLine{00988\ }
+\DoxyCodeLine{00989\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{00990\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pstoreu<Eigen::half>(}
+\DoxyCodeLine{00991\ \ \ \ \ Eigen::half*\ to,\ \textcolor{keyword}{const}\ Packet4h2\&\ from)\ \{}
+\DoxyCodeLine{00992\ \ \ \textcolor{keyword}{const}\ half2*\ from\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&from);}
+\DoxyCodeLine{00993\ \ \ pstoreu(to\ +\ 0,from\_alias[0]);}
+\DoxyCodeLine{00994\ \ \ pstoreu(to\ +\ 2,from\_alias[1]);}
+\DoxyCodeLine{00995\ \ \ pstoreu(to\ +\ 4,from\_alias[2]);}
+\DoxyCodeLine{00996\ \ \ pstoreu(to\ +\ 6,from\_alias[3]);}
+\DoxyCodeLine{00997\ \}}
+\DoxyCodeLine{00998\ }
+\DoxyCodeLine{00999\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01000\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ Packet4h2}
+\DoxyCodeLine{01001\ ploadt\_ro<Packet4h2,\ Aligned>(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{01002\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_LDG)}}
+\DoxyCodeLine{01003\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01004\ \ \ r\ =\ \_\_ldg(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }Packet4h2*\textcolor{keyword}{>}(from));}
+\DoxyCodeLine{01005\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01006\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01007\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01008\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01009\ \ \ r\_alias[0]\ =\ ploadt\_ro\_aligned(from\ +\ 0);}
+\DoxyCodeLine{01010\ \ \ r\_alias[1]\ =\ ploadt\_ro\_aligned(from\ +\ 2);}
+\DoxyCodeLine{01011\ \ \ r\_alias[2]\ =\ ploadt\_ro\_aligned(from\ +\ 4);}
+\DoxyCodeLine{01012\ \ \ r\_alias[3]\ =\ ploadt\_ro\_aligned(from\ +\ 6);}
+\DoxyCodeLine{01013\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01014\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01015\ \}}
+\DoxyCodeLine{01016\ }
+\DoxyCodeLine{01017\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01018\ EIGEN\_DEVICE\_FUNC\ EIGEN\_ALWAYS\_INLINE\ Packet4h2}
+\DoxyCodeLine{01019\ ploadt\_ro<Packet4h2,\ Unaligned>(\textcolor{keyword}{const}\ Eigen::half*\ from)\ \{}
+\DoxyCodeLine{01020\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01021\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01022\ \ \ r\_alias[0]\ =\ ploadt\_ro\_unaligned(from\ +\ 0);}
+\DoxyCodeLine{01023\ \ \ r\_alias[1]\ =\ ploadt\_ro\_unaligned(from\ +\ 2);}
+\DoxyCodeLine{01024\ \ \ r\_alias[2]\ =\ ploadt\_ro\_unaligned(from\ +\ 4);}
+\DoxyCodeLine{01025\ \ \ r\_alias[3]\ =\ ploadt\_ro\_unaligned(from\ +\ 6);}
+\DoxyCodeLine{01026\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01027\ \}}
+\DoxyCodeLine{01028\ }
+\DoxyCodeLine{01029\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01030\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01031\ pgather<Eigen::half,\ Packet4h2>(\textcolor{keyword}{const}\ Eigen::half*\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{01032\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01033\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01034\ \ \ p\_alias[0]\ =\ \_\_halves2half2(from[0\ *\ stride],\ from[1\ *\ stride]);}
+\DoxyCodeLine{01035\ \ \ p\_alias[1]\ =\ \_\_halves2half2(from[2\ *\ stride],\ from[3\ *\ stride]);}
+\DoxyCodeLine{01036\ \ \ p\_alias[2]\ =\ \_\_halves2half2(from[4\ *\ stride],\ from[5\ *\ stride]);}
+\DoxyCodeLine{01037\ \ \ p\_alias[3]\ =\ \_\_halves2half2(from[6\ *\ stride],\ from[7\ *\ stride]);}
+\DoxyCodeLine{01038\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01039\ \}}
+\DoxyCodeLine{01040\ }
+\DoxyCodeLine{01041\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01042\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ pscatter<Eigen::half,\ Packet4h2>(}
+\DoxyCodeLine{01043\ \ \ \ \ Eigen::half*\ to,\ \textcolor{keyword}{const}\ Packet4h2\&\ from,\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ stride)\ \{}
+\DoxyCodeLine{01044\ \ \ \textcolor{keyword}{const}\ half2*\ from\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&from);}
+\DoxyCodeLine{01045\ \ \ pscatter(to\ +\ stride\ *\ 0,\ from\_alias[0],\ stride);}
+\DoxyCodeLine{01046\ \ \ pscatter(to\ +\ stride\ *\ 2,\ from\_alias[1],\ stride);}
+\DoxyCodeLine{01047\ \ \ pscatter(to\ +\ stride\ *\ 4,\ from\_alias[2],\ stride);}
+\DoxyCodeLine{01048\ \ \ pscatter(to\ +\ stride\ *\ 6,\ from\_alias[3],\ stride);}
+\DoxyCodeLine{01049\ \}}
+\DoxyCodeLine{01050\ }
+\DoxyCodeLine{01051\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01052\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ pfirst<Packet4h2>(}
+\DoxyCodeLine{01053\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01054\ \ \ \textcolor{keywordflow}{return}\ pfirst(*(\textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a)));}
+\DoxyCodeLine{01055\ \}}
+\DoxyCodeLine{01056\ }
+\DoxyCodeLine{01057\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01058\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pabs<Packet4h2>(}
+\DoxyCodeLine{01059\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01060\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01061\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01062\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01063\ \ \ p\_alias[0]\ =\ pabs(a\_alias[0]);}
+\DoxyCodeLine{01064\ \ \ p\_alias[1]\ =\ pabs(a\_alias[1]);}
+\DoxyCodeLine{01065\ \ \ p\_alias[2]\ =\ pabs(a\_alias[2]);}
+\DoxyCodeLine{01066\ \ \ p\_alias[3]\ =\ pabs(a\_alias[3]);}
+\DoxyCodeLine{01067\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01068\ \}}
+\DoxyCodeLine{01069\ }
+\DoxyCodeLine{01070\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01071\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ ptrue<Packet4h2>(}
+\DoxyCodeLine{01072\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{01073\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ true\_half\ =\ half\_impl::raw\_uint16\_to\_half(0xffffu);}
+\DoxyCodeLine{01074\ \ \ \textcolor{keywordflow}{return}\ pset1<Packet4h2>(true\_half);}
+\DoxyCodeLine{01075\ \}}
+\DoxyCodeLine{01076\ }
+\DoxyCodeLine{01077\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01078\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pzero<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ \textcolor{comment}{/*a*/})\ \{}
+\DoxyCodeLine{01079\ \ \ \mbox{\hyperlink{structEigen_1_1internal_1_1unpacket__traits}{half}}\ false\_half\ =\ half\_impl::raw\_uint16\_to\_half(0x0000u);}
+\DoxyCodeLine{01080\ \ \ \textcolor{keywordflow}{return}\ pset1<Packet4h2>(false\_half);}
+\DoxyCodeLine{01081\ \}}
+\DoxyCodeLine{01082\ }
+\DoxyCodeLine{01083\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ ptranspose\_double(}
+\DoxyCodeLine{01084\ \ \ \ \ \textcolor{keywordtype}{double}*\ d\_row0,\ \textcolor{keywordtype}{double}*\ d\_row1,\ \textcolor{keywordtype}{double}*\ d\_row2,\ \textcolor{keywordtype}{double}*\ d\_row3,}
+\DoxyCodeLine{01085\ \ \ \ \ \textcolor{keywordtype}{double}*\ d\_row4,\ \textcolor{keywordtype}{double}*\ d\_row5,\ \textcolor{keywordtype}{double}*\ d\_row6,\ \textcolor{keywordtype}{double}*\ d\_row7)\ \{}
+\DoxyCodeLine{01086\ \ \ \textcolor{keywordtype}{double}\ d\_tmp;}
+\DoxyCodeLine{01087\ \ \ d\_tmp\ =\ d\_row0[1];}
+\DoxyCodeLine{01088\ \ \ d\_row0[1]\ =\ d\_row4[0];}
+\DoxyCodeLine{01089\ \ \ d\_row4[0]\ =\ d\_tmp;}
+\DoxyCodeLine{01090\ }
+\DoxyCodeLine{01091\ \ \ d\_tmp\ =\ d\_row1[1];}
+\DoxyCodeLine{01092\ \ \ d\_row1[1]\ =\ d\_row5[0];}
+\DoxyCodeLine{01093\ \ \ d\_row5[0]\ =\ d\_tmp;}
+\DoxyCodeLine{01094\ }
+\DoxyCodeLine{01095\ \ \ d\_tmp\ =\ d\_row2[1];}
+\DoxyCodeLine{01096\ \ \ d\_row2[1]\ =\ d\_row6[0];}
+\DoxyCodeLine{01097\ \ \ d\_row6[0]\ =\ d\_tmp;}
+\DoxyCodeLine{01098\ }
+\DoxyCodeLine{01099\ \ \ d\_tmp\ =\ d\_row3[1];}
+\DoxyCodeLine{01100\ \ \ d\_row3[1]\ =\ d\_row7[0];}
+\DoxyCodeLine{01101\ \ \ d\_row7[0]\ =\ d\_tmp;}
+\DoxyCodeLine{01102\ \}}
+\DoxyCodeLine{01103\ }
+\DoxyCodeLine{01104\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}\ ptranspose\_half2(}
+\DoxyCodeLine{01105\ \ \ \ \ half2*\ f\_row0,\ half2*\ f\_row1,\ half2*\ f\_row2,\ half2*\ f\_row3)\ \{}
+\DoxyCodeLine{01106\ \ \ half2\ f\_tmp;}
+\DoxyCodeLine{01107\ \ \ f\_tmp\ =\ f\_row0[1];}
+\DoxyCodeLine{01108\ \ \ f\_row0[1]\ =\ f\_row2[0];}
+\DoxyCodeLine{01109\ \ \ f\_row2[0]\ =\ f\_tmp;}
+\DoxyCodeLine{01110\ }
+\DoxyCodeLine{01111\ \ \ f\_tmp\ =\ f\_row1[1];}
+\DoxyCodeLine{01112\ \ \ f\_row1[1]\ =\ f\_row3[0];}
+\DoxyCodeLine{01113\ \ \ f\_row3[0]\ =\ f\_tmp;}
+\DoxyCodeLine{01114\ \}}
+\DoxyCodeLine{01115\ }
+\DoxyCodeLine{01116\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01117\ ptranspose\_half(half2\&\ f0,\ half2\&\ f1)\ \{}
+\DoxyCodeLine{01118\ \ \ \_\_half\ a1\ =\ \_\_low2half(f0);}
+\DoxyCodeLine{01119\ \ \ \_\_half\ a2\ =\ \_\_high2half(f0);}
+\DoxyCodeLine{01120\ \ \ \_\_half\ b1\ =\ \_\_low2half(f1);}
+\DoxyCodeLine{01121\ \ \ \_\_half\ b2\ =\ \_\_high2half(f1);}
+\DoxyCodeLine{01122\ \ \ f0\ =\ \_\_halves2half2(a1,\ b1);}
+\DoxyCodeLine{01123\ \ \ f1\ =\ \_\_halves2half2(a2,\ b2);}
+\DoxyCodeLine{01124\ \}}
+\DoxyCodeLine{01125\ }
+\DoxyCodeLine{01126\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ \textcolor{keywordtype}{void}}
+\DoxyCodeLine{01127\ ptranspose(\mbox{\hyperlink{structEigen_1_1internal_1_1PacketBlock}{PacketBlock<Packet4h2,8>}}\&\ kernel)\ \{}
+\DoxyCodeLine{01128\ \ \ \textcolor{keywordtype}{double}*\ d\_row0\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[0]);}
+\DoxyCodeLine{01129\ \ \ \textcolor{keywordtype}{double}*\ d\_row1\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[1]);}
+\DoxyCodeLine{01130\ \ \ \textcolor{keywordtype}{double}*\ d\_row2\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[2]);}
+\DoxyCodeLine{01131\ \ \ \textcolor{keywordtype}{double}*\ d\_row3\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[3]);}
+\DoxyCodeLine{01132\ \ \ \textcolor{keywordtype}{double}*\ d\_row4\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[4]);}
+\DoxyCodeLine{01133\ \ \ \textcolor{keywordtype}{double}*\ d\_row5\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[5]);}
+\DoxyCodeLine{01134\ \ \ \textcolor{keywordtype}{double}*\ d\_row6\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[6]);}
+\DoxyCodeLine{01135\ \ \ \textcolor{keywordtype}{double}*\ d\_row7\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keywordtype}{double}*\textcolor{keyword}{>}(\&kernel.packet[7]);}
+\DoxyCodeLine{01136\ \ \ ptranspose\_double(d\_row0,\ d\_row1,\ d\_row2,\ d\_row3,}
+\DoxyCodeLine{01137\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ d\_row4,\ d\_row5,\ d\_row6,\ d\_row7);}
+\DoxyCodeLine{01138\ }
+\DoxyCodeLine{01139\ }
+\DoxyCodeLine{01140\ \ \ half2*\ f\_row0\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row0);}
+\DoxyCodeLine{01141\ \ \ half2*\ f\_row1\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row1);}
+\DoxyCodeLine{01142\ \ \ half2*\ f\_row2\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row2);}
+\DoxyCodeLine{01143\ \ \ half2*\ f\_row3\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row3);}
+\DoxyCodeLine{01144\ \ \ ptranspose\_half2(f\_row0,\ f\_row1,\ f\_row2,\ f\_row3);}
+\DoxyCodeLine{01145\ \ \ ptranspose\_half(f\_row0[0],\ f\_row1[0]);}
+\DoxyCodeLine{01146\ \ \ ptranspose\_half(f\_row0[1],\ f\_row1[1]);}
+\DoxyCodeLine{01147\ \ \ ptranspose\_half(f\_row2[0],\ f\_row3[0]);}
+\DoxyCodeLine{01148\ \ \ ptranspose\_half(f\_row2[1],\ f\_row3[1]);}
+\DoxyCodeLine{01149\ }
+\DoxyCodeLine{01150\ \ \ f\_row0\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row0\ +\ 1);}
+\DoxyCodeLine{01151\ \ \ f\_row1\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row1\ +\ 1);}
+\DoxyCodeLine{01152\ \ \ f\_row2\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row2\ +\ 1);}
+\DoxyCodeLine{01153\ \ \ f\_row3\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row3\ +\ 1);}
+\DoxyCodeLine{01154\ \ \ ptranspose\_half2(f\_row0,\ f\_row1,\ f\_row2,\ f\_row3);}
+\DoxyCodeLine{01155\ \ \ ptranspose\_half(f\_row0[0],\ f\_row1[0]);}
+\DoxyCodeLine{01156\ \ \ ptranspose\_half(f\_row0[1],\ f\_row1[1]);}
+\DoxyCodeLine{01157\ \ \ ptranspose\_half(f\_row2[0],\ f\_row3[0]);}
+\DoxyCodeLine{01158\ \ \ ptranspose\_half(f\_row2[1],\ f\_row3[1]);}
+\DoxyCodeLine{01159\ }
+\DoxyCodeLine{01160\ \ \ f\_row0\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row4);}
+\DoxyCodeLine{01161\ \ \ f\_row1\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row5);}
+\DoxyCodeLine{01162\ \ \ f\_row2\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row6);}
+\DoxyCodeLine{01163\ \ \ f\_row3\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row7);}
+\DoxyCodeLine{01164\ \ \ ptranspose\_half2(f\_row0,\ f\_row1,\ f\_row2,\ f\_row3);}
+\DoxyCodeLine{01165\ \ \ ptranspose\_half(f\_row0[0],\ f\_row1[0]);}
+\DoxyCodeLine{01166\ \ \ ptranspose\_half(f\_row0[1],\ f\_row1[1]);}
+\DoxyCodeLine{01167\ \ \ ptranspose\_half(f\_row2[0],\ f\_row3[0]);}
+\DoxyCodeLine{01168\ \ \ ptranspose\_half(f\_row2[1],\ f\_row3[1]);}
+\DoxyCodeLine{01169\ }
+\DoxyCodeLine{01170\ \ \ f\_row0\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row4\ +\ 1);}
+\DoxyCodeLine{01171\ \ \ f\_row1\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row5\ +\ 1);}
+\DoxyCodeLine{01172\ \ \ f\_row2\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row6\ +\ 1);}
+\DoxyCodeLine{01173\ \ \ f\_row3\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(d\_row7\ +\ 1);}
+\DoxyCodeLine{01174\ \ \ ptranspose\_half2(f\_row0,\ f\_row1,\ f\_row2,\ f\_row3);}
+\DoxyCodeLine{01175\ \ \ ptranspose\_half(f\_row0[0],\ f\_row1[0]);}
+\DoxyCodeLine{01176\ \ \ ptranspose\_half(f\_row0[1],\ f\_row1[1]);}
+\DoxyCodeLine{01177\ \ \ ptranspose\_half(f\_row2[0],\ f\_row3[0]);}
+\DoxyCodeLine{01178\ \ \ ptranspose\_half(f\_row2[1],\ f\_row3[1]);}
+\DoxyCodeLine{01179\ }
+\DoxyCodeLine{01180\ \}}
+\DoxyCodeLine{01181\ }
+\DoxyCodeLine{01182\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01183\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01184\ plset<Packet4h2>(\textcolor{keyword}{const}\ Eigen::half\&\ a)\ \{}
+\DoxyCodeLine{01185\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_HIP\_DEVICE\_COMPILE)}}
+\DoxyCodeLine{01186\ }
+\DoxyCodeLine{01187\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01188\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01189\ \ \ p\_alias[0]\ =\ \_\_halves2half2(a,\ \_\_hadd(a,\ \_\_float2half(1.0f)));}
+\DoxyCodeLine{01190\ \ \ p\_alias[1]\ =\ \_\_halves2half2(\_\_hadd(a,\ \_\_float2half(2.0f)),}
+\DoxyCodeLine{01191\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_hadd(a,\ \_\_float2half(3.0f)));}
+\DoxyCodeLine{01192\ \ \ p\_alias[2]\ =\ \_\_halves2half2(\_\_hadd(a,\ \_\_float2half(4.0f)),}
+\DoxyCodeLine{01193\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_hadd(a,\ \_\_float2half(5.0f)));}
+\DoxyCodeLine{01194\ \ \ p\_alias[3]\ =\ \_\_halves2half2(\_\_hadd(a,\ \_\_float2half(6.0f)),}
+\DoxyCodeLine{01195\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \_\_hadd(a,\ \_\_float2half(7.0f)));}
+\DoxyCodeLine{01196\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01197\ \textcolor{preprocessor}{\#elif\ defined(EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{01198\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01199\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01200\ }
+\DoxyCodeLine{01201\ \ \ half2\ b\ =\ pset1<half2>(a);}
+\DoxyCodeLine{01202\ \ \ half2\ c;}
+\DoxyCodeLine{01203\ \ \ half2\ half\_offset0\ =\ \_\_halves2half2(\_\_float2half(0.0f),\_\_float2half(2.0f));}
+\DoxyCodeLine{01204\ \ \ half2\ half\_offset1\ =\ \_\_halves2half2(\_\_float2half(4.0f),\_\_float2half(6.0f));}
+\DoxyCodeLine{01205\ }
+\DoxyCodeLine{01206\ \ \ c\ =\ \_\_hadd2(b,\ half\_offset0);}
+\DoxyCodeLine{01207\ \ \ r\_alias[0]\ =\ plset(\_\_low2half(c));}
+\DoxyCodeLine{01208\ \ \ r\_alias[1]\ =\ plset(\_\_high2half(c));}
+\DoxyCodeLine{01209\ }
+\DoxyCodeLine{01210\ \ \ c\ =\ \_\_hadd2(b,\ half\_offset1);}
+\DoxyCodeLine{01211\ \ \ r\_alias[2]\ =\ plset(\_\_low2half(c));}
+\DoxyCodeLine{01212\ \ \ r\_alias[3]\ =\ plset(\_\_high2half(c));}
+\DoxyCodeLine{01213\ }
+\DoxyCodeLine{01214\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01215\ }
+\DoxyCodeLine{01216\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01217\ \ \ \textcolor{keywordtype}{float}\ f\ =\ \_\_half2float(a);}
+\DoxyCodeLine{01218\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01219\ \ \ half2*\ p\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01220\ \ \ p\_alias[0]\ =\ \_\_halves2half2(a,\ \_\_float2half(f\ +\ 1.0f));}
+\DoxyCodeLine{01221\ \ \ p\_alias[1]\ =\ \_\_halves2half2(\_\_float2half(f\ +\ 2.0f),\ \_\_float2half(f\ +\ 3.0f));}
+\DoxyCodeLine{01222\ \ \ p\_alias[2]\ =\ \_\_halves2half2(\_\_float2half(f\ +\ 4.0f),\ \_\_float2half(f\ +\ 5.0f));}
+\DoxyCodeLine{01223\ \ \ p\_alias[3]\ =\ \_\_halves2half2(\_\_float2half(f\ +\ 6.0f),\ \_\_float2half(f\ +\ 7.0f));}
+\DoxyCodeLine{01224\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01225\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01226\ \}}
+\DoxyCodeLine{01227\ }
+\DoxyCodeLine{01228\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01229\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01230\ pselect<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ mask,\ \textcolor{keyword}{const}\ Packet4h2\&\ a,}
+\DoxyCodeLine{01231\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01232\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01233\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01234\ \ \ \textcolor{keyword}{const}\ half2*\ mask\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&mask);}
+\DoxyCodeLine{01235\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01236\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01237\ \ \ r\_alias[0]\ =\ pselect(mask\_alias[0],\ a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01238\ \ \ r\_alias[1]\ =\ pselect(mask\_alias[1],\ a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01239\ \ \ r\_alias[2]\ =\ pselect(mask\_alias[2],\ a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01240\ \ \ r\_alias[3]\ =\ pselect(mask\_alias[3],\ a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01241\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01242\ \}}
+\DoxyCodeLine{01243\ }
+\DoxyCodeLine{01244\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01245\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01246\ pcmp\_eq<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01247\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01248\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01249\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01250\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01251\ \ \ r\_alias[0]\ =\ pcmp\_eq(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01252\ \ \ r\_alias[1]\ =\ pcmp\_eq(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01253\ \ \ r\_alias[2]\ =\ pcmp\_eq(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01254\ \ \ r\_alias[3]\ =\ pcmp\_eq(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01255\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01256\ \}}
+\DoxyCodeLine{01257\ }
+\DoxyCodeLine{01258\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01259\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pand<Packet4h2>(}
+\DoxyCodeLine{01260\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01261\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01262\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01263\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01264\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01265\ \ \ r\_alias[0]\ =\ pand(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01266\ \ \ r\_alias[1]\ =\ pand(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01267\ \ \ r\_alias[2]\ =\ pand(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01268\ \ \ r\_alias[3]\ =\ pand(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01269\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01270\ \}}
+\DoxyCodeLine{01271\ }
+\DoxyCodeLine{01272\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01273\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ por<Packet4h2>(}
+\DoxyCodeLine{01274\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01275\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01276\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01277\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01278\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01279\ \ \ r\_alias[0]\ =\ por(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01280\ \ \ r\_alias[1]\ =\ por(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01281\ \ \ r\_alias[2]\ =\ por(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01282\ \ \ r\_alias[3]\ =\ por(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01283\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01284\ \}}
+\DoxyCodeLine{01285\ }
+\DoxyCodeLine{01286\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01287\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pxor<Packet4h2>(}
+\DoxyCodeLine{01288\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01289\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01290\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01291\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01292\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01293\ \ \ r\_alias[0]\ =\ pxor(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01294\ \ \ r\_alias[1]\ =\ pxor(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01295\ \ \ r\_alias[2]\ =\ pxor(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01296\ \ \ r\_alias[3]\ =\ pxor(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01297\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01298\ \}}
+\DoxyCodeLine{01299\ }
+\DoxyCodeLine{01300\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01301\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01302\ pandnot<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01303\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01304\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01305\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01306\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01307\ \ \ r\_alias[0]\ =\ pandnot(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01308\ \ \ r\_alias[1]\ =\ pandnot(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01309\ \ \ r\_alias[2]\ =\ pandnot(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01310\ \ \ r\_alias[3]\ =\ pandnot(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01311\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01312\ \}}
+\DoxyCodeLine{01313\ }
+\DoxyCodeLine{01314\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01315\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ padd<Packet4h2>(}
+\DoxyCodeLine{01316\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01317\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01318\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01319\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01320\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01321\ \ \ r\_alias[0]\ =\ padd(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01322\ \ \ r\_alias[1]\ =\ padd(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01323\ \ \ r\_alias[2]\ =\ padd(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01324\ \ \ r\_alias[3]\ =\ padd(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01325\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01326\ \}}
+\DoxyCodeLine{01327\ }
+\DoxyCodeLine{01328\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01329\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ psub<Packet4h2>(}
+\DoxyCodeLine{01330\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01331\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01332\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01333\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01334\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01335\ \ \ r\_alias[0]\ =\ psub(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01336\ \ \ r\_alias[1]\ =\ psub(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01337\ \ \ r\_alias[2]\ =\ psub(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01338\ \ \ r\_alias[3]\ =\ psub(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01339\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01340\ \}}
+\DoxyCodeLine{01341\ }
+\DoxyCodeLine{01342\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01343\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pnegate(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01344\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01345\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01346\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01347\ \ \ r\_alias[0]\ =\ pnegate(a\_alias[0]);}
+\DoxyCodeLine{01348\ \ \ r\_alias[1]\ =\ pnegate(a\_alias[1]);}
+\DoxyCodeLine{01349\ \ \ r\_alias[2]\ =\ pnegate(a\_alias[2]);}
+\DoxyCodeLine{01350\ \ \ r\_alias[3]\ =\ pnegate(a\_alias[3]);}
+\DoxyCodeLine{01351\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01352\ \}}
+\DoxyCodeLine{01353\ }
+\DoxyCodeLine{01354\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01355\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pconj(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01356\ \ \ \textcolor{keywordflow}{return}\ a;}
+\DoxyCodeLine{01357\ \}}
+\DoxyCodeLine{01358\ }
+\DoxyCodeLine{01359\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01360\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pmul<Packet4h2>(}
+\DoxyCodeLine{01361\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01362\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01363\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01364\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01365\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01366\ \ \ r\_alias[0]\ =\ pmul(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01367\ \ \ r\_alias[1]\ =\ pmul(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01368\ \ \ r\_alias[2]\ =\ pmul(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01369\ \ \ r\_alias[3]\ =\ pmul(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01370\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01371\ \}}
+\DoxyCodeLine{01372\ }
+\DoxyCodeLine{01373\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01374\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pmadd<Packet4h2>(}
+\DoxyCodeLine{01375\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b,\ \textcolor{keyword}{const}\ Packet4h2\&\ c)\ \{}
+\DoxyCodeLine{01376\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01377\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01378\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01379\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01380\ \ \ \textcolor{keyword}{const}\ half2*\ c\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&c);}
+\DoxyCodeLine{01381\ \ \ r\_alias[0]\ =\ pmadd(a\_alias[0],\ b\_alias[0],\ c\_alias[0]);}
+\DoxyCodeLine{01382\ \ \ r\_alias[1]\ =\ pmadd(a\_alias[1],\ b\_alias[1],\ c\_alias[1]);}
+\DoxyCodeLine{01383\ \ \ r\_alias[2]\ =\ pmadd(a\_alias[2],\ b\_alias[2],\ c\_alias[2]);}
+\DoxyCodeLine{01384\ \ \ r\_alias[3]\ =\ pmadd(a\_alias[3],\ b\_alias[3],\ c\_alias[3]);}
+\DoxyCodeLine{01385\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01386\ \}}
+\DoxyCodeLine{01387\ }
+\DoxyCodeLine{01388\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01389\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pdiv<Packet4h2>(}
+\DoxyCodeLine{01390\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01391\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01392\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01393\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01394\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01395\ \ \ r\_alias[0]\ =\ pdiv(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01396\ \ \ r\_alias[1]\ =\ pdiv(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01397\ \ \ r\_alias[2]\ =\ pdiv(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01398\ \ \ r\_alias[3]\ =\ pdiv(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01399\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01400\ \}}
+\DoxyCodeLine{01401\ }
+\DoxyCodeLine{01402\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01403\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pmin<Packet4h2>(}
+\DoxyCodeLine{01404\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01405\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01406\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01407\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01408\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01409\ \ \ r\_alias[0]\ =\ pmin(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01410\ \ \ r\_alias[1]\ =\ pmin(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01411\ \ \ r\_alias[2]\ =\ pmin(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01412\ \ \ r\_alias[3]\ =\ pmin(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01413\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01414\ \}}
+\DoxyCodeLine{01415\ }
+\DoxyCodeLine{01416\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01417\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pmax<Packet4h2>(}
+\DoxyCodeLine{01418\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a,\ \textcolor{keyword}{const}\ Packet4h2\&\ b)\ \{}
+\DoxyCodeLine{01419\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01420\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01421\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01422\ \ \ \textcolor{keyword}{const}\ half2*\ b\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&b);}
+\DoxyCodeLine{01423\ \ \ r\_alias[0]\ =\ pmax(a\_alias[0],\ b\_alias[0]);}
+\DoxyCodeLine{01424\ \ \ r\_alias[1]\ =\ pmax(a\_alias[1],\ b\_alias[1]);}
+\DoxyCodeLine{01425\ \ \ r\_alias[2]\ =\ pmax(a\_alias[2],\ b\_alias[2]);}
+\DoxyCodeLine{01426\ \ \ r\_alias[3]\ =\ pmax(a\_alias[3],\ b\_alias[3]);}
+\DoxyCodeLine{01427\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01428\ \}}
+\DoxyCodeLine{01429\ }
+\DoxyCodeLine{01430\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01431\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux<Packet4h2>(}
+\DoxyCodeLine{01432\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01433\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01434\ }
+\DoxyCodeLine{01435\ \ \ \textcolor{keywordflow}{return}\ predux(a\_alias[0])\ +\ predux(a\_alias[1])\ +}
+\DoxyCodeLine{01436\ \ \ \ \ \ \ \ \ \ predux(a\_alias[2])\ +\ predux(a\_alias[3]);}
+\DoxyCodeLine{01437\ \}}
+\DoxyCodeLine{01438\ }
+\DoxyCodeLine{01439\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01440\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux\_max<Packet4h2>(}
+\DoxyCodeLine{01441\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01442\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01443\ \ \ half2\ m0\ =\ \_\_halves2half2(predux\_max(a\_alias[0]),}
+\DoxyCodeLine{01444\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ predux\_max(a\_alias[1]));}
+\DoxyCodeLine{01445\ \ \ half2\ m1\ =\ \_\_halves2half2(predux\_max(a\_alias[2]),}
+\DoxyCodeLine{01446\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ predux\_max(a\_alias[3]));}
+\DoxyCodeLine{01447\ \ \ \_\_half\ first\ \ =\ predux\_max(m0);}
+\DoxyCodeLine{01448\ \ \ \_\_half\ second\ =\ predux\_max(m1);}
+\DoxyCodeLine{01449\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{01450\ \ \ \textcolor{keywordflow}{return}\ (\_\_hgt(first,\ second)\ ?\ first\ :\ second);}
+\DoxyCodeLine{01451\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01452\ \ \ \textcolor{keywordtype}{float}\ ffirst\ \ =\ \_\_half2float(first);}
+\DoxyCodeLine{01453\ \ \ \textcolor{keywordtype}{float}\ fsecond\ =\ \_\_half2float(second);}
+\DoxyCodeLine{01454\ \ \ \textcolor{keywordflow}{return}\ (ffirst\ >\ fsecond)?\ first:\ second;}
+\DoxyCodeLine{01455\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01456\ \}}
+\DoxyCodeLine{01457\ }
+\DoxyCodeLine{01458\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01459\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux\_min<Packet4h2>(}
+\DoxyCodeLine{01460\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01461\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01462\ \ \ half2\ m0\ =\ \_\_halves2half2(predux\_min(a\_alias[0]),}
+\DoxyCodeLine{01463\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ predux\_min(a\_alias[1]));}
+\DoxyCodeLine{01464\ \ \ half2\ m1\ =\ \_\_halves2half2(predux\_min(a\_alias[2]),}
+\DoxyCodeLine{01465\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ predux\_min(a\_alias[3]));}
+\DoxyCodeLine{01466\ \ \ \_\_half\ first\ \ =\ predux\_min(m0);}
+\DoxyCodeLine{01467\ \ \ \_\_half\ second\ =\ predux\_min(m1);}
+\DoxyCodeLine{01468\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{01469\ \ \ \textcolor{keywordflow}{return}\ (\_\_hlt(first,\ second)\ ?\ first\ :\ second);}
+\DoxyCodeLine{01470\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01471\ \ \ \textcolor{keywordtype}{float}\ ffirst\ \ =\ \_\_half2float(first);}
+\DoxyCodeLine{01472\ \ \ \textcolor{keywordtype}{float}\ fsecond\ =\ \_\_half2float(second);}
+\DoxyCodeLine{01473\ \ \ \textcolor{keywordflow}{return}\ (ffirst\ <\ fsecond)?\ first:\ second;}
+\DoxyCodeLine{01474\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01475\ \}}
+\DoxyCodeLine{01476\ }
+\DoxyCodeLine{01477\ \textcolor{comment}{//\ likely\ overflow/underflow}}
+\DoxyCodeLine{01478\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01479\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Eigen::half\ predux\_mul<Packet4h2>(}
+\DoxyCodeLine{01480\ \ \ \ \ \textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01481\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01482\ \ \ \textcolor{keywordflow}{return}\ predux\_mul(pmul(pmul(a\_alias[0],\ a\_alias[1]),}
+\DoxyCodeLine{01483\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ pmul(a\_alias[2],\ a\_alias[3])));}
+\DoxyCodeLine{01484\ \}}
+\DoxyCodeLine{01485\ }
+\DoxyCodeLine{01486\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01487\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01488\ plog1p<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01489\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01490\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01491\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01492\ \ \ r\_alias[0]\ =\ plog1p(a\_alias[0]);}
+\DoxyCodeLine{01493\ \ \ r\_alias[1]\ =\ plog1p(a\_alias[1]);}
+\DoxyCodeLine{01494\ \ \ r\_alias[2]\ =\ plog1p(a\_alias[2]);}
+\DoxyCodeLine{01495\ \ \ r\_alias[3]\ =\ plog1p(a\_alias[3]);}
+\DoxyCodeLine{01496\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01497\ \}}
+\DoxyCodeLine{01498\ }
+\DoxyCodeLine{01499\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01500\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01501\ pexpm1<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01502\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01503\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01504\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01505\ \ \ r\_alias[0]\ =\ pexpm1(a\_alias[0]);}
+\DoxyCodeLine{01506\ \ \ r\_alias[1]\ =\ pexpm1(a\_alias[1]);}
+\DoxyCodeLine{01507\ \ \ r\_alias[2]\ =\ pexpm1(a\_alias[2]);}
+\DoxyCodeLine{01508\ \ \ r\_alias[3]\ =\ pexpm1(a\_alias[3]);}
+\DoxyCodeLine{01509\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01510\ \}}
+\DoxyCodeLine{01511\ }
+\DoxyCodeLine{01512\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01513\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ plog<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01514\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01515\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01516\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01517\ \ \ r\_alias[0]\ =\ plog(a\_alias[0]);}
+\DoxyCodeLine{01518\ \ \ r\_alias[1]\ =\ plog(a\_alias[1]);}
+\DoxyCodeLine{01519\ \ \ r\_alias[2]\ =\ plog(a\_alias[2]);}
+\DoxyCodeLine{01520\ \ \ r\_alias[3]\ =\ plog(a\_alias[3]);}
+\DoxyCodeLine{01521\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01522\ \}}
+\DoxyCodeLine{01523\ }
+\DoxyCodeLine{01524\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01525\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ pexp<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01526\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01527\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01528\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01529\ \ \ r\_alias[0]\ =\ pexp(a\_alias[0]);}
+\DoxyCodeLine{01530\ \ \ r\_alias[1]\ =\ pexp(a\_alias[1]);}
+\DoxyCodeLine{01531\ \ \ r\_alias[2]\ =\ pexp(a\_alias[2]);}
+\DoxyCodeLine{01532\ \ \ r\_alias[3]\ =\ pexp(a\_alias[3]);}
+\DoxyCodeLine{01533\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01534\ \}}
+\DoxyCodeLine{01535\ }
+\DoxyCodeLine{01536\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01537\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2\ psqrt<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01538\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01539\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01540\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01541\ \ \ r\_alias[0]\ =\ psqrt(a\_alias[0]);}
+\DoxyCodeLine{01542\ \ \ r\_alias[1]\ =\ psqrt(a\_alias[1]);}
+\DoxyCodeLine{01543\ \ \ r\_alias[2]\ =\ psqrt(a\_alias[2]);}
+\DoxyCodeLine{01544\ \ \ r\_alias[3]\ =\ psqrt(a\_alias[3]);}
+\DoxyCodeLine{01545\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01546\ \}}
+\DoxyCodeLine{01547\ }
+\DoxyCodeLine{01548\ \textcolor{keyword}{template}\ <>}
+\DoxyCodeLine{01549\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ Packet4h2}
+\DoxyCodeLine{01550\ prsqrt<Packet4h2>(\textcolor{keyword}{const}\ Packet4h2\&\ a)\ \{}
+\DoxyCodeLine{01551\ \ \ Packet4h2\ r;}
+\DoxyCodeLine{01552\ \ \ half2*\ r\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}half2*\textcolor{keyword}{>}(\&r);}
+\DoxyCodeLine{01553\ \ \ \textcolor{keyword}{const}\ half2*\ a\_alias\ =\ \textcolor{keyword}{reinterpret\_cast<}\textcolor{keyword}{const\ }half2*\textcolor{keyword}{>}(\&a);}
+\DoxyCodeLine{01554\ \ \ r\_alias[0]\ =\ prsqrt(a\_alias[0]);}
+\DoxyCodeLine{01555\ \ \ r\_alias[1]\ =\ prsqrt(a\_alias[1]);}
+\DoxyCodeLine{01556\ \ \ r\_alias[2]\ =\ prsqrt(a\_alias[2]);}
+\DoxyCodeLine{01557\ \ \ r\_alias[3]\ =\ prsqrt(a\_alias[3]);}
+\DoxyCodeLine{01558\ \ \ \textcolor{keywordflow}{return}\ r;}
+\DoxyCodeLine{01559\ \}}
+\DoxyCodeLine{01560\ }
+\DoxyCodeLine{01561\ \textcolor{comment}{//\ The\ following\ specialized\ padd,\ pmul,\ pdiv,\ pmin,\ pmax,\ pset1\ are\ needed\ for}}
+\DoxyCodeLine{01562\ \textcolor{comment}{//\ the\ implementation\ of\ GPU\ half\ reduction.}}
+\DoxyCodeLine{01563\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{01564\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ padd<half2>(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{01565\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{01566\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{01567\ \ \ \textcolor{keywordflow}{return}\ \_\_hadd2(a,\ b);}
+\DoxyCodeLine{01568\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01569\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{01570\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{01571\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{01572\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{01573\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ +\ b1;}
+\DoxyCodeLine{01574\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ +\ b2;}
+\DoxyCodeLine{01575\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{01576\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01577\ \}}
+\DoxyCodeLine{01578\ }
+\DoxyCodeLine{01579\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{01580\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmul<half2>(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{01581\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{01582\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{01583\ \ \ \textcolor{keywordflow}{return}\ \_\_hmul2(a,\ b);}
+\DoxyCodeLine{01584\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01585\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{01586\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{01587\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{01588\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{01589\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ *\ b1;}
+\DoxyCodeLine{01590\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ *\ b2;}
+\DoxyCodeLine{01591\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{01592\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01593\ \}}
+\DoxyCodeLine{01594\ }
+\DoxyCodeLine{01595\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{01596\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pdiv<half2>(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{01597\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{01598\ \textcolor{preprocessor}{\#if\ defined(EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC)}}
+\DoxyCodeLine{01599\ \ \ \textcolor{keywordflow}{return}\ \_\_h2div(a,\ b);}
+\DoxyCodeLine{01600\ \textcolor{preprocessor}{\#else}}
+\DoxyCodeLine{01601\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{01602\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{01603\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{01604\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{01605\ \ \ \textcolor{keywordtype}{float}\ r1\ =\ a1\ /\ b1;}
+\DoxyCodeLine{01606\ \ \ \textcolor{keywordtype}{float}\ r2\ =\ a2\ /\ b2;}
+\DoxyCodeLine{01607\ \ \ \textcolor{keywordflow}{return}\ \_\_floats2half2\_rn(r1,\ r2);}
+\DoxyCodeLine{01608\ \textcolor{preprocessor}{\#endif}}
+\DoxyCodeLine{01609\ \}}
+\DoxyCodeLine{01610\ }
+\DoxyCodeLine{01611\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{01612\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmin<half2>(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{01613\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{01614\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{01615\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{01616\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{01617\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{01618\ \ \ \_\_half\ r1\ =\ a1\ <\ b1\ ?\ \_\_low2half(a)\ :\ \_\_low2half(b);}
+\DoxyCodeLine{01619\ \ \ \_\_half\ r2\ =\ a2\ <\ b2\ ?\ \_\_high2half(a)\ :\ \_\_high2half(b);}
+\DoxyCodeLine{01620\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(r1,\ r2);}
+\DoxyCodeLine{01621\ \}}
+\DoxyCodeLine{01622\ }
+\DoxyCodeLine{01623\ \textcolor{keyword}{template}<>}
+\DoxyCodeLine{01624\ EIGEN\_DEVICE\_FUNC\ EIGEN\_STRONG\_INLINE\ half2\ pmax<half2>(\textcolor{keyword}{const}\ half2\&\ a,}
+\DoxyCodeLine{01625\ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \ \textcolor{keyword}{const}\ half2\&\ b)\ \{}
+\DoxyCodeLine{01626\ \ \ \textcolor{keywordtype}{float}\ a1\ =\ \_\_low2float(a);}
+\DoxyCodeLine{01627\ \ \ \textcolor{keywordtype}{float}\ a2\ =\ \_\_high2float(a);}
+\DoxyCodeLine{01628\ \ \ \textcolor{keywordtype}{float}\ b1\ =\ \_\_low2float(b);}
+\DoxyCodeLine{01629\ \ \ \textcolor{keywordtype}{float}\ b2\ =\ \_\_high2float(b);}
+\DoxyCodeLine{01630\ \ \ \_\_half\ r1\ =\ a1\ >\ b1\ ?\ \_\_low2half(a)\ :\ \_\_low2half(b);}
+\DoxyCodeLine{01631\ \ \ \_\_half\ r2\ =\ a2\ >\ b2\ ?\ \_\_high2half(a)\ :\ \_\_high2half(b);}
+\DoxyCodeLine{01632\ \ \ \textcolor{keywordflow}{return}\ \_\_halves2half2(r1,\ r2);}
+\DoxyCodeLine{01633\ \}}
+\DoxyCodeLine{01634\ }
+\DoxyCodeLine{01635\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ (defined(EIGEN\_HAS\_CUDA\_FP16)\ ||\ defined(EIGEN\_HAS\_HIP\_FP16))\ \&\&\ defined(EIGEN\_GPU\_COMPILE\_PHASE)}}
+\DoxyCodeLine{01636\ }
+\DoxyCodeLine{01637\ \textcolor{preprocessor}{\#undef\ EIGEN\_GPU\_HAS\_LDG}}
+\DoxyCodeLine{01638\ \textcolor{preprocessor}{\#undef\ EIGEN\_CUDA\_HAS\_FP16\_ARITHMETIC}}
+\DoxyCodeLine{01639\ \textcolor{preprocessor}{\#undef\ EIGEN\_GPU\_HAS\_FP16\_ARITHMETIC}}
+\DoxyCodeLine{01640\ }
+\DoxyCodeLine{01641\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{01642\ }
+\DoxyCodeLine{01643\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{01644\ }
+\DoxyCodeLine{01645\ }
+\DoxyCodeLine{01646\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_PACKET\_MATH\_GPU\_H}}
+
+\end{DoxyCode}

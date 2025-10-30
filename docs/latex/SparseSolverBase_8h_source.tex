@@ -1,0 +1,130 @@
+\doxysection{Sparse\+Solver\+Base.\+h}
+\hypertarget{SparseSolverBase_8h_source}{}\label{SparseSolverBase_8h_source}\index{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseSolverBase.h@{nuli-\/avionics-\/flight-\/software/platformio\_nuli\_avionics\_flight\_software/include/Eigen/src/SparseCore/SparseSolverBase.h}}
+
+\begin{DoxyCode}{0}
+\DoxyCodeLine{00001\ \textcolor{comment}{//\ This\ file\ is\ part\ of\ Eigen,\ a\ lightweight\ C++\ template\ library}}
+\DoxyCodeLine{00002\ \textcolor{comment}{//\ for\ linear\ algebra.}}
+\DoxyCodeLine{00003\ \textcolor{comment}{//}}
+\DoxyCodeLine{00004\ \textcolor{comment}{//\ Copyright\ (C)\ 2014\ Gael\ Guennebaud\ <gael.guennebaud@inria.fr>}}
+\DoxyCodeLine{00005\ \textcolor{comment}{//}}
+\DoxyCodeLine{00006\ \textcolor{comment}{//\ This\ Source\ Code\ Form\ is\ subject\ to\ the\ terms\ of\ the\ Mozilla}}
+\DoxyCodeLine{00007\ \textcolor{comment}{//\ Public\ License\ v.\ 2.0.\ If\ a\ copy\ of\ the\ MPL\ was\ not\ distributed}}
+\DoxyCodeLine{00008\ \textcolor{comment}{//\ with\ this\ file,\ You\ can\ obtain\ one\ at\ http://mozilla.org/MPL/2.0/.}}
+\DoxyCodeLine{00009\ }
+\DoxyCodeLine{00010\ \textcolor{preprocessor}{\#ifndef\ EIGEN\_SPARSESOLVERBASE\_H}}
+\DoxyCodeLine{00011\ \textcolor{preprocessor}{\#define\ EIGEN\_SPARSESOLVERBASE\_H}}
+\DoxyCodeLine{00012\ }
+\DoxyCodeLine{00013\ \textcolor{keyword}{namespace\ }\mbox{\hyperlink{namespaceEigen}{Eigen}}\ \{\ }
+\DoxyCodeLine{00014\ }
+\DoxyCodeLine{00015\ \textcolor{keyword}{namespace\ }internal\ \{}
+\DoxyCodeLine{00016\ \textcolor{comment}{}}
+\DoxyCodeLine{00017\ \textcolor{comment}{\ \ /**\ \(\backslash\)internal}}
+\DoxyCodeLine{00018\ \textcolor{comment}{\ \ *\ Helper\ functions\ to\ solve\ with\ a\ sparse\ right-\/hand-\/side\ and\ result.}}
+\DoxyCodeLine{00019\ \textcolor{comment}{\ \ *\ The\ rhs\ is\ decomposed\ into\ small\ vertical\ panels\ which\ are\ solved\ through\ dense\ temporaries.}}
+\DoxyCodeLine{00020\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00021\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00022\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if<Rhs::ColsAtCompileTime!=1\ \&\&\ Dest::ColsAtCompileTime!=1>::type}}}
+\DoxyCodeLine{00023\ solve\_sparse\_through\_dense\_panels(\textcolor{keyword}{const}\ Decomposition\ \&dec,\ \textcolor{keyword}{const}\ Rhs\&\ rhs,\ Dest\ \&dest)}
+\DoxyCodeLine{00024\ \{}
+\DoxyCodeLine{00025\ \ \ EIGEN\_STATIC\_ASSERT((Dest::Flags\&\mbox{\hyperlink{group__flags_gae4f56c2a60bbe4bd2e44c5b19cbe8762}{RowMajorBit}})==0,THIS\_METHOD\_IS\_ONLY\_FOR\_COLUMN\_MAJOR\_MATRICES);}
+\DoxyCodeLine{00026\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Dest::Scalar\ DestScalar;}
+\DoxyCodeLine{00027\ \ \ \textcolor{comment}{//\ we\ process\ the\ sparse\ rhs\ per\ block\ of\ NbColsAtOnce\ columns\ temporarily\ stored\ into\ a\ dense\ matrix.}}
+\DoxyCodeLine{00028\ \ \ \textcolor{keyword}{static}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ NbColsAtOnce\ =\ 4;}
+\DoxyCodeLine{00029\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ rhsCols\ =\ rhs.cols();}
+\DoxyCodeLine{00030\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ rhs.rows();}
+\DoxyCodeLine{00031\ \ \ \textcolor{comment}{//\ the\ temporary\ matrices\ do\ not\ need\ more\ columns\ than\ NbColsAtOnce:}}
+\DoxyCodeLine{00032\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ tmpCols\ =\ (std::min)(rhsCols,\ NbColsAtOnce);\ }
+\DoxyCodeLine{00033\ \ \ Eigen::Matrix<DestScalar,Dynamic,Dynamic>\ tmp(size,tmpCols);}
+\DoxyCodeLine{00034\ \ \ Eigen::Matrix<DestScalar,Dynamic,Dynamic>\ tmpX(size,tmpCols);}
+\DoxyCodeLine{00035\ \ \ \textcolor{keywordflow}{for}(\mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ k=0;\ k<rhsCols;\ k+=NbColsAtOnce)}
+\DoxyCodeLine{00036\ \ \ \{}
+\DoxyCodeLine{00037\ \ \ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ actualCols\ =\ std::min<Index>(rhsCols-\/k,\ NbColsAtOnce);}
+\DoxyCodeLine{00038\ \ \ \ \ tmp.leftCols(actualCols)\ =\ rhs.middleCols(k,actualCols);}
+\DoxyCodeLine{00039\ \ \ \ \ tmpX.leftCols(actualCols)\ =\ dec.solve(tmp.leftCols(actualCols));}
+\DoxyCodeLine{00040\ \ \ \ \ dest.middleCols(k,actualCols)\ =\ tmpX.leftCols(actualCols).sparseView();}
+\DoxyCodeLine{00041\ \ \ \}}
+\DoxyCodeLine{00042\ \}}
+\DoxyCodeLine{00043\ }
+\DoxyCodeLine{00044\ \textcolor{comment}{//\ Overload\ for\ vector\ as\ rhs}}
+\DoxyCodeLine{00045\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Decomposition,\ \textcolor{keyword}{typename}\ Rhs,\ \textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00046\ \textcolor{keyword}{typename}\ \mbox{\hyperlink{structEigen_1_1internal_1_1enable__if}{enable\_if<Rhs::ColsAtCompileTime==1\ ||\ Dest::ColsAtCompileTime==1>::type}}}
+\DoxyCodeLine{00047\ solve\_sparse\_through\_dense\_panels(\textcolor{keyword}{const}\ Decomposition\ \&dec,\ \textcolor{keyword}{const}\ Rhs\&\ rhs,\ Dest\ \&dest)}
+\DoxyCodeLine{00048\ \{}
+\DoxyCodeLine{00049\ \ \ \textcolor{keyword}{typedef}\ \textcolor{keyword}{typename}\ Dest::Scalar\ DestScalar;}
+\DoxyCodeLine{00050\ \ \ \mbox{\hyperlink{namespaceEigen_a62e77e0933482dafde8fe197d9a2cfde}{Index}}\ size\ =\ rhs.rows();}
+\DoxyCodeLine{00051\ \ \ Eigen::Matrix<DestScalar,Dynamic,1>\ rhs\_dense(rhs);}
+\DoxyCodeLine{00052\ \ \ Eigen::Matrix<DestScalar,Dynamic,1>\ dest\_dense(size);}
+\DoxyCodeLine{00053\ \ \ dest\_dense\ =\ dec.solve(rhs\_dense);}
+\DoxyCodeLine{00054\ \ \ dest\ =\ dest\_dense.sparseView();}
+\DoxyCodeLine{00055\ \}}
+\DoxyCodeLine{00056\ }
+\DoxyCodeLine{00057\ \}\ \textcolor{comment}{//\ end\ namespace\ internal}}
+\DoxyCodeLine{00058\ \textcolor{comment}{}}
+\DoxyCodeLine{00059\ \textcolor{comment}{/**\ \(\backslash\)class\ SparseSolverBase}}
+\DoxyCodeLine{00060\ \textcolor{comment}{\ \ *\ \(\backslash\)ingroup\ SparseCore\_Module}}
+\DoxyCodeLine{00061\ \textcolor{comment}{\ \ *\ \(\backslash\)brief\ A\ base\ class\ for\ sparse\ solvers}}
+\DoxyCodeLine{00062\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00063\ \textcolor{comment}{\ \ *\ \(\backslash\)tparam\ Derived\ the\ actual\ type\ of\ the\ solver.}}
+\DoxyCodeLine{00064\ \textcolor{comment}{\ \ *}}
+\DoxyCodeLine{00065\ \textcolor{comment}{\ \ */}}
+\DoxyCodeLine{00066\ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Derived>}
+\DoxyCodeLine{00067\ \textcolor{keyword}{class\ }\mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}\ :\ \mbox{\hyperlink{classEigen_1_1internal_1_1noncopyable}{internal::noncopyable}}}
+\DoxyCodeLine{00068\ \{}
+\DoxyCodeLine{00069\ \ \ \textcolor{keyword}{public}:}
+\DoxyCodeLine{00070\ \textcolor{comment}{}}
+\DoxyCodeLine{00071\ \textcolor{comment}{\ \ \ \ /**\ Default\ constructor\ */}}
+\DoxyCodeLine{00072\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aacd99fa17db475e74d3834767f392f33}{SparseSolverBase}}()}
+\DoxyCodeLine{00073\ \ \ \ \ \ \ :\ m\_isInitialized(false)}
+\DoxyCodeLine{00074\ \ \ \ \ \{\}}
+\DoxyCodeLine{00075\ }
+\DoxyCodeLine{00076\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseSolverBase}{\string~SparseSolverBase}}()}
+\DoxyCodeLine{00077\ \ \ \ \ \{\}}
+\DoxyCodeLine{00078\ }
+\DoxyCodeLine{00079\ \ \ \ \ Derived\&\ derived()\ \{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{static\_cast<}Derived*\textcolor{keyword}{>}(\textcolor{keyword}{this});\ \}}
+\DoxyCodeLine{00080\ \ \ \ \ \textcolor{keyword}{const}\ Derived\&\ derived()\textcolor{keyword}{\ const\ }\{\ \textcolor{keywordflow}{return}\ *\textcolor{keyword}{static\_cast<}\textcolor{keyword}{const\ }Derived*\textcolor{keyword}{>}(\textcolor{keyword}{this});\ \}}
+\DoxyCodeLine{00081\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00082\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ solution\ x\ of\ \(\backslash\)f\$\ A\ x\ =\ b\ \(\backslash\)f\$\ using\ the\ current\ decomposition\ of\ A.}}
+\DoxyCodeLine{00083\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00084\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute()}}
+\DoxyCodeLine{00085\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00086\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00087\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ Solve<Derived,\ Rhs>}
+\DoxyCodeLine{00088\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_a57c5b7f5e35274b55b5d57e8c88cc4a6}{solve}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1MatrixBase}{MatrixBase<Rhs>}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00089\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00090\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Solver\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00091\ \ \ \ \ \ \ eigen\_assert(derived().rows()==b.rows()\ \&\&\ \textcolor{stringliteral}{"{}solve():\ invalid\ number\ of\ rows\ of\ the\ right\ hand\ side\ matrix\ b"{}});}
+\DoxyCodeLine{00092\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<Derived,\ Rhs>}}(derived(),\ b.derived());}
+\DoxyCodeLine{00093\ \ \ \ \ \}}
+\DoxyCodeLine{00094\ \ \ \ \ \textcolor{comment}{}}
+\DoxyCodeLine{00095\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)returns\ an\ expression\ of\ the\ solution\ x\ of\ \(\backslash\)f\$\ A\ x\ =\ b\ \(\backslash\)f\$\ using\ the\ current\ decomposition\ of\ A.}}
+\DoxyCodeLine{00096\ \textcolor{comment}{\ \ \ \ \ \ *}}
+\DoxyCodeLine{00097\ \textcolor{comment}{\ \ \ \ \ \ *\ \(\backslash\)sa\ compute()}}
+\DoxyCodeLine{00098\ \textcolor{comment}{\ \ \ \ \ \ */}}
+\DoxyCodeLine{00099\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs>}
+\DoxyCodeLine{00100\ \ \ \ \ \textcolor{keyword}{inline}\ \textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<Derived,\ Rhs>}}}
+\DoxyCodeLine{00101\ \ \ \ \ \mbox{\hyperlink{classEigen_1_1SparseSolverBase_aa525407e654603e8275cefeda32054c9}{solve}}(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase}{SparseMatrixBase<Rhs>}}\&\ b)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00102\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00103\ \ \ \ \ \ \ eigen\_assert(m\_isInitialized\ \&\&\ \textcolor{stringliteral}{"{}Solver\ is\ not\ initialized."{}});}
+\DoxyCodeLine{00104\ \ \ \ \ \ \ eigen\_assert(derived().rows()==b.\mbox{\hyperlink{classEigen_1_1SparseMatrixBase_a1944e9fa9ce7937bfc3a87b2cb94371f}{rows}}()\ \&\&\ \textcolor{stringliteral}{"{}solve():\ invalid\ number\ of\ rows\ of\ the\ right\ hand\ side\ matrix\ b"{}});}
+\DoxyCodeLine{00105\ \ \ \ \ \ \ \textcolor{keywordflow}{return}\ \mbox{\hyperlink{classEigen_1_1Solve}{Solve<Derived,\ Rhs>}}(derived(),\ b.derived());}
+\DoxyCodeLine{00106\ \ \ \ \ \}}
+\DoxyCodeLine{00107\ \ \ \ \ }
+\DoxyCodeLine{00108\ \textcolor{preprocessor}{\ \ \ \ \#ifndef\ EIGEN\_PARSED\_BY\_DOXYGEN}\textcolor{comment}{}}
+\DoxyCodeLine{00109\ \textcolor{comment}{\ \ \ \ /**\ \(\backslash\)internal\ default\ implementation\ of\ solving\ with\ a\ sparse\ rhs\ */}\textcolor{preprocessor}{}}
+\DoxyCodeLine{00110\ \ \ \ \ \textcolor{keyword}{template}<\textcolor{keyword}{typename}\ Rhs,\textcolor{keyword}{typename}\ Dest>}
+\DoxyCodeLine{00111\ \ \ \ \ \textcolor{keywordtype}{void}\ \_solve\_impl(\textcolor{keyword}{const}\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase}{SparseMatrixBase<Rhs>}}\ \&b,\ \mbox{\hyperlink{classEigen_1_1SparseMatrixBase}{SparseMatrixBase<Dest>}}\ \&dest)\textcolor{keyword}{\ const}}
+\DoxyCodeLine{00112\ \textcolor{keyword}{\ \ \ \ }\{}
+\DoxyCodeLine{00113\ \ \ \ \ \ \ internal::solve\_sparse\_through\_dense\_panels(derived(),\ b.derived(),\ dest.derived());}
+\DoxyCodeLine{00114\ \ \ \ \ \}}
+\DoxyCodeLine{00115\ \textcolor{preprocessor}{\ \ \ \ \#endif\ }\textcolor{comment}{//\ EIGEN\_PARSED\_BY\_DOXYGEN}}
+\DoxyCodeLine{00116\ }
+\DoxyCodeLine{00117\ \ \ \textcolor{keyword}{protected}:}
+\DoxyCodeLine{00118\ \ \ \ \ }
+\DoxyCodeLine{00119\ \ \ \ \ \textcolor{keyword}{mutable}\ \textcolor{keywordtype}{bool}\ m\_isInitialized;}
+\DoxyCodeLine{00120\ \};}
+\DoxyCodeLine{00121\ }
+\DoxyCodeLine{00122\ \}\ \textcolor{comment}{//\ end\ namespace\ Eigen}}
+\DoxyCodeLine{00123\ }
+\DoxyCodeLine{00124\ \textcolor{preprocessor}{\#endif\ }\textcolor{comment}{//\ EIGEN\_SPARSESOLVERBASE\_H}}
+
+\end{DoxyCode}
