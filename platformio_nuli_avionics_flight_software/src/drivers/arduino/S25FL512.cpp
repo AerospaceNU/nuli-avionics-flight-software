@@ -23,7 +23,6 @@
  * Figure out where we wait for completion
  * Figure out when we call write disable
  * Standardize API
- * Handle cross page boundary's
  */
 
 S25FL512::S25FL512(const uint8_t chipSelectPin) : m_chipSelectPin(chipSelectPin) {}

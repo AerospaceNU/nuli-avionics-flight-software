@@ -73,7 +73,7 @@ float StateEstimator1D::getPressurePa() {
 }
 
 float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) const {
-    // @todo, full scale switching, bad reading detection, and coordinate transforms
+    // @todo, full scale switching, bad reading detection
     if ((flightState == PRE_FLIGHT || flightState == ASCENT) && m_hardware->getNumAccelerometers() > 0) {
         switch (m_boardOrientation.get()) {
         case POS_X:
