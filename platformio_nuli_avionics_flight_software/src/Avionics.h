@@ -51,6 +51,10 @@ struct Vector3D_s {
     float z; ///< Z axis
 };
 
+inline float vector3DMagnitude(const Vector3D_s& vector) {
+    return std::sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+}
+
 /**
  * @struct Coordinates_s
  * @brief Geographic coordinates with latitude and longitude

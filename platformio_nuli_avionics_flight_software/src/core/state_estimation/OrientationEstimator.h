@@ -42,14 +42,17 @@ private:
     LowPass m_launchAngleLowPassZ{0.01};
 
     ConfigurationData<GyroscopeBias_s> m_gyroscopeBias;
+
     struct LowPass3D_s {
         LowPass x{0.001};
         LowPass y{0.001};
         LowPass z{0.001};
+        Vector3D_s lastVelocity{0, 0, 0};
     };
-    LowPass3D_s m_lowPass[MAX_GYROSCOPE_NUM];
-    Alarm m_gyroscopeBiasAlarm;
 
+    LowPass3D_s m_lowPass[MAX_GYROSCOPE_NUM];
+    Debounce m_motionDetector{250};
+    Alarm m_gyroscopeBiasAlarm;
 };
 
 

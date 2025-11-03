@@ -19,6 +19,11 @@ public:
         return smoothed;
     }
 
+    void forceSet(const float value) {
+        smoothed = value;
+        initialized = true;
+    }
+
     void reset() {
         initialized = false;
         smoothed = 0.0f;
