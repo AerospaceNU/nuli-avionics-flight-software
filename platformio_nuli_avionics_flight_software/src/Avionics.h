@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cmath>
+#include <Quaternion.h>
 
 /**
  * @file Avionics.h
@@ -50,13 +51,6 @@ struct Vector3D_s {
     float z; ///< Z axis
 };
 
-struct Quaternion_s {
-    float x;
-    float y;
-    float z;
-    float w;
-};
-
 /**
  * @struct Coordinates_s
  * @brief Geographic coordinates with latitude and longitude
@@ -90,9 +84,9 @@ struct State1D_s {
 };
 
 struct Orientation_s {
-    Vector3D_s angle;
+    float tilt;
     Vector3D_s angularVelocity;
-    Quaternion_s angleQuaternion;
+    Quaternion angleQuaternion;
 };
 
 struct State6D_s {

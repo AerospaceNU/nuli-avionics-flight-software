@@ -68,7 +68,7 @@ HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimatorBasic6D;
+StateEstimatorBasic6D stateEstimatorBasic6D(true);
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(true);
 IndicatorManager indicatorManager;
@@ -170,7 +170,7 @@ void loop() {
     }
 
     // Determine state
-    // state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
+    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     // state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);

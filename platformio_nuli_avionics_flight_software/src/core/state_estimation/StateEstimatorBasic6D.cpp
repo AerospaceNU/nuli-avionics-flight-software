@@ -2,10 +2,13 @@
 #include "util/Timer.h"
 #include "core/transform/Vector3DTransform.h"
 #include "core/transform/DiscreteRotation.h"
-#include "core/transform/Quaternion.h"
-
 
 #define RAD_TO_DEG_M(x) ((x) * (180.0f / M_PI))
+
+StateEstimatorBasic6D::StateEstimatorBasic6D(bool useKalman) {
+    m_useKalman = useKalman;
+}
+
 
 void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
@@ -13,41 +16,36 @@ void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* 
     m_debug = hardware->getDebugStream();
 
     m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
-
-    m_kalmanFilterZ.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
-    m_kalmanFilterZ.setAccelerometerCovariance(1);
-
-    m_kalmanFilterX.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
-    m_kalmanFilterX.setAccelerometerCovariance(1);
-    m_kalmanFilterX.setPitoCovariance(2);
-
-    m_kalmanFilterY.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
-    m_kalmanFilterY.setAccelerometerCovariance(1);
-    m_kalmanFilterY.setPitoCovariance(2);
 }
 
 State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation) {
-    // const Vector3D_s accelerationsMSS_board = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
-    // m_currentState6D.acceleration = QuaternionTransform(orientation.angleQuaternion).transform(accelerationsMSS_board);
-    //
-    // // Determine Velocity's
-    // m_kalmanFilterZ.predict();
-    // m_kalmanFilterZ.altitudeAndAccelerationDataUpdate(state1D.unfilteredNoOffsetAltitudeM - m_groundElevation.get(), m_currentState6D.acceleration.z - Constants::G_EARTH_MSS);
-    //
-    // const float vz = m_kalmanFilterZ.getVelocity();
-    // const Vector3D_s worldDir = QuaternionHelper::rotateVector(orientation.angleQuaternion, {0, 0, 1});
-    // const float scale = vz / worldDir.z;
-    // const Vector3D_s projectedVelocity = {worldDir.x * scale, worldDir.y * scale, vz};
-    //
-    // m_kalmanFilterX.predict();
-    // m_kalmanFilterX.velocityAndAccelerationDataUpdate(projectedVelocity.x, m_currentState6D.acceleration.x);
-    // m_kalmanFilterY.predict();
-    // m_kalmanFilterY.velocityAndAccelerationDataUpdate(projectedVelocity.y, m_currentState6D.acceleration.y);
-    //
-    // // Integrate position
-    // m_currentState6D.position.x = m_kalmanFilterX.getAltitude();
-    // m_currentState6D.position.y = m_kalmanFilterY.getAltitude();
-    // m_currentState6D.position.z = m_kalmanFilterZ.getAltitude();
+    // This is the data we have available
+    const float altitudeM = state1D.unfilteredNoOffsetAltitudeM - m_groundElevation.get();
+    const Vector3D_s accelerationMSS_worldFrame = getAccelerationMSS(orientation);
+
+    // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame
+    if (m_useKalman) {
+        // Implement kalman filter here
+        m_currentState6D.position.z = 0;
+        m_currentState6D.velocity.z = 0;
+        m_currentState6D.acceleration.z = 0;
+    } else {
+        // Implement fixed gain observer here
+        m_currentState6D.position.z = 0;
+        m_currentState6D.velocity.z = 0;
+        m_currentState6D.acceleration.z = 0;
+    }
+
+    // Determine X/Y axis state
+    // Project Z velocity determined by the kalman filter or fixed gain observer
+    Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);
+    // Implement complementary filter here. This is a function of projectedVelocityMS and accelerationMSS_worldFrame
+    m_currentState6D.position.x = 0;
+    m_currentState6D.position.y = 0;
+    m_currentState6D.velocity.x = 0;
+    m_currentState6D.velocity.y = 0;
+    m_currentState6D.acceleration.x = 0;
+    m_currentState6D.acceleration.y = 0;
 
     return m_currentState6D;
 }
@@ -55,3 +53,28 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
 State6D_s StateEstimatorBasic6D::getState6D() const {
     return m_currentState6D;
 }
+
+Vector3D_s StateEstimatorBasic6D::getAccelerationMSS(const Orientation_s& orientation) const {
+    const Vector3D_s accelerationsMSS_board = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
+    const Quaternion accelerationsMSS_worldQ = orientation.angleQuaternion.rotate(Quaternion(accelerationsMSS_board.x, accelerationsMSS_board.y, accelerationsMSS_board.z));
+    return  {accelerationsMSS_worldQ.b, accelerationsMSS_worldQ.c, accelerationsMSS_worldQ.d};
+}
+
+Vector3D_s StateEstimatorBasic6D::projectVelocities(const Orientation_s& orientation, float velocityZ) const {
+    Quaternion forwardBody(0, 0, 0, 1); // forward along body Z
+
+    // Rotate forward vector to world frame
+    Quaternion forwardWorld = orientation.angleQuaternion.rotate(forwardBody);
+
+    // Compute scale factor to match vertical component
+    // forwardWorld.d is Z in world frame
+    float scale = m_currentState6D.velocity.z / forwardWorld.d;
+
+    // Compute full 3D velocity in world frame
+    float vx = forwardWorld.b * scale; // world X
+    float vy = forwardWorld.c * scale; // world Y
+    float vz = m_currentState6D.velocity.z; // world Z (already known)
+
+    return {vx, vy, vz};
+}
+

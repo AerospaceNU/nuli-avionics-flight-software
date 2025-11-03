@@ -5,6 +5,7 @@ set(CMAKE_CXX_STANDARD 20)
 
 # ========Desktop configuration========
 include_directories(platformio_nuli_avionics_flight_software/include)
+include_directories(platformio_nuli_avionics_flight_software/lib/Quaternion)
 include_directories(platformio_nuli_avionics_flight_software/lib)
 include_directories(platformio_nuli_avionics_flight_software/src)
 
@@ -21,6 +22,7 @@ file(GLOB_RECURSE core_sources
 
 set(desktopSimFiles
         platformio_nuli_avionics_flight_software/src/builds/desktop.cpp
+        platformio_nuli_avionics_flight_software/lib/Quaternion/Quaternion.cpp
         ${desktop_driver_sources}
         ${core_sources}
 )

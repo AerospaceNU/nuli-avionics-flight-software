@@ -6,9 +6,9 @@
 #include "../../ConstantsUnits.h"
 #include "../generic_hardware/Accelerometer.h"
 #include "../generic_hardware/Gyroscope.h"
-#include "../transform/Quaternion.h"
 #include "../filters/LowPass.h"
 #include "util/Timer.h"
+#include "Quaternion.h"
 
 class OrientationEstimator {
 public:
@@ -21,11 +21,13 @@ public:
     const Orientation_s& getOrientation() const;
 
 private:
-    void integrateGyroscope(const Timestamp_s& timestamp, const Vector3D_s& angularVelocity);
+    Quaternion integrateGyroscope(const Timestamp_s& timestamp, const Vector3D_s& angularVelocity) const;
 
-    void updateLaunchAngle(const Timestamp_s& timestamp);
+    Quaternion updateLaunchAngle(const Timestamp_s& timestamp) const;
 
     void updateGyroscopeBias(const Timestamp_s& timestamp);
+
+    static void computeTiltAndTwist(const Quaternion& q, float& tiltDeg);
 
     HardwareAbstraction* m_hardware = nullptr;
     Configuration* m_configuration = nullptr;
@@ -33,7 +35,7 @@ private:
 
     Orientation_s m_currentOrientation = {};
 
-    ConfigurationData<Quaternion_s> m_launchAngle;
+    ConfigurationData<Quaternion> m_launchAngle;
     Alarm m_launchAngleAlarm;
     LowPass m_launchAngleLowPassX{0.01};
     LowPass m_launchAngleLowPassY{0.01};

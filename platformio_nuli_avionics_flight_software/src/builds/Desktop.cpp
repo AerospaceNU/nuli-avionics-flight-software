@@ -33,7 +33,7 @@ HardwareAbstraction hardware;
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimatorBasic6D;
+StateEstimatorBasic6D stateEstimatorBasic6D(true);
 DesktopSerialReader<1000> serialReader;
 IntegratedParser cliParser;
 ConfigurationID_t desktopRequiredConfigs[] = {BOARD_NAME_c};
