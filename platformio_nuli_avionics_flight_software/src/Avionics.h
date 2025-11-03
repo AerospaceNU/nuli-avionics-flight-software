@@ -148,5 +148,5 @@ void setup();
 void loop();
 #define AVIONICS_DESKTOP_MAIN  int main() { setup(); while (true) loop(); }
 #endif
-
+#include <string.h>
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

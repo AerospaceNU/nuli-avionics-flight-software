@@ -2,6 +2,7 @@
 #define DESKTOP_ARGUMENTFLAG_TPP
 
 #include "ArgumentFlag.h"
+#include "Avionics.h"
 
 
 template<typename T>
