@@ -21,6 +21,8 @@ constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
 constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
 constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
+constexpr uint32_t GROUND_REFERENCE_UPDATE_DELAY = 500;
+
 
 
 // Hardware Abstraction max size parameters
@@ -52,7 +54,7 @@ struct Vector3D_s {
 };
 
 inline float vector3DMagnitude(const Vector3D_s& vector) {
-    return std::sqrt(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+    return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
 /**
@@ -88,9 +90,12 @@ struct State1D_s {
 };
 
 struct Orientation_s {
-    float tilt;
+    float tiltMagnitudeDeg;
     Vector3D_s angularVelocity;
     Quaternion angleQuaternion;
+    float roll;
+    float pitch;
+    float yaw;
 };
 
 struct State6D_s {
@@ -139,6 +144,7 @@ struct GyroscopeBias_s {
 
 
 #ifdef PLATFORMIO
+#include "Arduino.h"
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
 #else

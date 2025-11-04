@@ -1,5 +1,4 @@
 #include "OrientationEstimator.h"
-
 constexpr ConfigurationID_t OrientationEstimator::REQUIRED_CONFIGS[];
 
 void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* configuration) {
@@ -14,6 +13,8 @@ void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* c
     m_launchAngleAlarm.startAlarm(0, 0);
     m_gyroscopeBiasAlarm.startAlarm(0, 0);
 
+    m_currentOrientation.angleQuaternion = m_launchAngle.get();
+
     // Ensure all gyros start compensated
     GyroscopeBias_s currentGyroBias = m_gyroscopeBias.get();
     for (uint32_t i = 0; i < m_hardware->getNumGyroscopes(); i++) {
@@ -26,24 +27,26 @@ void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* c
 
 // Assume we have one gyro for now, @todo handle full scale switching
 const Orientation_s& OrientationEstimator::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
-    if (flightState == PRE_FLIGHT) {
+    if (flightState == PRE_FLIGHT && timestamp.runtime_ms < 10 * 1000) {
         updateGyroscopeBias(timestamp);
         m_currentOrientation.angularVelocity = m_hardware->getGyroscope(0)->getVelocitiesRadS_board_biasRemoved();
         m_currentOrientation.angleQuaternion = updateLaunchAngle(timestamp);
-        computeTiltAndTwist(m_currentOrientation.angleQuaternion, m_currentOrientation.tilt);
+        m_currentOrientation.tiltMagnitudeDeg = computeTilt(m_currentOrientation.angleQuaternion);
     } else {
-        Quaternion q = updateLaunchAngle(timestamp);
-        float tilt;
-        computeTiltAndTwist(q, tilt);
+        m_currentOrientation.angularVelocity = m_hardware->getGyroscope(0)->getVelocitiesRadS_board_biasRemoved();
+        m_currentOrientation.angleQuaternion = integrateGyroscope(timestamp, m_currentOrientation.angularVelocity);
 
-        const Vector3D_s velocitiesRadS_board = m_hardware->getGyroscope(0)->getVelocitiesRadS_board_biasRemoved();
-        m_currentOrientation.angularVelocity = velocitiesRadS_board;
-        m_currentOrientation.angleQuaternion = integrateGyroscope(timestamp, velocitiesRadS_board);
-        computeTiltAndTwist(m_currentOrientation.angleQuaternion, m_currentOrientation.tilt);
-        // m_debug->message("%.2f\t%.2f\t%.2f", m_currentOrientation.tilt, tilt, m_currentOrientation.tilt - tilt);
-        // m_debug->message("%.2f\t%.2f\t%.2f\t%.2f", m_currentOrientation.angleQuaternion.a, m_currentOrientation.angleQuaternion.b, m_currentOrientation.angleQuaternion.c, m_currentOrientation.angleQuaternion.d);
-        // m_debug->message("%.2f\t%.2f\t%.2f\t%.2f\n", q.a, q.b, q.c, q.d);
+        m_currentOrientation.tiltMagnitudeDeg = computeTilt(m_currentOrientation.angleQuaternion);
+        // m_debug->message("%.2f\t%.2f", m_currentOrientation.tiltMagnitudeDeg, computeTilt(updateLaunchAngle(timestamp)));
     }
+
+    Vector3D_s accel = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
+    Quaternion worldAccel = m_currentOrientation.angleQuaternion.rotate(Quaternion(accel.x, accel.y, accel.z));
+    m_debug->data("%.2f\t%.2f\t%.2f", worldAccel.b, worldAccel.c, worldAccel.d);
+
+    // quaternionToEuler(m_currentOrientation.angleQuaternion);
+    // m_debug->data("%.2f\t%.2f\t%.2f", m_currentOrientation.roll, m_currentOrientation.pitch, m_currentOrientation.yaw);
+
     return getOrientation();
 }
 
@@ -78,27 +81,54 @@ Quaternion OrientationEstimator::integrateGyroscope(const Timestamp_s& timestamp
     return q;
 }
 
-Quaternion OrientationEstimator::updateLaunchAngle(const Timestamp_s& timestamp) const {
-    // Get accelerometer reading in m/s^2
-    Vector3D_s accel = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
+Quaternion OrientationEstimator::updateLaunchAngle(const Timestamp_s& timestamp) {
+    // Get accelerations and filter
+    Vector3D_s accelerationMSS_board = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
+    if (fabs(vector3DMagnitude(accelerationMSS_board) - Constants::G_EARTH_MSS) < 0.5) {
+        m_launchAngleLowPassX.update(accelerationMSS_board.x);
+        m_launchAngleLowPassY.update(accelerationMSS_board.y);
+        m_launchAngleLowPassZ.update(accelerationMSS_board.z);
 
-    // Normalize the accelerometer vector
-    float mag = std::sqrt(accel.x * accel.x + accel.y * accel.y + accel.z * accel.z);
-    if (mag < 1e-6f) return Quaternion(); // avoid division by zero
-    accel.x /= mag;
-    accel.y /= mag;
-    accel.z /= mag;
+        // Calculate rotation
+        const Quaternion worldPositiveZUnit(0.0f, 0.0f, 0.0f, 1.0f);
+        const Quaternion measuredGravityUnit = Quaternion(0.0f, m_launchAngleLowPassX.value(), m_launchAngleLowPassY.value(), m_launchAngleLowPassZ.value()).normalize();
+        Quaternion orientation = measuredGravityUnit.rotation_between_vectors(worldPositiveZUnit); // This calls normalize
 
-    // Compute pitch and roll (in radians)
-    // pitch = rotation around Y axis
-    // roll  = rotation around X axis
-    float pitch = std::asin(-accel.x); // rotation about Y-axis
-    float roll = std::atan2(accel.y, accel.z); // rotation about X-axis
-    float yaw = 0.0f; // cannot measure yaw with accelerometer
+        // If for some reason result is NaN or degenerate, fall back
+        if (std::isfinite(orientation.a) && std::isfinite(orientation.b) && std::isfinite(orientation.c) && std::isfinite(orientation.d)) {
+            if (m_launchAngleAlarm.isAlarmFinished(timestamp.runtime_ms)) {
+                m_launchAngleAlarm.startAlarm(timestamp.runtime_ms, GROUND_REFERENCE_UPDATE_DELAY);
+                constexpr float changeThreshold = 0.01;
+                bool aChanged = std::fabs(orientation.a - m_launchAngle.get().a) > changeThreshold;
+                bool bChanged = std::fabs(orientation.b - m_launchAngle.get().b) > changeThreshold;
+                bool cChanged = std::fabs(orientation.c - m_launchAngle.get().c) > changeThreshold;
+                bool dChanged = std::fabs(orientation.d - m_launchAngle.get().d) > changeThreshold;
 
-    // Create quaternion using your library
-    Quaternion q = Quaternion::from_euler_rotation(roll, pitch, yaw);
-    return q;
+                if (aChanged || bChanged || cChanged || dChanged) {
+                    m_launchAngle.set(orientation);
+                    m_debug->message("Launch orientation set to %.2f", computeTilt(orientation));
+                }
+            }
+        }
+    }
+    return m_launchAngle.get();
+}
+
+
+float OrientationEstimator::computeTilt(const Quaternion& q) {
+    // Normalize quaternion to prevent drift errors
+    Quaternion norm = q;
+    norm.normalize();
+
+    // Rotate body Z-axis (0, 0, 1) by quaternion
+    Quaternion bodyZ(0.0f, 0.0f, 0.0f, 1.0f);
+    Quaternion rotatedZ = norm.rotate(bodyZ);
+
+    // Clamp z to valid range for acos
+    float z = fmaxf(-1.0f, fminf(1.0f, rotatedZ.d));
+
+    // Total tilt magnitude (degrees)
+    return acosf(z) * 180.0f / M_PI;
 }
 
 
@@ -106,7 +136,7 @@ void OrientationEstimator::updateGyroscopeBias(const Timestamp_s& timestamp) {
     GyroscopeBias_s currentGyroBias = m_gyroscopeBias.get();
     // Only allow updates to the configuration at max 1Hz
     const bool validUpdateTick = m_gyroscopeBiasAlarm.isAlarmFinished(timestamp.runtime_ms);
-    if (validUpdateTick) m_gyroscopeBiasAlarm.startAlarm(timestamp.runtime_ms, 500);
+    if (validUpdateTick) m_gyroscopeBiasAlarm.startAlarm(timestamp.runtime_ms, GROUND_REFERENCE_UPDATE_DELAY);
     // Loop through all gyros and update their biases
     bool isUpdated = false;
     for (uint32_t i = 0; i < m_hardware->getNumGyroscopes(); i++) {
@@ -157,19 +187,25 @@ void OrientationEstimator::updateGyroscopeBias(const Timestamp_s& timestamp) {
     }
 }
 
-void OrientationEstimator::computeTiltAndTwist(const Quaternion& q, float& tiltDeg) {
-    // Make a copy (since q is const)
+void OrientationEstimator::quaternionToEuler(const Quaternion& q) {
+    // Normalize the quaternion to avoid drift issues
     Quaternion norm = q;
     norm.normalize();
 
-    // Rotation matrix element for body Z axis in world frame
-    const float r22 = 1 - 2 * (norm.b * norm.b + norm.c * norm.c);
+    // Roll (X-axis rotation)
+    float sinr_cosp = 2.0f * (norm.a * norm.b + norm.c * norm.d);
+    float cosr_cosp = 1.0f - 2.0f * (norm.b * norm.b + norm.c * norm.c);
+    m_currentOrientation.roll = atan2f(sinr_cosp, cosr_cosp) * 180.0f / M_PI;
 
-    // Clamp to [-1, 1] to avoid NaNs from acos
-    float zClamped = r22;
-    if (zClamped > 1.0f) zClamped = 1.0f;
-    else if (zClamped < -1.0f) zClamped = -1.0f;
+    // Pitch (Y-axis rotation)
+    float sinp = 2.0f * (norm.a * norm.c - norm.d * norm.b);
+    if (fabsf(sinp) >= 1.0f)
+        m_currentOrientation.pitch = copysignf(90.0f, sinp); // use 90 degrees if out of range
+    else
+        m_currentOrientation.pitch = asinf(sinp) * 180.0f / M_PI;
 
-    // Tilt = angle from vertical (deg)
-    tiltDeg = std::acos(zClamped) * 180.0f / float(Constants::PI_VAL);
+    // Yaw (Z-axis rotation)
+    float siny_cosp = 2.0f * (norm.a * norm.d + norm.b * norm.c);
+    float cosy_cosp = 1.0f - 2.0f * (norm.c * norm.c + norm.d * norm.d);
+    m_currentOrientation.yaw = atan2f(siny_cosp, cosy_cosp) * 180.0f / M_PI;
 }

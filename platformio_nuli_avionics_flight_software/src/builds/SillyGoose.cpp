@@ -35,6 +35,7 @@
 // @todo disable write in flash driver
 // @todo fix low pass implementation with dt included
 // @todo review boot flight detection
+// @todo log configuration somehow at the start of a flight
 
 // clang-format off
 struct SillyGooseLogData {
@@ -170,9 +171,10 @@ void loop() {
     }
 
     // Determine state
+
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    // state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
+    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // State machine to determine when to do what

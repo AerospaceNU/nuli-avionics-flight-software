@@ -107,7 +107,7 @@ void StateEstimator1D::updateGroundElevationReference(const float unfilteredAlti
     m_groundTemperatureReferenceLowPass.update(m_hardware->getBarometer(0)->getTemperatureK());
     m_groundElevationReferenceLowPass.update(unfilteredAltitudeM);
     if (m_needNewGroundReference || m_groundElevationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
-        m_groundElevationReferenceTimer.startAlarm(timestamp.runtime_ms, 1000);
+        m_groundElevationReferenceTimer.startAlarm(timestamp.runtime_ms, GROUND_REFERENCE_UPDATE_DELAY);
         bool groundElevationChanged = abs(m_groundElevation.get() - m_groundElevationReferenceLowPass.value()) > 2.0f;
         bool groundTemperatureChanged = abs(m_groundTemperature.get() - m_groundTemperatureReferenceLowPass.value()) > 2.0f;
         if (m_needNewGroundReference || groundElevationChanged || groundTemperatureChanged) {
@@ -129,7 +129,7 @@ void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timest
     accelerations = {m_lowPassAX.value(), m_lowPassAY.value(), m_lowPassAZ.value()};
 
     if (m_needNewGroundReference || m_boardOrientationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
-        m_boardOrientationReferenceTimer.startAlarm(timestamp.runtime_ms, 1000);
+        m_boardOrientationReferenceTimer.startAlarm(timestamp.runtime_ms, GROUND_REFERENCE_UPDATE_DELAY);
         const float absX = fabs(accelerations.x);
         const float absY = fabs(accelerations.y);
         const float absZ = fabs(accelerations.z);

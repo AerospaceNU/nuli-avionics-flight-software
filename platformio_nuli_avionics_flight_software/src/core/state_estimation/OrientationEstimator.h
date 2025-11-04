@@ -1,7 +1,7 @@
 #ifndef ORIENTATIONESTIMATOR_H
 #define ORIENTATIONESTIMATOR_H
 
-#include "../../Avionics.h"
+#include "Avionics.h"
 #include "../configuration/Configuration.h"
 #include "../../ConstantsUnits.h"
 #include "../generic_hardware/Accelerometer.h"
@@ -23,11 +23,13 @@ public:
 private:
     Quaternion integrateGyroscope(const Timestamp_s& timestamp, const Vector3D_s& angularVelocity) const;
 
-    Quaternion updateLaunchAngle(const Timestamp_s& timestamp) const;
+    Quaternion updateLaunchAngle(const Timestamp_s& timestamp);
 
     void updateGyroscopeBias(const Timestamp_s& timestamp);
 
-    static void computeTiltAndTwist(const Quaternion& q, float& tiltDeg);
+    static float computeTilt(const Quaternion& q);
+
+    void quaternionToEuler(const Quaternion& q);
 
     HardwareAbstraction* m_hardware = nullptr;
     Configuration* m_configuration = nullptr;
