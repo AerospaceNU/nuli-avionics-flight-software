@@ -42,7 +42,7 @@ const Orientation_s& OrientationEstimator::update(const Timestamp_s& timestamp, 
 
     Vector3D_s accel = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
     Quaternion worldAccel = m_currentOrientation.angleQuaternion.rotate(Quaternion(accel.x, accel.y, accel.z));
-    m_debug->data("%.2f\t%.2f\t%.2f", worldAccel.b, worldAccel.c, worldAccel.d);
+    // m_debug->data("%.2f\t%.2f\t%.2f", worldAccel.b, worldAccel.c, worldAccel.d);
 
     // quaternionToEuler(m_currentOrientation.angleQuaternion);
     // m_debug->data("%.2f\t%.2f\t%.2f", m_currentOrientation.roll, m_currentOrientation.pitch, m_currentOrientation.yaw);

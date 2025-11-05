@@ -171,7 +171,6 @@ void loop() {
     }
 
     // Determine state
-
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
