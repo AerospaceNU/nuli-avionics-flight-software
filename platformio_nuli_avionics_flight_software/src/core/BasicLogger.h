@@ -72,10 +72,12 @@ public:
             if (m_currentTick >= m_ticksPerLog) {
                 m_currentTick = 0;
             }
-            m_dataStruct.id = 0x01;
-            m_dataStruct.data = logDataStruct;
-            m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
-            m_logWriteIndex++;
+            if (getRemainingLogLengthSeconds() > 5) {
+                m_dataStruct.id = 0x01;
+                m_dataStruct.data = logDataStruct;
+                m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
+                m_logWriteIndex++;
+            }
         }
         if (m_enableStreaming) {
             m_printFunction(logDataStruct, m_debug);
@@ -83,17 +85,21 @@ public:
     }
 
     void logMessage(const char* str) {
-        m_dataStruct.id = 0x03;
-        memcpy(&m_dataStruct.data, str, std::min(sizeof(LogDataStruct), strlen(str) + 1));
-        ((char*)(&m_dataStruct.data))[sizeof(LogDataStruct) - 1] = '\0'; // Ensure null termination
-        m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
-        m_logWriteIndex++;
+        if (getRemainingLogLengthSeconds() > 5) {
+            m_dataStruct.id = 0x03;
+            memcpy(&m_dataStruct.data, str, std::min(sizeof(LogDataStruct), strlen(str) + 1));
+            ((char*)(&m_dataStruct.data))[sizeof(LogDataStruct) - 1] = '\0'; // Ensure null termination
+            m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
+            m_logWriteIndex++;
+        }
     }
 
     void newFlight() {
-        m_dataStruct.id = 0x02;
-        m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
-        m_logWriteIndex++;
+        if (getRemainingLogLengthSeconds() > 5) {
+            m_dataStruct.id = 0x02;
+            m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
+            m_logWriteIndex++;
+        }
     }
 
     void erase() {
