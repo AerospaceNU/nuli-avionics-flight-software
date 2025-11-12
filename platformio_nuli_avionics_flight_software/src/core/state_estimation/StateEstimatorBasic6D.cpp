@@ -35,7 +35,7 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
         m_currentState6D.velocity.z = 0;
         m_currentState6D.acceleration.z = 0;
     }
-
+    
     // Determine X/Y axis state
     // Project Z velocity determined by the kalman filter or fixed gain observer
     Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);

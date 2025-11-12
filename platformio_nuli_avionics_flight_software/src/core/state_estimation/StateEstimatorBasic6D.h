@@ -10,17 +10,16 @@
 #include "core/generic_hardware/Barometer.h"
 #include "../filters/LowPass.h"
 
-
-
 class StateEstimatorBasic6D {
 public:
-    StateEstimatorBasic6D(bool useKalman);
+    explicit StateEstimatorBasic6D(bool useKalman);
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
     State6D_s update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation);
 
     State6D_s getState6D() const;
+
 
 private:
     Vector3D_s getAccelerationMSS(const Orientation_s& orientation) const;
