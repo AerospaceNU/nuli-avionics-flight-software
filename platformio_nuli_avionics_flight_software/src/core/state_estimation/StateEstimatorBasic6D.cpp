@@ -16,28 +16,33 @@ void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* 
     m_debug = hardware->getDebugStream();
 
     m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
+
+    m_currentState6D.position.x = 0;
+    m_currentState6D.position.y = 0;
+    m_currentState6D.position.z = 0;
 }
 
 State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation) {
     // This is the data we have available
+    const float dtSeconds = timestamp.dt_ms / 1000.0f;
     const float altitudeM = state1D.unfilteredNoOffsetAltitudeM - m_groundElevation.get();
     const Vector3D_s accelerationMSS_worldFrame = getAccelerationMSS(orientation);
 
-    // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame
+    // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame, Matthew
     if (m_useKalman) {
         // Implement kalman filter here
         m_currentState6D.position.z = 0;
         m_currentState6D.velocity.z = 0;
         m_currentState6D.acceleration.z = 0;
     } else {
-        // Implement fixed gain observer here
+        // Implement fixed gain observer here, Julia
         m_currentState6D.position.z = 0;
         m_currentState6D.velocity.z = 0;
         m_currentState6D.acceleration.z = 0;
     }
-    
+
     // Determine X/Y axis state
-    // Project Z velocity determined by the kalman filter or fixed gain observer
+    // Project Z velocity determined by the kalman filter or fixed gain observer, Xiaofu
     Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);
     // Implement complementary filter here. This is a function of projectedVelocityMS and accelerationMSS_worldFrame
     m_currentState6D.position.x = 0;
