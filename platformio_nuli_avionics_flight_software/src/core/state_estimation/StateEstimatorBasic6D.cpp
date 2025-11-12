@@ -28,9 +28,9 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
     const float altitudeM = state1D.unfilteredNoOffsetAltitudeM - m_groundElevation.get();
     const Vector3D_s accelerationMSS_worldFrame = getAccelerationMSS(orientation);
 
-    // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame, Matthew
+    // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame
     if (m_useKalman) {
-        // Implement kalman filter here
+        // Implement kalman filter here, Matthew
         m_currentState6D.position.z = 0;
         m_currentState6D.velocity.z = 0;
         m_currentState6D.acceleration.z = 0;
