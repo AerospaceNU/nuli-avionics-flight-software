@@ -1,7 +1,7 @@
 # parse_rawOffloadDF.py
 import re
 
-filename = "rawOffloadDF.txt"
+filename = "data/rawOffloadDF.txt"
 
 timestamps = []
 
