@@ -31,7 +31,6 @@
 // @todo Kalman gains
 // @todo Offload -> simulation data pipeline
 // @todo Have barometer re-init in code
-// @todo handle log overflow
 // @todo disable write in flash driver
 // @todo fix low pass implementation with dt included
 // @todo review boot flight detection

@@ -30,6 +30,9 @@ def offload_data(ser):
     current_file = None
     recording = False
 
+    flight_number += 1
+    current_file = open(generate_flight_filename(flight_number), "w", buffering=1)
+
     while True:
         try:
             line_bytes = ser.readline()

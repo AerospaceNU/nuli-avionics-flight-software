@@ -26,15 +26,6 @@ inline Type* get##Type(uint8_t index) {                                         
     return arrayVariable[index];                                                    \
 }
 
-#define GENERATE_GET_SET_METHODS_MACRO(Type, arrayVariable)                         \
-void set##Type(Type* instance) {                                                    \
-    arrayVariable = instance;                                                       \
-}                                                                                   \
-inline Type* get##Type() {                                                          \
-    return arrayVariable;                                                           \
-}
-
-
 /**
  * @class HardwareAbstraction
  * @brief Provide an abstraction to access all hardware
@@ -110,7 +101,7 @@ private:
     VoltageSensor* m_voltageSensorArray[MAX_VOLTAGE_SENSOR_NUM] = {nullptr}; ///< Array containing all the VoltageSensors in the system
     Barometer* m_barometerArray[MAX_BAROMETER_NUM] = {nullptr}; ///< Array containing all the Barometers in the system
     Accelerometer* m_accelerometerArray[MAX_ACCELEROMETER_NUM] = {nullptr}; ///< Array containing all the Accelerometers in the system
-    Magnetometer* m_magnetometerArray[MAX_BAROMETER_NUM] = {nullptr}; ///< Array containing all the Magnetometers in the system
+    Magnetometer* m_magnetometerArray[MAX_MAGNETOMETER_NUM] = {nullptr}; ///< Array containing all the Magnetometers in the system
     Gyroscope* m_gyroscopeArray[MAX_GYROSCOPE_NUM] = {nullptr}; ///< Array containing all the Gyroscopes in the system
     FlashMemory* m_flashMemoryArray[MAX_FLASH_MEMORY_NUM] = {nullptr}; ///< Array containing all the FlashMemory in the system
     FramMemory* m_framMemoryArray[MAX_FRAM_MEMORY_NUM] = {nullptr}; ///< Array containing all the FramMemory in the system
