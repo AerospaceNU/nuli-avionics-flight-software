@@ -24,6 +24,8 @@ constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
 // Apogee detection
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
+constexpr uint32_t MACH_LOCKOUT_TIMER_MS = 5000;
+constexpr float MACH_LOCKOUT_THRESHOLD_MS = 150.0;
 // Landing detection
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
