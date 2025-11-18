@@ -6,9 +6,9 @@ import re
 # --------------------------------------------------------
 # Hardcoded filepath
 # --------------------------------------------------------
-FILEPATH = r"data/2025-11-15 Owlgator/offload_20251116_001447_flight10.txt"
+# FILEPATH = r"data/2025-11-15 Owlgator/offload_20251116_001447_flight10.txt"
 # FILEPATH = r"data/2025-11-15 Nathans Cert/offload_20251115_134352_flight13.txt"
-# FILEPATH = r"data/2025-11-15 MBTA/silly goose 1 offload_20251117_182939_flight2.txt"
+FILEPATH = r"data/2025-11-15 MBTA/silly goose 1 offload_20251117_182939_flight2.txt"
 # FILEPATH = r"data/2025-11-15 MBTA/silly goose 2 offload_20251117_183544_flight2.txt"
 # FILEPATH = r"data/2025-11-15 MBTA/silly goose 3 offload_20251117_183710_flight2.txt"
 
