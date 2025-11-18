@@ -29,6 +29,21 @@ set(desktopSimFiles
 add_executable(desktop ${desktopSimFiles})
 
 
+# ========Desktop Protobuf Test Configuration========
+include_directories(
+        platformio_nuli_avionics_flight_software/lib/nanopb
+        platformio_nuli_avionics_flight_software/src/proto/c
+)
+
+add_executable(ProtobufTest
+        # source files
+        platformio_nuli_avionics_flight_software/src/builds/ProtobufDesktopTest.cpp
+        platformio_nuli_avionics_flight_software/src/proto/c/message.pb.c
+        platformio_nuli_avionics_flight_software/lib/nanopb/pb_common.c
+        platformio_nuli_avionics_flight_software/lib/nanopb/pb_encode.c
+        platformio_nuli_avionics_flight_software/lib/nanopb/pb_decode.c
+        platformio_nuli_avionics_flight_software/src/proto/c/NULIPacket.cpp)
+
 # ========Doxygen Build Configuration========
 option(BUILD_DOC "Build documentation" ON)
 find_package(Doxygen)
