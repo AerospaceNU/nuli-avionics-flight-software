@@ -217,3 +217,4 @@ void loop() {
             droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
         });
 }
+
