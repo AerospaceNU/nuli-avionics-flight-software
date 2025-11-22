@@ -16,7 +16,7 @@ public:
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    State6D_s update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation);
+    State6D_s update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation, FlightState_e flightState);
 
     State6D_s getState6D() const;
 
@@ -28,12 +28,16 @@ private:
 
     bool m_useKalman;
 
+    KalmanFilter1D m_kalmanFilter;
+
     HardwareAbstraction* m_hardware = nullptr;
     Configuration* m_configuration = nullptr;
     DebugStream* m_debug = nullptr;
 
     State6D_s m_currentState6D = {};
     ConfigurationData<float> m_groundElevation;
+    ConfigurationData<int32_t> m_boardOrientation;
+
 };
 
 

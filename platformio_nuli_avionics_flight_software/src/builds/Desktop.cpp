@@ -84,7 +84,7 @@ void loop() {
     // Determine state
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
+    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // Run CLI
@@ -102,7 +102,13 @@ void loop() {
     //               state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
     // );
     // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
-    debug.message("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+
+    if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
+        exit(0);
+    }
+
+    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+        state.timestamp.runtime_ms,
         state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
         state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
         state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
