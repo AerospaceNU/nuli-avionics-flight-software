@@ -8,6 +8,8 @@ void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* c
 
     m_gyroscopeBias = configuration->getConfigurable<GYROSCOPE_BIAS_c>();
     m_launchAngle = configuration->getConfigurable<LAUNCH_ANGLE_c>();
+    m_boardOrientation = m_configuration->getConfigurable<BOARD_ORIENTATION_c>();
+
 
     // Initialize the base conditions immediately
     m_launchAngleAlarm.startAlarm(0, 0);
@@ -27,7 +29,7 @@ void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* c
 
 // Assume we have one gyro for now, @todo handle full scale switching
 const Orientation_s& OrientationEstimator::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
-    if (flightState == PRE_FLIGHT && timestamp.runtime_ms < 10 * 1000) {
+    if (flightState == PRE_FLIGHT) {
         updateGyroscopeBias(timestamp);
         m_currentOrientation.angularVelocity = m_hardware->getGyroscope(0)->getVelocitiesRadS_board_biasRemoved();
         m_currentOrientation.angleQuaternion = updateLaunchAngle(timestamp);
@@ -115,13 +117,24 @@ Quaternion OrientationEstimator::updateLaunchAngle(const Timestamp_s& timestamp)
 }
 
 
-float OrientationEstimator::computeTilt(const Quaternion& q) {
+float OrientationEstimator::computeTilt(const Quaternion& q) const {
     // Normalize quaternion to prevent drift errors
     Quaternion norm = q;
     norm.normalize();
 
     // Rotate body Z-axis (0, 0, 1) by quaternion
     Quaternion bodyZ(0.0f, 0.0f, 0.0f, 1.0f);
+
+    // We actually want to compare against whatever axis we think is along the length of the rocket
+    uint32_t direction = m_boardOrientation.get();
+    if (direction == POS_X)      bodyZ = Quaternion(-1, 0, 0);
+    else if (direction == NEG_X) bodyZ = Quaternion(1, 0, 0);
+    else if (direction == POS_Y) bodyZ = Quaternion(0, -1, 0);
+    else if (direction == NEG_Y) bodyZ = Quaternion(0, 1, 0);
+    else if (direction == POS_Z) bodyZ = Quaternion(0, 0, -1);
+    else if (direction == NEG_Z) bodyZ = Quaternion(0, 0, 1);
+
+
     Quaternion rotatedZ = norm.rotate(bodyZ);
 
     // Clamp z to valid range for acos

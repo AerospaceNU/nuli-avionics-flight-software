@@ -62,7 +62,7 @@ State6D_s StateEstimatorBasic6D::getState6D() const {
 Vector3D_s StateEstimatorBasic6D::getAccelerationMSS(const Orientation_s& orientation) const {
     const Vector3D_s accelerationsMSS_board = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
     const Quaternion accelerationsMSS_worldQ = orientation.angleQuaternion.rotate(Quaternion(accelerationsMSS_board.x, accelerationsMSS_board.y, accelerationsMSS_board.z));
-    return  {accelerationsMSS_worldQ.b, accelerationsMSS_worldQ.c, accelerationsMSS_worldQ.d};
+    return  {accelerationsMSS_worldQ.b, accelerationsMSS_worldQ.c, accelerationsMSS_worldQ.d - float(Constants::G_EARTH_MSS)};
 }
 
 Vector3D_s StateEstimatorBasic6D::projectVelocities(const Orientation_s& orientation, float velocityZ) const {

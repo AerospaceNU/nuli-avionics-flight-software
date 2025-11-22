@@ -27,7 +27,7 @@ private:
 
     void updateGyroscopeBias(const Timestamp_s& timestamp);
 
-    static float computeTilt(const Quaternion& q);
+    float computeTilt(const Quaternion& q) const;
 
     void quaternionToEuler(const Quaternion& q);
 
@@ -44,6 +44,7 @@ private:
     LowPass m_launchAngleLowPassZ{0.01};
 
     ConfigurationData<GyroscopeBias_s> m_gyroscopeBias;
+    ConfigurationData<int32_t> m_boardOrientation;
 
     struct LowPass3D_s {
         LowPass x{0.001};

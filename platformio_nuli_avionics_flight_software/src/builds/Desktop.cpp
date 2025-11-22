@@ -42,7 +42,8 @@ ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c,
 
 void setup() {
     // Setup sim input/output
-    csvReader.setup("../simulation/data/Avionics Flight Data - 2023-04-15-beanboozler-output-FCB.csv");
+    // csvReader.setup("../simulation/data/Avionics Flight Data - 2023-04-15-beanboozler-output-FCB.csv");
+    csvReader.setup("../simulation/data/MBTA_FLIGHT_DATA.txt");
     debug.outputToFile("../simulation/output.txt");
 
     // Initialize
@@ -75,9 +76,10 @@ void loop() {
     hardware.readSensors(); // Has no effect because we are using simulated data
     // Read in the .csv data
     csvReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
-    barometer.inject((csvReader.getKey<float>("baro1_temp") - 32) * 5.0f / 9.0f + 273.15f, 0, csvReader.getKey<float>("baro1_pres") * 101325);
-    accelerometer.inject({csvReader.getKey<float>("imu1_accel_x") * FCB_V0_ACCEL_SCALE_FACTOR, csvReader.getKey<float>("imu1_accel_y") * FCB_V0_ACCEL_SCALE_FACTOR, csvReader.getKey<float>("imu1_accel_z") * FCB_V0_ACCEL_SCALE_FACTOR}, 0);
-    gyroscope.inject({csvReader.getKey<float>("imu1_gyro_x") * FCB_V0_GYRO_SCALE_FACTOR, csvReader.getKey<float>("imu1_gyro_y") * FCB_V0_GYRO_SCALE_FACTOR, csvReader.getKey<float>("imu1_gyro_z") * FCB_V0_GYRO_SCALE_FACTOR}, 0);
+    barometer.inject(csvReader.getKey<float>("barometerTemperatureK"), 0, csvReader.getKey<float>("pressurePa"));
+    accelerometer.inject({csvReader.getKey<float>("accelerationMSS_x"), csvReader.getKey<float>("accelerationMSS_y"), csvReader.getKey<float>("accelerationMSS_z")}, 0);
+    gyroscope.inject({csvReader.getKey<float>("velocityRadS_x"), csvReader.getKey<float>("velocityRadS_y"), csvReader.getKey<float>("velocityRadS_z")}, 0);
+
 
     // Determine state
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
@@ -99,5 +101,11 @@ void loop() {
     //               gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
     //               state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
     // );
-    debug.message("%.2f\t%.2f\t%d", state.orientation.tilt, state.state1D.altitudeM, state.flightState);
+    // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
+    debug.message("%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+        state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
+        state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
+        state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
+        state.orientation.tiltMagnitudeDeg, state.flightState);
+
 }
