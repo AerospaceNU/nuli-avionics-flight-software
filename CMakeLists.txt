@@ -42,7 +42,7 @@ add_executable(ProtobufTest
         platformio_nuli_avionics_flight_software/lib/nanopb/pb_common.c
         platformio_nuli_avionics_flight_software/lib/nanopb/pb_encode.c
         platformio_nuli_avionics_flight_software/lib/nanopb/pb_decode.c
-        platformio_nuli_avionics_flight_software/src/proto/c/NULIPacket.cpp)
+        platformio_nuli_avionics_flight_software/src/proto/c/NULIPacketUtils.cpp)
 
 # ========Doxygen Build Configuration========
 option(BUILD_DOC "Build documentation" ON)
