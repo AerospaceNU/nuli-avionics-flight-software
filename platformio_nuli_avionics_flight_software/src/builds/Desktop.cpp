@@ -107,9 +107,10 @@ void loop() {
         exit(0);
     }
 
-    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
         state.timestamp.runtime_ms,
         state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
+        state.state6D.position2.x, state.state6D.position2.y, state.state6D.position2.z,
         state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
         state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
         state.orientation.tiltMagnitudeDeg, state.flightState);

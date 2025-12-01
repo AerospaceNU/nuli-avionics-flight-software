@@ -92,8 +92,9 @@ Quaternion OrientationEstimator::updateLaunchAngle(const Timestamp_s& timestamp)
         m_launchAngleLowPassZ.update(accelerationMSS_board.z);
 
         // Calculate rotation
-        const Quaternion worldPositiveZUnit(0.0f, 0.0f, 0.0f, 1.0f);
-        const Quaternion measuredGravityUnit = Quaternion(0.0f, m_launchAngleLowPassX.value(), m_launchAngleLowPassY.value(), m_launchAngleLowPassZ.value()).normalize();
+        const Quaternion worldPositiveZUnit(0.0f, 0.0f, 1.0f);
+        // @todo fix
+        const Quaternion measuredGravityUnit = Quaternion(m_launchAngleLowPassX.value(), m_launchAngleLowPassZ.value(), m_launchAngleLowPassY.value()).normalize();
         Quaternion orientation = measuredGravityUnit.rotation_between_vectors(worldPositiveZUnit); // This calls normalize
 
         // If for some reason result is NaN or degenerate, fall back
@@ -127,7 +128,7 @@ float OrientationEstimator::computeTilt(const Quaternion& q) const {
 
     // We actually want to compare against whatever axis we think is along the length of the rocket
     uint32_t direction = m_boardOrientation.get();
-    if (direction == POS_X)      bodyZ = Quaternion(-1, 0, 0);
+    if (direction == POS_X) bodyZ = Quaternion(-1, 0, 0);
     else if (direction == NEG_X) bodyZ = Quaternion(1, 0, 0);
     else if (direction == POS_Y) bodyZ = Quaternion(0, -1, 0);
     else if (direction == NEG_Y) bodyZ = Quaternion(0, 1, 0);

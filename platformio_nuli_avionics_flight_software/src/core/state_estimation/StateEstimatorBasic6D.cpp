@@ -57,11 +57,18 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
     Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);
     // Implement complementary filter here. This is a function of projectedVelocityMS and accelerationMSS_worldFrame
     if (flightState != PRE_FLIGHT) {
+        m_currentState6D.velocity.x += accelerationMSS_worldFrame.x * dtSeconds;
+        m_currentState6D.velocity.y += accelerationMSS_worldFrame.y * dtSeconds;
+        m_currentState6D.position2.x += m_currentState6D.velocity.x * dtSeconds;
+        m_currentState6D.position2.y += m_currentState6D.velocity.y * dtSeconds;
+        m_currentState6D.position2.z = m_currentState6D.position.z;
+
+
         m_currentState6D.position.x += projectedVelocityMS.x * dtSeconds;
         m_currentState6D.position.y += projectedVelocityMS.y * dtSeconds;
     }
-    m_currentState6D.velocity.x = projectedVelocityMS.x;
-    m_currentState6D.velocity.y = projectedVelocityMS.y;
+    // m_currentState6D.velocity.x = projectedVelocityMS.x;
+    // m_currentState6D.velocity.y = projectedVelocityMS.y;
     m_currentState6D.acceleration.x = accelerationMSS_worldFrame.x;
     m_currentState6D.acceleration.y = accelerationMSS_worldFrame.y;
 
