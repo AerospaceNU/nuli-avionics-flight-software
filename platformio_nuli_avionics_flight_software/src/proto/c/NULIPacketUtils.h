@@ -2,6 +2,7 @@
 #define DESKTOP_NULIPACKETUTILS_H
 
 #include "message.pb.h"
+#include "ReturnCodes.pb.h"
 
 #define NULI_PACKET_START_FLAG 0x7E
 #define NULI_PACKET_STOP_FLAG 0x7F
@@ -31,14 +32,14 @@
  */
 class NULIPacketUtils {
 public:
-    int encode(NULIMessage *nuliMessage, uint8_t *dst_buffer, uint32_t *bytes_written);
+    ReturnCode encode(NULIMessage *nuliMessage, uint8_t *dst_buffer, uint32_t *bytes_written);
 
-    int decode(uint8_t *buffer, uint32_t length, NULIMessage *message);
+    ReturnCode decode(uint8_t *buffer, uint32_t length, NULIMessage *message);
 
 private:
     uint32_t encodeNULIMessagePayload(NULIMessage *nuliMessage, uint8_t *buffer);
 
-    int decodeNULIMessagePayload(NULIMessage *nuliMessage, uint8_t *payload_buffer, uint32_t payload_length);
+    ReturnCode decodeNULIMessagePayload(NULIMessage *nuliMessage, uint8_t *payload_buffer, uint32_t payload_length);
 
     uint32_t addByteStuffing(const uint8_t *src, uint32_t src_length, uint8_t* dst, uint32_t dst_max_length);
 

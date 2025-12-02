@@ -3,6 +3,7 @@
 
 #include <Avionics.h>
 #include "GenericSensor.h"
+#include "NULIPacketUtils.h"
 
 class RadioLink {
 public:
@@ -15,6 +16,8 @@ public:
     virtual uint32_t getData(uint8_t* data, uint32_t maxLength) { return 0; };
 
     virtual void transmit(uint8_t* data, uint32_t length) {};
+
+    virtual void transmit(NULIPacketUtils message) {};
 };
 
 
