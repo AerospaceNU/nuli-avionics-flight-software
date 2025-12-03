@@ -175,6 +175,41 @@ ax2.grid(True)
 plt.tight_layout()
 plt.show(block=True)
 
+
+
+# ---------------------------------------------------------
+# EXTRA PLOT: tiltMagnitudeDeg vs altitude (state_z)
+# ---------------------------------------------------------
+
+tilt_vals = []
+alt_vals = []
+
+with open(state_file, "r") as f:
+    for line in f:
+        if not line.startswith("MSG:"):
+            continue
+        parts = line.replace("MSG:", "").split()
+        if len(parts) != 15:
+            continue
+
+        z = float(parts[0])           # state.state6D.position.z
+        tilt = float(parts[13])       # tiltMagnitudeDeg
+
+        alt_vals.append(z)
+        tilt_vals.append(tilt)
+
+# --- Create new window ---
+plt.figure(figsize=(8, 5))
+plt.plot(alt_vals, tilt_vals, linewidth=2)
+
+plt.xlabel("Time (ms)")
+plt.ylabel("Tilt Magnitude (deg)")
+plt.title("Tilt vs Altitude")
+plt.grid(True)
+
+plt.show(block=True)
+
+
 # import numpy as np
 # import matplotlib.pyplot as plt
 # from pyproj import Proj, transform
