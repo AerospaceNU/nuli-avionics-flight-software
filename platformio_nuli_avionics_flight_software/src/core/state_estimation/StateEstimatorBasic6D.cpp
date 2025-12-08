@@ -3,6 +3,7 @@
 #include "core/transform/Vector3DTransform.h"
 #include "core/transform/DiscreteRotation.h"
 
+#include <iostream>
 #define RAD_TO_DEG_M(x) ((x) * (180.0f / M_PI))
 
 StateEstimatorBasic6D::StateEstimatorBasic6D(bool useKalman) {
@@ -42,15 +43,50 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
     }
 
     // Determine X/Y axis state
-    // Project Z velocity determined by the kalman filter or fixed gain observer, Xiaofu
+    // Project Z velocity determined by the kalman filter or fixed gain observer, Xiaofu work on the complementary filter
+    // Simulation/
     Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);
     // Implement complementary filter here. This is a function of projectedVelocityMS and accelerationMSS_worldFrame
-    m_currentState6D.position.x = 0;
-    m_currentState6D.position.y = 0;
-    m_currentState6D.velocity.x = 0;
-    m_currentState6D.velocity.y = 0;
-    m_currentState6D.acceleration.x = 0;
-    m_currentState6D.acceleration.y = 0;
+
+    // High-frequency velocity from integrated acceleration
+    m_integratedVelocityXY.x += accelerationMSS_worldFrame.x * dtSeconds;
+    m_integratedVelocityXY.y += accelerationMSS_worldFrame.y * dtSeconds;
+
+    // Low-frequency velocity from Z-axis projection
+    Vector3D_s projectedVelocity = projectVelocities(orientation, m_currentState6D.velocity.z);
+
+    // Complementary filter
+    const float alpha = 0.98f;
+
+    m_currentState6D.velocity.x =
+        alpha * m_integratedVelocityXY.x + (1 - alpha) * projectedVelocity.x;
+
+    m_currentState6D.velocity.y =
+        alpha * m_integratedVelocityXY.y + (1 - alpha) * projectedVelocity.y;
+
+    // Position integration
+    m_currentState6D.position.x += m_currentState6D.velocity.x * dtSeconds;
+    m_currentState6D.position.y += m_currentState6D.velocity.y * dtSeconds;
+
+    // Acceleration (world frame)
+    m_currentState6D.acceleration.x = accelerationMSS_worldFrame.x;
+    m_currentState6D.acceleration.y = accelerationMSS_worldFrame.y;
+
+    std::cout << "Pos("
+          << m_currentState6D.position.x << ", "
+          << m_currentState6D.position.y << ")  Vel("
+          << m_currentState6D.velocity.x << ", "
+          << m_currentState6D.velocity.y << ")\n";
+
+
+
+
+    // m_currentState6D.position.x = 0;
+    // m_currentState6D.position.y = 0;
+    // m_currentState6D.velocity.x = 0;
+    // m_currentState6D.velocity.y = 0;
+    // m_currentState6D.acceleration.x = 0;
+    // m_currentState6D.acceleration.y = 0;
 
     return m_currentState6D;
 }
