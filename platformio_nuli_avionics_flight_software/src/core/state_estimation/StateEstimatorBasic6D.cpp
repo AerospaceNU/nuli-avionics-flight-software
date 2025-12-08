@@ -9,7 +9,6 @@ StateEstimatorBasic6D::StateEstimatorBasic6D(bool useKalman) {
     m_useKalman = useKalman;
 }
 
-
 void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
     m_configuration = configuration;
@@ -18,39 +17,34 @@ void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* 
     m_groundElevation = m_configuration->getConfigurable<GROUND_ELEVATION_c>();
     m_boardOrientation = m_configuration->getConfigurable<BOARD_ORIENTATION_c>();
 
-
     m_currentState6D.position.x = 0;
     m_currentState6D.position.y = 0;
     m_currentState6D.position.z = 0;
 
     m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
     m_kalmanFilter.setAccelerometerCovariance(1);
+    m_kalmanFilter.setBarometerCovariance(1);
 }
 
 State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation, FlightState_e flightState) {
     // This is the data we have available
-    const float dtSeconds = timestamp.dt_ms / 1000.0f;
+    const float dtSeconds = float(timestamp.dt_ms) / 1000.0f;
     const float altitudeM = state1D.unfilteredNoOffsetAltitudeM - m_groundElevation.get();
     const Vector3D_s accelerationMSS_worldFrame = getAccelerationMSS(orientation);
 
     // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame
     if (m_useKalman) {
-        // Implement kalman filter here, Matthew
-        m_currentState6D.position.z = 0;
-        m_currentState6D.velocity.z = 0;
-        m_currentState6D.acceleration.z = 0;
+        m_kalmanFilter.predict();
+        m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeM, accelerationMSS_worldFrame.z);
+        m_currentState6D.position.z = m_kalmanFilter.getPosition();
+        m_currentState6D.velocity.z = m_kalmanFilter.getVelocity();
+        m_currentState6D.acceleration.z = m_kalmanFilter.getAcceleration();
     } else {
         // Implement fixed gain observer here, Julia
         m_currentState6D.position.z = 0;
         m_currentState6D.velocity.z = 0;
         m_currentState6D.acceleration.z = 0;
     }
-    m_kalmanFilter.predict();
-    m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeM, accelerationMSS_worldFrame.z);
-    m_currentState6D.position.z = m_kalmanFilter.getPosition();
-    m_currentState6D.velocity.z = m_kalmanFilter.getVelocity();
-    m_currentState6D.acceleration.z = m_kalmanFilter.getAcceleration();
-
 
     // Determine X/Y axis state
     // Project Z velocity determined by the kalman filter or fixed gain observer, Xiaofu
