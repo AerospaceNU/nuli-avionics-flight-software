@@ -100,7 +100,6 @@ struct Orientation_s {
 
 struct State6D_s {
     Vector3D_s position;
-    Vector3D_s position2;
     Vector3D_s velocity;
     Vector3D_s acceleration;
 };
