@@ -25,6 +25,8 @@ private:
     Vector3D_s getAccelerationMSS(const Orientation_s& orientation) const;
 
     Vector3D_s projectVelocities(const Orientation_s& orientation, float velocityZ) const;
+    Vector3D_s m_integratedVelocityXY = {0.0f, 0.0f, 0.0f};
+
 
     bool m_useKalman;
 
