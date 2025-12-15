@@ -45,6 +45,20 @@ void KalmanFilter1D::setDeltaTime(float delta_t) {
                                      {0, 1,       delta_t},
                                      {0, 0,       1}
     };
+
+    // compute Q from jerk spectral density q = sigma^2
+    const float q = processJerkStd * processJerkStd;
+    const float dt = delta_t;
+    const float dt2 = dt*dt;
+    const float dt3 = dt2*dt;
+    const float dt4 = dt3*dt;
+    const float dt5 = dt4*dt;
+
+    Q = Eigen::Matrix<float, 3, 3>{
+            {q * dt5 / 20.0f, q * dt4 / 8.0f, q * dt3 / 6.0f},
+            {q * dt4 / 8.0f,  q * dt3 / 3.0f, q * dt2 / 2.0f},
+            {q * dt3 / 6.0f,  q * dt2 / 2.0f, q * dt}
+    };
 }
 
 void KalmanFilter1D::setBarometerCovariance(float covariance) {

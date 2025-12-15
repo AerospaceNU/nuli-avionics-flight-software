@@ -22,8 +22,8 @@ void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* 
     m_currentState6D.position.z = 0;
 
     m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
-    m_kalmanFilter.setAccelerometerCovariance(1);
-    m_kalmanFilter.setBarometerCovariance(1);
+    m_kalmanFilter.setAccelerometerCovariance(0.0046437);
+    m_kalmanFilter.setBarometerCovariance(4.7828);
 }
 
 State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation, FlightState_e flightState) {
@@ -34,6 +34,8 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
 
     // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame
     if (m_useKalman) {
+        // Set covariance functions based on assumptions relative to what data should look like
+            // For examply, if the velocity is > 250 m/s, we trust the barometer less so set barometer covariance to much higher
         m_kalmanFilter.predict();
         m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeM, accelerationMSS_worldFrame.z);
         m_currentState6D.position.z = m_kalmanFilter.getPosition();
