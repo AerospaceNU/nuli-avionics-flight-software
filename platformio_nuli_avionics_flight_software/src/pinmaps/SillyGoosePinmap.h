@@ -6,6 +6,8 @@
 #define FRAM_HOLD_PIN (10)
 #define FLASH_HOLD_PIN (11)
 #define IMU_INT_PIN (6)
+#define STATUS_PIN (A5)
+#define BOOT_PIN (5)
 
 #define BUZZER_PIN (0)
 #define LIGHT_PIN (1)
