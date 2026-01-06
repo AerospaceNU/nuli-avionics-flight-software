@@ -7,6 +7,8 @@
 #include "drivers/arduino/ArduinoSystemClock.h"
 #include "drivers/arduino/MS5607Sensor.h"
 #include "drivers/arduino/ICM20602Sensor.h"
+#include "drivers/arduino/ICM42605Sensor.h"
+#include "drivers/arduino/MX25L256.h"
 #include "drivers/arduino/S25FL512.h"
 #include "drivers/arduino/ArduinoPyro.h"
 #include "drivers/arduino/ArduinoFram.h"
@@ -15,6 +17,7 @@
 #include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoSimulationParser.h"
+#include "drivers/arduino/ArduinoDigitalInput.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
 #include "core/configuration/ConfigurationCliBinding.h"
@@ -52,15 +55,22 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
+#if AVIONICS_ARGUMENT_boardVersion == 1
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM20602Sensor icm20602(&imuRotation);
+S25FL512 flash(FLASH_CS_PIN);
+#elif AVIONICS_ARGUMENT_boardVersion == 2
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
+ICM42605Sensor icm20602(&imuRotation);
+MX25L256 flash(FLASH_CS_PIN);
+#endif
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
-S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
+ArduinoDigitalInput powerStatus(STATUS_PIN);
 
 // Core components
 HardwareAbstraction hardware;
@@ -113,7 +123,7 @@ void setup() {
     // Initialize
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
-    configuration.setDefault<BOARD_NAME_c>("SillyGoose");
+    configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0); // Lower the LED Power
 
     // Setup Hardware
@@ -128,6 +138,7 @@ void setup() {
     hardware.appendGyroscope(icm20602.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
+    hardware.appendDigitalInput(&powerStatus);
     hardware.setup(&serialDebug, &arduinoClock, 100);
 
     // Setup components
@@ -156,7 +167,6 @@ void loop() {
     hardware.readSensors();
     hardware.runPyros();
 
-
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
         float simData[5];
@@ -177,7 +187,10 @@ void loop() {
         logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
+        // Disable the buzzer on USB power on the V2 only
+        buzzer.setEnabled(powerStatus.isHigh() || AVIONICS_ARGUMENT_boardVersion == 1);
     } else if (state.flightState == ASCENT) {
+        buzzer.enable();
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {

@@ -20,4 +20,6 @@
 #include "VoltageSensor.h"
 #include "GPS.h"
 
+#include "DigitalInput.h"
+
 #endif //GENERICHARDWARE_H

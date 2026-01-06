@@ -28,6 +28,7 @@ void HardwareAbstraction::setup(DebugStream* debugStream, SystemClock* systemClo
     for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->setup(m_debug);
     for (int i = 0; i < m_numIndicators; i++) m_indicatorArray[i]->setup(m_debug);
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->setup(m_debug);
+    for (int i = 0; i < m_numDigitalInput; i++) m_digitalInputArray[i]->setup(m_debug);
 
     m_debug->message("HARDWARE SET UP COMPLETE\r\n");
 }
@@ -40,6 +41,7 @@ void HardwareAbstraction::readSensors() const {
     for (int i = 0; i < m_numMagnetometers; i++) m_magnetometerArray[i]->read();
     for (int i = 0; i < m_numGyroscopes; i++) m_gyroscopeArray[i]->read();
     for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->read();
+    for (int i = 0; i < m_numDigitalInput; i++) m_digitalInputArray[i]->read();
 }
 
 void HardwareAbstraction::runPyros() const {

@@ -6,6 +6,7 @@
 
 /**
  * This macro generates three methods for a given type of hardware:
+ *  @todo have this declare the arrays too
  * - addHardware(Hardware*);
  * - getNumHardware();
  * - getHardwareArray();
@@ -76,6 +77,8 @@ public:
 
     GENERATE_GET_ADD_METHODS_MACRO(GenericSensor, m_genericSensorArray, m_numGenericSensors, MAX_GENERIC_SENSOR_NUM)
 
+    GENERATE_GET_ADD_METHODS_MACRO(DigitalInput, m_digitalInputArray, m_numDigitalInput, MAX_DIGITAL_INPUT_NUM)
+
 private:
     uint32_t m_loopTime = 10;
     uint32_t m_loopDtMs = 0; ///< Tracks the loop execution time
@@ -97,6 +100,7 @@ private:
     uint8_t m_numRadioLinks = 0; ///< Number of RadioLinks in the system
     uint8_t m_numIndicators = 0; ///< Number of RadioLinks in the system
     uint8_t m_numGenericSensors = 0; ///< Number of generic sensors
+    uint8_t m_numDigitalInput = 0; ///< Number of generic sensors
     Pyro* m_pyroArray[MAX_PYRO_NUM] = {nullptr}; ///< Array containing all the Pyros in the system
     VoltageSensor* m_voltageSensorArray[MAX_VOLTAGE_SENSOR_NUM] = {nullptr}; ///< Array containing all the VoltageSensors in the system
     Barometer* m_barometerArray[MAX_BAROMETER_NUM] = {nullptr}; ///< Array containing all the Barometers in the system
@@ -108,6 +112,8 @@ private:
     RadioLink* m_radioLinkArray[MAX_RADIO_TRANSMITTER_LINK_NUM] = {nullptr}; ///< Array containing all the RadioLinks in the system
     Indicator* m_indicatorArray[MAX_INDICATOR_NUM] = {nullptr}; ///< Array containing all the RadioLinks in the system
     GenericSensor* m_genericSensorArray[MAX_GENERIC_SENSOR_NUM] = {nullptr}; ///< Array containing all generic sensors
+    DigitalInput* m_digitalInputArray[MAX_DIGITAL_INPUT_NUM] = {nullptr}; ///< Array containing all digital inputs
+
 };
 
 #undef GENERATE_GET_ADD_METHODS_MACRO   // Macro has no use beyond this file

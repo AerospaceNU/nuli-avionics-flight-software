@@ -34,6 +34,14 @@ public:
         m_active = true;
     }
 
+    void setEnabled(const bool enabled) {
+        if (enabled) {
+            enable();
+        } else {
+            disable();
+        }
+    }
+
     void disable() {
         m_enabled = false;
         off();  // Ensure buzzer is off immediately

@@ -80,22 +80,10 @@ static void initICM42605() {
     writeRegister(PWR_MGMT0, 0b00001111);
     delay(50);
 
-    /* -------- Configure ranges -------- */
-    selectBank(1);
-
-    // /* Gyro: ±2000 dps, ODR = 1 kHz */
-    // writeRegister(GYRO_CONFIG0, 0x06);
-    //
-    // /* Accel: ±16g, ODR = 1 kHz */
-    // writeRegister(ACCEL_CONFIG0, 0x06);
-
     // Gyro ±2000 dps, ODR = 200 Hz
     writeRegister(GYRO_CONFIG0,  0b00000111);
-
-    // Accel ±16g, ODR = 200 Hz
+    // // Accel ±16g, ODR = 200 Hz
     writeRegister(ACCEL_CONFIG0, 0b00000111);
-
-    selectBank(0);
 }
 
 /* =========================
