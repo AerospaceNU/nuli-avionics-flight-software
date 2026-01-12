@@ -26,44 +26,12 @@ def generate_flight_filename(flight_number):
 def offload_data(ser):
     """Offload data from device, splitting into files for each 'New flight'."""
     os.makedirs(DATA_DIR, exist_ok=True)
-    flight_number = 0
-    current_file = None
-    recording = False
-
-    flight_number += 1
-    current_file = open(generate_flight_filename(flight_number), "w", buffering=1)
+    current_file = open("rawOffload.txt", "wb")
 
     while True:
         try:
-            line_bytes = ser.readline()
-            if not line_bytes:
-                continue
-
-            line = line_bytes.decode('utf-8', errors='ignore').strip()
-            print(line)
-
-            # Start recording only after 'MSG:\tStarting Offload'
-            if not recording:
-                if line == "MSG:\tStarting Offload":
-                    recording = True
-                continue
-
-            # Stop condition
-            if line == "MSG:\tEnding Offload":
-                if current_file:
-                    current_file.close()
-                break
-
-            # Split into new file on 'Logger setup'
-            if line == "Logger setup":
-                if current_file:
-                    current_file.close()
-                flight_number += 1
-                current_file = open(generate_flight_filename(flight_number), "w", buffering=1)
-
-            # Write to current file if recording
-            if current_file:
-                current_file.write(line + "\n")
+            line_bytes = ser.read(5000)
+            current_file.write(line_bytes)
 
         except serial.SerialException:
             print("Serial connection lost.")
