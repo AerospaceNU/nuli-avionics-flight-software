@@ -14,8 +14,8 @@
 
 #define CLOCK_SPI_DATA 0x00
 #define ERASE_ALL_TIME (1000 * 60 * 5)
-#define SECTOR_SIZE (262144)        // Address of end of sector 1 from datasheet: 0003FFFF
-#define MEMORY_SIZE (67108864)
+#define SECTOR_SIZE (262144 / 4)        // Address of end of sector 1 from datasheet: 0003FFFF
+#define MEMORY_SIZE (33554432)
 #define PAGE_SIZE (256)
 
 /**
