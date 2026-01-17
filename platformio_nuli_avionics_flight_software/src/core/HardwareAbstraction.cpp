@@ -1,49 +1,27 @@
 #include "HardwareAbstraction.h"
 #include <cmath>
 
-void HardwareAbstraction::setup(DebugStream* debugStream, SystemClock* systemClock, const uint32_t loopRateHz) {
-    m_debug = debugStream;
-    m_systemClock = systemClock;
+#include "drivers/arduino/ArduinoSerialReader.h"
+
+HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz) {
+    m_debug = &debugStream;
+    m_systemClock = &systemClock;
     setLoopRateHz(loopRateHz);
-    // Setup core
-    if (m_debug == nullptr || m_systemClock == nullptr) {
-        if (m_debug != nullptr) {
-            m_debug->setup();
-            m_debug->error("Debug stream, clock, configuration, and configuration memory required");
-        }
-        while (true);
-    }
+}
+
+void HardwareAbstraction::setup() {
     m_debug->setup();
     m_debug->message("SETTING UP HARDWARE");
     m_systemClock->setup(m_debug);
-
-    for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numAccelerometers; i++) m_accelerometerArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numMagnetometers; i++) m_magnetometerArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numGyroscopes; i++) m_gyroscopeArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numFlashMemory; i++) m_flashMemoryArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numFramMemory; i++) m_framMemoryArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numRadioLinks; i++) m_radioLinkArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numIndicators; i++) m_indicatorArray[i]->setup(m_debug);
-    for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->setup(m_debug);
-
+    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) hardwareDevice->setup(m_debug);
     m_debug->message("HARDWARE SET UP COMPLETE\r\n");
 }
 
-void HardwareAbstraction::readSensors() const {
-    for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->read();
-    for (int i = 0; i < m_numVoltageSensors; i++) m_voltageSensorArray[i]->read();
-    for (int i = 0; i < m_numBarometers; i++) m_barometerArray[i]->read();
-    for (int i = 0; i < m_numAccelerometers; i++) m_accelerometerArray[i]->read();
-    for (int i = 0; i < m_numMagnetometers; i++) m_magnetometerArray[i]->read();
-    for (int i = 0; i < m_numGyroscopes; i++) m_gyroscopeArray[i]->read();
-    for (int i = 0; i < m_numGenericSensors; i++) m_genericSensorArray[i]->read();
-}
-
-void HardwareAbstraction::runPyros() const {
-    for (int i = 0; i < m_numPyros; i++) m_pyroArray[i]->run();
+void HardwareAbstraction::runAndReadAllHardware() const {
+    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) {
+        hardwareDevice->run();
+        hardwareDevice->read();
+    }
 }
 
 void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
@@ -66,7 +44,7 @@ Timestamp_s HardwareAbstraction::enforceLoopTime() {
             m_debug->warn("Loop overrun, lasting %d ms", m_loopDtMs);
             m_intendedTickEndtimeUs = actualLoopEndtimeUs + (m_loopTime * Units::MS_TO_US);
         } else {
-            while ((int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) > 0) {
+            while ((int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) > 0 && (int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) < m_loopDtMs * Units::MS_TO_US) {
                 actualLoopEndtimeUs = m_systemClock->currentRuntimeUs();
             }
             m_intendedTickEndtimeUs += (m_loopTime * Units::MS_TO_US);
@@ -90,3 +68,8 @@ uint32_t HardwareAbstraction::getTargetLoopTimeMs() const {
 
 DebugStream* HardwareAbstraction::getDebugStream() const { return m_debug; }
 
+void HardwareAbstraction::avionicsSystemError(const char* message) const {
+    m_debug->setup();
+    m_debug->error("Critical Avionics Issue: %s", message);
+    while (AVIONICS_ARGUMENT_isDev) {}
+}

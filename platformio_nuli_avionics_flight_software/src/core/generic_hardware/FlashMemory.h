@@ -3,8 +3,9 @@
 
 #include <Avionics.h>
 #include "core/generic_hardware/DebugStream.h"
+#include "GenericHardware.h"
 
-class FlashMemory {
+class FlashMemory : public GenericAvionicsHardware {
 public:
     virtual ~FlashMemory() = default;
 

@@ -40,6 +40,7 @@ private:
     StopWatch m_stateStopWatch;
 
     Debounce m_launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
+    Debounce m_machLockDebounce = Debounce(MACH_LOCKOUT_TIMER_MS);
     Debounce m_apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);
     Debounce m_landingDebounce = Debounce(LANDING_DEBOUNCE_TIMER_MS);
 

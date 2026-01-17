@@ -1,7 +1,7 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOVOLTAGESENSOR_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOVOLTAGESENSOR_H
 
-#include "../../core/generic_hardware/VoltageSensor.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class ArduinoVoltageSensor final : public VoltageSensor {
 public:

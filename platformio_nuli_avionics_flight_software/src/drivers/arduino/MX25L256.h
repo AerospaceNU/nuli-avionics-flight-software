@@ -1,5 +1,5 @@
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_S25FL512_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_S25FL512_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MX25L256_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MX25L256_H
 
 #include <Avionics.h>
 #include <Arduino.h>
@@ -7,9 +7,9 @@
 #include "core/generic_hardware/GenericHardware.h"
 
 
-class S25FL512 final : public FlashMemory {
+class MX25L256 final : public FlashMemory {
 public:
-    explicit S25FL512(uint8_t chipSelectPin);
+    explicit MX25L256(uint8_t chipSelectPin);
 
     void setSpiClass(SPIClass* spiClass);
 
@@ -64,4 +64,4 @@ protected:
 };
 
 
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_S25FL512_H
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_MX25L256_H

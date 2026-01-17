@@ -6,6 +6,7 @@ constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
 void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
+    m_machLockDebounce.check(true, 0); // This allows this check to be true ASAP if you never go above mach. Kinda a hack for now
 
     // We need to determine the initial "boot" state
     constexpr Timestamp_s bootTimestamp = {0, 0, 0};
@@ -86,15 +87,18 @@ bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const Stat
 }
 
 bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D) {
-    // Track maximum altitude
-    if (state1D.altitudeM > m_maxAltitude) {
-        m_maxAltitude = state1D.altitudeM;
-    }
-    // Run debounce checks
-    const bool goingDown = state1D.velocityMS < 0;
-    const bool belowApogeeChangeThreshold = state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M;
-    if (m_apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp.runtime_ms)) {
-        return true;
+    // Mach lockout
+    if (m_machLockDebounce.check(state1D.velocityMS < MACH_LOCKOUT_THRESHOLD_MS, timestamp.runtime_ms)) {
+        // Track maximum altitude
+        if (state1D.altitudeM > m_maxAltitude) {
+            m_maxAltitude = state1D.altitudeM;
+        }
+        // Run debounce checks
+        const bool goingDown = state1D.velocityMS < 0;
+        const bool belowApogeeChangeThreshold = state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M;
+        if (m_apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp.runtime_ms)) {
+            return true;
+        }
     }
     return false;
 }

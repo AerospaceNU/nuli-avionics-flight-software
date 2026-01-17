@@ -1,5 +1,5 @@
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20602Sensor_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20602Sensor_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM42605Sensor_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM42605Sensor_H
 
 #include <Avionics.h>
 #include "core/generic_hardware/GenericHardware.h"
@@ -7,17 +7,17 @@
 
 
 /**
- * @class ICM20602Sensor
- * @brief Driver for ICM20602
+ * @class ICM42605Sensor
+ * @brief Driver for ICM42605
  * @details I2C only
  */
-class ICM20602Sensor final : public GenericSensor {
+class ICM42605Sensor final : public GenericSensor {
 public:
-    // ICM20602Sensor
+    // ICM42605Sensor
     /**
      * @brief Creates a ICM 20602
      */
-    explicit ICM20602Sensor(const Vector3DTransform *transform);
+    explicit ICM42605Sensor(const Vector3DTransform *transform);
 
     /**
      * @brief Initializes the sensor
@@ -35,7 +35,7 @@ public:
     /**
      * @brief Gets the Accelerometer injector class
      * @details Injector classes are used to pass data to the HardwareAbstraction.
-     * The ICM20602 is basically a 3 in one sensor, so we make a "dummy" class for each of the 3 sensors, and pass data through it.
+     * The ICM42605 is basically a 3 in one sensor, so we make a "dummy" class for each of the 3 sensors, and pass data through it.
      * @return Accelerometer injector class
      */
     Accelerometer* getAccelerometer();
@@ -43,7 +43,7 @@ public:
     /**
      * @brief Gets the Gyroscope injector class
      * @details Injector classes are used to pass data to the HardwareAbstraction.
-     * The ICM20602 is basically a 3 in one sensor, so we make a "dummy" class for each of the 3 sensors, and pass data through it.
+     * The ICM42605 is basically a 3 in one sensor, so we make a "dummy" class for each of the 3 sensors, and pass data through it.
      * @return Gyroscope injector class
      */
     Gyroscope* getGyroscope();
@@ -62,4 +62,4 @@ private:
 };
 
 
-#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM20602Sensor_H
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ICM42605Sensor_H

@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "Avionics.h"
-#include "core/generic_hardware/LineReader.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 /**
  * @class ArduinoSerialReader

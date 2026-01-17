@@ -3,9 +3,8 @@
 
 #include "Avionics.h"
 #include "Arduino.h"
-#include "../../core/generic_hardware/FramMemory.h"
+#include "core/generic_hardware/GenericHardware.h"
 #include "Adafruit_FRAM_SPI.h"
-#include "core/generic_hardware/DebugStream.h"
 
 class ArduinoFram : public FramMemory {
 public:
