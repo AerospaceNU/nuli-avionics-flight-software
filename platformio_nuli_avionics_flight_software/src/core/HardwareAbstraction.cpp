@@ -44,7 +44,7 @@ Timestamp_s HardwareAbstraction::enforceLoopTime() {
             m_debug->warn("Loop overrun, lasting %d ms", m_loopDtMs);
             m_intendedTickEndtimeUs = actualLoopEndtimeUs + (m_loopTime * Units::MS_TO_US);
         } else {
-            while ((int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) > 0 && (int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) < m_loopDtMs * Units::MS_TO_US) {
+            while ((int32_t)(m_intendedTickEndtimeUs - actualLoopEndtimeUs) > 0 && int32_t(m_intendedTickEndtimeUs - actualLoopEndtimeUs) < int32_t(m_loopDtMs * Units::MS_TO_US)) {
                 actualLoopEndtimeUs = m_systemClock->currentRuntimeUs();
             }
             m_intendedTickEndtimeUs += (m_loopTime * Units::MS_TO_US);
