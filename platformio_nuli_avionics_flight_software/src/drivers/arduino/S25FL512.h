@@ -4,9 +4,8 @@
 #include <Avionics.h>
 #include <Arduino.h>
 #include <SPI.h>
+#include "core/generic_hardware/GenericHardware.h"
 
-#include "core/generic_hardware/FlashMemory.h"
-#include "core/generic_hardware/DebugStream.h"
 
 class S25FL512 final : public FlashMemory {
 public:

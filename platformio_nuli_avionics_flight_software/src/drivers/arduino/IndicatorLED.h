@@ -3,7 +3,7 @@
 
 #include "Avionics.h"
 #include <Arduino.h>
-#include "../../core/generic_hardware/Indicator.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class IndicatorLED final : public Indicator {
 public:
