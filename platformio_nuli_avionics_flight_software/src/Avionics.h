@@ -47,7 +47,7 @@ constexpr uint8_t MAX_FLASH_MEMORY_NUM = 4;
 constexpr uint8_t MAX_FRAM_MEMORY_NUM = 4;
 constexpr uint8_t MAX_RADIO_TRANSMITTER_LINK_NUM = 4;
 constexpr uint8_t MAX_INDICATOR_NUM = 4;
-constexpr uint8_t MAX_GENERIC_SENSOR_NUM = 10;
+constexpr uint8_t MAX_GENERIC_HARDWARE_NUM = 50;
 constexpr uint8_t MAX_DIGITAL_INPUT_NUM = 5;
 // Configuration max size paramiters
 constexpr uint8_t MAX_CONFIGURATION_NUM = 30;

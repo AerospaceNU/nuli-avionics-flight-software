@@ -32,6 +32,7 @@
 #include "core/transform/DiscreteRotation.h"
 
 // @todo Kalman gains
+// @todo Save fram to flash
 // @todo Offload -> simulation data pipeline
 // @todo Have barometer re-init in code
 // @todo disable write in flash driver
@@ -73,7 +74,7 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 ArduinoDigitalInput powerStatus(STATUS_PIN);
 
 // Core components
-HardwareAbstraction hardware;
+HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 BasicLogger<SillyGooseLogData> logger;
@@ -133,13 +134,13 @@ void setup() {
     int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendBarometer(&barometer);
-    hardware.appendGenericSensor(&icm20602);
+    hardware.appendGenericHardware(&icm20602);
     hardware.appendAccelerometer(icm20602.getAccelerometer());
     hardware.appendGyroscope(icm20602.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
     hardware.appendDigitalInput(&powerStatus);
-    hardware.setup(&serialDebug, &arduinoClock, 100);
+    hardware.setup();
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
@@ -164,8 +165,7 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.readSensors();
-    hardware.runPyros();
+    hardware.runAndReadAllHardware();  // Reads sensors, runs any background code for every hardware device
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {

@@ -4,7 +4,7 @@
 #include <Avionics.h>
 #include "GenericSensor.h"
 
-class RadioLink {
+class RadioLink : public GenericAvionicsHardware {
 public:
     virtual void setup(DebugStream *debugStream) {}
 

@@ -1,6 +1,7 @@
 #ifndef GENERICHARDWARE_H
 #define GENERICHARDWARE_H
 
+#include "GenericAvionicsHardware.h"
 #include "GenericSensor.h"
 #include "DebugStream.h"
 #include "SystemClock.h"

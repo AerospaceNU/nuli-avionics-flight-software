@@ -9,7 +9,7 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
     for (int i = 0; i < allConfigsLength; i++) {
         for (int j = 0; j < allConfigs[i].length; j++) {
             if (m_numConfigurations >= MAX_CONFIGURATION_NUM) {
-                criticalError("Too many configurations");
+                constructorFailed = true;
                 break;
             }
 
@@ -32,11 +32,15 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 
 void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     if (!hardware || hardware->getNumFramMemorys() < id) {
-        criticalError("Either no hardware or no fram");
+        m_hardware->avionicsSystemError("Either no hardware or no fram");
     }
     m_hardware = hardware;
     m_memory = hardware->getFramMemory(id);
     m_debug = hardware->getDebugStream();
+
+    if (constructorFailed) {
+        m_hardware->avionicsSystemError("Too many configurations");
+    }
 
     m_configurationCRC = getConfigurable<CONFIGURATION_CRC_c>();
     m_configurationAllIdCRC = getConfigurable<CONFIGURATION_ALL_ID_CRC_c>();
@@ -111,7 +115,7 @@ void Configuration::assignMemory() {
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         const uint16_t configurationLength = getConfigurationLength(m_configurations[i].id);
         if (m_dataBufferIndex + configurationLength >= m_dataBufferMaxLength) {
-            criticalError("Out of memory error");
+            m_hardware->avionicsSystemError("Out of memory error");
             m_numConfigurations = i;
             return;
         }
@@ -175,15 +179,10 @@ BaseConfigurationData_s* Configuration::getBaseConfigurationData(const Configura
     return nullptr;
 }
 
-void Configuration::criticalError(const char* str) const {
-    m_debug->setup();
-    m_debug->error("Critical configuration error: %s", str);
-    while (true);
-}
-
 bool Configuration::hasError() const {
     if (m_numConfigurations < 3 || m_configurations[0].id != CONFIGURATION_CRC_c || m_configurations[1].id != CONFIGURATION_ALL_ID_CRC_c || m_configurations[2].id != CONFIGURATION_VERSION_c) {
-        criticalError("Required configurations for Configuration class not included");
+        m_hardware->avionicsSystemError("Required configurations for Configuration class not included");
+        return true;
     }
     // Ensure the memory has not been corrupted
     if (m_configurationCRC.get() != calculateCrc()) {
