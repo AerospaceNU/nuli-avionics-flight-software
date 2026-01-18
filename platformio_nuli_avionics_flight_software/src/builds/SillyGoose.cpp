@@ -58,11 +58,11 @@ SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connec
 MS5607Sensor barometer;
 #if AVIONICS_ARGUMENT_boardVersion == 1
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-ICM20602Sensor icm20602(&imuRotation);
+ICM20602Sensor imu(&imuRotation);
 S25FL512 flash(FLASH_CS_PIN);
 #elif AVIONICS_ARGUMENT_boardVersion == 2
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-ICM42605Sensor icm20602(&imuRotation);
+ICM42605Sensor imu(&imuRotation);
 MX25L256 flash(FLASH_CS_PIN);
 #endif
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
@@ -134,9 +134,9 @@ void setup() {
     int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendBarometer(&barometer);
-    hardware.appendGenericHardware(&icm20602);
-    hardware.appendAccelerometer(icm20602.getAccelerometer());
-    hardware.appendGyroscope(icm20602.getGyroscope());
+    hardware.appendGenericHardware(&imu);
+    hardware.appendAccelerometer(imu.getAccelerometer());
+    hardware.appendGyroscope(imu.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
     hardware.appendDigitalInput(&powerStatus);
@@ -172,7 +172,7 @@ void loop() {
         float simData[5];
         simulationParser.blockingGetFloatArray(simData);
         barometer.inject(simData[0], 0, simData[1]);
-        icm20602.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
+        imu.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
     }
 
     // Determine state
@@ -223,9 +223,9 @@ void loop() {
     // Run logging
     logger.log({
             state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
-            icm20602.getAccelerometer()->getAccelerationsMSS_sensor().x, icm20602.getAccelerometer()->getAccelerationsMSS_sensor().y, icm20602.getAccelerometer()->getAccelerationsMSS_sensor().z,
-            icm20602.getGyroscope()->getVelocitiesRadS_raw().x, icm20602.getGyroscope()->getVelocitiesRadS_raw().y, icm20602.getGyroscope()->getVelocitiesRadS_raw().z,
-            icm20602.getGyroscope()->getTemperatureK(),
+            imu.getAccelerometer()->getAccelerationsMSS_sensor().x, imu.getAccelerometer()->getAccelerationsMSS_sensor().y, imu.getAccelerometer()->getAccelerationsMSS_sensor().z,
+            imu.getGyroscope()->getVelocitiesRadS_raw().x, imu.getGyroscope()->getVelocitiesRadS_raw().y, imu.getGyroscope()->getVelocitiesRadS_raw().z,
+            imu.getGyroscope()->getTemperatureK(),
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
             droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
         });
