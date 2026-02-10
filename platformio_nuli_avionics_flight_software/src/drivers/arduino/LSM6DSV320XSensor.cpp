@@ -28,7 +28,7 @@ void LSM6DSV320XSensor::setup(DebugStream* debugStream) {
 
     //setting up registers
 
-    // probably don't need these first two as they are defaults
+    // probably don't need these first three as they are defaults
     writeRegister(CTRL1_XL_REG, 0x00); // Low G Accel power down
     writeRegister(CTRL1_XL_HG, 0x00);  // High G Accel power down
     writeRegister(CTRL2_G_REG, 0x00);  // Gyro Power down
@@ -46,6 +46,7 @@ void LSM6DSV320XSensor::setup(DebugStream* debugStream) {
     writeRegister(CTRL1_XL_HG, 0x9C);
     // High performance 120Hz Gyro 4000 dps
     writeRegister(CTRL2_G_REG, 0x06);
+    //check for correct read
     uint8_t whoAmI = readRegister(WHO_AM_I_REG);
     if (whoAmI == 0x73) {
         debugStream->message("LSM6DSV320X initialized");
@@ -57,6 +58,11 @@ void LSM6DSV320XSensor::setup(DebugStream* debugStream) {
 
 
 void LSM6DSV320XSensor::read() {
+    //need to get data from sensor
+
+    // need to convert data to correct units
+
+    //need to inject data into injector class member variables
 
 }
 

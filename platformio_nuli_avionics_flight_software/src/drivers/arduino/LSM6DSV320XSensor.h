@@ -66,13 +66,13 @@ public:
 
 private:
     // Injector Classes
-    Accelerometer m_highGAccelerometer;
-    Accelerometer m_lowGAccelerometer;
-    Gyroscope m_gyroscope;
+    Accelerometer m_highGAccelerometer;     ///< Injector class used to pass data to the HardwareAbstraction
+    Accelerometer m_lowGAccelerometer;      ///< Injector class used to pass data to the HardwareAbstraction
+    Gyroscope m_gyroscope;                  ///< Injector class used to pass data to the HardwareAbstraction
 
     //SPI
-    uint8_t m_chipSelectPin;
-    SPIClass *m_spi;
+    uint8_t m_chipSelectPin;                ///< SPI chip select pin
+    SPIClass *m_spi;                        ///< SPI instance passed via constructor
 
     // Data
     int16_t highGAccelData[3] = {};
