@@ -12,6 +12,8 @@
 #define STATUS_CMD 0x05
 #define STATUS_WRITE_IN_PROGRESS_BIT 0x01
 
+#define CLOCK_SPI_DATA 0x00
+
 /**
  * @todo
  * Figure out where we wait for completion
@@ -115,7 +117,7 @@ void FlashMemoryCommon::read(uint32_t address, uint8_t* buffer, uint32_t length)
     enableSelectPin();
     m_spiBus->transfer(readCommandHeader, sizeof(readCommandHeader));
     for (size_t i = 0; i < length; i++) {
-        buffer[i] = m_spiBus->transfer(m_deviceData.clockSpiData); // Read data into the buffer
+        buffer[i] = m_spiBus->transfer(CLOCK_SPI_DATA); // Read data into the buffer
     }
     disableSelectPin();
 }
@@ -178,7 +180,7 @@ uint8_t FlashMemoryCommon::readStatusRegister() const {
     uint8_t status;
     enableSelectPin();
     m_spiBus->transfer(STATUS_CMD); // Read Status Register (RDSR) command
-    status = m_spiBus->transfer(m_deviceData.clockSpiData); // Dummy byte to clock out the status register
+    status = m_spiBus->transfer(CLOCK_SPI_DATA); // Dummy byte to clock out the status register
     disableSelectPin();
     return status;
 }

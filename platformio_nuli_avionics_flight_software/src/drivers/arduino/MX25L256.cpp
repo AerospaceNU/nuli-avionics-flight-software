@@ -1,7 +1,6 @@
 #include "MX25L256.h"
 
 static const FlashMemoryData_s deviceData = {
-    .clockSpiData = 0x00,
     .eraseAllTime = 1000 * 60 * 5,
     .sectorSize = 262144 / 4,
     .memorySize = 33554432,

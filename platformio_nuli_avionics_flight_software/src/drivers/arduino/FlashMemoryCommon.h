@@ -8,7 +8,6 @@
 
 // Device-specific data
 struct FlashMemoryData_s {
-    const uint8_t clockSpiData;
     const uint32_t eraseAllTime;
     const uint32_t sectorSize;
     const uint32_t memorySize;
