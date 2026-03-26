@@ -177,7 +177,8 @@ void loop() {
         // Set default log rate
         logger.setLogDelay(5000);
         cliParser.runCli();
-        indicatorManager.beepContinuity(state.timestamp);
+        // indicatorManager.beepContinuity(state.timestamp);
+        indicatorManager.altitudeBeeps(state.timestamp, 123);
     } else if (state.flightState == ASCENT) {
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);

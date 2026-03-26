@@ -43,6 +43,8 @@ private:
     Debounce m_apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);
     Debounce m_landingDebounce = Debounce(LANDING_DEBOUNCE_TIMER_MS);
 
+    Debounce m_altBeeperBebounce = Debounce(ALT_BEEPER_DEBOUNCE_TIMER); //Debounce for Altitude Beeper
+
     Debounce m_unknownStateTimer = Debounce(UNKNOWN_STATE_TIMER_MS);
     LowPass m_unknownStateVelocityLowPass{0.1};
     float m_unknownStateMaximumAltitude = -999999999.0f;

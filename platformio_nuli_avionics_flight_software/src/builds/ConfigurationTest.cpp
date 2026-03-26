@@ -7,8 +7,8 @@
 #include "drivers/arduino/ArduinoFram.h"
 #include "drivers/arduino/ArduinoSerialReader.h"
 #include "core/HardwareAbstraction.h"
-#include "core/Configuration.h"
-#include "core/ConfigurationCliBinding.h"
+#include "core/configuration/Configuration.h"
+#include "core/configuration/ConfigurationCliBinding.h"
 #include "core/BasicLogger.h"
 #include "core/cli/IntegratedParser.h"
 

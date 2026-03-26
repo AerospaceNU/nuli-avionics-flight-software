@@ -4,7 +4,9 @@
 #include "Avionics.h"
 #include "HardwareAbstraction.h"
 #include "core/generic_hardware/Indicator.h"
+#include "util/Timer.h"
 #include "core/generic_hardware/Pyro.h"
+#include "util/AltitudeBeeps.h"
 
 class IndicatorManager {
 public:
@@ -97,7 +99,19 @@ public:
         }
     }
 
+    void altitudeBeeps(const Timestamp_s& timestamp, float altitude) {
+        static bool initialized = false;
+        
+        if (!initialized) {
+            altBeeper.start(static_cast<int>(altitude));
+            initialized = true;
+        }
+        
+        altBeeper.update(timestamp.runtime_ms);
+    }
+
 private:
+    AltitudeBeeper altBeeper;
     HardwareAbstraction* m_hardware = nullptr;
     Pyro* m_drogue = nullptr;
     Pyro* m_main = nullptr;

@@ -31,6 +31,7 @@ constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
 constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
 constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
+constexpr uint32_t ALT_BEEPER_DEBOUNCE_TIMER = 120; //Debounce for Altitude Beeper
 
 
 // Hardware Abstraction max size parameters
