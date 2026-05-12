@@ -8,7 +8,7 @@ import re
 # --------------------------------------------------------
 # FILEPATH = r"data/2025-11-15 Owlgator/offload_20251116_001447_flight10.txt"
 # FILEPATH = r"data/2025-11-15 Nathans Cert/offload_20251115_134352_flight13.txt"
-# FILEPATH = r"data/2025-11-15 MBTA/silly goose 1 offload_20251117_182939_flight2.txt"
+FILEPATH = r"data/2025-11-15 MBTA/silly goose 1 offload_20251117_182939_flight2.txt"
 # FILEPATH = r"data/2025-11-15 MBTA/silly goose 2 offload_20251117_183544_flight2.txt"
 # FILEPATH = r"data/2025-11-15 MBTA/silly goose 3 offload_20251117_183710_flight2.txt"
 
@@ -16,7 +16,7 @@ import re
 # Rocket works
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\RocketWorks-SillyGoose-backup.txt"
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\RocketWorks-SillyGooseV2-RideAlong\offload_20260223_215403_flight11.txt"
-FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\ridealong_doctored_offload_20260223_215403_flight11.txt"
+# FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\ridealong_doctored_offload_20260223_215403_flight11.txt"
 # Ethical Missile
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\Ethical Missile\EthicalMissile-SillyGoose-backup.txt"
 # BlueUp

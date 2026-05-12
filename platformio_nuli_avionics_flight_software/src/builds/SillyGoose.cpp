@@ -1,5 +1,6 @@
 #include "Arduino.h"
 #include "Avionics.h"
+#include "Adafruit_TinyUSB.h"
 #include "pinmaps/SillyGoosePinmap.h"
 #include "util/Timer.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
@@ -122,6 +123,8 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
+    USBDevice.setProductDescriptor(SILLY_GOOSE_NAME);
+    USBDevice.setManufacturerDescriptor("SillyGoose");
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
