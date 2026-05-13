@@ -59,11 +59,11 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-#if AVIONICS_ARGUMENT_boardVersion == 1
+#if IS_BOARD_VERSION(1)
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM20602Sensor imu(&imuRotation);
 S25FL512 flash(FLASH_CS_PIN);
-#elif AVIONICS_ARGUMENT_boardVersion == 2
+#elif IS_BOARD_VERSION(2)
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM42605Sensor imu(&imuRotation);
 MX25L256 flash(FLASH_CS_PIN);

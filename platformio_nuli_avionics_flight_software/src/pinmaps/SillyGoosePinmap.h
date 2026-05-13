@@ -1,13 +1,15 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SILLYGOOSEPINS_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SILLYGOOSEPINS_H
 
+#include <Avionics.h>
+
 // SillyGooseV1 Hardware
-#if AVIONICS_ARGUMENT_boardVersion == 1
+#if IS_BOARD_VERSION(1)
 #define SENSE_R1 10.0f
 #define SENSE_R2 10.0f
 #define SILLY_GOOSE_NAME "SillyGooseV1"
 // SillyGooseV2 Hardware
-#elif AVIONICS_ARGUMENT_boardVersion == 2
+#elif IS_BOARD_VERSION(2)
 #define SENSE_R1 30.0f
 #define SENSE_R2 10.0f
 #define SILLY_GOOSE_NAME "SillyGooseV2"
