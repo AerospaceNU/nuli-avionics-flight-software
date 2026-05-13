@@ -5,31 +5,6 @@
 #include <string.h>
 #include "core/generic_hardware/DebugStream.h"
 
-// DebugStream that captures formatted output into a caller-supplied buffer
-// instead of writing to a serial port. Used by buildRow() to reuse the
-// project's existing print-log functions without going through snprintf %f
-// (which silently drops floats on SAMD21 newlib-nano).
-class BufferDebugStream final : public DebugStream {
-public:
-    void bind(char* buf, uint16_t cap) { m_buf = buf; m_cap = cap; m_len = 0; }
-    uint16_t length() const { return m_len; }
-
-protected:
-    size_t write(const void* buffer, size_t size) override {
-        if (m_buf == nullptr) return 0;
-        uint16_t toCopy = (uint16_t)size;
-        if ((uint32_t)m_len + toCopy > m_cap) toCopy = (uint16_t)(m_cap - m_len);
-        memcpy(m_buf + m_len, buffer, toCopy);
-        m_len = (uint16_t)(m_len + toCopy);
-        return toCopy;
-    }
-
-private:
-    char*    m_buf = nullptr;
-    uint16_t m_cap = 0;
-    uint16_t m_len = 0;
-};
-
 // ============================ Disk Geometry ============================
 //
 // FAT16, 128 MB volume, 8 KB clusters, two FATs. Geometry chosen so the
@@ -64,82 +39,11 @@ constexpr uint16_t MAX_ENTRY_SIZE = 128;
 constexpr uint8_t MAX_FLIGHTS = 32;
 constexpr uint8_t MAX_FILES   = MAX_FLIGHTS + 1;  // +1 for CONFIG.TXT
 
-// ============================ Config File (placeholder) ============================
-//
-// Not wired to the real Configuration object yet. Edits make it back into the
-// in-memory ConfigValues struct via parseConfig() and are echoed to Serial so
-// the round-trip can be observed.
-
-constexpr uint16_t CONFIG_CAPACITY = (uint16_t)CLUSTER_BYTES;
+// One cluster for CONFIG.TXT. The render/parse callbacks own the format;
+// this file only sees the buffer as raw bytes.
+constexpr uint32_t CONFIG_CAPACITY = CLUSTER_BYTES;
 char     g_configBuf[CONFIG_CAPACITY];
 volatile bool g_configDirty = false;
-
-struct ConfigValues {
-    char     boardName[24];
-    uint32_t drogueDelayMs;
-    float    mainElevationM;
-    float    voltageScale;
-    uint32_t pyroFireDurationMs;
-    bool     enableBuzzer;
-};
-
-ConfigValues g_config = {"SillyGoose", 1000, 150.0f, 0.00644f, 1000, true};
-
-void renderConfig() {
-    int n = snprintf(g_configBuf, CONFIG_CAPACITY,
-                     "# SillyGoose USB config (placeholder -- not yet wired to flight config)\r\n"
-                     "boardName=%s\r\n"
-                     "drogueDelayMs=%lu\r\n"
-                     "mainElevationM=%.2f\r\n"
-                     "voltageScale=%.6f\r\n"
-                     "pyroFireDurationMs=%lu\r\n"
-                     "enableBuzzer=%s\r\n",
-                     g_config.boardName,
-                     (unsigned long)g_config.drogueDelayMs,
-                     g_config.mainElevationM, g_config.voltageScale,
-                     (unsigned long)g_config.pyroFireDurationMs,
-                     g_config.enableBuzzer ? "true" : "false");
-    if (n < 0) n = 0;
-    while (n < (int)CONFIG_CAPACITY - 2) { g_configBuf[n++] = '\r'; g_configBuf[n++] = '\n'; }
-}
-
-void trimEol(char* s) {
-    size_t len = strlen(s);
-    while (len > 0 && (s[len - 1] == ' ' || s[len - 1] == '\t' ||
-                       s[len - 1] == '\r' || s[len - 1] == '\n')) {
-        s[--len] = '\0';
-    }
-}
-
-void parseConfig(const char* text, uint32_t len) {
-    uint32_t i = 0;
-    while (i < len) {
-        const uint32_t lineStart = i;
-        while (i < len && text[i] != '\n' && text[i] != '\r') i++;
-        const uint32_t lineEnd = i;
-        while (i < len && (text[i] == '\r' || text[i] == '\n')) i++;
-        if (lineEnd == lineStart || text[lineStart] == '#') continue;
-        uint32_t eq = lineStart;
-        while (eq < lineEnd && text[eq] != '=') eq++;
-        if (eq == lineEnd) continue;
-        char key[32] = {0};
-        char val[64] = {0};
-        uint32_t kLen = eq - lineStart;
-        if (kLen >= sizeof(key)) kLen = sizeof(key) - 1;
-        memcpy(key, text + lineStart, kLen);
-        uint32_t vLen = lineEnd - eq - 1;
-        if (vLen >= sizeof(val)) vLen = sizeof(val) - 1;
-        memcpy(val, text + eq + 1, vLen);
-        trimEol(key);
-        trimEol(val);
-        if      (strcmp(key, "boardName")          == 0) { strncpy(g_config.boardName, val, sizeof(g_config.boardName) - 1); g_config.boardName[sizeof(g_config.boardName) - 1] = '\0'; }
-        else if (strcmp(key, "drogueDelayMs")      == 0) g_config.drogueDelayMs      = strtoul(val, nullptr, 10);
-        else if (strcmp(key, "mainElevationM")     == 0) g_config.mainElevationM     = (float)atof(val);
-        else if (strcmp(key, "voltageScale")       == 0) g_config.voltageScale       = (float)atof(val);
-        else if (strcmp(key, "pyroFireDurationMs") == 0) g_config.pyroFireDurationMs = strtoul(val, nullptr, 10);
-        else if (strcmp(key, "enableBuzzer")       == 0) g_config.enableBuzzer       = (strcmp(val, "true") == 0 || strcmp(val, "1") == 0);
-    }
-}
 
 // ============================ Singleton state ============================
 
@@ -156,10 +60,14 @@ struct VFile {
 VFile     g_files[MAX_FILES];
 uint8_t   g_fileCount = 0;
 
-FlashMemory*                  g_flash      = nullptr;
-uint16_t                      g_entrySize  = 0;
-const char*                   g_header     = nullptr;
-UsbMscOffload::RowFormatterFn g_formatter  = nullptr;
+FlashMemory*                            g_flash      = nullptr;
+uint16_t                                g_entrySize  = 0;
+const char*                             g_header     = nullptr;
+UsbMscOffloadDetail::EntryFormatterFn   g_formatter  = nullptr;
+Configuration*                          g_configuration = nullptr;
+DebugStream*                            g_debug      = nullptr;
+UsbMscOffloadDetail::RenderConfigFn     g_renderFn   = nullptr;
+UsbMscOffloadDetail::ParseConfigFn      g_parseFn    = nullptr;
 
 Adafruit_USBD_MSC g_usbMsc;
 
@@ -289,7 +197,7 @@ void buildRow(uint32_t fileIdx, uint32_t rowIdx, char* out) {
     out[TSV_ROW_SIZE - 1] = '\n';
 
     char tmp[TSV_ROW_SIZE];
-    BufferDebugStream stream;
+    UsbMscOffloadDetail::BufferDebugStream stream;
     stream.bind(tmp, TSV_ROW_SIZE);
 
     if (rowIdx == 0) {
@@ -309,7 +217,7 @@ void buildRow(uint32_t fileIdx, uint32_t rowIdx, char* out) {
 
     // DebugStream::data() appends a trailing '\n'; strip it so the row's own
     // CRLF terminator (already in `out`) is the only line ending.
-    uint16_t n = stream.length();
+    uint32_t n = stream.length();
     while (n > 0 && (tmp[n - 1] == '\n' || tmp[n - 1] == '\r')) n--;
     if (n > TSV_ROW_SIZE - 2) n = TSV_ROW_SIZE - 2;
     memcpy(out, tmp, n);
@@ -496,36 +404,37 @@ int32_t msc_write_cb(uint32_t lba, uint8_t* buffer, uint32_t bufsize) {
 void msc_flush_cb(void) {
     if (g_configDirty) {
         g_configDirty = false;
-        parseConfig(g_configBuf, CONFIG_CAPACITY);
-        Serial.print("[CONFIG] parsed: boardName='");
-        Serial.print(g_config.boardName);
-        Serial.print("' drogueDelayMs=");
-        Serial.print(g_config.drogueDelayMs);
-        Serial.print(" mainElevationM=");
-        Serial.print(g_config.mainElevationM);
-        Serial.print(" voltageScale=");
-        Serial.print(g_config.voltageScale, 6);
-        Serial.print(" pyroFireDurationMs=");
-        Serial.print(g_config.pyroFireDurationMs);
-        Serial.print(" enableBuzzer=");
-        Serial.println(g_config.enableBuzzer ? "true" : "false");
+        if (g_parseFn != nullptr && g_configuration != nullptr) {
+            g_parseFn(g_configuration, g_configBuf, CONFIG_CAPACITY, g_debug);
+        }
     }
 }
 
 }  // namespace
 
-// ============================ Public class ============================
+// ============================ Bridge from class template ============================
+//
+// The header-side UsbMscOffload<LDS, ConfigIDs...> wraps these statics; this
+// is what its begin() funnels into.
 
-UsbMscOffload::UsbMscOffload(FlashMemory* flash, uint16_t entrySize,
-                             const char* tsvHeader, RowFormatterFn formatter) {
-    g_flash     = flash;
-    g_entrySize = entrySize;
-    g_header    = tsvHeader;
-    g_formatter = formatter;
-}
+namespace UsbMscOffloadDetail {
 
-void UsbMscOffload::begin() {
-    renderConfig();
+void beginInternal(FlashMemory* flash, uint16_t entrySize,
+                   const char* tsvHeader, EntryFormatterFn formatter,
+                   Configuration* configuration, DebugStream* debug,
+                   RenderConfigFn renderFn, ParseConfigFn parseFn) {
+    g_flash         = flash;
+    g_entrySize     = entrySize;
+    g_header        = tsvHeader;
+    g_formatter     = formatter;
+    g_configuration = configuration;
+    g_debug         = debug;
+    g_renderFn      = renderFn;
+    g_parseFn       = parseFn;
+
+    if (g_renderFn != nullptr && g_configuration != nullptr) {
+        g_renderFn(g_configuration, g_configBuf, CONFIG_CAPACITY);
+    }
     scanFlights();
 
     g_usbMsc.setID("NULI", "SillyGoose", "1.0");
@@ -534,3 +443,5 @@ void UsbMscOffload::begin() {
     g_usbMsc.setUnitReady(true);
     g_usbMsc.begin();
 }
+
+}  // namespace UsbMscOffloadDetail

@@ -54,29 +54,6 @@ struct SillyGooseLogData {
 void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
 // clang-format on
 
-// Flash entry as written by BasicLogger<SillyGooseLogData>: id byte + payload.
-struct SillyGooseFlashEntry { uint8_t id; SillyGooseLogData data; } remove_struct_padding;
-
-// UsbMscOffload row formatter. Reuses the existing printLog() (which already
-// formats floats correctly through DebugStream) so the USB-offloaded TSV
-// matches the CLI offload byte-for-byte. Aligned copy of the payload via
-// memcpy because the raw flash buffer is byte-aligned and SAMD21 can't
-// unaligned-load floats / uint32 directly.
-static void formatSillyGooseRow(const uint8_t* entry, DebugStream* debug) {
-    const uint8_t id = entry[0];
-    if (id == 0x01) {
-        SillyGooseLogData d;
-        memcpy(&d, entry + 1, sizeof(d));
-        printLog(d, debug);
-    } else if (id == 0x02) {
-        debug->data("# === new flight ===");
-    } else if (id == 0x03) {
-        char str[sizeof(SillyGooseLogData) + 1];
-        memcpy(str, entry + 1, sizeof(SillyGooseLogData));
-        str[sizeof(SillyGooseLogData)] = '\0';
-        debug->data("# %s", str);
-    }
-}
 
 // Hardware
 ArduinoSystemClock arduinoClock;
@@ -108,7 +85,6 @@ ArduinoSerialReader<500> serialReader(true);
 IndicatorManager indicatorManager;
 ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
-UsbMscOffload usbMscOffload(&flash, sizeof(SillyGooseFlashEntry), LOG_HEADER, formatSillyGooseRow);
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
 Configuration configuration({
@@ -118,6 +94,15 @@ Configuration configuration({
         StateEstimator1D::REQUIRED_CONFIGS,
         OrientationEstimator::REQUIRED_CONFIGS
     });
+UsbMscOffload<SillyGooseLogData,
+              DROGUE_DELAY_c,
+              MAIN_ELEVATION_c,
+              BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+              GROUND_ELEVATION_c,
+              GROUND_TEMPERATURE_c,
+              PYRO_FIRE_DURATION_c,
+              BOARD_NAME_c,
+              CONFIGURATION_VERSION_c> usbMscOffload(&flash, LOG_HEADER, printLog, &configuration, &serialDebug);
 // Locally used configuration data
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
