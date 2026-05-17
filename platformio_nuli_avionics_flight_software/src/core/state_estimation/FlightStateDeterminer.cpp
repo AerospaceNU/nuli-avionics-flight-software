@@ -100,6 +100,7 @@ bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const St
             return true;
         }
     }
+    m_apogeeDebounce.reset();
     return false;
 }
 
