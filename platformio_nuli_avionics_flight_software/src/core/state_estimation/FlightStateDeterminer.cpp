@@ -99,6 +99,9 @@ bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const St
         if (m_apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp.runtime_ms)) {
             return true;
         }
+        else {
+            m_apogeeDebounce.reset();
+        }
     }
     return false;
 }
