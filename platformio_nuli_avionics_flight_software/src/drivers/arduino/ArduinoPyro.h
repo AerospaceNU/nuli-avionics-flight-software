@@ -3,8 +3,7 @@
 
 #include <Avionics.h>
 #include "util/Timer.h"
-#include "../../core/generic_hardware/GenericSensor.h"
-#include "../../core/generic_hardware/Pyro.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 
 /**

@@ -7,6 +7,8 @@
 #include "drivers/arduino/ArduinoSystemClock.h"
 #include "drivers/arduino/MS5607Sensor.h"
 #include "drivers/arduino/ICM20602Sensor.h"
+#include "drivers/arduino/ICM42605Sensor.h"
+#include "drivers/arduino/MX25L256.h"
 #include "drivers/arduino/S25FL512.h"
 #include "drivers/arduino/ArduinoPyro.h"
 #include "drivers/arduino/ArduinoFram.h"
@@ -15,6 +17,7 @@
 #include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoSimulationParser.h"
+#include "drivers/arduino/ArduinoDigitalInput.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
 #include "core/configuration/ConfigurationCliBinding.h"
@@ -29,6 +32,7 @@
 #include "core/transform/DiscreteRotation.h"
 
 // @todo Kalman gains
+// @todo Save fram to flash
 // @todo Offload -> simulation data pipeline
 // @todo Have barometer re-init in code
 // @todo disable write in flash driver
@@ -52,18 +56,25 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
+#if AVIONICS_ARGUMENT_boardVersion == 1
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-ICM20602Sensor icm20602(&imuRotation);
+ICM20602Sensor imu(&imuRotation);
+S25FL512 flash(FLASH_CS_PIN);
+#elif AVIONICS_ARGUMENT_boardVersion == 2
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
+ICM42605Sensor imu(&imuRotation);
+MX25L256 flash(FLASH_CS_PIN);
+#endif
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
-S25FL512 flash(FLASH_CS_PIN);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
+ArduinoDigitalInput powerStatus(STATUS_PIN);
 
 // Core components
-HardwareAbstraction hardware;
+HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 BasicLogger<SillyGooseLogData> logger;
@@ -113,7 +124,7 @@ void setup() {
     // Initialize
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
-    configuration.setDefault<BOARD_NAME_c>("SillyGoose");
+    configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0); // Lower the LED Power
 
     // Setup Hardware
@@ -123,12 +134,13 @@ void setup() {
     int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendBarometer(&barometer);
-    hardware.appendGenericSensor(&icm20602);
-    hardware.appendAccelerometer(icm20602.getAccelerometer());
-    hardware.appendGyroscope(icm20602.getGyroscope());
+    hardware.appendGenericHardware(&imu);
+    hardware.appendAccelerometer(imu.getAccelerometer());
+    hardware.appendGyroscope(imu.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
-    hardware.setup(&serialDebug, &arduinoClock, 100);
+    hardware.appendDigitalInput(&powerStatus);
+    hardware.setup();
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
@@ -153,16 +165,14 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.readSensors();
-    hardware.runPyros();
-
+    hardware.runAndReadAllHardware();  // Reads sensors, runs any background code for every hardware device
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
         float simData[5];
         simulationParser.blockingGetFloatArray(simData);
         barometer.inject(simData[0], 0, simData[1]);
-        icm20602.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
+        imu.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
     }
 
     // Determine state
@@ -177,7 +187,10 @@ void loop() {
         logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
+        // Disable the buzzer on USB power on the V2 only
+        buzzer.setEnabled(powerStatus.isHigh() || AVIONICS_ARGUMENT_boardVersion == 1);
     } else if (state.flightState == ASCENT) {
+        buzzer.enable();
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -210,9 +223,9 @@ void loop() {
     // Run logging
     logger.log({
             state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
-            icm20602.getAccelerometer()->getAccelerationsMSS_sensor().x, icm20602.getAccelerometer()->getAccelerationsMSS_sensor().y, icm20602.getAccelerometer()->getAccelerationsMSS_sensor().z,
-            icm20602.getGyroscope()->getVelocitiesRadS_raw().x, icm20602.getGyroscope()->getVelocitiesRadS_raw().y, icm20602.getGyroscope()->getVelocitiesRadS_raw().z,
-            icm20602.getGyroscope()->getTemperatureK(),
+            imu.getAccelerometer()->getAccelerationsMSS_sensor().x, imu.getAccelerometer()->getAccelerationsMSS_sensor().y, imu.getAccelerometer()->getAccelerationsMSS_sensor().z,
+            imu.getGyroscope()->getVelocitiesRadS_raw().x, imu.getGyroscope()->getVelocitiesRadS_raw().y, imu.getGyroscope()->getVelocitiesRadS_raw().z,
+            imu.getGyroscope()->getTemperatureK(),
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
             droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
         });

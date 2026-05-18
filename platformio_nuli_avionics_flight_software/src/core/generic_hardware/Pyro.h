@@ -23,7 +23,7 @@ public:
      */
     void read() override {}
 
-    virtual void run() {};
+    void run() override {};
 
     /**
      * @brief Returns if the channel has pyro continuity

@@ -193,11 +193,11 @@ private:
 
     void assignMemory();
 
-    void criticalError(const char* str) const;
-
     uint32_t calculateCrc() const;
 
     uint32_t calculateAllIdCrc() const;
+
+    bool constructorFailed = false;
 
     uint8_t* m_dataBuffer;
     uint32_t m_dataBufferIndex = 0;

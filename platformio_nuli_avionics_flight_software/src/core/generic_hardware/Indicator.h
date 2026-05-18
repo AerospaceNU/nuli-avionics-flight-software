@@ -3,7 +3,7 @@
 
 #include "Avionics.h"
 
-class Indicator {
+class Indicator : public GenericAvionicsHardware {
 public:
     virtual ~Indicator() = default;
 

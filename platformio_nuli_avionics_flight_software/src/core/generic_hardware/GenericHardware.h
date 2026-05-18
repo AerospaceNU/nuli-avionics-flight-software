@@ -1,6 +1,7 @@
 #ifndef GENERICHARDWARE_H
 #define GENERICHARDWARE_H
 
+#include "GenericAvionicsHardware.h"
 #include "GenericSensor.h"
 #include "DebugStream.h"
 #include "SystemClock.h"
@@ -19,5 +20,7 @@
 #include "Pyro.h"
 #include "VoltageSensor.h"
 #include "GPS.h"
+
+#include "DigitalInput.h"
 
 #endif //GENERICHARDWARE_H

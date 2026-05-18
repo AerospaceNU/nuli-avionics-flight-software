@@ -24,6 +24,8 @@ constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
 // Apogee detection
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
+constexpr uint32_t MACH_LOCKOUT_TIMER_MS = 5000;
+constexpr float MACH_LOCKOUT_THRESHOLD_MS = 150.0;
 // Landing detection
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
@@ -45,7 +47,8 @@ constexpr uint8_t MAX_FLASH_MEMORY_NUM = 4;
 constexpr uint8_t MAX_FRAM_MEMORY_NUM = 4;
 constexpr uint8_t MAX_RADIO_TRANSMITTER_LINK_NUM = 4;
 constexpr uint8_t MAX_INDICATOR_NUM = 4;
-constexpr uint8_t MAX_GENERIC_SENSOR_NUM = 10;
+constexpr uint8_t MAX_GENERIC_HARDWARE_NUM = 50;
+constexpr uint8_t MAX_DIGITAL_INPUT_NUM = 5;
 // Configuration max size paramiters
 constexpr uint8_t MAX_CONFIGURATION_NUM = 30;
 constexpr uint16_t MAX_CONFIGURATION_LENGTH = 500;

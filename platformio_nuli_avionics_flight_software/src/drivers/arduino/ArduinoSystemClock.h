@@ -3,7 +3,7 @@
 
 #include <Arduino.h>
 #include "Avionics.h"
-#include "core/generic_hardware/SystemClock.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class ArduinoSystemClock final : public SystemClock {
 public:

@@ -14,6 +14,7 @@ class DebugStream {
 public:
     virtual ~DebugStream() = default;
 
+    // Can be called multiple times, implementations must handle safely
     virtual void setup() {
 
     }

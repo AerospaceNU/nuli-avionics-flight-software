@@ -1,17 +1,31 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SILLYGOOSEPINS_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SILLYGOOSEPINS_H
 
+// SillyGooseV1 Hardware
+#if AVIONICS_ARGUMENT_boardVersion == 1
+#define SENSE_R1 10.0f
+#define SENSE_R2 10.0f
+#define SILLY_GOOSE_NAME "SillyGooseV1"
+// SillyGooseV2 Hardware
+#elif AVIONICS_ARGUMENT_boardVersion == 2
+#define SENSE_R1 30.0f
+#define SENSE_R2 10.0f
+#define SILLY_GOOSE_NAME "SillyGooseV2"
+#endif
+
 #define FRAM_CS_PIN (13)
 #define FLASH_CS_PIN (12)
 #define FRAM_HOLD_PIN (10)
 #define FLASH_HOLD_PIN (11)
 #define IMU_INT_PIN (6)
+#define STATUS_PIN (A5)
+#define BOOT_PIN (5)
 
 #define BUZZER_PIN (0)
 #define LIGHT_PIN (1)
 
 #define VOLTAGE_SENSE_PIN (A4)
-#define VOLTAGE_SENSE_SCALE (2.0f * (3.3f / 1023.0f))
+#define VOLTAGE_SENSE_SCALE (((SENSE_R1 + SENSE_R2) / SENSE_R2) * (3.3f / 1023.0f))
 
 #define PYRO1_GATE_PIN (9)
 #define PYRO1_SENSE_PIN (A2)
