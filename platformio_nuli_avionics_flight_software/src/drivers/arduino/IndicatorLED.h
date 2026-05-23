@@ -23,19 +23,11 @@ public:
     }
 
     void on() override {
-        if (m_outputPower > 0) {
-            analogWrite(m_pin, m_outputPower);
-        } else {
-            digitalWrite(m_pin, HIGH);
-        }
+        analogWrite(m_pin, m_outputPower > 0 ? m_outputPower : 255);
     }
 
     void off() override {
-        if (m_outputPower > 0) {
-            analogWrite(m_pin, 0);
-        } else {
-            digitalWrite(m_pin, LOW);
-        }
+        analogWrite(m_pin, 0);
     }
 
     void setPercent(float percent) override {

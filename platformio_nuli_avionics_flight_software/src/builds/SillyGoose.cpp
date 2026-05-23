@@ -31,13 +31,18 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
-// @todo Kalman gains
+// @todo Kalman gains for mach
 // @todo Save fram to flash
-// @todo Offload -> simulation data pipeline
-// @todo Have barometer re-init in code
-// @todo disable write in flash driver
-// @todo fix low pass implementation with dt included
-// @todo review boot flight detection
+// @todo Offload -> simulation data pipeline, fix sim
+// @todo Have barometer re-init in code/figure out I2C bus lock
+// @todo Disable write in flash driver
+// @todo Fix low pass implementation with dt included
+// @todo Fix stuck in ascent while not moving bug
+// @todo Enable/disable buzzer in config
+// @todo Make a data repo
+// @todo Drogue deployment failure detection
+// @todo Merge into orientation code, fix the hardcoded transform
+
 
 // clang-format off
 struct SillyGooseLogData {
@@ -138,7 +143,7 @@ void setup() {
     hardware.appendAccelerometer(imu.getAccelerometer());
     hardware.appendGyroscope(imu.getGyroscope());
     hardware.appendIndicator(&led);
-    hardware.appendIndicator(&buzzer);
+    // hardware.appendIndicator(&buzzer);
     hardware.appendDigitalInput(&powerStatus);
     hardware.setup();
 
