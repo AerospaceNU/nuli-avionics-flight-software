@@ -216,7 +216,7 @@ from pyproj import Proj, transform
 
 gps_file = "data/MBTA_GPS_Clip.txt"
 state_file = "output.txt"
-ROTATE_DEGREES = 0    # <---- change this constant
+ROTATE_DEGREES = 65    # <---- change this constant
 
 # ---------------------------
 # Load GPS data (lat, lon, alt)

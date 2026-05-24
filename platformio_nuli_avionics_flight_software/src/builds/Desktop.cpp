@@ -103,9 +103,9 @@ void loop() {
     // );
     // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
 
-    // if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
-    //    exit(0);
-    // }
+    if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
+       exit(0);
+    }
 
     debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
         state.timestamp.runtime_ms,
