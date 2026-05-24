@@ -59,22 +59,7 @@ struct SillyGooseLogData {
 } remove_struct_padding;
 #define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
 void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
-void printConfig(Configuration* config, char* buf, size_t bufSize) {
-    mini_snprintf(buf, (int)bufSize,
-        "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u",
-        config->getConfigurable<BOARD_NAME_c>().get().str,
-        (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(),
-        (double)config->getConfigurable<MAIN_ELEVATION_c>().get(),
-        (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(),
-        (double)config->getConfigurable<GROUND_ELEVATION_c>().get(),
-        (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(),
-        (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(),
-        (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(),
-        (int)config->getConfigurable<FLIGHT_STATE_c>().get(),
-        (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(),
-        (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get()
-    );
-}
+void printConfig(Configuration* config, char* buf, size_t bufSize) { mini_snprintf(buf, (int)bufSize, "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u", config->getConfigurable<BOARD_NAME_c>().get().str, (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(), (double)config->getConfigurable<MAIN_ELEVATION_c>().get(), (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(), (double)config->getConfigurable<GROUND_ELEVATION_c>().get(), (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(), (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(), (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(), (int)config->getConfigurable<FLIGHT_STATE_c>().get(), (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(), (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get()); }
 // clang-format on
 
 // Hardware
@@ -191,7 +176,7 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.runAndReadAllHardware();  // Reads sensors, runs any background code for every hardware device
+    hardware.runAndReadAllHardware(); // Reads sensors, runs any background code for every hardware device
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
@@ -217,7 +202,6 @@ void loop() {
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
-        buzzer.enable();
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -257,4 +241,3 @@ void loop() {
             droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
         });
 }
-
