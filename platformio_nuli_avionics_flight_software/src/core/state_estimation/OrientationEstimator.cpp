@@ -42,8 +42,9 @@ const Orientation_s& OrientationEstimator::update(const Timestamp_s& timestamp, 
         // m_debug->message("%.2f\t%.2f", m_currentOrientation.tiltMagnitudeDeg, computeTilt(updateLaunchAngle(timestamp)));
     }
 
-    Vector3D_s accel = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
-    Quaternion worldAccel = m_currentOrientation.angleQuaternion.rotate(Quaternion(accel.x, accel.y, accel.z));
+    // Kept for future debug: world-frame acceleration derived from current orientation.
+    // Vector3D_s accel = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
+    // Quaternion worldAccel = m_currentOrientation.angleQuaternion.rotate(Quaternion(accel.x, accel.y, accel.z));
     // m_debug->data("%.2f\t%.2f\t%.2f", worldAccel.b, worldAccel.c, worldAccel.d);
 
     // quaternionToEuler(m_currentOrientation.angleQuaternion);
@@ -93,8 +94,7 @@ Quaternion OrientationEstimator::updateLaunchAngle(const Timestamp_s& timestamp)
 
         // Calculate rotation
         const Quaternion worldPositiveZUnit(0.0f, 0.0f, 1.0f);
-        // @todo fix
-        const Quaternion measuredGravityUnit = Quaternion(m_launchAngleLowPassX.value(), m_launchAngleLowPassZ.value(), m_launchAngleLowPassY.value()).normalize();
+        const Quaternion measuredGravityUnit = Quaternion(m_launchAngleLowPassX.value(), m_launchAngleLowPassY.value(), m_launchAngleLowPassZ.value()).normalize();
         Quaternion orientation = measuredGravityUnit.rotation_between_vectors(worldPositiveZUnit); // This calls normalize
 
         // If for some reason result is NaN or degenerate, fall back
@@ -128,12 +128,12 @@ float OrientationEstimator::computeTilt(const Quaternion& q) const {
 
     // We actually want to compare against whatever axis we think is along the length of the rocket
     uint32_t direction = m_boardOrientation.get();
-    if (direction == POS_X) bodyZ = Quaternion(-1, 0, 0);
-    else if (direction == NEG_X) bodyZ = Quaternion(1, 0, 0);
-    else if (direction == POS_Y) bodyZ = Quaternion(0, -1, 0);
-    else if (direction == NEG_Y) bodyZ = Quaternion(0, 1, 0);
-    else if (direction == POS_Z) bodyZ = Quaternion(0, 0, -1);
-    else if (direction == NEG_Z) bodyZ = Quaternion(0, 0, 1);
+    if (direction == POS_X) bodyZ = Quaternion(1, 0, 0);
+    else if (direction == NEG_X) bodyZ = Quaternion(-1, 0, 0);
+    else if (direction == POS_Y) bodyZ = Quaternion(0, 1, 0);
+    else if (direction == NEG_Y) bodyZ = Quaternion(0, -1, 0);
+    else if (direction == POS_Z) bodyZ = Quaternion(0, 0, 1);
+    else if (direction == NEG_Z) bodyZ = Quaternion(0, 0, -1);
 
 
     Quaternion rotatedZ = norm.rotate(bodyZ);
@@ -164,9 +164,9 @@ void OrientationEstimator::updateGyroscopeBias(const Timestamp_s& timestamp) {
                 (angularVelocitiesRadSRaw_sensor.y - m_lowPass[i].lastVelocity.y) / (float(timestamp.dt_ms) / 1000.0f),
                 (angularVelocitiesRadSRaw_sensor.z - m_lowPass[i].lastVelocity.z) / (float(timestamp.dt_ms) / 1000.0f)
             };
-        m_lowPass->lastVelocity = angularVelocitiesRadSRaw_sensor;
+        m_lowPass[i].lastVelocity = angularVelocitiesRadSRaw_sensor;
         constexpr float motionThreshold = 2;
-        bool moving = angularAcceleration.x > motionThreshold || angularAcceleration.y > motionThreshold || angularAcceleration.z > motionThreshold;
+        bool moving = std::fabs(angularAcceleration.x) > motionThreshold || std::fabs(angularAcceleration.y) > motionThreshold || std::fabs(angularAcceleration.z) > motionThreshold;
 
         // Low pass filter our biases if we are not moving
         if (m_motionDetector.check(!moving, timestamp.runtime_ms)) {

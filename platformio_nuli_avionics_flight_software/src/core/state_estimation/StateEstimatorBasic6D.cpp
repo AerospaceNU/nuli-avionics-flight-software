@@ -48,8 +48,9 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
         m_currentState6D.acceleration.z = 0;
     }
 
-    if (flightState != PRE_FLIGHT) {
-        // Determine X/Y axis state
+    if (flightState == ASCENT) {
+        // Determine X/Y axis state. Only valid during powered/coasting ascent — the projection assumes
+        // axial motion (velocity along the rocket's lengthwise axis), which breaks under chute.
         // Project Z velocity determined by the kalman filter or fixed gain observer, Xiaofu work on the complementary filter
         // Low-frequency velocity from Z-axis projection
         Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);
@@ -87,6 +88,7 @@ State6D_s StateEstimatorBasic6D::getState6D() const {
 Vector3D_s StateEstimatorBasic6D::getAccelerationMSS(const Orientation_s& orientation) const {
     const Vector3D_s accelerationsMSS_board = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
     const Quaternion accelerationsMSS_worldQ = orientation.angleQuaternion.rotate(Quaternion(accelerationsMSS_board.x, accelerationsMSS_board.y, accelerationsMSS_board.z));
+    // Gravity is subtracted only from world Z because the world frame is defined gravity-aligned (+Z up).
     return {accelerationsMSS_worldQ.b, accelerationsMSS_worldQ.c, accelerationsMSS_worldQ.d - float(Constants::G_EARTH_MSS)};
 }
 
@@ -95,12 +97,12 @@ Vector3D_s StateEstimatorBasic6D::projectVelocities(const Orientation_s& orienta
 
     // We actually want to compare against whatever axis we think is along the length of the rocket
     uint32_t direction = m_boardOrientation.get();
-    if (direction == POS_X) forwardBody = Quaternion(-1, 0, 0);
-    else if (direction == NEG_X) forwardBody = Quaternion(1, 0, 0);
-    else if (direction == POS_Y) forwardBody = Quaternion(0, -1, 0);
-    else if (direction == NEG_Y) forwardBody = Quaternion(0, 1, 0);
-    else if (direction == POS_Z) forwardBody = Quaternion(0, 0, -1);
-    else if (direction == NEG_Z) forwardBody = Quaternion(0, 0, 1);
+    if (direction == POS_X) forwardBody = Quaternion(1, 0, 0);
+    else if (direction == NEG_X) forwardBody = Quaternion(-1, 0, 0);
+    else if (direction == POS_Y) forwardBody = Quaternion(0, 1, 0);
+    else if (direction == NEG_Y) forwardBody = Quaternion(0, -1, 0);
+    else if (direction == POS_Z) forwardBody = Quaternion(0, 0, 1);
+    else if (direction == NEG_Z) forwardBody = Quaternion(0, 0, -1);
     // Quaternion forwardBody(1, 0, 0); // forward along body Z
 
     // Rotate forward vector to world frame
