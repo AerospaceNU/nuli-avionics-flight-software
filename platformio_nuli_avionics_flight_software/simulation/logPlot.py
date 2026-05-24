@@ -16,7 +16,7 @@ import re
 # Rocket works
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\RocketWorks-SillyGoose-backup.txt"
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\RocketWorks-SillyGooseV2-RideAlong\offload_20260223_215403_flight11.txt"
-FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\ridealong_doctored_offload_20260223_215403_flight11.txt"
+# FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\RocketWorks\ridealong_doctored_offload_20260223_215403_flight11.txt"
 # Ethical Missile
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\Ethical Missile\EthicalMissile-SillyGoose-backup.txt"
 # BlueUp
@@ -24,6 +24,8 @@ FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\pla
 # Haybales
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\Haybales\offload_20260223_213658_flight19.txt"
 # FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\2-22-26\Haybales\offload_20260223_211107_flight20.txt"
+
+FILEPATH = r"C:\Users\patri\Documents\Software\nuli-avionics-flight-software\platformio_nuli_avionics_flight_software\simulation\data\offload_20260517_125904_flight104.txt"
 
 # --------------------------------------------------------
 # Forced header definition

@@ -30,18 +30,22 @@
 #include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
+#include "util/StringHelper.h"
 
-// @todo Kalman gains for mach
-// @todo Save fram to flash
 // @todo Offload -> simulation data pipeline, fix sim
 // @todo Have barometer re-init in code/figure out I2C bus lock
 // @todo Disable write in flash driver
 // @todo Fix low pass implementation with dt included
 // @todo Fix stuck in ascent while not moving bug
-// @todo Enable/disable buzzer in config
-// @todo Make a data repo
 // @todo Drogue deployment failure detection
 // @todo Merge into orientation code, fix the hardcoded transform
+// @todo Update firmware from website
+// @todo Firmware version tracking
+
+// @todo Make a data repo
+// @todo Save fram to flash
+// @todo Kalman gains for mach
+// @todo Enable/disable buzzer in config
 
 
 // clang-format off
@@ -55,6 +59,22 @@ struct SillyGooseLogData {
 } remove_struct_padding;
 #define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
 void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
+void printConfig(Configuration* config, char* buf, size_t bufSize) {
+    mini_snprintf(buf, (int)bufSize,
+        "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u",
+        config->getConfigurable<BOARD_NAME_c>().get().str,
+        (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(),
+        (double)config->getConfigurable<MAIN_ELEVATION_c>().get(),
+        (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(),
+        (double)config->getConfigurable<GROUND_ELEVATION_c>().get(),
+        (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(),
+        (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(),
+        (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(),
+        (int)config->getConfigurable<FLIGHT_STATE_c>().get(),
+        (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(),
+        (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get()
+    );
+}
 // clang-format on
 
 // Hardware
@@ -158,7 +178,7 @@ void setup() {
     stateEstimator1D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
-    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
+    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration, printConfig);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
