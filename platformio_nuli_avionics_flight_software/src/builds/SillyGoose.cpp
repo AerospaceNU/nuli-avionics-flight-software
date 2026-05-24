@@ -43,6 +43,7 @@
 // @todo Intelligent log memory usage
 // @todo Copy over new uf2 stuff
 // @todo Copy over AVIONICS_ARGUMENT_boardVersion macro stuff
+// @todo Make buzzer not screen during offload
 
 
 // @todo Offload -> simulation data pipeline, fix sim2

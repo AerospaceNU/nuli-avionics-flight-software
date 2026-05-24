@@ -42,7 +42,6 @@ ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c,
 
 void setup() {
     // Setup sim input/output
-    // csvReader.setup("../simulation/data/Avionics Flight Data - 2023-04-15-beanboozler-output-FCB.csv");
     csvReader.setup("../simulation/data/MBTA_FLIGHT_DATA.txt");
     debug.outputToFile("../simulation/output.txt");
 
@@ -102,16 +101,16 @@ void loop() {
     //               gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
     //               state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
     // );
-    debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
-1
+    // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
+
     // if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
     //    exit(0);
     // }
 
-    // debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
-    //     state.timestamp.runtime_ms,
-    //     state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
-    //     state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
-    //     state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
-    //     state.orientation.tiltMagnitudeDeg, state.flightState);
+    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+        state.timestamp.runtime_ms,
+        state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
+        state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
+        state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
+        state.orientation.tiltMagnitudeDeg, state.flightState);
 }
