@@ -64,7 +64,11 @@ protected:
     Eigen::Matrix<float, 3, 3> Q;           // The process covariance
 
     double lastTime = 0;
+
+private:
+    float processJerkStd = 10.0f;
 };
+
 
 
 #endif //position_KF_H

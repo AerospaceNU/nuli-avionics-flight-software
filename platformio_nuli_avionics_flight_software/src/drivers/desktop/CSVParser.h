@@ -9,6 +9,9 @@
 #include <algorithm>
 #include <limits>
 
+// #define CSV_CHAR ','
+#define CSV_CHAR '\t'
+
 class CSVReader {
 public:
     CSVReader() = default;
@@ -119,7 +122,9 @@ private:
     std::vector<std::string> headers_;
     size_t currentIndex_ = 0;
     int64_t firstCsvTime_ = -1;
-    const std::string timeKey_ = "timestamp_ms";
+    // const std::string timeKey_ = "timestamp_ms";
+    const std::string timeKey_ = "timestampMs";
+
 
     void parseHeader(const std::string &line) {
         std::string trimmed = line;
@@ -141,7 +146,7 @@ private:
     }
 
     static void trimTrailingComma(std::string &s) {
-        while (!s.empty() && s.back() == ',') s.pop_back();
+        while (!s.empty() && s.back() == CSV_CHAR) s.pop_back();
     }
 
     // Split CSV line respecting quotes
@@ -154,7 +159,7 @@ private:
             char c = line[i];
             if (c == '"') {
                 inQuotes = !inQuotes; // toggle quote state
-            } else if (c == ',' && !inQuotes) {
+            } else if (c == CSV_CHAR && !inQuotes) {
                 result.push_back(current);
                 current.clear();
             } else {
@@ -175,7 +180,7 @@ private:
     template<typename T>
     static T convert(const std::string &s) {
         std::string clean = s;
-        clean.erase(std::remove(clean.begin(), clean.end(), ','), clean.end()); // remove commas
+        clean.erase(std::remove(clean.begin(), clean.end(), CSV_CHAR), clean.end()); // remove commas
 
         if constexpr (std::is_integral<T>::value) {
             if (clean.empty()) return T{};
@@ -198,7 +203,7 @@ private:
 
         try {
             std::string clean = it->second;
-            clean.erase(std::remove(clean.begin(), clean.end(), ','), clean.end()); // remove commas
+            clean.erase(std::remove(clean.begin(), clean.end(), CSV_CHAR), clean.end()); // remove commas
             out = std::stod(clean);
             return true;
         } catch (...) {

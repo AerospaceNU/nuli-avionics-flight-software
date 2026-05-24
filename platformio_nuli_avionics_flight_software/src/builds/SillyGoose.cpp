@@ -91,6 +91,8 @@ ArduinoDigitalInput powerStatus(STATUS_PIN);
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
+OrientationEstimator orientationEstimator;
+StateEstimatorBasic6D stateEstimatorBasic6D(true);
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(!AVIONICS_ARGUMENT_isSim);
 IndicatorManager indicatorManager;
@@ -192,7 +194,9 @@ void loop() {
     }
 
     // Determine state
+    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
+    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // Turn on/off the buzzer
