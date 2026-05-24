@@ -41,6 +41,9 @@
 // @todo Update firmware from website
 // @todo Firmware version tracking
 // @todo Intelligent log memory usage
+// @todo Copy over new uf2 stuff
+// @todo Copy over AVIONICS_ARGUMENT_boardVersion macro stuff
+
 
 // @todo Offload -> simulation data pipeline, fix sim2
 // @todo Make a data repo
