@@ -93,7 +93,6 @@ HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimatorBasic6D(true);
 BasicLogger<SillyGooseLogData> logger;
 ArduinoSerialReader<500> serialReader(!AVIONICS_ARGUMENT_isSim);
 IndicatorManager indicatorManager;
@@ -167,6 +166,7 @@ void setup() {
     cliParser.setup(&serialReader, &serialDebug);
     simulationParser.setup(&cliParser, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
+    orientationEstimator.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration, printConfig);
@@ -195,6 +195,7 @@ void loop() {
     }
 
     // Determine state
+    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 

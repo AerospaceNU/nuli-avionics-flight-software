@@ -33,7 +33,7 @@ HardwareAbstraction hardware(debug, desktopClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimatorBasic6D(true);
+StateEstimatorBasic6D stateEstimator6D(true);
 DesktopSerialReader<1000> serialReader;
 IntegratedParser cliParser;
 ConfigurationID_t desktopRequiredConfigs[] = {BOARD_NAME_c};
@@ -64,7 +64,7 @@ void setup() {
     cliParser.setup(&serialReader, &debug);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
-    stateEstimatorBasic6D.setup(&hardware, &configuration);
+    stateEstimator6D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     debug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
@@ -85,7 +85,7 @@ void loop() {
     // Determine state
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation, flightStateDeterminer.getFlightState());
+    state.state6D = stateEstimator6D.update(state.timestamp, state.state1D, state.orientation, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // Run CLI
