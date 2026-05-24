@@ -7,7 +7,7 @@ import serial
 from serial.tools import list_ports
 import numpy as np
 
-# Sibling checkout: <Software>/nuli-avionics-flight-software/.../simulation/ -> <Software>/rocket-flight-data/data/
+# Sibling checkout: <Software>/nuli-avionics-flight-software/.../scripts/ -> <Software>/rocket-flight-data/data/
 DATA_DIR = os.path.abspath(
     os.path.join(os.path.dirname(__file__), "..", "..", "..", "rocket-flight-data", "data")
 )

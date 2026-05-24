@@ -1,6 +1,6 @@
 #include "Avionics.h"
 AVIONICS_DESKTOP_MAIN
-#include "drivers/desktop/CSVParser.h"
+#include "drivers/desktop/FlightDataReader.h"
 #include "drivers/desktop/DesktopDebug.h"
 #include "drivers/desktop/DummySystemClock.h"
 #include "drivers/desktop/DesktopSerialReader.h"
@@ -17,7 +17,7 @@ AVIONICS_DESKTOP_MAIN
 // Desktop sim specific stuff
 constexpr float FCB_V0_ACCEL_SCALE_FACTOR = 0.0071784678f;
 constexpr float FCB_V0_GYRO_SCALE_FACTOR = 0.0012217305f;
-CSVReader csvReader;
+FlightDataReader flightDataReader;
 
 // Hardware
 DummySystemClock desktopClock(100);
@@ -41,8 +41,9 @@ Configuration configuration({desktopRequiredConfigs, Configuration::REQUIRED_CON
 ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
 
 void setup() {
-    // Setup sim input/output
-    csvReader.setup("../simulation/data/MBTA_FLIGHT_DATA.txt");
+    // Setup sim input/output. Start at ts=10145116 to match the prior clipped MBTA_FLIGHT_DATA.txt
+    // (skips ~10s of pre-launchpad handling at the start of board1's recording).
+    flightDataReader.setup("../../rocket-flight-data/data/2025-11-15 MBTA/2025-11-15 V1 MBTA ridealong board1.txt", '\t', 10145116);
     debug.outputToFile("../simulation/output.txt");
 
     // Initialize
@@ -74,11 +75,11 @@ void loop() {
     state.timestamp = hardware.enforceLoopTime();
     hardware.runAndReadAllHardware();
 
-    // Read in the .csv data
-    csvReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
-    barometer.inject(csvReader.getKey<float>("barometerTemperatureK"), 0, csvReader.getKey<float>("pressurePa"));
-    accelerometer.inject({csvReader.getKey<float>("accelerationMSS_x"), csvReader.getKey<float>("accelerationMSS_y"), csvReader.getKey<float>("accelerationMSS_z")}, 0);
-    gyroscope.inject({csvReader.getKey<float>("velocityRadS_x"), csvReader.getKey<float>("velocityRadS_y"), csvReader.getKey<float>("velocityRadS_z")}, 0);
+    // Read in the flight data
+    flightDataReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
+    barometer.inject(flightDataReader.getKey<float>("tempK"), 0, flightDataReader.getKey<float>("pressurePa"));
+    accelerometer.inject({flightDataReader.getKey<float>("accelX"), flightDataReader.getKey<float>("accelY"), flightDataReader.getKey<float>("accelZ")}, 0);
+    gyroscope.inject({flightDataReader.getKey<float>("gyroX"), flightDataReader.getKey<float>("gyroY"), flightDataReader.getKey<float>("gyroZ")}, 0);
 
 
     // Determine state
