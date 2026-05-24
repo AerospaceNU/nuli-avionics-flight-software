@@ -36,7 +36,11 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
         m_reInitializeKalman = false;
     }
 
-    // @todo update covariances with velocity
+    // Inflate barometer covariance near mach to trust noisy baro less.
+    // Mirrors AerospaceNU/stm32-avionics: linear ramp on velocity between 250-350 m/s,
+    // equivalent to scaling the baro Kalman gain from 1.0 down to ~0.3.
+    const float machRamp = std::max(0.0f, std::min(1.0f, (m_kalmanFilter.getVelocity() - 250.0f) / 100.0f));
+    m_kalmanFilter.setBarometerCovariance(1.0f + machRamp * (1.0f / 0.3f - 1.0f));
 
     m_kalmanFilter.predict();
     m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);

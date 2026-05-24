@@ -88,7 +88,7 @@ IndicatorManager indicatorManager;
 ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
 // Configuration
-ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
+ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c};
 Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
@@ -108,6 +108,7 @@ ConfigurationCliBindings<DROGUE_DELAY_c,
                          GROUND_TEMPERATURE_c,
                          PYRO_FIRE_DURATION_c,
                          BOARD_NAME_c,
+                         BUZZER_ENABLED_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
 SimpleFlag resetBoard("--reset", "Send start", true, 255, []() {
@@ -143,7 +144,7 @@ void setup() {
     hardware.appendAccelerometer(imu.getAccelerometer());
     hardware.appendGyroscope(imu.getGyroscope());
     hardware.appendIndicator(&led);
-    // hardware.appendIndicator(&buzzer);
+    hardware.appendIndicator(&buzzer);
     hardware.appendDigitalInput(&powerStatus);
     hardware.setup();
 
@@ -184,6 +185,9 @@ void loop() {
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
+    // Turn on/off the buzzer
+    buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get());
+
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
         // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
@@ -192,8 +196,6 @@ void loop() {
         logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
-        // Disable the buzzer on USB power on the V2 only
-        buzzer.setEnabled(powerStatus.isHigh() || AVIONICS_ARGUMENT_boardVersion == 1);
     } else if (state.flightState == ASCENT) {
         buzzer.enable();
         logger.enableContinuousLogging();
