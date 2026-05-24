@@ -16,7 +16,6 @@
 #include "drivers/arduino/IndicatorLED.h"
 #include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
-#include "drivers/arduino/ArduinoSimulationParser.h"
 #include "drivers/arduino/ArduinoDigitalInput.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
@@ -26,13 +25,13 @@
 #include "core/BasicLogger.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/IntegratedParser.h"
+#include "core/cli/SimulationParser.h"
 #include "core/state_estimation/OrientationEstimator.h"
 #include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 #include "util/StringHelper.h"
 
-// @todo Offload -> simulation data pipeline, fix sim
 // @todo Have barometer re-init in code/figure out I2C bus lock
 // @todo Disable write in flash driver
 // @todo Fix low pass implementation with dt included
@@ -41,7 +40,9 @@
 // @todo Merge into orientation code, fix the hardcoded transform
 // @todo Update firmware from website
 // @todo Firmware version tracking
+// @todo Intelligent log memory usage
 
+// @todo Offload -> simulation data pipeline, fix sim2
 // @todo Make a data repo
 // @todo Save fram to flash
 // @todo Kalman gains for mach
@@ -88,10 +89,10 @@ HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 BasicLogger<SillyGooseLogData> logger;
-ArduinoSerialReader<500> serialReader(true);
+ArduinoSerialReader<500> serialReader(!AVIONICS_ARGUMENT_isSim);
 IndicatorManager indicatorManager;
-ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
+SimulationParser<8> simulationParser;
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c};
 Configuration configuration({
@@ -158,6 +159,7 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.setup(&serialReader, &serialDebug);
+    simulationParser.setup(&cliParser, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
@@ -178,10 +180,12 @@ void loop() {
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
-        float simData[5];
-        simulationParser.blockingGetFloatArray(simData);
-        barometer.inject(simData[0], 0, simData[1]);
-        imu.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
+        simulationParser.waitForEntry();
+        // inject(temperatureK, humidityPercent, pressurePa) — python sends pressure first, temp second
+        barometer.inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
+        imu.getAccelerometer()->inject({simulationParser.getValue(2), simulationParser.getValue(3), simulationParser.getValue(4)}, 0);
+        imu.getGyroscope()->inject({simulationParser.getValue(5), simulationParser.getValue(6), simulationParser.getValue(7)}, 0);
+        simulationParser.releaseEntry();
     }
 
     // Determine state
