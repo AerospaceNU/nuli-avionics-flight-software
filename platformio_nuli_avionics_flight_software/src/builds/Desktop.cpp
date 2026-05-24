@@ -29,7 +29,7 @@ Gyroscope gyroscope(&imuRotation);
 VolatileConfigurationMemory<1000> fram;
 
 // Core components
-HardwareAbstraction hardware;
+HardwareAbstraction hardware(debug, desktopClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
@@ -55,7 +55,7 @@ void setup() {
     hardware.appendBarometer(&barometer);
     hardware.appendAccelerometer(&accelerometer);
     hardware.appendGyroscope(&gyroscope);
-    hardware.setup(&debug, &desktopClock, 100);
+    hardware.setup();
 
     // Setup components
     debug.message("SETTING UP COMPONENTS");
@@ -73,7 +73,8 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.readSensors(); // Has no effect because we are using simulated data
+    hardware.runAndReadAllHardware();
+
     // Read in the .csv data
     csvReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
     barometer.inject(csvReader.getKey<float>("barometerTemperatureK"), 0, csvReader.getKey<float>("pressurePa"));
@@ -101,16 +102,16 @@ void loop() {
     //               gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
     //               state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
     // );
-    // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
+    debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
+1
+    // if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
+    //    exit(0);
+    // }
 
-    if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
-       exit(0);
-    }
-
-    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
-        state.timestamp.runtime_ms,
-        state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
-        state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
-        state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
-        state.orientation.tiltMagnitudeDeg, state.flightState);
+    // debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+    //     state.timestamp.runtime_ms,
+    //     state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
+    //     state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
+    //     state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
+    //     state.orientation.tiltMagnitudeDeg, state.flightState);
 }

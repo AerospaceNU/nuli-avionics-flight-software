@@ -36,8 +36,6 @@ constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
 constexpr uint32_t GROUND_REFERENCE_UPDATE_DELAY = 500;
 
-
-
 // Hardware Abstraction max size parameters
 constexpr uint8_t MAX_PYRO_NUM = 10;
 constexpr uint8_t MAX_VOLTAGE_SENSOR_NUM = 5;

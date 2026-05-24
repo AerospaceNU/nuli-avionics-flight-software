@@ -3,6 +3,16 @@ project(desktop)
 
 set(CMAKE_CXX_STANDARD 20)
 
+include(FetchContent)
+
+# ETL (matches the etlcpp/Embedded Template Library@^20.45.0 dep used by PlatformIO builds)
+FetchContent_Declare(
+        etl
+        GIT_REPOSITORY https://github.com/ETLCPP/etl.git
+        GIT_TAG        20.45.0
+)
+FetchContent_MakeAvailable(etl)
+
 # ========Desktop configuration========
 include_directories(platformio_nuli_avionics_flight_software/include)
 include_directories(platformio_nuli_avionics_flight_software/lib/Quaternion)
@@ -29,6 +39,7 @@ set(desktopSimFiles
 
 # Create the desktop executable
 add_executable(desktop ${desktopSimFiles})
+target_link_libraries(desktop PRIVATE etl::etl)
 
 
 # ========Doxygen Build Configuration========
@@ -48,7 +59,6 @@ endif ()
 
 
 # ========G-Test========
-include(FetchContent)
 FetchContent_Declare(
         googletest
         URL https://github.com/google/googletest/archive/5376968f6948923e2411081fd9372e71a59d8e77.zip
