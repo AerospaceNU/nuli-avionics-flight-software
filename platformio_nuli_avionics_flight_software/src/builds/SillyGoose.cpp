@@ -116,9 +116,7 @@ ConfigurationCliBindings<DROGUE_DELAY_c,
                          BUZZER_ENABLED_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
-SimpleFlag resetBoard("--reset", "Send start", true, 255, []() {
-    NVIC_SystemReset();
-});
+SimpleFlag resetBoard("--reset", "Send start", true, 255, []() { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
     serialDebug.message("Firing drogue");
