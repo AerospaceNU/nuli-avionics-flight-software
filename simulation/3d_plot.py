@@ -214,9 +214,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 from pyproj import Proj, transform
 
-gps_file = "data/MBTA_GPS_Clip.txt"
+gps_file = "../../rocket-flight-data/data/2025-11-15 MBTA/MBTA_GPS_Clip.txt"
 state_file = "output.txt"
-ROTATE_DEGREES = 80   # <---- change this constant
+ROTATE_DEGREES = 75   # <---- change this constant
 
 # ---------------------------
 # Load GPS data (lat, lon, alt)
