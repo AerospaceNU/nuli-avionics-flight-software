@@ -179,7 +179,6 @@ void loop() {
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
         simulationParser.waitForEntry();
-        // inject(temperatureK, humidityPercent, pressurePa) — python sends pressure first, temp second
         barometer.inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
         imu.getAccelerometer()->inject({simulationParser.getValue(2), simulationParser.getValue(3), simulationParser.getValue(4)}, 0);
         imu.getGyroscope()->inject({simulationParser.getValue(5), simulationParser.getValue(6), simulationParser.getValue(7)}, 0);
