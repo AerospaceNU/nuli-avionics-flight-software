@@ -6,6 +6,8 @@
 #include "../HardwareAbstraction.h"
 #include "../generic_hardware/FramMemory.h"
 #include "../generic_hardware/DebugStream.h"
+#include <cstddef>  // std::max_align_t
+#include <cstdint>  // uintptr_t
 
 /**
  * @struct BaseConfigurationData_s
@@ -114,6 +116,16 @@ public:
      */
     template <unsigned N, unsigned M>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
+        // The external buffer must be over-aligned to std::max_align_t so any registered
+        // type can land at a valid offset within it. The caller is responsible for
+        // declaring it as: alignas(std::max_align_t) uint8_t buffer[M];
+        // If they didn't, skip construct() — typed access from the registry would
+        // unaligned-access on Cortex-M0/M0+ — and defer the error to setup().
+        constexpr uintptr_t requiredAlignMask = alignof(std::max_align_t) - 1u;
+        if ((reinterpret_cast<uintptr_t>(buffer) & requiredAlignMask) != 0u) {
+            externalBufferMisaligned = true;
+            return;
+        }
         construct(allConfigs, N);
     }
 
@@ -198,12 +210,24 @@ private:
     uint32_t calculateAllIdCrc() const;
 
     bool constructorFailed = false;
+    // Set by assignMemory() if it OOMs. assignMemory() runs from the constructor where
+    // m_hardware is still null, so it can't call avionicsSystemError directly; setup()
+    // checks this flag once m_hardware is assigned and reports there.
+    bool assignMemoryFailed = false;
+    // Set by the external-buffer constructor if the caller-supplied buffer isn't
+    // aligned to std::max_align_t. Same deferred-report pattern as above.
+    bool externalBufferMisaligned = false;
 
     uint8_t* m_dataBuffer;
     uint32_t m_dataBufferIndex = 0;
     const uint32_t m_dataBufferMaxLength = 0;
 
-    uint8_t m_bufferDO_NOT_USE[MAX_CONFIGURATION_LENGTH] = {};
+    // Overalign to std::max_align_t so the buffer's base satisfies any scalar's
+    // alignof. Per-entry padding is then handled by assignMemory() using each
+    // registered type's alignof. This lets the registry hold types of any
+    // standard alignment (int64_t, double, etc.) without HardFaulting on
+    // Cortex-M0/M0+ unaligned access.
+    alignas(std::max_align_t) uint8_t m_bufferDO_NOT_USE[MAX_CONFIGURATION_LENGTH] = {};
     BaseConfigurationData_s m_configurations[MAX_CONFIGURATION_NUM] = {};
     uint32_t m_numConfigurations = 0;
 

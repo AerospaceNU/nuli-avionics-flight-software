@@ -154,6 +154,11 @@ struct GyroscopeBias_s {
 #define AVIONICS_ARGUMENT_isDev false
 #endif
 
+#ifndef AVIONICS_ARGUMENT_boardVersion
+#define AVIONICS_ARGUMENT_boardVersion 1
+#endif
+
+#define IS_BOARD_VERSION(version) AVIONICS_ARGUMENT_boardVersion == version
 
 #ifdef PLATFORMIO
 #include "Arduino.h"

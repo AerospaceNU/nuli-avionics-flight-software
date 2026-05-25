@@ -41,17 +41,7 @@
 // @todo Update firmware from website
 // @todo Firmware version tracking
 // @todo Intelligent log memory usage
-// @todo Copy over new uf2 stuff
-// @todo Copy over AVIONICS_ARGUMENT_boardVersion macro stuff
-// @todo Make buzzer not screen during offload
-
-
-// @todo Offload -> simulation data pipeline, fix sim2
-// @todo Make a data repo
-// @todo Save fram to flash
-// @todo Kalman gains for mach
-// @todo Enable/disable buzzer in config
-
+// @todo have AI see if there are any ../ in include paths that don't need to be there
 
 // clang-format off
 struct SillyGooseLogData {
@@ -72,11 +62,11 @@ void printConfig(Configuration* config, char* buf, size_t bufSize) { mini_snprin
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-#if AVIONICS_ARGUMENT_boardVersion == 1
+#if IS_BOARD_VERSION(1)
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM20602Sensor imu(&imuRotation);
 S25FL512 flash(FLASH_CS_PIN);
-#elif AVIONICS_ARGUMENT_boardVersion == 2
+#elif IS_BOARD_VERSION(2)
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM42605Sensor imu(&imuRotation);
 MX25L256 flash(FLASH_CS_PIN);

@@ -35,7 +35,7 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
     // Determine Z axis state. This is a function of altitudeM and accelerationMSS_worldFrame
     if (m_useKalman) {
         // Set covariance functions based on assumptions relative to what data should look like
-            // For examply, if the velocity is > 250 m/s, we trust the barometer less so set barometer covariance to much higher
+        // For examply, if the velocity is > 250 m/s, we trust the barometer less so set barometer covariance to much higher
         m_kalmanFilter.predict();
         m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeM, accelerationMSS_worldFrame.z);
         m_currentState6D.position.z = m_kalmanFilter.getPosition();
@@ -57,13 +57,10 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
         // Implement complementary filter here. This is a function of projectedVelocityMS and accelerationMSS_worldFrame
 
         // High-frequency velocity from integrated acceleration
-        if constexpr (constexpr bool integrateAccelIndependent = false) {
-            m_integratedVelocityXY.x += accelerationMSS_worldFrame.x * dtSeconds;
-            m_integratedVelocityXY.y += accelerationMSS_worldFrame.y * dtSeconds;
-        } else {
-            m_integratedVelocityXY.x = m_currentState6D.velocity.x + accelerationMSS_worldFrame.x * dtSeconds;
-            m_integratedVelocityXY.y = m_currentState6D.velocity.y + accelerationMSS_worldFrame.y * dtSeconds;
-        }
+        // m_integratedVelocityXY.x += accelerationMSS_worldFrame.x * dtSeconds;
+        // m_integratedVelocityXY.y += accelerationMSS_worldFrame.y * dtSeconds;
+        m_integratedVelocityXY.x = m_currentState6D.velocity.x + accelerationMSS_worldFrame.x * dtSeconds;
+        m_integratedVelocityXY.y = m_currentState6D.velocity.y + accelerationMSS_worldFrame.y * dtSeconds;
 
         // Complementary filter
         constexpr float alpha = 0.1f;
