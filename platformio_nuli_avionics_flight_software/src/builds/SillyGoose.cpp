@@ -37,9 +37,7 @@
 // @todo Fix low pass implementation with dt included
 // @todo Fix stuck in ascent while not moving bug
 // @todo Drogue deployment failure detection
-// @todo Merge into orientation code, fix the hardcoded transform
 // @todo Update firmware from website
-// @todo Firmware version tracking
 // @todo Intelligent log memory usage
 // @todo have AI see if there are any ../ in include paths that don't need to be there
 
@@ -132,7 +130,7 @@ void setup() {
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
-    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0); // Lower the LED Power
+    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
 
     // Setup Hardware
     int16_t framID = hardware.appendFramMemory(&fram);
