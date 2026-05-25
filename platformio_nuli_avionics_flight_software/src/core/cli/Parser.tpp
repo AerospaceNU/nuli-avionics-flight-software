@@ -10,7 +10,7 @@ CLIReturnCode_e Parser::addFlagGroup(BaseFlag* (&flagGroup)[n]) {
         return CLI_PARSER_ZERO_FLAG_GROUPS_ADDED;
     }
 
-    if (m_numFlagGroups > MAX_FLAG_GROUPS) {
+    if (m_numFlagGroups >= MAX_FLAG_GROUPS) {
         return CLI_PARSER_MAXIMUM_FLAG_GROUPS_EXCEEDED;
     }
 
@@ -28,7 +28,7 @@ CLIReturnCode_e Parser::addFlagGroup(BaseFlag* (&flagGroup)[n], int8_t uid) {
         return CLI_PARSER_ZERO_FLAG_GROUPS_ADDED;
     }
 
-    if (m_numFlagGroups > MAX_FLAG_GROUPS) {
+    if (m_numFlagGroups >= MAX_FLAG_GROUPS) {
         return CLI_PARSER_MAXIMUM_FLAG_GROUPS_EXCEEDED;
     }
 

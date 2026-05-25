@@ -21,7 +21,7 @@
  *          the compiler would create a new instance for every new `n`
  */
 
-const uint8_t MAX_FLAG_GROUPS = 16;    ///< Maximum number of FlagGroups
+const uint8_t MAX_FLAG_GROUPS = 20;    ///< Maximum number of FlagGroups
 const uint8_t MAX_FLAGS = 16;          ///< Maximum number of flags per FlagGroup
 
 /**
