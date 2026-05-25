@@ -47,9 +47,9 @@ private:
     ConfigurationData<int32_t> m_boardOrientation;
 
     struct LowPass3D_s {
-        LowPass x{0.001};
-        LowPass y{0.001};
-        LowPass z{0.001};
+        LowPass x{0.0005};
+        LowPass y{0.0005};
+        LowPass z{0.0005};
         Vector3D_s lastVelocity{0, 0, 0};
     };
 
