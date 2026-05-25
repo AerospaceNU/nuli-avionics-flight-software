@@ -3,20 +3,46 @@ project(desktop)
 
 set(CMAKE_CXX_STANDARD 20)
 
+# ----------------------------------------------------------------------------
+# Terminal-build note (CLion users can ignore this):
+# If you build this project from a plain shell using CLion's bundled mingw
+# toolchain (the usual default), prepend its bin/ directory to PATH first, e.g.
+#   set "PATH=C:\Program Files\JetBrains\CLion <version>\bin\mingw\bin;%PATH%"
+# Otherwise cc1plus.exe (the C++ frontend spawned by g++) cannot locate its
+# co-installed DLLs (libgcc_s_seh-1.dll, libwinpthread-1.dll, libstdc++-6.dll,
+# ...), exits with 0xC0000135 (STATUS_DLL_NOT_FOUND) and prints nothing, which
+# makes the build appear to fail silently. CLion's own build action sets this
+# PATH for you automatically.
+# ----------------------------------------------------------------------------
+
 include(FetchContent)
 
-# ETL (matches the etlcpp/Embedded Template Library@^20.45.0 dep used by PlatformIO builds)
-FetchContent_Declare(
-        etl
-        GIT_REPOSITORY https://github.com/ETLCPP/etl.git
-        GIT_TAG        20.45.0
-)
-FetchContent_MakeAvailable(etl)
+# ========Vendored libraries========
+# All three live under platformio_nuli_avionics_flight_software/lib/ — see
+# platformio_nuli_avionics_flight_software/lib/README for upstream/version/license info.
+set(VENDOR_LIB_DIR ${CMAKE_CURRENT_SOURCE_DIR}/platformio_nuli_avionics_flight_software/lib)
+
+# ETL (header-only) — replaces the prior FetchContent of etlcpp/etl. Exposed as
+# the same `etl::etl` target name the FetchContent build provided, so existing
+# target_link_libraries() lines keep working unchanged.
+add_library(etl INTERFACE)
+add_library(etl::etl ALIAS etl)
+target_include_directories(etl INTERFACE "${VENDOR_LIB_DIR}/Embedded Template Library/include")
+
+# Eigen (header-only) — used in source as `#include "Eigen/Dense"`, which
+# resolves against the lib/ parent because the headers live in lib/Eigen/.
+add_library(eigen INTERFACE)
+add_library(Eigen3::Eigen ALIAS eigen)
+target_include_directories(eigen INTERFACE ${VENDOR_LIB_DIR})
+
+# Quaternion — small library with one .cpp; expose headers via INTERFACE target
+# and add the source to consumers that need it (see desktopSimFiles below).
+add_library(quaternion INTERFACE)
+target_include_directories(quaternion INTERFACE ${VENDOR_LIB_DIR}/Quaternion)
+set(QUATERNION_SOURCES ${VENDOR_LIB_DIR}/Quaternion/Quaternion.cpp)
 
 # ========Desktop configuration========
 include_directories(platformio_nuli_avionics_flight_software/include)
-include_directories(platformio_nuli_avionics_flight_software/lib/Quaternion)
-include_directories(platformio_nuli_avionics_flight_software/lib)
 include_directories(platformio_nuli_avionics_flight_software/src)
 
 
@@ -32,14 +58,14 @@ file(GLOB_RECURSE core_sources
 
 set(desktopSimFiles
         platformio_nuli_avionics_flight_software/src/builds/desktop.cpp
-        platformio_nuli_avionics_flight_software/lib/Quaternion/Quaternion.cpp
+        ${QUATERNION_SOURCES}
         ${desktop_driver_sources}
         ${core_sources}
 )
 
 # Create the desktop executable
 add_executable(desktop ${desktopSimFiles})
-target_link_libraries(desktop PRIVATE etl::etl)
+target_link_libraries(desktop PRIVATE etl::etl Eigen3::Eigen quaternion)
 
 
 # ========Doxygen Build Configuration========
