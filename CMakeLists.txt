@@ -29,11 +29,12 @@ add_library(etl INTERFACE)
 add_library(etl::etl ALIAS etl)
 target_include_directories(etl INTERFACE "${VENDOR_LIB_DIR}/Embedded Template Library/include")
 
-# Eigen (header-only) — used in source as `#include "Eigen/Dense"`, which
-# resolves against the lib/ parent because the headers live in lib/Eigen/.
+# Eigen (header-only) — used in source as `#include "Eigen/Dense"`. The Eigen
+# source tree puts headers at lib/Eigen/Eigen/Dense (Eigen's own layout), so
+# the include root has to be lib/Eigen/ for that include to resolve.
 add_library(eigen INTERFACE)
 add_library(Eigen3::Eigen ALIAS eigen)
-target_include_directories(eigen INTERFACE ${VENDOR_LIB_DIR})
+target_include_directories(eigen INTERFACE ${VENDOR_LIB_DIR}/Eigen)
 
 # Quaternion — small library with one .cpp; expose headers via INTERFACE target
 # and add the source to consumers that need it (see desktopSimFiles below).
