@@ -40,6 +40,8 @@
 // @todo Update firmware from website
 // @todo Intelligent log memory usage
 // @todo have AI see if there are any ../ in include paths that don't need to be there
+// @todo Make sure alignment code in configuration works on 64 bit systems
+// @todo Tune the Q thing in kalman filter
 
 // clang-format off
 struct SillyGooseLogData {

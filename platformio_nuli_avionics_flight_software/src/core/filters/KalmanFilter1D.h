@@ -66,7 +66,7 @@ protected:
     double lastTime = 0;
 
 private:
-    float processJerkStd = 10.0f;
+    float processJerkStd = 1.0f;   // @todo tune this more
 };
 
 
