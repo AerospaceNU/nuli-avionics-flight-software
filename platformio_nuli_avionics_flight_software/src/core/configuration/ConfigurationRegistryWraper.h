@@ -79,6 +79,32 @@ inline uint16_t getConfigurationLength(const ConfigurationID_t name) {
     return getConfigurationLengthGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c>(name);
 }
 
+// Recursive generator to get the alignof a given configuration ID's type.
+// `alignof` in C++ always returns a power of two, so callers can use it directly
+// in `(idx + a - 1) & ~(a - 1)` style rounding without checking.
+template <signed N>
+inline uint16_t getConfigurationAlignmentGenerator(const ConfigurationID_t name) {
+    if (name == N) return alignof(typename GetConfigurationType_s<N>::type);
+    return getConfigurationAlignmentGenerator<N - 1>(name);
+}
+
+// Base case: stop recursion at -1. Return 1 (no alignment requirement) as a safe
+// fallback; this branch is only reachable if the ID isn't actually registered.
+template <>
+inline uint16_t getConfigurationAlignmentGenerator<-1>(ConfigurationID_t) {
+    return 1;
+}
+
+// Skip the sentinel entry
+template <>
+inline uint16_t getConfigurationAlignmentGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c>(const ConfigurationID_t name) {
+    return getConfigurationAlignmentGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c - 1>(name);
+}
+
+inline uint16_t getConfigurationAlignment(const ConfigurationID_t name) {
+    return getConfigurationAlignmentGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c>(name);
+}
+
 // Recursive generator to get the name of a given configuration ID
 template <signed N>
 inline const char* getConfigurationNameGenerator(const ConfigurationID_t name) {

@@ -1,6 +1,6 @@
 #include "Avionics.h"
 AVIONICS_DESKTOP_MAIN
-#include "drivers/desktop/CSVParser.h"
+#include "drivers/desktop/FlightDataReader.h"
 #include "drivers/desktop/DesktopDebug.h"
 #include "drivers/desktop/DummySystemClock.h"
 #include "drivers/desktop/DesktopSerialReader.h"
@@ -17,7 +17,7 @@ AVIONICS_DESKTOP_MAIN
 // Desktop sim specific stuff
 constexpr float FCB_V0_ACCEL_SCALE_FACTOR = 0.0071784678f;
 constexpr float FCB_V0_GYRO_SCALE_FACTOR = 0.0012217305f;
-CSVReader csvReader;
+FlightDataReader flightDataReader;
 
 // Hardware
 DummySystemClock desktopClock(100);
@@ -29,11 +29,11 @@ Gyroscope gyroscope(&imuRotation);
 VolatileConfigurationMemory<1000> fram;
 
 // Core components
-HardwareAbstraction hardware;
+HardwareAbstraction hardware(debug, desktopClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimatorBasic6D;
+StateEstimatorBasic6D stateEstimator6D(true);
 DesktopSerialReader<1000> serialReader;
 IntegratedParser cliParser;
 ConfigurationID_t desktopRequiredConfigs[] = {BOARD_NAME_c};
@@ -41,8 +41,9 @@ Configuration configuration({desktopRequiredConfigs, Configuration::REQUIRED_CON
 ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
 
 void setup() {
-    // Setup sim input/output
-    csvReader.setup("../simulation/data/Avionics Flight Data - 2023-04-15-beanboozler-output-FCB.csv");
+    // Setup sim input/output. Start at ts=10145116 to match the prior clipped MBTA_FLIGHT_DATA.txt
+    // (skips ~10s of pre-launchpad handling at the start of board1's recording).
+    flightDataReader.setup("../../rocket-flight-data/data/2025-11-15 MBTA/2025-11-15 V1 MBTA ridealong board1.txt", '\t', 10145116);
     debug.outputToFile("../simulation/output.txt");
 
     // Initialize
@@ -54,7 +55,7 @@ void setup() {
     hardware.appendBarometer(&barometer);
     hardware.appendAccelerometer(&accelerometer);
     hardware.appendGyroscope(&gyroscope);
-    hardware.setup(&debug, &desktopClock, 100);
+    hardware.setup();
 
     // Setup components
     debug.message("SETTING UP COMPONENTS");
@@ -63,7 +64,7 @@ void setup() {
     cliParser.setup(&serialReader, &debug);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
-    stateEstimatorBasic6D.setup(&hardware, &configuration);
+    stateEstimator6D.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     debug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
@@ -72,17 +73,19 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.readSensors(); // Has no effect because we are using simulated data
-    // Read in the .csv data
-    csvReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
-    barometer.inject((csvReader.getKey<float>("baro1_temp") - 32) * 5.0f / 9.0f + 273.15f, 0, csvReader.getKey<float>("baro1_pres") * 101325);
-    accelerometer.inject({csvReader.getKey<float>("imu1_accel_x") * FCB_V0_ACCEL_SCALE_FACTOR, csvReader.getKey<float>("imu1_accel_y") * FCB_V0_ACCEL_SCALE_FACTOR, csvReader.getKey<float>("imu1_accel_z") * FCB_V0_ACCEL_SCALE_FACTOR}, 0);
-    gyroscope.inject({csvReader.getKey<float>("imu1_gyro_x") * FCB_V0_GYRO_SCALE_FACTOR, csvReader.getKey<float>("imu1_gyro_y") * FCB_V0_GYRO_SCALE_FACTOR, csvReader.getKey<float>("imu1_gyro_z") * FCB_V0_GYRO_SCALE_FACTOR}, 0);
+    hardware.runAndReadAllHardware();
+
+    // Read in the flight data
+    flightDataReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
+    barometer.inject(flightDataReader.getKey<float>("tempK"), 0, flightDataReader.getKey<float>("pressurePa"));
+    accelerometer.inject({flightDataReader.getKey<float>("accelX"), flightDataReader.getKey<float>("accelY"), flightDataReader.getKey<float>("accelZ")}, 0);
+    gyroscope.inject({flightDataReader.getKey<float>("gyroX"), flightDataReader.getKey<float>("gyroY"), flightDataReader.getKey<float>("gyroZ")}, 0);
+
 
     // Determine state
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.state6D = stateEstimatorBasic6D.update(state.timestamp, state.state1D, state.orientation);
+    state.state6D = stateEstimator6D.update(state.timestamp, state.state1D, state.orientation, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
     // Run CLI
@@ -92,11 +95,23 @@ void loop() {
     configuration.pushUpdatesToMemory();
 
     // Print out current values
-    debug.message("%d\t%.4f\t%.1f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.2f\t%.2f\t%.4f\t%.2f\t%d",
-                  state.timestamp.runtime_ms,
-                  barometer.getPressurePa(), barometer.getTemperatureK(),
-                  accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
-                  gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
-                  state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
-    );
+    // debug.message("%d\t%.4f\t%.1f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.2f\t%.2f\t%.4f\t%.2f\t%d",
+    //               state.timestamp.runtime_ms,
+    //               barometer.getPressurePa(), barometer.getTemperatureK(),
+    //               accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
+    //               gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
+    //               state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
+    // );
+    // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
+
+    if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
+       exit(0);
+    }
+
+    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
+        state.timestamp.runtime_ms,
+        state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
+        state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
+        state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
+        state.orientation.tiltMagnitudeDeg, state.flightState);
 }

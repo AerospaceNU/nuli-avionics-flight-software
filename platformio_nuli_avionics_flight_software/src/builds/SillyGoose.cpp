@@ -16,7 +16,6 @@
 #include "drivers/arduino/IndicatorLED.h"
 #include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
-#include "drivers/arduino/ArduinoSimulationParser.h"
 #include "drivers/arduino/ArduinoDigitalInput.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
@@ -26,18 +25,23 @@
 #include "core/BasicLogger.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/IntegratedParser.h"
+#include "core/cli/SimulationParser.h"
 #include "core/state_estimation/OrientationEstimator.h"
 #include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
+#include "util/StringHelper.h"
 
-// @todo Kalman gains
-// @todo Save fram to flash
-// @todo Offload -> simulation data pipeline
-// @todo Have barometer re-init in code
-// @todo disable write in flash driver
-// @todo fix low pass implementation with dt included
-// @todo review boot flight detection
+// @todo Have barometer re-init in code/figure out I2C bus lock
+// @todo Disable write in flash driver
+// @todo Fix low pass implementation with dt included
+// @todo Fix stuck in ascent while not moving bug
+// @todo Drogue deployment failure detection
+// @todo Update firmware from website
+// @todo Intelligent log memory usage
+// @todo have AI see if there are any ../ in include paths that don't need to be there
+// @todo Make sure alignment code in configuration works on 64 bit systems
+// @todo Tune the Q thing in kalman filter
 
 // clang-format off
 struct SillyGooseLogData {
@@ -47,20 +51,22 @@ struct SillyGooseLogData {
     float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
     int32_t flightState;
     bool drogueContinuity, drogueFired, mainContinuity, mainFired;
+    float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
 } remove_struct_padding;
-#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0); };
+#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d"
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d); };
+void printConfig(Configuration* config, char* buf, size_t bufSize) { mini_snprintf(buf, (int)bufSize, "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u\tFIRMWARE_VERSION=%s", config->getConfigurable<BOARD_NAME_c>().get().str, (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(), (double)config->getConfigurable<MAIN_ELEVATION_c>().get(), (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(), (double)config->getConfigurable<GROUND_ELEVATION_c>().get(), (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(), (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(), (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(), (int)config->getConfigurable<FLIGHT_STATE_c>().get(), (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(), (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get(), config->getConfigurable<FIRMWARE_VERSION_c>().get().str); }
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-#if AVIONICS_ARGUMENT_boardVersion == 1
+#if IS_BOARD_VERSION(1)
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM20602Sensor imu(&imuRotation);
 S25FL512 flash(FLASH_CS_PIN);
-#elif AVIONICS_ARGUMENT_boardVersion == 2
+#elif IS_BOARD_VERSION(2)
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 ICM42605Sensor imu(&imuRotation);
 MX25L256 flash(FLASH_CS_PIN);
@@ -77,13 +83,14 @@ ArduinoDigitalInput powerStatus(STATUS_PIN);
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
+OrientationEstimator orientationEstimator;
 BasicLogger<SillyGooseLogData> logger;
-ArduinoSerialReader<500> serialReader(true);
+ArduinoSerialReader<500> serialReader(!AVIONICS_ARGUMENT_isSim);
 IndicatorManager indicatorManager;
-ArduinoSimulationParser simulationParser;
 IntegratedParser cliParser;
+SimulationParser<8> simulationParser;
 // Configuration
-ConfigurationID_t sillyGooseRequiredConfigs[] = {BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c};
+ConfigurationID_t sillyGooseRequiredConfigs[] = {FIRMWARE_VERSION_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c};
 Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
@@ -96,18 +103,18 @@ ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
 // CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
-ConfigurationCliBindings<DROGUE_DELAY_c,
+ConfigurationCliBindings<FIRMWARE_VERSION_c,
+                         DROGUE_DELAY_c,
                          MAIN_ELEVATION_c,
                          BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
                          GROUND_ELEVATION_c,
                          GROUND_TEMPERATURE_c,
                          PYRO_FIRE_DURATION_c,
                          BOARD_NAME_c,
+                         BUZZER_ENABLED_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
-SimpleFlag resetBoard("--reset", "Send start", true, 255, []() {
-    NVIC_SystemReset();
-});
+SimpleFlag resetBoard("--reset", "Send start", true, 255, []() { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
 SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
     serialDebug.message("Firing drogue");
@@ -122,10 +129,10 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi device buses to prevent one device from locking the bus
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
-    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0); // Lower the LED Power
+    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
 
     // Setup Hardware
     int16_t framID = hardware.appendFramMemory(&fram);
@@ -149,10 +156,12 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.setup(&serialReader, &serialDebug);
+    simulationParser.setup(&cliParser, &serialDebug);
     stateEstimator1D.setup(&hardware, &configuration);
+    orientationEstimator.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
-    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog);
+    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration, printConfig);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
@@ -165,19 +174,24 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.runAndReadAllHardware();  // Reads sensors, runs any background code for every hardware device
+    hardware.runAndReadAllHardware(); // Reads sensors, runs any background code for every hardware device
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
-        float simData[5];
-        simulationParser.blockingGetFloatArray(simData);
-        barometer.inject(simData[0], 0, simData[1]);
-        imu.getAccelerometer()->inject({simData[2], simData[3], simData[4]}, 0);
+        simulationParser.waitForEntry();
+        barometer.inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
+        imu.getAccelerometer()->inject({simulationParser.getValue(2), simulationParser.getValue(3), simulationParser.getValue(4)}, 0);
+        imu.getGyroscope()->inject({simulationParser.getValue(5), simulationParser.getValue(6), simulationParser.getValue(7)}, 0);
+        simulationParser.releaseEntry();
     }
 
     // Determine state
+    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
+
+    // Turn on/off the buzzer
+    buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
 
     // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
@@ -187,10 +201,7 @@ void loop() {
         logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
-        // Disable the buzzer on USB power on the V2 only
-        buzzer.setEnabled(powerStatus.isHigh() || AVIONICS_ARGUMENT_boardVersion == 1);
     } else if (state.flightState == ASCENT) {
-        buzzer.enable();
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -227,7 +238,9 @@ void loop() {
             imu.getGyroscope()->getVelocitiesRadS_raw().x, imu.getGyroscope()->getVelocitiesRadS_raw().y, imu.getGyroscope()->getVelocitiesRadS_raw().z,
             imu.getGyroscope()->getTemperatureK(),
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired()
+            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired(),
+            state.orientation.tiltMagnitudeDeg,
+            state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
+            state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d
         });
 }
-

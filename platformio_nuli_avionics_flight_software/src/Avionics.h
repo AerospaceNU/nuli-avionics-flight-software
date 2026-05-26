@@ -3,6 +3,7 @@
 
 #include <cstdint>
 #include <cmath>
+#include <Quaternion.h>
 
 /**
  * @file Avionics.h
@@ -33,7 +34,7 @@ constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
 constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
 constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
-
+constexpr uint32_t GROUND_REFERENCE_UPDATE_DELAY = 2000;
 
 // Hardware Abstraction max size parameters
 constexpr uint8_t MAX_PYRO_NUM = 10;
@@ -64,12 +65,9 @@ struct Vector3D_s {
     float z; ///< Z axis
 };
 
-struct Quaternion_s {
-    float x;
-    float y;
-    float z;
-    float w;
-};
+inline float vector3DMagnitude(const Vector3D_s& vector) {
+    return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
+}
 
 /**
  * @struct Coordinates_s
@@ -104,9 +102,12 @@ struct State1D_s {
 };
 
 struct Orientation_s {
-    Vector3D_s angle;
+    float tiltMagnitudeDeg;
     Vector3D_s angularVelocity;
-    Quaternion_s angleQuaternion;
+    Quaternion angleQuaternion;
+    float roll;
+    float pitch;
+    float yaw;
 };
 
 struct State6D_s {
@@ -153,8 +154,18 @@ struct GyroscopeBias_s {
 #define AVIONICS_ARGUMENT_isDev false
 #endif
 
+#ifndef AVIONICS_ARGUMENT_boardVersion
+#define AVIONICS_ARGUMENT_boardVersion 1
+#endif
+
+#ifndef AVIONICS_ARGUMENT_firmwareVersion
+#define AVIONICS_ARGUMENT_firmwareVersion "unversioned"
+#endif
+
+#define IS_BOARD_VERSION(version) AVIONICS_ARGUMENT_boardVersion == version
 
 #ifdef PLATFORMIO
+#include "Arduino.h"
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
 #else
@@ -162,5 +173,5 @@ void setup();
 void loop();
 #define AVIONICS_DESKTOP_MAIN  int main() { setup(); while (true) loop(); }
 #endif
-
+#include <string.h>
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

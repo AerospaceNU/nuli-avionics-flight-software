@@ -6,6 +6,14 @@
 #include "configuration/Configuration.h"
 #include "cli/Parser.h"
 
+enum LogEntryID : uint8_t {
+    LOG_EMPTY = 0xFF,
+    LOG_DATA = 0x01,
+    LOG_NEW_FLIGHT = 0x02,
+    LOG_MESSAGE = 0x03,
+    LOG_MESSAGE_CONTINUATION = 0x04,
+};
+
 template <typename LogDataStruct>
 class BasicLogger {
     // clang-format off
@@ -14,6 +22,7 @@ class BasicLogger {
         LogDataStruct data;
     } remove_struct_padding;
     // clang-format on
+
 public:
     BasicLogger() : m_logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
                     m_startFlag("-b", "", false, 255, []() {}),
@@ -23,13 +32,18 @@ public:
                     m_offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
                     m_streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
 
-    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, void (*printFunction)(const LogDataStruct&, DebugStream*)) {
+    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header,
+               void (*printFunction)(const LogDataStruct&, DebugStream*),
+               Configuration* configuration = nullptr,
+               void (*printConfigFunction)(Configuration*, char*, size_t) = nullptr) {
         m_hardware = hardware;
         m_debug = m_hardware->getDebugStream();
         m_flash = m_hardware->getFlashMemory(flashID);
         m_logWriteIndex = 0;
         m_headerStr = header;
         m_printFunction = printFunction;
+        m_configuration = configuration;
+        m_printConfigFunction = printConfigFunction;
         m_loopTime = hardware->getTargetLoopTimeMs();
 
         // Setup CLI interface
@@ -43,14 +57,14 @@ public:
 
         uint32_t left = 0;
         uint32_t right = numEntries; // exclusive upper bound
-        uint32_t firstEmpty = numEntries; // default if nothing is 0xFF
+        uint32_t firstEmpty = numEntries; // default if nothing is LOG_EMPTY
 
         while (left < right) {
             uint32_t mid = left + (right - left) / 2;
             uint8_t id;
             offload(mid, id);
 
-            if (id == 0xFF) {
+            if (id == LOG_EMPTY) {
                 firstEmpty = mid; // possible candidate
                 right = mid; // search left half
             } else {
@@ -58,12 +72,18 @@ public:
             }
         }
 
-        // firstEmpty is now the first index where id == 0xFF
+        // firstEmpty is now the first index where id == LOG_EMPTY
         m_logWriteIndex = firstEmpty;
 
         m_debug->message("Logging setup, starting at entry: %d, index: %d", getEntryNumber(), (m_logWriteIndex * sizeof(InternalStruct_s)));
         m_debug->message("Maximum log length (s): %d, Remaining log length (s): %d", getMaxLogLengthSeconds(), getRemainingLogLengthSeconds());
         logMessage("Logger setup");
+        if (m_printConfigFunction && m_configuration) {
+            char configBuf[512];
+            configBuf[0] = '\0';
+            m_printConfigFunction(m_configuration, configBuf, sizeof(configBuf));
+            if (configBuf[0] != '\0') logMessage(configBuf);
+        }
     }
 
     void log(const LogDataStruct& logDataStruct) {
@@ -73,7 +93,7 @@ public:
                 m_currentTick = 0;
             }
             if (getRemainingLogLengthSeconds() > 5) {
-                m_dataStruct.id = 0x01;
+                m_dataStruct.id = LOG_DATA;
                 m_dataStruct.data = logDataStruct;
                 m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
                 m_logWriteIndex++;
@@ -85,18 +105,29 @@ public:
     }
 
     void logMessage(const char* str) {
-        if (getRemainingLogLengthSeconds() > 5) {
-            m_dataStruct.id = 0x03;
-            memcpy(&m_dataStruct.data, str, std::min(sizeof(LogDataStruct), strlen(str) + 1));
-            ((char*)(&m_dataStruct.data))[sizeof(LogDataStruct) - 1] = '\0'; // Ensure null termination
+        if (getRemainingLogLengthSeconds() <= 5) return;
+        const size_t dataSize = sizeof(LogDataStruct);
+        const size_t totalLen = strlen(str) + 1; // include null terminator
+        size_t pos = 0;
+        bool first = true;
+        while (pos < totalLen) {
+            m_dataStruct.id = first ? LOG_MESSAGE : LOG_MESSAGE_CONTINUATION;
+            first = false;
+            const size_t remaining = totalLen - pos;
+            const size_t chunk = remaining < dataSize ? remaining : dataSize;
+            memcpy(&m_dataStruct.data, str + pos, chunk);
+            if (chunk < dataSize) {
+                memset(((uint8_t*)&m_dataStruct.data) + chunk, 0, dataSize - chunk);
+            }
             m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
             m_logWriteIndex++;
+            pos += chunk;
         }
     }
 
     void newFlight() {
         if (getRemainingLogLengthSeconds() > 5) {
-            m_dataStruct.id = 0x02;
+            m_dataStruct.id = LOG_NEW_FLIGHT;
             m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s), true);
             m_logWriteIndex++;
         }
@@ -146,23 +177,43 @@ public:
         uint32_t failCount = 0;
         m_debug->message("Starting Offload");
         m_debug->data(m_headerStr);
+
+        constexpr size_t MSG_BUF_SIZE = 512;
+        char msgBuf[MSG_BUF_SIZE];
+        size_t msgBufLen = 0;
+
         for (uint32_t i = 0; true; i++) {
             uint8_t id;
             const LogDataStruct logData = offload(i, id);
-            if (id == 0xFF) {
-                failCount++;
-                if (failCount >= 4) {
-                    break;
-                }
-            } else if (id == 0x01) {
-                m_printFunction(logData, m_debug);
-            } else if (id == 0x02) {
-                m_debug->data("New flight");
-            } else if (id == 0x03) {
-                char* str = (char*)&logData;
-                str[sizeof(LogDataStruct) - 1] = '\0';
-                m_debug->data("%s", str);
+
+            // Flush pending multi-entry message when we hit a non-continuation entry
+            if (id != LOG_MESSAGE_CONTINUATION && msgBufLen > 0) {
+                if (msgBufLen >= MSG_BUF_SIZE) msgBufLen = MSG_BUF_SIZE - 1;
+                msgBuf[msgBufLen] = '\0';
+                m_debug->data("%s", msgBuf);
+                msgBufLen = 0;
             }
+
+            if (id == LOG_EMPTY) {
+                failCount++;
+                if (failCount >= 4) break;
+            } else if (id == LOG_DATA) {
+                m_printFunction(logData, m_debug);
+            } else if (id == LOG_NEW_FLIGHT) {
+                m_debug->data("New flight");
+            } else if (id == LOG_MESSAGE || id == LOG_MESSAGE_CONTINUATION) {
+                size_t copyLen = sizeof(LogDataStruct);
+                if (msgBufLen + copyLen >= MSG_BUF_SIZE) {
+                    copyLen = (msgBufLen >= MSG_BUF_SIZE - 1) ? 0 : (MSG_BUF_SIZE - 1 - msgBufLen);
+                }
+                memcpy(msgBuf + msgBufLen, &logData, copyLen);
+                msgBufLen += copyLen;
+            }
+        }
+        if (msgBufLen > 0) {
+            if (msgBufLen >= MSG_BUF_SIZE) msgBufLen = MSG_BUF_SIZE - 1;
+            msgBuf[msgBufLen] = '\0';
+            m_debug->data("%s", msgBuf);
         }
         m_debug->message("Ending Offload");
     }
@@ -254,6 +305,9 @@ private:
 
     const char* m_headerStr = nullptr;
     void (*m_printFunction)(const LogDataStruct&, DebugStream*) = nullptr;
+
+    Configuration* m_configuration = nullptr;
+    void (*m_printConfigFunction)(Configuration*, char*, size_t) = nullptr;
 };
 
 #endif //BASICLOGGER_H

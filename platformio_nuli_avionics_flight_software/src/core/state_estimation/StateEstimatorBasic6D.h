@@ -8,30 +8,38 @@
 #include "core/generic_hardware/Accelerometer.h"
 #include "core/generic_hardware/Gyroscope.h"
 #include "core/generic_hardware/Barometer.h"
-#include "core/transform/Quaternion.h"
 #include "../filters/LowPass.h"
-
-
 
 class StateEstimatorBasic6D {
 public:
+    explicit StateEstimatorBasic6D(bool useKalman);
+
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 
-    State6D_s update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation);
+    State6D_s update(const Timestamp_s& timestamp, const State1D_s& state1D, const Orientation_s& orientation, FlightState_e flightState);
 
     State6D_s getState6D() const;
 
+
 private:
+    Vector3D_s getAccelerationMSS(const Orientation_s& orientation) const;
+
+    Vector3D_s projectVelocities(const Orientation_s& orientation, float velocityZ) const;
+    Vector3D_s m_integratedVelocityXY = {0.0f, 0.0f, 0.0f};
+
+
+    bool m_useKalman;
+
+    KalmanFilter1D m_kalmanFilter;
+
     HardwareAbstraction* m_hardware = nullptr;
     Configuration* m_configuration = nullptr;
     DebugStream* m_debug = nullptr;
 
     State6D_s m_currentState6D = {};
     ConfigurationData<float> m_groundElevation;
+    ConfigurationData<int32_t> m_boardOrientation;
 
-    KalmanFilter1D m_kalmanFilterX;
-    KalmanFilter1D m_kalmanFilterY;
-    KalmanFilter1D m_kalmanFilterZ;
 };
 
 

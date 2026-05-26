@@ -1,8 +1,6 @@
 #include "HardwareAbstraction.h"
 #include <cmath>
 
-#include "drivers/arduino/ArduinoSerialReader.h"
-
 HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz) {
     m_debug = &debugStream;
     m_systemClock = &systemClock;
