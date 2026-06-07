@@ -124,37 +124,23 @@ jobs:
         id: meta
         run: |
           set -euo pipefail
+          short_sha="$(echo "${{ github.sha }}" | cut -c1-7)"
+          date_stamp="$(date -u +%Y%m%d)"
+          # Unique tag per build so every push is preserved as its own release:
+          #   <branch>-<date>-g<shortSHA>  e.g. main-20260607-g374ab3a
+          echo "tag=${{ github.ref_name }}-${date_stamp}-g${short_sha}" >> "$GITHUB_OUTPUT"
           if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
-            echo "name=Flight firmware (latest)" >> "$GITHUB_OUTPUT"
+            echo "name=Flight firmware ${date_stamp} (${short_sha})" >> "$GITHUB_OUTPUT"
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=not-flight-tested-latest" >> "$GITHUB_OUTPUT"
-            echo "name=Not-flight-tested firmware (latest)" >> "$GITHUB_OUTPUT"
+            echo "name=Not-flight-tested ${date_stamp} (${short_sha})" >> "$GITHUB_OUTPUT"
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: List artifacts
         run: ls -la dist
 
-      - name: Clear stale assets from the rolling release
-        # Asset names are versioned, so without this each push would pile up
-        # new assets next to the old ones. Delete the existing assets (keeping
-        # the release and its tag) so only the current build's files remain.
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          set -euo pipefail
-          tag="${{ steps.meta.outputs.tag }}"
-          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            gh release view "$tag" --repo "$GITHUB_REPOSITORY" \
-              --json assets -q '.assets[].name' | while read -r a; do
-                [ -n "$a" ] && gh release delete-asset "$tag" "$a" \
-                  --repo "$GITHUB_REPOSITORY" --yes || true
-              done
-          fi
-
-      - name: Publish / update rolling release
+      - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.meta.outputs.tag }}
@@ -166,6 +152,8 @@ jobs:
 
             Environments: SillyGooseV1, SillyGooseV2, SillyGooseV1Sim, SillyGooseV2Sim.
 
-            > Rolling release: assets are replaced on every push to `${{ github.ref_name }}`.
+            Each push publishes a new, permanent release tagged
+            `${{ github.ref_name }}-<date>-g<shortSHA>`, so build history is kept.
+            For `main` the newest non-prerelease is automatically marked *Latest*.
           files: dist/*.uf2
           fail_on_unmatched_files: true
