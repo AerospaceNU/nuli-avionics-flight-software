@@ -1,0 +1,143 @@
+name: Build & Release Firmware
+
+# Builds the SillyGoose PlatformIO environments and publishes their .uf2
+# files to a rolling, per-branch GitHub Release on every push.
+#
+# - main                -> stable release, tag "latest"
+# - not-flight-tested   -> prerelease, tag "not-flight-tested-latest"
+#
+# The PlatformIO project lives in a subfolder; the git repo root is one level
+# up. On not-flight-tested the vendored libs are submodules, on main they are
+# committed directly, so `submodules: recursive` is correct on both branches
+# (it simply no-ops where there is nothing to fetch).
+
+on:
+  push:
+    branches:
+      - main
+      - not-flight-tested
+  # TEMPORARY: lets us validate the build on the PR before merging into a
+  # protected branch. The release job below is guarded to push events only,
+  # so PR runs build/validate but never publish. Remove this block once the
+  # workflow is proven.
+  pull_request:
+    branches:
+      - main
+      - not-flight-tested
+
+# Allow the built-in GITHUB_TOKEN to create/update releases and tags.
+permissions:
+  contents: write
+
+env:
+  PIO_PROJECT_DIR: platformio_nuli_avionics_flight_software
+
+jobs:
+  build:
+    name: Build ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - SillyGooseV1
+          - SillyGooseV2
+          - SillyGooseV1Sim
+          - SillyGooseV2Sim
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO toolchains, platforms & registry libraries
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio_nuli_avionics_flight_software/platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build firmware (${{ matrix.environment }})
+        working-directory: ${{ env.PIO_PROJECT_DIR }}
+        run: pio run -e ${{ matrix.environment }}
+
+      - name: Collect & rename UF2
+        working-directory: ${{ env.PIO_PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          # post_uf2.py drops "${env}_<timestamp>.uf2" in the project root.
+          uf2="$(ls -t ${{ matrix.environment }}_*.uf2 2>/dev/null | head -n1 || true)"
+          if [ -z "$uf2" ]; then
+            echo "::error::No .uf2 produced for ${{ matrix.environment }}. Looked in $(pwd)"
+            ls -la
+            exit 1
+          fi
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          cp "$uf2" "$GITHUB_WORKSPACE/dist/${{ matrix.environment }}.uf2"
+          echo "Packaged $uf2 -> dist/${{ matrix.environment }}.uf2"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uf2-${{ matrix.environment }}
+          path: dist/${{ matrix.environment }}.uf2
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    # Never publish from a pull_request event — only on real pushes to the
+    # protected branches.
+    if: github.event_name == 'push'
+    steps:
+      - name: Download all UF2 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: uf2-*
+          path: dist
+          merge-multiple: true
+
+      - name: Determine release metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "name=Flight firmware (latest)" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=not-flight-tested-latest" >> "$GITHUB_OUTPUT"
+            echo "name=Not-flight-tested firmware (latest)" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: List artifacts
+        run: ls -la dist
+
+      - name: Publish / update rolling release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.tag }}
+          name: ${{ steps.meta.outputs.name }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          target_commitish: ${{ github.sha }}
+          body: |
+            Automated build from `${{ github.ref_name }}` @ `${{ github.sha }}`.
+
+            Environments: SillyGooseV1, SillyGooseV2, SillyGooseV1Sim, SillyGooseV2Sim.
+
+            > Rolling release: assets are replaced on every push to `${{ github.ref_name }}`.
+          files: dist/*.uf2
+          fail_on_unmatched_files: true
