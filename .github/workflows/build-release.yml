@@ -75,22 +75,34 @@ jobs:
         working-directory: ${{ env.PIO_PROJECT_DIR }}
         run: |
           set -euo pipefail
-          # post_uf2.py drops "${env}_<timestamp>.uf2" in the project root.
-          uf2="$(ls -t ${{ matrix.environment }}_*.uf2 2>/dev/null | head -n1 || true)"
-          if [ -z "$uf2" ]; then
-            echo "::error::No .uf2 produced for ${{ matrix.environment }}. Looked in $(pwd)"
-            ls -la
+          # Both branches' post_uf2.py emit the canonical firmware.uf2 in the
+          # build dir, regardless of how each names its project-root copy
+          # (latest_firmware.uf2 vs <env>_<timestamp>.uf2). Use the build dir
+          # so this step is branch-independent.
+          uf2=".pio/build/${{ matrix.environment }}/firmware.uf2"
+          if [ ! -f "$uf2" ]; then
+            echo "::error::No .uf2 at $uf2 for ${{ matrix.environment }}"
+            find .pio/build -name '*.uf2' 2>/dev/null | sed 's/^/  found: /' || true
             exit 1
           fi
+          # Build a versioned asset name so a downloaded .uf2 is traceable to
+          # its exact build: <env>[-v<firmwareVersion>]-<date>-g<shortSHA>.uf2
+          short_sha="$(echo "${{ github.sha }}" | cut -c1-7)"
+          date_stamp="$(date -u +%Y%m%d)"
+          # firmwareVersion lives in platformio.ini as ...='"1.00"'; best-effort.
+          fw="$(grep -oE "firmwareVersion[^\"]*\"[0-9]+\.[0-9]+\"" platformio.ini | grep -oE '[0-9]+\.[0-9]+' | head -n1 || true)"
+          if [ -n "$fw" ]; then ver="-v${fw}"; else ver=""; fi
+          asset="${{ matrix.environment }}${ver}-${date_stamp}-g${short_sha}.uf2"
           mkdir -p "$GITHUB_WORKSPACE/dist"
-          cp "$uf2" "$GITHUB_WORKSPACE/dist/${{ matrix.environment }}.uf2"
-          echo "Packaged $uf2 -> dist/${{ matrix.environment }}.uf2"
+          cp "$uf2" "$GITHUB_WORKSPACE/dist/${asset}"
+          echo "Packaged $uf2 -> dist/${asset}"
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
         with:
           name: uf2-${{ matrix.environment }}
-          path: dist/${{ matrix.environment }}.uf2
+          # Each runner builds exactly one env, so dist/ holds a single .uf2.
+          path: dist/*.uf2
           if-no-files-found: error
 
   release:
@@ -124,6 +136,23 @@ jobs:
 
       - name: List artifacts
         run: ls -la dist
+
+      - name: Clear stale assets from the rolling release
+        # Asset names are versioned, so without this each push would pile up
+        # new assets next to the old ones. Delete the existing assets (keeping
+        # the release and its tag) so only the current build's files remain.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.meta.outputs.tag }}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" \
+              --json assets -q '.assets[].name' | while read -r a; do
+                [ -n "$a" ] && gh release delete-asset "$tag" "$a" \
+                  --repo "$GITHUB_REPOSITORY" --yes || true
+              done
+          fi
 
       - name: Publish / update rolling release
         uses: softprops/action-gh-release@v2
