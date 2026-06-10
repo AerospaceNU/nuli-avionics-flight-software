@@ -1,0 +1,207 @@
+name: Build & Release Firmware
+
+# Builds the SillyGoose PlatformIO environments and publishes their .uf2
+# files to GitHub Releases on every push. Per push, two releases are updated:
+#
+#   1. A permanent, versioned history release   (tag <branch>-v<X>)
+#   2. A rolling "latest" release whose assets keep stable filenames, so the
+#      download links never change.
+#
+#     main              -> "Flight Firmware vX",            rolling tag: latest
+#     not-flight-tested -> "Not-Flight-Tested Firmware vX", rolling tag: not-flight-tested-latest
+#
+# X auto-bumps: it is the per-branch commit count (git rev-list --count HEAD).
+#
+# Layout notes: the git repo root is one level up from the PlatformIO project.
+# On not-flight-tested the vendored libs are submodules; on main they are
+# committed directly, so `submodules: recursive` is correct on both branches.
+
+on:
+  push:
+    branches:
+      - main
+      - not-flight-tested
+  # Validate the build on every PR into a protected branch before it merges.
+  # The release job is guarded to push events only, so PRs build but never publish.
+  pull_request:
+    branches:
+      - main
+      - not-flight-tested
+
+permissions:
+  contents: write
+
+env:
+  PIO_PROJECT_DIR: platformio_nuli_avionics_flight_software
+
+jobs:
+  build:
+    name: Build ${{ matrix.environment }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        environment:
+          - SillyGooseV1
+          - SillyGooseV2
+          - SillyGooseV1Sim
+          - SillyGooseV2Sim
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Cache PlatformIO toolchains, platforms & registry libraries
+        uses: actions/cache@v4
+        with:
+          path: ~/.platformio
+          key: pio-${{ runner.os }}-${{ hashFiles('platformio_nuli_avionics_flight_software/platformio.ini') }}
+          restore-keys: |
+            pio-${{ runner.os }}-
+
+      - name: Install PlatformIO
+        run: |
+          python -m pip install --upgrade pip
+          pip install platformio
+
+      - name: Build firmware (${{ matrix.environment }})
+        working-directory: ${{ env.PIO_PROJECT_DIR }}
+        run: pio run -e ${{ matrix.environment }}
+
+      - name: Collect UF2
+        working-directory: ${{ env.PIO_PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+          # Both branches' post_uf2.py emit the canonical firmware.uf2 in the
+          # build dir, regardless of how each names its project-root copy. Use
+          # the build dir so this step is branch-independent; all asset naming
+          # (version + branch suffix) happens later in the release job.
+          uf2=".pio/build/${{ matrix.environment }}/firmware.uf2"
+          if [ ! -f "$uf2" ]; then
+            echo "::error::No .uf2 at $uf2 for ${{ matrix.environment }}"
+            find .pio/build -name '*.uf2' 2>/dev/null | sed 's/^/  found: /' || true
+            exit 1
+          fi
+          mkdir -p "$GITHUB_WORKSPACE/dist"
+          cp "$uf2" "$GITHUB_WORKSPACE/dist/${{ matrix.environment }}.uf2"
+          echo "Collected $uf2 -> dist/${{ matrix.environment }}.uf2"
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: uf2-${{ matrix.environment }}
+          path: dist/${{ matrix.environment }}.uf2
+          if-no-files-found: error
+
+  release:
+    name: Publish release
+    needs: build
+    runs-on: ubuntu-latest
+    # Never publish from a pull_request event — only on real pushes.
+    if: github.event_name == 'push'
+    steps:
+      - name: Checkout (full history for version count)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Download all UF2 artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: uf2-*
+          path: incoming
+          merge-multiple: true
+
+      - name: Determine release metadata
+        id: meta
+        run: |
+          set -euo pipefail
+          # Auto-bumping version: per-branch commit count.
+          x="$(git rev-list --count HEAD)"
+          echo "x=${x}" >> "$GITHUB_OUTPUT"
+          if [ "${{ github.ref_name }}" = "main" ]; then
+            echo "history_tag=main-v${x}"            >> "$GITHUB_OUTPUT"
+            echo "name=Flight Firmware v${x}"         >> "$GITHUB_OUTPUT"
+            echo "latest_tag=latest"                  >> "$GITHUB_OUTPUT"
+            echo "prerelease=false"                   >> "$GITHUB_OUTPUT"
+            echo "make_latest=true"                   >> "$GITHUB_OUTPUT"
+            echo "suffix="                            >> "$GITHUB_OUTPUT"
+          else
+            echo "history_tag=not-flight-tested-v${x}"          >> "$GITHUB_OUTPUT"
+            echo "name=Not-Flight-Tested Firmware v${x}"        >> "$GITHUB_OUTPUT"
+            echo "latest_tag=not-flight-tested-latest"          >> "$GITHUB_OUTPUT"
+            echo "prerelease=true"                              >> "$GITHUB_OUTPUT"
+            echo "make_latest=false"                            >> "$GITHUB_OUTPUT"
+            echo "suffix=_not_flight_tested"                    >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stage named assets
+        run: |
+          set -euo pipefail
+          x="${{ steps.meta.outputs.x }}"
+          suffix="${{ steps.meta.outputs.suffix }}"
+          mkdir -p history latest
+          for f in incoming/*.uf2; do
+            env_name="$(basename "$f" .uf2)"
+            # Versioned name for the permanent history release.
+            cp "$f" "history/${env_name}${suffix}_v${x}.uf2"
+            # Stable name for the rolling "latest" release (permanent links).
+            cp "$f" "latest/${env_name}${suffix}.uf2"
+          done
+          echo "--- history ---"; ls -1 history
+          echo "--- latest  ---"; ls -1 latest
+
+      - name: Publish versioned history release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.history_tag }}
+          name: ${{ steps.meta.outputs.name }}
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          make_latest: false
+          target_commitish: ${{ github.sha }}
+          body: |
+            Automated build of `${{ github.ref_name }}` @ `${{ github.sha }}` (v${{ steps.meta.outputs.x }}).
+
+            Environments: SillyGooseV1, SillyGooseV2, SillyGooseV1Sim, SillyGooseV2Sim.
+
+            Permanent, versioned build. The always-current build lives at the
+            `${{ steps.meta.outputs.latest_tag }}` release.
+          files: history/*.uf2
+          fail_on_unmatched_files: true
+
+      - name: Clear stale assets from the rolling "latest" release
+        # Stable filenames overwrite cleanly, but this also removes any assets
+        # left over from a previous naming scheme so "latest" stays tidy.
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          tag="${{ steps.meta.outputs.latest_tag }}"
+          if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release view "$tag" --repo "$GITHUB_REPOSITORY" \
+              --json assets -q '.assets[].name' | while read -r a; do
+                [ -n "$a" ] && gh release delete-asset "$tag" "$a" \
+                  --repo "$GITHUB_REPOSITORY" --yes || true
+              done
+          fi
+
+      - name: Update rolling "latest" release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.meta.outputs.latest_tag }}
+          name: ${{ steps.meta.outputs.name }} (latest)
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          make_latest: ${{ steps.meta.outputs.make_latest }}
+          target_commitish: ${{ github.sha }}
+          body: |
+            Always points at the newest `${{ github.ref_name }}` build
+            (currently v${{ steps.meta.outputs.x }}, `${{ github.sha }}`).
+            Filenames here are stable, so these download links never change.
+          files: latest/*.uf2
+          fail_on_unmatched_files: true
