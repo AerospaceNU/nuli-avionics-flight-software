@@ -35,7 +35,7 @@ def objcopy_to_uf2(source, target, env):
     build_dir = env.subst("$BUILD_DIR")
     project_dir = env.subst("$PROJECT_DIR")
     uf2_build_path = os.path.join(build_dir, "firmware.uf2")
-    script_path = os.path.join(project_dir, "uf2", "uf2conv.py")
+    script_path = os.path.join(project_dir, "build_tools", "uf2conv.py")
 
     print(f"--- Generating UF2 for {board_mcu.upper()} ---")
 
