@@ -1,8 +1,5 @@
 import os
 import sys
-import glob
-import shutil
-from datetime import datetime
 
 # --- BOARD SPECIFIC DATA ---
 # Configuration mapping for different MCU families
@@ -37,11 +34,7 @@ def objcopy_to_uf2(source, target, env):
     bin_path = os.path.abspath(str(target[0]))
     build_dir = env.subst("$BUILD_DIR")
     project_dir = env.subst("$PROJECT_DIR")
-    env_name = env.subst("$PIOENV")
-    timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     uf2_build_path = os.path.join(build_dir, "firmware.uf2")
-    uf2_final_name = f"{env_name}_{timestamp}.uf2"
-    uf2_final_path = os.path.join(project_dir, uf2_final_name)
     script_path = os.path.join(project_dir, "uf2", "uf2conv.py")
 
     print(f"--- Generating UF2 for {board_mcu.upper()} ---")
@@ -62,21 +55,7 @@ def objcopy_to_uf2(source, target, env):
     exit_code = env.Execute(full_cmd)
 
     if exit_code == 0 and os.path.exists(uf2_build_path):
-        # Prune previous UF2s for this env so each env keeps only its latest.
-        for stale in glob.glob(os.path.join(project_dir, f"{env_name}_*.uf2")):
-            try:
-                os.remove(stale)
-            except OSError:
-                pass
-        # Also clean up legacy artifacts from older versions of this script.
-        legacy = os.path.join(project_dir, "latest_firmware.uf2")
-        if os.path.exists(legacy):
-            try:
-                os.remove(legacy)
-            except OSError:
-                pass
-        shutil.copyfile(uf2_build_path, uf2_final_path)
-        print(f"--- Success! UF2 saved to project root as '{uf2_final_name}' ---")
+        print(f"--- Success! UF2 saved to '{uf2_build_path}' ---")
     else:
         print(f"--- Error: UF2 conversion failed for {board_mcu} ---")
 
