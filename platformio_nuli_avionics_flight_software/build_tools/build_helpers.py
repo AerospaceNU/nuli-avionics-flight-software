@@ -2,9 +2,14 @@
 
 import ast
 import json
+import os
+import re
 
 Import("env")
 
+
+FIRMWARE_VERSION_ENV = "AVIONICS_FIRMWARE_VERSION"
+FIRMWARE_VERSION_PATTERN = re.compile(r"^[A-Za-z0-9._+-]{1,19}$")
 
 TARGETS = {
     "board": env.BoardConfig(),
@@ -54,3 +59,20 @@ for target_name, config_path, value in iter_config_overrides():
 
 if applied_overrides:
     print("Applied config overrides: " + ", ".join(applied_overrides))
+
+
+firmware_version = os.environ.get(FIRMWARE_VERSION_ENV, "").strip()
+
+if firmware_version:
+    if not FIRMWARE_VERSION_PATTERN.fullmatch(firmware_version):
+        raise ValueError(
+            f"{FIRMWARE_VERSION_ENV} must be 1-19 chars using letters, "
+            "numbers, '.', '_', '+', or '-'"
+        )
+
+    env.Append(
+        BUILD_FLAGS=[
+            f'-D AVIONICS_ARGUMENT_firmwareVersion=\\"{firmware_version}\\"',
+        ]
+    )
+    print(f"Applied firmware version: {firmware_version}")

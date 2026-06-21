@@ -3,18 +3,16 @@ name: Build & Release Firmware
 # Builds the SillyGoose PlatformIO environments and publishes their .uf2
 # files to GitHub Releases on every push. Per push, two releases are updated:
 #
-#   1. A permanent, versioned history release   (tag <branch>-v<X>)
+#   1. A permanent, versioned history release   (tag <branch>-v<major>.<minor>)
 #   2. A rolling "latest" release whose assets keep stable filenames, so the
 #      download links never change.
 #
-#     main              -> "Flight Firmware vX",            rolling tag: latest
-#     not-flight-tested -> "Not-Flight-Tested Firmware vX", rolling tag: not-flight-tested-latest
+#     main              -> "Flight Firmware v1.00",            rolling tag: latest
+#     not-flight-tested -> "Not-Flight-Tested Firmware v1.00", rolling tag: not-flight-tested-latest
 #
-# X auto-bumps: it is the per-branch commit count (git rev-list --count HEAD).
-#
-# Layout notes: the git repo root is one level up from the PlatformIO project.
-# On not-flight-tested the vendored libs are submodules; on main they are
-# committed directly, so `submodules: recursive` is correct on both branches.
+# The major version comes from [avionics].firmwareMajor in platformio.ini.
+# The minor version auto-increments from matching Git tags. Changing
+# firmwareMajor from 1 to 2 resets the auto-generated sequence to v2.00.
 
 on:
   push:
@@ -31,12 +29,150 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: firmware-${{ github.event_name == 'push' && 'release' || github.ref }}
+  cancel-in-progress: false
+
 env:
   PIO_PROJECT_DIR: platformio_nuli_avionics_flight_software
 
 jobs:
+  version:
+    name: Determine firmware version
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      firmware_version: ${{ steps.meta.outputs.firmware_version }}
+      history_tag: ${{ steps.meta.outputs.history_tag }}
+      name: ${{ steps.meta.outputs.name }}
+      latest_tag: ${{ steps.meta.outputs.latest_tag }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
+      make_latest: ${{ steps.meta.outputs.make_latest }}
+      suffix: ${{ steps.meta.outputs.suffix }}
+    steps:
+      - name: Checkout (full history for tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Determine release metadata
+        id: meta
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PIO_PROJECT_DIR: ${{ env.PIO_PROJECT_DIR }}
+        run: |
+          set -euo pipefail
+
+          short_sha="$(git rev-parse --short=7 HEAD)"
+
+          major="$(python - <<'PY'
+          from configparser import ConfigParser
+          import os
+          from pathlib import Path
+
+          config = ConfigParser(interpolation=None)
+          config.optionxform = str
+          path = Path(os.environ["PIO_PROJECT_DIR"]) / "platformio.ini"
+          config.read(path)
+          print(config["avionics"]["firmwareMajor"].strip())
+          PY
+          )"
+
+          if ! [[ "$major" =~ ^[1-9][0-9]*$ ]]; then
+            echo "::error::[avionics].firmwareMajor must be a positive integer, got '${major}'"
+            exit 1
+          fi
+
+          format_version() {
+            printf "v%s.%02d" "$major" "$1"
+          }
+
+          minor_numbers_for_major() {
+            git tag --list "*-v${major}.[0-9]*" |
+              sed -E "s/^.*-v${major}\.([0-9]+)$/\1/" |
+              grep -E '^[0-9]+$' |
+              sort -n
+          }
+
+          next_global_version() {
+            latest_minor="$(minor_numbers_for_major | tail -1 || true)"
+            if [ -z "$latest_minor" ]; then
+              format_version 0
+            else
+              format_version "$((10#$latest_minor + 1))"
+            fi
+          }
+
+          version_at_head_for_branch() {
+            git tag --points-at HEAD --list "${REF_NAME}-v${major}.[0-9]*" |
+              sed -E "s/^${REF_NAME}-//" |
+              grep -E "^v${major}\.[0-9]+$" |
+              sort -t. -k2,2n |
+              tail -1 || true
+          }
+
+          reusable_not_flight_tested_version_for_main() {
+            git tag --list "not-flight-tested-v${major}.[0-9]*" |
+              sed -E 's/^not-flight-tested-//' |
+              grep -E "^v${major}\.[0-9]+$" |
+              sort -t. -k2,2n |
+              while read -r candidate; do
+                if git merge-base --is-ancestor "not-flight-tested-${candidate}" HEAD &&
+                   ! git rev-parse -q --verify "refs/tags/main-${candidate}" >/dev/null; then
+                  echo "$candidate"
+                fi
+              done |
+              tail -1 || true
+          }
+
+          if [ "$EVENT_NAME" != "push" ]; then
+            firmware_version="pr-${PR_NUMBER:-$short_sha}"
+            echo "version=${firmware_version}" >> "$GITHUB_OUTPUT"
+            echo "firmware_version=${firmware_version}" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          existing="$(version_at_head_for_branch)"
+          if [ -n "$existing" ]; then
+            version="$existing"
+          elif [ "$REF_NAME" = "main" ]; then
+            reusable="$(reusable_not_flight_tested_version_for_main)"
+            if [ -n "$reusable" ]; then
+              version="$reusable"
+            else
+              version="$(next_global_version)"
+            fi
+          elif [ "$REF_NAME" = "not-flight-tested" ]; then
+            version="$(next_global_version)"
+          else
+            echo "::error::Unsupported release branch: ${REF_NAME}"
+            exit 1
+          fi
+
+          if [ "$REF_NAME" = "main" ]; then
+            echo "history_tag=main-${version}" >> "$GITHUB_OUTPUT"
+            echo "name=Flight Firmware ${version}" >> "$GITHUB_OUTPUT"
+            echo "latest_tag=latest" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+            echo "make_latest=true" >> "$GITHUB_OUTPUT"
+            echo "suffix=" >> "$GITHUB_OUTPUT"
+          else
+            echo "history_tag=not-flight-tested-${version}" >> "$GITHUB_OUTPUT"
+            echo "name=Not-Flight-Tested Firmware ${version}" >> "$GITHUB_OUTPUT"
+            echo "latest_tag=not-flight-tested-latest" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+            echo "make_latest=false" >> "$GITHUB_OUTPUT"
+            echo "suffix=_not_flight_tested" >> "$GITHUB_OUTPUT"
+          fi
+
+          echo "version=${version}" >> "$GITHUB_OUTPUT"
+          echo "firmware_version=${version}" >> "$GITHUB_OUTPUT"
+
   build:
     name: Build ${{ matrix.environment }}
+    needs: version
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
@@ -72,16 +208,14 @@ jobs:
 
       - name: Build firmware (${{ matrix.environment }})
         working-directory: ${{ env.PIO_PROJECT_DIR }}
+        env:
+          AVIONICS_FIRMWARE_VERSION: ${{ needs.version.outputs.firmware_version }}
         run: pio run -e ${{ matrix.environment }}
 
       - name: Collect UF2
         working-directory: ${{ env.PIO_PROJECT_DIR }}
         run: |
           set -euo pipefail
-          # Both branches' post_uf2.py emit the canonical firmware.uf2 in the
-          # build dir, regardless of how each names its project-root copy. Use
-          # the build dir so this step is branch-independent; all asset naming
-          # (version + branch suffix) happens later in the release job.
           uf2=".pio/build/${{ matrix.environment }}/firmware.uf2"
           if [ ! -f "$uf2" ]; then
             echo "::error::No .uf2 at $uf2 for ${{ matrix.environment }}"
@@ -101,15 +235,15 @@ jobs:
 
   release:
     name: Publish release
-    needs: build
+    needs:
+      - version
+      - build
     runs-on: ubuntu-latest
-    # Never publish from a pull_request event — only on real pushes.
+    # Never publish from a pull_request event - only on real pushes.
     if: github.event_name == 'push'
     steps:
-      - name: Checkout (full history for version count)
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Download all UF2 artifacts
         uses: actions/download-artifact@v4
@@ -118,39 +252,16 @@ jobs:
           path: incoming
           merge-multiple: true
 
-      - name: Determine release metadata
-        id: meta
-        run: |
-          set -euo pipefail
-          # Auto-bumping version: per-branch commit count.
-          x="$(git rev-list --count HEAD)"
-          echo "x=${x}" >> "$GITHUB_OUTPUT"
-          if [ "${{ github.ref_name }}" = "main" ]; then
-            echo "history_tag=main-v${x}"            >> "$GITHUB_OUTPUT"
-            echo "name=Flight Firmware v${x}"         >> "$GITHUB_OUTPUT"
-            echo "latest_tag=latest"                  >> "$GITHUB_OUTPUT"
-            echo "prerelease=false"                   >> "$GITHUB_OUTPUT"
-            echo "make_latest=true"                   >> "$GITHUB_OUTPUT"
-            echo "suffix="                            >> "$GITHUB_OUTPUT"
-          else
-            echo "history_tag=not-flight-tested-v${x}"          >> "$GITHUB_OUTPUT"
-            echo "name=Not-Flight-Tested Firmware v${x}"        >> "$GITHUB_OUTPUT"
-            echo "latest_tag=not-flight-tested-latest"          >> "$GITHUB_OUTPUT"
-            echo "prerelease=true"                              >> "$GITHUB_OUTPUT"
-            echo "make_latest=false"                            >> "$GITHUB_OUTPUT"
-            echo "suffix=_not_flight_tested"                    >> "$GITHUB_OUTPUT"
-          fi
-
       - name: Stage named assets
         run: |
           set -euo pipefail
-          x="${{ steps.meta.outputs.x }}"
-          suffix="${{ steps.meta.outputs.suffix }}"
+          version="${{ needs.version.outputs.version }}"
+          suffix="${{ needs.version.outputs.suffix }}"
           mkdir -p history latest
           for f in incoming/*.uf2; do
             env_name="$(basename "$f" .uf2)"
             # Versioned name for the permanent history release.
-            cp "$f" "history/${env_name}${suffix}_v${x}.uf2"
+            cp "$f" "history/${env_name}${suffix}_${version}.uf2"
             # Stable name for the rolling "latest" release (permanent links).
             cp "$f" "latest/${env_name}${suffix}.uf2"
           done
@@ -160,18 +271,19 @@ jobs:
       - name: Publish versioned history release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.history_tag }}
-          name: ${{ steps.meta.outputs.name }}
-          prerelease: ${{ steps.meta.outputs.prerelease }}
+          tag_name: ${{ needs.version.outputs.history_tag }}
+          name: ${{ needs.version.outputs.name }}
+          prerelease: ${{ needs.version.outputs.prerelease }}
           make_latest: false
           target_commitish: ${{ github.sha }}
           body: |
-            Automated build of `${{ github.ref_name }}` @ `${{ github.sha }}` (v${{ steps.meta.outputs.x }}).
+            Automated build of `${{ github.ref_name }}` @ `${{ github.sha }}`
+            (${{ needs.version.outputs.version }}).
 
             Environments: SillyGooseV1, SillyGooseV2, SillyGooseV1Sim, SillyGooseV2Sim.
 
             Permanent, versioned build. The always-current build lives at the
-            `${{ steps.meta.outputs.latest_tag }}` release.
+            `${{ needs.version.outputs.latest_tag }}` release.
           files: history/*.uf2
           fail_on_unmatched_files: true
 
@@ -182,7 +294,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          tag="${{ steps.meta.outputs.latest_tag }}"
+          tag="${{ needs.version.outputs.latest_tag }}"
           if gh release view "$tag" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
             gh release view "$tag" --repo "$GITHUB_REPOSITORY" \
               --json assets -q '.assets[].name' | while read -r a; do
@@ -191,17 +303,26 @@ jobs:
               done
           fi
 
+      - name: Move rolling "latest" tag
+        run: |
+          set -euo pipefail
+          tag="${{ needs.version.outputs.latest_tag }}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f "$tag" "$GITHUB_SHA"
+          git push origin "refs/tags/${tag}" --force
+
       - name: Update rolling "latest" release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.latest_tag }}
-          name: ${{ steps.meta.outputs.name }} (latest)
-          prerelease: ${{ steps.meta.outputs.prerelease }}
-          make_latest: ${{ steps.meta.outputs.make_latest }}
+          tag_name: ${{ needs.version.outputs.latest_tag }}
+          name: ${{ needs.version.outputs.name }} (latest)
+          prerelease: ${{ needs.version.outputs.prerelease }}
+          make_latest: ${{ needs.version.outputs.make_latest }}
           target_commitish: ${{ github.sha }}
           body: |
             Always points at the newest `${{ github.ref_name }}` build
-            (currently v${{ steps.meta.outputs.x }}, `${{ github.sha }}`).
+            (currently ${{ needs.version.outputs.version }}, `${{ github.sha }}`).
             Filenames here are stable, so these download links never change.
           files: latest/*.uf2
           fail_on_unmatched_files: true
