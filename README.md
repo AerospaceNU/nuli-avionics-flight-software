@@ -76,6 +76,8 @@ on top of our existing project.
 4. Build project
   1. Click the `Hammer` icon. If everything builds correctly, fantastic!
 
+We have also encountered an error where PlatformIO will attempt to install dependancies, and seemingly fail forever with cryptic file not found errors. The typical behavior of this error is it will attempt to look for a mirror of a library forever. This happens if the file name is too long (>260 chars). Enable long file names in powershell to solve this.
+
 ### 4. Doxygen
 Download Doxygen from here: https://www.doxygen.nl/download.html \
 Installation instructions: https://www.doxygen.nl/manual/install.html

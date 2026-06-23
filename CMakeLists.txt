@@ -70,11 +70,11 @@ target_link_libraries(desktop PRIVATE etl::etl Eigen3::Eigen quaternion)
 
 
 # ========Doxygen Build Configuration========
-option(BUILD_DOC "Build documentation" ON)
+option(BUILD_DOC "Build documentation" OFF)
 find_package(Doxygen)
 find_program(DOT_EXECUTABLE dot)
 if (BUILD_DOC AND DOXYGEN_FOUND AND DOT_EXECUTABLE)
-    add_custom_target(create_doxygen ALL
+    add_custom_target(create_doxygen
             COMMAND ${DOXYGEN_EXECUTABLE} Doxyfile
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/docs/
             COMMENT "Generating API documentation with Doxygen"
