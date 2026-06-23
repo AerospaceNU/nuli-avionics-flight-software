@@ -64,6 +64,18 @@ public:
         write("\n");
     }
 
+    // Write raw bytes, retrying until every byte is accepted. This makes a
+    // binary offload robust to USB backpressure: if the host stalls, we block
+    // until it drains rather than silently dropping log data.
+    void writeRaw(const void* buffer, size_t size) {
+        const uint8_t* p = static_cast<const uint8_t*>(buffer);
+        while (size > 0) {
+            const size_t n = write(p, size);
+            p += n;
+            size -= n;
+        }
+    }
+
 protected:
     // Implement this in your derived class to actually output bytes.
     // Should return number of bytes written. The default is a no-op.

@@ -5,6 +5,7 @@
 #include "HardwareAbstraction.h"
 #include "configuration/Configuration.h"
 #include "cli/Parser.h"
+#include "util/CRC.h"
 
 enum LogEntryID : uint8_t {
     LOG_EMPTY = 0xFF,
@@ -174,6 +175,7 @@ public:
     }
 
     void offloadCallback() {
+        if (m_offloadBinaryFlag.isSet()) { binaryOffloadCallback(); return; }
         uint32_t failCount = 0;
         m_debug->message("Starting Offload");
         m_debug->data(m_headerStr);
@@ -215,6 +217,40 @@ public:
             msgBuf[msgBufLen] = '\0';
             m_debug->data("%s", msgBuf);
         }
+        m_debug->message("Ending Offload");
+    }
+
+    // Binary offload: dumps the raw packed flash records framed by a versioned
+    // preamble. The host validates magic + struct size + header CRC, so a local
+    // struct change can't be silently misparsed. writeRaw blocks on USB
+    // backpressure so saturation can't drop records.
+    void binaryOffloadCallback() {
+        m_debug->message("Starting Offload");
+
+        // Header CRC fingerprints the struct layout (the header string is kept
+        // in sync with LogDataStruct), so renames/reorders are detected too.
+        const uint16_t dataSize = sizeof(LogDataStruct);
+        const uint16_t headerCrc = crc16(m_headerStr, strlen(m_headerStr));
+        const uint8_t preamble[] = {
+            'S', 'G', 'B',
+            (uint8_t)(dataSize & 0xFF), (uint8_t)(dataSize >> 8),
+            (uint8_t)(headerCrc & 0xFF), (uint8_t)(headerCrc >> 8),
+        };
+        m_debug->writeRaw(preamble, sizeof(preamble));
+
+        uint32_t failCount = 0;
+        for (uint32_t i = 0; true; i++) {
+            uint8_t id;
+            offload(i, id); // loads m_dataStruct = {id, data}
+            if (id == LOG_EMPTY) {
+                if (++failCount >= 4) break;
+                continue;
+            }
+            failCount = 0;
+            m_debug->writeRaw(m_dataStructStart, sizeof(InternalStruct_s)); // packed [id][data]
+        }
+        const uint8_t terminator = LOG_EMPTY;
+        m_debug->writeRaw(&terminator, 1);
         m_debug->message("Ending Offload");
     }
 
