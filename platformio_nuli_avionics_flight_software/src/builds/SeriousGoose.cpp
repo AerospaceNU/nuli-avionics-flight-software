@@ -1,15 +1,16 @@
 #include "Arduino.h"
 #include "Avionics.h"
-#include "pinmaps/SillyGoosePinmap.h"
+#include "pinmaps/SeriousGoosePinmap.h"
 #include "util/Timer.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
+#include "drivers/arduino/UBloxV2.h"
 #include "drivers/arduino/MS5607Sensor.h"
+#include "drivers/arduino/SX1262Radio.h"
 #include "drivers/arduino/ICM20602Sensor.h"
 #include "drivers/arduino/ICM42605Sensor.h"
 #include "drivers/arduino/MX25L256.h"
-#include "drivers/arduino/S25FL512.h"
 #include "drivers/arduino/ArduinoPyro.h"
 #include "drivers/arduino/ArduinoFram.h"
 #include "drivers/arduino/ArduinoVoltageSensor.h"
@@ -32,20 +33,6 @@
 #include "core/transform/DiscreteRotation.h"
 #include "util/StringHelper.h"
 
-// @todo Have barometer re-init in code/figure out I2C bus lock
-// @todo Disable write in flash driver
-// @todo Fix low pass implementation with dt included
-// @todo Fix stuck in ascent while not moving bug
-// @todo Drogue deployment failure detection
-// @todo Update firmware from website
-// @todo Intelligent log memory usage
-// @todo have AI see if there are any ../ in include paths that don't need to be there
-// @todo Make sure alignment code in configuration works on 64 bit systems
-// @todo Tune the Q thing in kalman filter
-// @todo Mach lockout in the configurationGPS
-// @todo GUI waits for DIP switch
-// @todo Bootprot checking
-
 // clang-format off
 struct SillyGooseLogData {
     uint32_t timestampMs;
@@ -53,34 +40,35 @@ struct SillyGooseLogData {
     float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
     float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
     int32_t flightState;
-    bool drogueContinuity, drogueFired, mainContinuity, mainFired;
+    bool drogueContinuity, drogueFired, mainContinuity, mainFired, auxContinuity, auxFired;
     float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
+    float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
+    uint32_t gpsUnixTimeS;
+    uint16_t gpsHdop, gpsVdop; // raw, scaled by 100 - matches the GPS module's native representation
+    uint8_t gpsFixQuality, gpsSatellitesTracked;
 } remove_struct_padding;
-#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d); };
-void printConfig(Configuration* config, char* buf, size_t bufSize) { mini_snprintf(buf, (int)bufSize, "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u\tFIRMWARE_VERSION=%s", config->getConfigurable<BOARD_NAME_c>().get().str, (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(), (double)config->getConfigurable<MAIN_ELEVATION_c>().get(), (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(), (double)config->getConfigurable<GROUND_ELEVATION_c>().get(), (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(), (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(), (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(), (int)config->getConfigurable<FLIGHT_STATE_c>().get(), (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(), (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get(), config->getConfigurable<FIRMWARE_VERSION_c>().get().str); }
+#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\tauxContinuity\tauxFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d\tgpsLatitudeDeg\tgpsLongitudeDeg\tgpsAltitudeM\tgpsUnixTimeS\tgpsHdop\tgpsVdop\tgpsFixQuality\tgpsSatellitesTracked"
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%lu\t%u\t%u\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.auxContinuity?1:0,d.auxFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d,d.gpsLatitudeDeg,d.gpsLongitudeDeg,d.gpsAltitudeM,d.gpsUnixTimeS,d.gpsHdop,d.gpsVdop,d.gpsFixQuality,d.gpsSatellitesTracked); };
+void printConfig(Configuration* config, char* buf, size_t bufSize) { mini_snprintf(buf, (int)bufSize, "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u\tFIRMWARE_VERSION=%s\tRADIO_FREQUENCY=%.2f\tLORA_SPREADING_FACTOR=%d\tRADIO_TRANSMIT_INTERVAL=%u", config->getConfigurable<BOARD_NAME_c>().get().str, (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(), (double)config->getConfigurable<MAIN_ELEVATION_c>().get(), (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(), (double)config->getConfigurable<GROUND_ELEVATION_c>().get(), (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(), (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(), (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(), (int)config->getConfigurable<FLIGHT_STATE_c>().get(), (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(), (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get(), config->getConfigurable<FIRMWARE_VERSION_c>().get().str, (double)config->getConfigurable<RADIO_FREQUENCY_c>().get(), (int)config->getConfigurable<LORA_SPREADING_FACTOR_c>().get(), (unsigned int)config->getConfigurable<RADIO_TRANSMIT_INTERVAL_c>().get()); }
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
 MS5607Sensor barometer;
-#if IS_BOARD_VERSION(1)
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-ICM20602Sensor imu(&imuRotation);
-S25FL512 flash(FLASH_CS_PIN);
-#elif IS_BOARD_VERSION(2)
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse(); // update
 ICM42605Sensor imu(&imuRotation);
 MX25L256 flash(FLASH_CS_PIN);
-#endif
-ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
-ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
+UBloxV2 gps(&Serial1);
+SX1262Radio radio(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RESET_PIN, RADIO_BUSY_PIN, RADIO_RX_EN_PIN, RADIO_TX_EN_PIN, 915.0f);
+Alarm radioTransmitTimer;
+ArduinoPyro mainPyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
+ArduinoPyro droguePyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
+ArduinoPyro auxPyro(PYRO3_GATE_PIN, PYRO3_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoDigitalInput powerStatus(STATUS_PIN);
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -93,7 +81,10 @@ IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
 // Configuration
-ConfigurationID_t sillyGooseRequiredConfigs[] = {FIRMWARE_VERSION_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c};
+ConfigurationID_t sillyGooseRequiredConfigs[] = {
+        FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c
+    };
 Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
@@ -105,8 +96,12 @@ Configuration configuration({
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
+ConfigurationData<uint32_t> radioTransmitDelay;
 // CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
 ConfigurationCliBindings<FIRMWARE_VERSION_c,
+                         RADIO_FREQUENCY_c,
+                         LORA_SPREADING_FACTOR_c,
+                         RADIO_TRANSMIT_INTERVAL_c,
                          DROGUE_DELAY_c,
                          MAIN_ELEVATION_c,
                          BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
@@ -127,7 +122,11 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     serialDebug.message("Firing main");
     mainPyro.fireFor(pyroFireDuration.get());
 });
-BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+SimpleFlag testAux("-a", "Send start", false, 255, []() {
+    serialDebug.message("Firing aux");
+    auxPyro.fireFor(pyroFireDuration.get());
+});
+BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain, &testAux};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
@@ -149,7 +148,8 @@ void setup() {
     hardware.appendGyroscope(imu.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
-    hardware.appendDigitalInput(&powerStatus);
+    hardware.appendGPS(&gps);
+    hardware.appendRadioLink(&radio);
     hardware.setup();
 
     // Setup components
@@ -169,7 +169,13 @@ void setup() {
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
+    radioTransmitDelay = configuration.getConfigurable<RADIO_TRANSMIT_INTERVAL_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
+    // Radio
+    radio.setFrequency(configuration.getConfigurable<RADIO_FREQUENCY_c>().get());
+    radio.setSpreadingFactor(configuration.getConfigurable<LORA_SPREADING_FACTOR_c>().get());
+    radioTransmitTimer.startAlarm(0, 0); // Trigger right away
+    // All done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
 }
 
@@ -189,6 +195,7 @@ void loop() {
     }
 
     // Determine state
+    state.rawGps = gps.getCoordinates();
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
@@ -235,15 +242,26 @@ void loop() {
     // Update any changes to the configuration
     configuration.pushUpdatesToMemory();
     // Run logging
-    logger.log({
+    SillyGooseLogData logData = {
             state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
             imu.getAccelerometer()->getAccelerationsMSS_sensor().x, imu.getAccelerometer()->getAccelerationsMSS_sensor().y, imu.getAccelerometer()->getAccelerationsMSS_sensor().z,
             imu.getGyroscope()->getVelocitiesRadS_raw().x, imu.getGyroscope()->getVelocitiesRadS_raw().y, imu.getGyroscope()->getVelocitiesRadS_raw().z,
             imu.getGyroscope()->getTemperatureK(),
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired(),
+            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired(), auxPyro.hasContinuity(), auxPyro.isFired(),
             state.orientation.tiltMagnitudeDeg,
             state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
-            state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d
-        });
+            state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
+            state.rawGps.latitudeDeg, state.rawGps.longitudeDeg, state.rawGps.altitudeM,
+            gps.getUnixTimeS(), gps.getHDOP(), gps.getVDOP(), gps.getFixQuality(), gps.getSatellitesTracked()
+        };
+    logger.log(logData);
+
+    if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms) && radio.startTransmit(&logData, sizeof(logData))) {
+        radioTransmitTimer.startAlarm(state.timestamp.runtime_ms, radioTransmitDelay.get());
+    }
+    if (radio.isMessageAvailable()) {
+        const RadioLink::RadioMessage receivedMessage = radio.readMessage(); // assumes a null-terminated C string for now
+        serialDebug.message("Radio: %s (RSSI: %d, SNR: %.2f)", (const char*)receivedMessage.data, receivedMessage.rssi, receivedMessage.snr);
+    }
 }

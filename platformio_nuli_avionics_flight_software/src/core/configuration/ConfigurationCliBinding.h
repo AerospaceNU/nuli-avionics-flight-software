@@ -1,5 +1,6 @@
 #include <type_traits>
 #include <cstdint>
+#include <tuple>
 #include "Avionics.h"
 #include "core/cli/Parser.h"
 #include "core/cli/SimpleFlag.h"

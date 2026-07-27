@@ -1,4 +1,5 @@
 #include "OrientationEstimator.h"
+#include "ConstantsUnits.h"
 constexpr ConfigurationID_t OrientationEstimator::REQUIRED_CONFIGS[];
 
 void OrientationEstimator::setup(HardwareAbstraction* hardware, Configuration* configuration) {

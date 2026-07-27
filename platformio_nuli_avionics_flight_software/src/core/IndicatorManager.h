@@ -3,8 +3,7 @@
 
 #include "Avionics.h"
 #include "HardwareAbstraction.h"
-#include "core/generic_hardware/Indicator.h"
-#include "core/generic_hardware/Pyro.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class IndicatorManager {
 public:

@@ -2,8 +2,7 @@
 #define INTEGRATEDPARSER_H
 
 #include  "Parser.h"
-#include "core/generic_hardware/LineReader.h"
-#include "core/generic_hardware/DebugStream.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class IntegratedParser : public Parser {
 public:

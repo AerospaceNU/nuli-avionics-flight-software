@@ -3,7 +3,7 @@
 
 #include <Avionics.h>
 #include "GenericSensor.h"
-#include "../transform/Vector3DTransform.h"
+#include "core/transform/Vector3DTransform.h"
 
 /**
  * @class Accelerometer

@@ -5,6 +5,7 @@
 #include "HardwareAbstraction.h"
 #include "configuration/Configuration.h"
 #include "cli/Parser.h"
+#include "cli/SimpleFlag.h"
 #include "util/CRC.h"
 
 enum LogEntryID : uint8_t {
@@ -236,7 +237,10 @@ public:
             (uint8_t)(dataSize & 0xFF), (uint8_t)(dataSize >> 8),
             (uint8_t)(headerCrc & 0xFF), (uint8_t)(headerCrc >> 8),
         };
-        m_debug->writeRaw(preamble, sizeof(preamble));
+        if (!m_debug->writeRaw(preamble, sizeof(preamble))) {
+            m_debug->error("Binary offload aborted: host stopped draining (preamble)");
+            return;
+        }
 
         uint32_t failCount = 0;
         for (uint32_t i = 0; true; i++) {
@@ -247,7 +251,10 @@ public:
                 continue;
             }
             failCount = 0;
-            m_debug->writeRaw(m_dataStructStart, sizeof(InternalStruct_s)); // packed [id][data]
+            if (!m_debug->writeRaw(m_dataStructStart, sizeof(InternalStruct_s))) { // packed [id][data]
+                m_debug->error("Binary offload aborted: host stopped draining (entry %d)", i);
+                return;
+            }
         }
         const uint8_t terminator = LOG_EMPTY;
         m_debug->writeRaw(&terminator, 1);

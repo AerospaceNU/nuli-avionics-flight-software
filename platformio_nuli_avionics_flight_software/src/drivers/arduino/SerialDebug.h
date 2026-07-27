@@ -3,7 +3,7 @@
 
 #include "Avionics.h"
 #include "Arduino.h"
-#include "core/generic_hardware/DebugStream.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class SerialDebug final : public DebugStream {
 public:

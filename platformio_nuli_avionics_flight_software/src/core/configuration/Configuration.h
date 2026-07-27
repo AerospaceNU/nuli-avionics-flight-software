@@ -3,9 +3,8 @@
 
 #include "Avionics.h"
 #include "ConfigurationRegistryWraper.h"
-#include "../HardwareAbstraction.h"
-#include "../generic_hardware/FramMemory.h"
-#include "../generic_hardware/DebugStream.h"
+#include "core/HardwareAbstraction.h"
+#include "core/generic_hardware/GenericHardware.h"
 #include <cstddef>  // std::max_align_t
 #include <cstdint>  // uintptr_t
 

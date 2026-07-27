@@ -1,7 +1,5 @@
 #include <Avionics.h>
-#include "../../core/generic_hardware/GenericSensor.h"
 #include "ArduinoPyro.h"
-#include "../../core/generic_hardware/Pyro.h"
 #include "Arduino.h"
 
 

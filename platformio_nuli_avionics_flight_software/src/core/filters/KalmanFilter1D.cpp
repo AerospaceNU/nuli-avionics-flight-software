@@ -1,4 +1,6 @@
 #include "KalmanFilter1D.h"
+#include <cmath>
+#include <algorithm>
 
 KalmanFilter1D::KalmanFilter1D() {
     // States are [position, velocity, acceleration]

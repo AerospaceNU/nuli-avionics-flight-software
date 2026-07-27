@@ -23,7 +23,7 @@ public:
     /**
      * @brief Read data from the sensor
      * @details Read in one reading from the sensor, and convert the data to usefully units/numbers.
-     * Currently is allowed to block the loop to wait for data from the sensor for a few ms.
+     * Currently, is allowed to block the loop to wait for data from the sensor for a few ms.
      */
     void read() override {}
 

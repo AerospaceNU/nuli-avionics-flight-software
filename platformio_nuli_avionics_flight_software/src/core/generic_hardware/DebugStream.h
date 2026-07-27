@@ -6,9 +6,6 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstring>
-#include <limits>
-#include <cmath>
-#include <type_traits>
 
 class DebugStream {
 public:
@@ -65,15 +62,35 @@ public:
     }
 
     // Write raw bytes, retrying until every byte is accepted. This makes a
-    // binary offload robust to USB backpressure: if the host stalls, we block
-    // until it drains rather than silently dropping log data.
-    void writeRaw(const void* buffer, size_t size) {
+    // binary offload robust to brief USB backpressure: if the host stalls
+    // momentarily, we retry until it drains rather than silently dropping log
+    // data. Bounded by MAX_CONSECUTIVE_STALLS consecutive zero-byte writes so a
+    // host that never drains (disconnected, or stuck for some other reason)
+    // can't hang the device forever - returns false if that limit is hit,
+    // leaving some of buffer unwritten.
+    static constexpr uint16_t MAX_CONSECUTIVE_STALLS = 10000;
+
+    bool writeRaw(const void* buffer, size_t size) {
         const uint8_t* p = static_cast<const uint8_t*>(buffer);
+        uint16_t consecutiveStalls = 0;
         while (size > 0) {
-            const size_t n = write(p, size);
+            size_t n = write(p, size);
+            // A write() can never legitimately report writing more bytes than it was
+            // asked to. The Arduino SAMD core's USB CDC stack returns (uint32_t)-1 on
+            // a TX timeout, and Serial_::write() only checks "> 0" before passing that
+            // straight back as the byte count - so a single stalled packet reports as
+            // billions of bytes "written". Treat any out-of-range count as a hard 0 so
+            // that case hits the stall counter below instead of corrupting p/size.
+            if (n > size) n = 0;
+            if (n == 0) {
+                if (++consecutiveStalls >= MAX_CONSECUTIVE_STALLS) return false;
+                continue;
+            }
+            consecutiveStalls = 0;
             p += n;
             size -= n;
         }
+        return true;
     }
 
 protected:

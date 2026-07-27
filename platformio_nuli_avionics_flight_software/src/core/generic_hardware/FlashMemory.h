@@ -3,7 +3,7 @@
 
 #include <Avionics.h>
 #include "core/generic_hardware/DebugStream.h"
-#include "GenericHardware.h"
+#include "GenericAvionicsHardware.h"
 
 class FlashMemory : public GenericAvionicsHardware {
 public:

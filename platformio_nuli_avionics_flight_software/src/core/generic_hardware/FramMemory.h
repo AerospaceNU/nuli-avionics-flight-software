@@ -2,7 +2,9 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONMEMORY_H
 
 #include "core/generic_hardware/DebugStream.h"
-#include "GenericHardware.h"
+#include "GenericAvionicsHardware.h"
+#include <cstring>
+#include <cstdint>
 
 class FramMemory: public GenericAvionicsHardware {
 public:

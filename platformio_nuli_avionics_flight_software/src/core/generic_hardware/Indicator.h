@@ -2,6 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_INDICATOR_H
 
 #include "Avionics.h"
+#include "core/generic_hardware/GenericAvionicsHardware.h"
 
 class Indicator : public GenericAvionicsHardware {
 public:

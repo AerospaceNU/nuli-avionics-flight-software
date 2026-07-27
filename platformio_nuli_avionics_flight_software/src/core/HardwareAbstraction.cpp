@@ -1,4 +1,5 @@
 #include "HardwareAbstraction.h"
+#include "ConstantsUnits.h"
 #include <cmath>
 
 HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz) {

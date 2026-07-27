@@ -1,5 +1,5 @@
 #include "Parser.h"
-#include <stdexcept>
+#include <algorithm>
 
 // parses inputs into appropriate flags.
 CLIReturnCode_e Parser::parse(int argc, char** argv) {
