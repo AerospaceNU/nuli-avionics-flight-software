@@ -27,7 +27,7 @@ public:
         // Waits as long as the host harness takes, so pets every spin - *Sim envs extend the real
         // board envs (run on real hardware), so an un-pet wait here would reset-loop the board.
         while (m_simDataBuffer.empty()) {
-            m_watchdog->pet();
+            m_watchdog->petInLoop();
             m_parser->runCli();
         }
         // Absorb python's per-report burst. Should be >= python's BURST so the

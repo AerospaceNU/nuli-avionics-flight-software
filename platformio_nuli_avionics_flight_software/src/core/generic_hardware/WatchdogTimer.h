@@ -27,6 +27,26 @@ public:
 
     /** @brief Whether the last MCU reset was caused by this watchdog. Valid immediately after boot. */
     virtual bool causedLastReset() const { return false; }
+
+    // Safe to call every iteration of a hot loop - only pets once petInLoopIntervalMs() has elapsed,
+    // since some drivers have a real per-call cost to pet().
+    void petInLoop() {
+        const uint32_t nowMs = currentTimeMs();
+        if (nowMs - m_lastPetInLoopMs >= petInLoopIntervalMs()) {
+            pet();
+            m_lastPetInLoopMs = nowMs;
+        }
+    }
+
+protected:
+    // Clock backing petInLoop(). Default 0 keeps it a no-op like every other base method.
+    virtual uint32_t currentTimeMs() const { return 0; }
+
+    // Cadence for petInLoop(). Default 0 pets every call; override using the configured timeout.
+    virtual uint32_t petInLoopIntervalMs() const { return 0; }
+
+private:
+    uint32_t m_lastPetInLoopMs = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_WATCHDOGTIMER_H

@@ -232,7 +232,7 @@ void FlashMemoryCommon::eraseSector(uint32_t sectorNumber, bool waitForCompletio
 bool FlashMemoryCommon::waitForWriteCompletion(uint32_t timeout) const {
     uint32_t end = millis() + timeout;
     while (isWriteInProgress()) {
-        if (m_watchdog) m_watchdog->pet(); // eraseAll can block for minutes here - see eraseAllTime
+        if (m_watchdog) m_watchdog->petInLoop(); // Long operation so need to pet the watchdog
         if (millis() >= end) {
             return false;
         }

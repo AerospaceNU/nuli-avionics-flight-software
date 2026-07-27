@@ -183,7 +183,7 @@ public:
         // Bounded by m_numEntries as a backstop: log() normally leaves LOG_EMPTY space near the
         // end, but that's enforced elsewhere - this stops a corrupted/full log scanning forever.
         for (uint32_t i = 0; i < m_numEntries; i++) {
-            m_watchdog->pet(); // a full offload can run for minutes
+            m_watchdog->petInLoop(); // a full offload can run for minutes
 
             uint8_t id;
             const LogDataStruct logData = offload(i, id);
@@ -258,7 +258,7 @@ public:
 
         uint32_t failCount = 0;
         for (uint32_t i = 0; i < m_numEntries; i++) {
-            m_watchdog->pet(); // a full offload can run for minutes
+            m_watchdog->petInLoop(); // a full offload can run for minutes
 
             uint8_t id;
             offload(i, id); // loads m_dataStruct = {id, data, crc}

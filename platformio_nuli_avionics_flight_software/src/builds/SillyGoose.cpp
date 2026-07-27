@@ -43,7 +43,6 @@
 // @todo Bootprot checking
 // @todo Burnout detection
 // @todo Watchdog in setup
-// @todo Speed up offload: limiting factor is reading from flash
 // @todo Set PIDs so the web gui can detect V1 vs V2, allow updating to sim firmware
 
 

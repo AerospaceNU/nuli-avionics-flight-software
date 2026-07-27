@@ -16,6 +16,7 @@ void ArduinoWatchdog::setup(DebugStream* debugStream) {
 
 void ArduinoWatchdog::enable(const uint32_t timeoutMs) {
     Watchdog.enable((int)timeoutMs);
+    m_timeoutMs = timeoutMs;
     m_enabled = true;
 }
 
@@ -30,4 +31,12 @@ void ArduinoWatchdog::disable() {
 
 bool ArduinoWatchdog::causedLastReset() const {
     return (Watchdog.resetCause() & RCAUSE_WDT_BIT) != 0;
+}
+
+uint32_t ArduinoWatchdog::currentTimeMs() const {
+    return millis();
+}
+
+uint32_t ArduinoWatchdog::petInLoopIntervalMs() const {
+    return m_timeoutMs / 4;
 }

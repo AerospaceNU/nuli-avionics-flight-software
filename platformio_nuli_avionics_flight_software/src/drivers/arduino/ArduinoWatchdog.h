@@ -21,8 +21,14 @@ public:
 
     bool causedLastReset() const override;
 
+protected:
+    uint32_t currentTimeMs() const override;
+
+    uint32_t petInLoopIntervalMs() const override;
+
 private:
     bool m_enabled = false;
+    uint32_t m_timeoutMs = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOWATCHDOG_H
