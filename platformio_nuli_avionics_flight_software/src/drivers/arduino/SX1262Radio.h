@@ -7,11 +7,7 @@
 /**
  * @class SX1262Radio
  * @brief Radio driver for SX1262-based modules (SeriousGoose uses an EBYTE E22-900MM22S)
- * @details Uses RadioLib. The E22 module brings RXEN/TXEN out as separate pins that must be
- * driven directly by the host - DIO2/DIO3 aren't wired to the MCU on this board, so the chip's
- * internal DIO2-as-RF-switch feature can't be used. Handled here via RadioLib's
- * setRfSwitchPins(), which drives RXEN/TXEN itself whenever the radio changes mode. The module's
- * onboard TCXO is powered via begin()'s tcxoVoltage argument.
+ * @details Uses RadioLib. DIO2/DIO3 aren't wired to the MCU, so RXEN/TXEN are driven directly via RadioLib's setRfSwitchPins() instead of the chip's internal RF-switch feature; the onboard TCXO is powered via begin()'s tcxoVoltage argument.
  */
 class SX1262Radio : public RadioLink {
 public:
@@ -31,12 +27,11 @@ public:
     /**
      * @brief Initialize the radio and start listening for incoming packets
      */
-    void setup(DebugStream* debugStream) override;
+    void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override;
 
     /**
      * @brief Service the last TX/RX operation flagged by the DIO1 interrupt
-     * @details If a receive just completed, buffers the message and re-arms receive. If a
-     * transmit just completed, re-arms receive. Must be called regularly.
+     * @details If a receive just completed, buffers the message and re-arms receive; if a transmit just completed, re-arms receive. Must be called regularly.
      */
     void run() override;
 
@@ -55,16 +50,14 @@ public:
 
     /**
      * @brief Change the radio's center frequency
-     * @details Puts the radio into standby first since the chip requires that to accept a new
-     * frequency, then resumes listening afterward if it was previously receiving.
+     * @details Puts the radio into standby first (required to accept a new frequency), then resumes listening afterward if it was previously receiving.
      * @param frequencyMHz Center frequency in MHz
      */
     bool setFrequency(float frequencyMHz) override;
 
     /**
      * @brief Change the LoRa spreading factor
-     * @details Puts the radio into standby first since the chip requires that to accept new
-     * modulation parameters, then resumes listening afterward if it was previously receiving.
+     * @details Puts the radio into standby first (required to accept new modulation parameters), then resumes listening afterward if it was previously receiving.
      * @param spreadingFactor LoRa spreading factor, 5-12
      */
     bool setSpreadingFactor(uint8_t spreadingFactor) override;

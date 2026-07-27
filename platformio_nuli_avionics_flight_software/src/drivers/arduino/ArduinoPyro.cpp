@@ -3,7 +3,7 @@
 #include "Arduino.h"
 
 
-void ArduinoPyro::setup(DebugStream* debugStream) {
+void ArduinoPyro::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     pinMode(m_firePin, OUTPUT);
     disable();
 }

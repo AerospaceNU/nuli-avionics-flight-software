@@ -15,7 +15,7 @@ public:
      * @brief Initializes the pyro
      * @details Sets up the input/output pins
      */
-    void setup(DebugStream* debugStream) override {}
+    void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override {}
 
     /**
      * @brief Reads in the continuity state

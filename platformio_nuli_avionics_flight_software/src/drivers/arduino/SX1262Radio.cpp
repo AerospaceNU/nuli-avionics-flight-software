@@ -1,8 +1,7 @@
 #include "SX1262Radio.h"
 
 // RadioLib's DIO1 callback must be a plain function pointer, so completion is signalled via this
-// flag rather than a member function. Only one SX1262Radio is ever instantiated on a board, so a
-// single file-scope flag is sufficient.
+// flag instead of a member function - safe since only one SX1262Radio is ever instantiated on a board.
 static volatile bool s_sx1262OperationDone = false;
 
 static void setSX1262InterruptFlag() {
@@ -14,7 +13,7 @@ SX1262Radio::SX1262Radio(uint8_t csPin, uint8_t dio1Pin, uint8_t resetPin, uint8
     m_csPin(csPin), m_dio1Pin(dio1Pin), m_resetPin(resetPin), m_busyPin(busyPin),
     m_rxEnPin(rxEnPin), m_txEnPin(txEnPin), m_frequencyMHz(frequencyMHz) {}
 
-void SX1262Radio::setup(DebugStream* debugStream) {
+void SX1262Radio::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     m_debugStream = debugStream;
 
     m_radio = new Module(m_csPin, m_dio1Pin, m_resetPin, m_busyPin);
@@ -67,9 +66,8 @@ void SX1262Radio::run() {
 }
 
 bool SX1262Radio::startTransmit(void* data, uint32_t length) {
-    // Don't stomp on an in-progress transmit - this can happen for real if the configured
-    // transmit interval is shorter than the actual on-air time for the configured spreading
-    // factor (e.g. SF11/12 can take several seconds per packet).
+    // Don't stomp on an in-progress transmit - can happen for real if the configured transmit
+    // interval is shorter than the actual on-air time for the spreading factor (e.g. SF11/12 can take several seconds/packet).
     if (m_status == RadioLinkStatus::TX_ACTIVE) return false;
 
     const int16_t state = m_radio.startTransmit((uint8_t*)data, length);
@@ -92,6 +90,12 @@ bool SX1262Radio::startReceive() {
 }
 
 bool SX1262Radio::setFrequency(float frequencyMHz) {
+    // standby() would silently abort an in-progress transmit at the hardware level without ever
+    // firing the DIO1 interrupt run() waits on - m_status would be stuck at TX_ACTIVE forever, wedging
+    // both future receives and startTransmit() (see its own TX_ACTIVE guard). Reject instead, same as
+    // startTransmit() does for re-entry - caller can retry once the current transmit completes.
+    if (m_status == RadioLinkStatus::TX_ACTIVE) return false;
+
     const bool wasReceiving = m_status == RadioLinkStatus::RX_LISTENING || m_status == RadioLinkStatus::RX_ACTIVE;
 
     m_radio.standby(); // the chip requires standby mode to accept a new frequency
@@ -107,6 +111,9 @@ bool SX1262Radio::setFrequency(float frequencyMHz) {
 }
 
 bool SX1262Radio::setSpreadingFactor(uint8_t spreadingFactor) {
+    // See setFrequency()'s comment - same TX_ACTIVE hazard, same fix.
+    if (m_status == RadioLinkStatus::TX_ACTIVE) return false;
+
     const bool wasReceiving = m_status == RadioLinkStatus::RX_LISTENING || m_status == RadioLinkStatus::RX_ACTIVE;
 
     m_radio.standby(); // the chip requires standby mode to accept new modulation parameters

@@ -7,9 +7,7 @@
 /**
  * @class UBloxV2
  * @brief GPS driver for u-blox M8-generation modules (e.g. MAX-M8) using the SparkFun u-blox GNSS Arduino Library v2.
- * @details M10-generation modules need the newer "SparkFun u-blox GNSS v3" library instead. The two libraries both
- * declare a global `SFE_UBLOX_GNSS` class, so they can't be linked into the same firmware image - the correct
- * driver has to be picked per-board at compile time rather than autodetected at runtime.
+ * @details M10-generation modules need "SparkFun u-blox GNSS v3" instead - both libraries declare a global `SFE_UBLOX_GNSS` class, so they can't coexist in one image; the right driver must be picked per-board at compile time, not autodetected.
  */
 class UBloxV2 : public GPS {
 public:
@@ -23,10 +21,9 @@ public:
 
     /**
      * @brief Initialize the sensor
-     * @details Connects to the module, switches it to the configured baud rate, disables NMEA output in favor of
-     * UBX-only, and configures it for high-dynamics rocket flight (airborne <4g dynamic model, max navigation rate).
+     * @details Connects to the module, switches to the configured baud rate, disables NMEA in favor of UBX-only, and configures for high-dynamics rocket flight (airborne <4g dynamic model, max navigation rate).
      */
-    void setup(DebugStream* debugStream) override;
+    void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override;
 
     /**
      * @brief Read data from the sensor
@@ -37,9 +34,7 @@ public:
 protected:
     /**
      * @brief (Re)connects to the module over m_serial at the given baud rate
-     * @details Restarts the local serial port at the new baud and re-runs the library's handshake.
-     * Needed twice during setup() - once at the module's factory-default 9600 baud, and again after
-     * telling the module to switch to m_baudRate, since the local port has to be reconfigured to match.
+     * @details Restarts the local serial port at the new baud and re-runs the library's handshake - needed twice in setup(): once at the module's factory-default 9600 baud, again after telling the module to switch to m_baudRate.
      */
     bool connectAtBaud(uint32_t baud);
 

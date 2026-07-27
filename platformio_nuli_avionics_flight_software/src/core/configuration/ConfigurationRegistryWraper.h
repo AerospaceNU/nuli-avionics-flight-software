@@ -3,7 +3,9 @@
 
 #include "Avionics.h"
 #include "ConstantsUnits.h"
+#include "util/StringHelper.h"
 #include <cstring>
+#include <type_traits>
 
 typedef int16_t ConfigurationID_t;
 
@@ -221,5 +223,75 @@ inline bool getConfigurationValid(ConfigurationID_t id, const void* src) {
     return getConfigurationValidGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c>(id, src);
 }
 
+// Formats a single config value as "NAME=value" text given only its ID and a raw pointer to its
+// bytes (NOT a live Configuration object) - so it can print a value read back from flash exactly as
+// it was at logging time, not whatever the value is right now. Overloads cover every type currently
+// registered in ConfigurationRegistry.h; unlike ConfigurationCliBinding::printValue() there's no
+// "(unsupported type)" fallback here, since every field must always show up in the log.
+template <unsigned N>
+inline int printConfigValue(const ConfigurationString<N>& value, char* buf, size_t bufSize) {
+    return mini_snprintf(buf, (int)bufSize, "%s", value.str);
+}
+
+template <typename T>
+inline typename std::enable_if<std::is_floating_point<T>::value, int>::type
+printConfigValue(const T& value, char* buf, size_t bufSize) {
+    return mini_snprintf(buf, (int)bufSize, "%.8f", (double)value);
+}
+
+template <typename T>
+inline typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value, int>::type
+printConfigValue(const T& value, char* buf, size_t bufSize) {
+    return mini_snprintf(buf, (int)bufSize, "%u", (unsigned int)value);
+}
+
+template <typename T>
+inline typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value, int>::type
+printConfigValue(const T& value, char* buf, size_t bufSize) {
+    return mini_snprintf(buf, (int)bufSize, "%d", (int)value);
+}
+
+inline int printConfigValue(const Quaternion& value, char* buf, size_t bufSize) {
+    return mini_snprintf(buf, (int)bufSize, "%.8f,%.8f,%.8f,%.8f", (double)value.a, (double)value.b, (double)value.c, (double)value.d);
+}
+
+inline int printConfigValue(const GyroscopeBias_s& value, char* buf, size_t bufSize) {
+    int written = 0;
+    for (uint8_t i = 0; i < MAX_GYROSCOPE_NUM; i++) {
+        if (i > 0) written += mini_snprintf(buf + written, (int)bufSize - written, ",");
+        written += mini_snprintf(buf + written, (int)bufSize - written, "%.8f,%.8f,%.8f",
+                                  (double)value.bias[i].x, (double)value.bias[i].y, (double)value.bias[i].z);
+    }
+    return written;
+}
+
+// Recursive generator to print a value given a runtime ID - mirrors the pattern of every other
+// generator above, but dispatches on TYPE (via printConfigValue's overloads) instead of just
+// returning a fixed compile-time property.
+template <signed N>
+inline int getConfigurationPrintGenerator(const ConfigurationID_t name, const void* rawPtr, char* buf, size_t bufSize) {
+    if (name == N) {
+        typedef typename GetConfigurationType_s<N>::type config_type_t;
+        return printConfigValue(*static_cast<const config_type_t*>(rawPtr), buf, bufSize);
+    }
+    return getConfigurationPrintGenerator<N - 1>(name, rawPtr, buf, bufSize);
+}
+
+// Base case specialization: stop recursion at -1
+template <>
+inline int getConfigurationPrintGenerator<-1>(ConfigurationID_t, const void*, char* buf, size_t bufSize) {
+    return mini_snprintf(buf, (int)bufSize, "?");
+}
+
+// Skip the sentinel entry
+template <>
+inline int getConfigurationPrintGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c>(const ConfigurationID_t name, const void* rawPtr, char* buf, size_t bufSize) {
+    return getConfigurationPrintGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c - 1>(name, rawPtr, buf, bufSize);
+}
+
+// Public function. Returns the number of characters written to buf.
+inline int getConfigurationPrint(const ConfigurationID_t name, const void* rawPtr, char* buf, size_t bufSize) {
+    return getConfigurationPrintGenerator<LEAVE_THIS_ENTRY_LAST_WITH_THE_HIGHEST_VALUE_c>(name, rawPtr, buf, bufSize);
+}
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRYWRAP_H

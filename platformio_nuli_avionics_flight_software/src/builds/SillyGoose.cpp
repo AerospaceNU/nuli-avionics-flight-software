@@ -5,9 +5,7 @@
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
-#include "drivers/arduino/MS5607Sensor.h"
-#include "drivers/arduino/ICM20602Sensor.h"
-#include "drivers/arduino/ICM42605Sensor.h"
+#include "drivers/arduino/Ms5607Mmc5603SensorPackage.h"
 #include "drivers/arduino/MX25L256.h"
 #include "drivers/arduino/S25FL512.h"
 #include "drivers/arduino/ArduinoPyro.h"
@@ -17,6 +15,7 @@
 #include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoDigitalInput.h"
+#include "drivers/arduino/ArduinoWatchdog.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
 #include "core/configuration/ConfigurationCliBinding.h"
@@ -30,21 +29,23 @@
 #include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
-#include "util/StringHelper.h"
 
 // @todo Have barometer re-init in code/figure out I2C bus lock
 // @todo Disable write in flash driver
 // @todo Fix low pass implementation with dt included
-// @todo Fix stuck in ascent while not moving bug
 // @todo Drogue deployment failure detection
 // @todo Update firmware from website
 // @todo Intelligent log memory usage
-// @todo have AI see if there are any ../ in include paths that don't need to be there
 // @todo Make sure alignment code in configuration works on 64 bit systems
 // @todo Tune the Q thing in kalman filter
 // @todo Mach lockout in the configurationGPS
 // @todo GUI waits for DIP switch
 // @todo Bootprot checking
+// @todo Burnout detection
+// @todo Watchdog in setup
+// @todo Speed up offload: limiting factor is reading from flash
+// @todo Set PIDs so the web gui can detect V1 vs V2, allow updating to sim firmware
+
 
 // clang-format off
 struct SillyGooseLogData {
@@ -58,22 +59,20 @@ struct SillyGooseLogData {
 } remove_struct_padding;
 #define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d"
 void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d); };
-void printConfig(Configuration* config, char* buf, size_t bufSize) { mini_snprintf(buf, (int)bufSize, "CONFIG\tBOARD_NAME=%s\tDROGUE_DELAY=%u\tMAIN_ELEVATION=%.2f\tBATTERY_VOLTAGE_SENSOR_SCALE_FACTOR=%.4f\tGROUND_ELEVATION=%.2f\tGROUND_TEMPERATURE=%.2f\tPYRO_FIRE_DURATION=%u\tBUZZER_ENABLED=%u\tFLIGHT_STATE=%d\tBOARD_ORIENTATION=%d\tCONFIGURATION_VERSION=%u\tFIRMWARE_VERSION=%s", config->getConfigurable<BOARD_NAME_c>().get().str, (unsigned int)config->getConfigurable<DROGUE_DELAY_c>().get(), (double)config->getConfigurable<MAIN_ELEVATION_c>().get(), (double)config->getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get(), (double)config->getConfigurable<GROUND_ELEVATION_c>().get(), (double)config->getConfigurable<GROUND_TEMPERATURE_c>().get(), (unsigned int)config->getConfigurable<PYRO_FIRE_DURATION_c>().get(), (unsigned int)config->getConfigurable<BUZZER_ENABLED_c>().get(), (int)config->getConfigurable<FLIGHT_STATE_c>().get(), (int)config->getConfigurable<BOARD_ORIENTATION_c>().get(), (unsigned int)config->getConfigurable<CONFIGURATION_VERSION_c>().get(), config->getConfigurable<FIRMWARE_VERSION_c>().get().str); }
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
-MS5607Sensor barometer;
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 #if IS_BOARD_VERSION(1)
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-ICM20602Sensor imu(&imuRotation);
 S25FL512 flash(FLASH_CS_PIN);
+constexpr Ms5607Mmc5603SensorPackage::ImuType SILLY_GOOSE_IMU_TYPE = Ms5607Mmc5603SensorPackage::ImuType::ICM20602;
 #elif IS_BOARD_VERSION(2)
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-ICM42605Sensor imu(&imuRotation);
 MX25L256 flash(FLASH_CS_PIN);
+constexpr Ms5607Mmc5603SensorPackage::ImuType SILLY_GOOSE_IMU_TYPE = Ms5607Mmc5603SensorPackage::ImuType::ICM42605;
 #endif
+Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, SILLY_GOOSE_IMU_TYPE, false); // no magnetometer on SillyGoose
 ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
@@ -81,6 +80,7 @@ ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 ArduinoDigitalInput powerStatus(STATUS_PIN);
+ArduinoWatchdog watchdog;
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -143,13 +143,14 @@ void setup() {
     int16_t drogueID = hardware.appendPyro(&droguePyro);
     int16_t mainID = hardware.appendPyro(&mainPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
-    hardware.appendBarometer(&barometer);
-    hardware.appendGenericHardware(&imu);
-    hardware.appendAccelerometer(imu.getAccelerometer());
-    hardware.appendGyroscope(imu.getGyroscope());
+    hardware.appendGenericHardware(&sensorPackage);
+    hardware.appendBarometer(sensorPackage.getBarometer());
+    hardware.appendAccelerometer(sensorPackage.getAccelerometer());
+    hardware.appendGyroscope(sensorPackage.getGyroscope());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
     hardware.appendDigitalInput(&powerStatus);
+    hardware.setWatchdogTimer(&watchdog);
     hardware.setup();
 
     // Setup components
@@ -159,18 +160,22 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.setup(&serialReader, &serialDebug);
-    simulationParser.setup(&cliParser, &serialDebug);
+    simulationParser.setup(&cliParser, &serialDebug, &hardware);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
     indicatorManager.setup(&hardware, drogueID, mainID);
-    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration, printConfig);
+    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration);
     // Locally used configuration variables
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
+    // Watchdog checks and startup
+    if (watchdog.causedLastReset()) logger.logMessage("Last reset was caused by the watchdog");
+    watchdog.enable(100); // What seems to get most cases. Still disconnected when doing USB stuff sometimes
+    watchdog.pet(); // IDK if this actually helps or if it's redundant with enable
 }
 
 void loop() {
@@ -182,9 +187,9 @@ void loop() {
     // Read in sim data. This should be optimized out by the compiler in the final deployment
     if (AVIONICS_ARGUMENT_isSim) {
         simulationParser.waitForEntry();
-        barometer.inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
-        imu.getAccelerometer()->inject({simulationParser.getValue(2), simulationParser.getValue(3), simulationParser.getValue(4)}, 0);
-        imu.getGyroscope()->inject({simulationParser.getValue(5), simulationParser.getValue(6), simulationParser.getValue(7)}, 0);
+        sensorPackage.getBarometer()->inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
+        sensorPackage.getAccelerometer()->inject({simulationParser.getValue(2), simulationParser.getValue(3), simulationParser.getValue(4)}, 0);
+        sensorPackage.getGyroscope()->inject({simulationParser.getValue(5), simulationParser.getValue(6), simulationParser.getValue(7)}, 0);
         simulationParser.releaseEntry();
     }
 
@@ -205,6 +210,9 @@ void loop() {
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
+        // Config can differ from the boot-time snapshot (CLI edits on the pad) - log it again here
+        // so a later simulation replay knows the exact configuration that was active at launch.
+        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -236,10 +244,11 @@ void loop() {
     configuration.pushUpdatesToMemory();
     // Run logging
     logger.log({
-            state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
-            imu.getAccelerometer()->getAccelerationsMSS_sensor().x, imu.getAccelerometer()->getAccelerationsMSS_sensor().y, imu.getAccelerometer()->getAccelerationsMSS_sensor().z,
-            imu.getGyroscope()->getVelocitiesRadS_raw().x, imu.getGyroscope()->getVelocitiesRadS_raw().y, imu.getGyroscope()->getVelocitiesRadS_raw().z,
-            imu.getGyroscope()->getTemperatureK(),
+            state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
+            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,
+            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
+            sensorPackage.getGyroscope()->getVelocitiesRadS_raw().x, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().y, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().z,
+            sensorPackage.getGyroscope()->getTemperatureK(),
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
             droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired(),
             state.orientation.tiltMagnitudeDeg,

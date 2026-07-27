@@ -14,7 +14,7 @@ public:
         VISUAL,
     };
 
-    virtual void setup(DebugStream *debugStream) {}
+    virtual void setup(DebugStream *debugStream, WatchdogTimer *watchdog) {}
 
     virtual void on() = 0;
 

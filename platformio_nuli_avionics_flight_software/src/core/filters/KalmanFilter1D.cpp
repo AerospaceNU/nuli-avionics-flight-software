@@ -21,6 +21,7 @@ KalmanFilter1D::KalmanFilter1D() {
                                    {0, 1, 0},       // Pito tube
                                    {0, 0, 1},       // Accelerometer
     };
+    m_isHIdentity = H.isIdentity(); // see the comment on H and m_isHIdentity in the header
 
     // IDK if we actually want to start with zero covariance, but I think it should be numerically stable
     P.setZero();
@@ -101,23 +102,33 @@ void KalmanFilter1D::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement
     R.row(1) = R_pito;
     R.row(2) = R_accel;
 
-    // Compute innovation
-    Eigen::Matrix<float, 3, 1> innovation = measurement - H * x;  // Innovation is [pos; vel; accel]
-    innovation = innovation.cwiseProduct(mask);             // I think this is a fine way to handle situations where we don't get all the measurements at once, but IDK really
-
-    // Calculate innovation covariance
-    Eigen::Matrix<float, 3, 3> S = H * P * H.transpose() + R;
-
-    // Calculate gain
-    Eigen::Matrix<float, 3, 3> K = P * H.transpose() * S.inverse();
-
-    // Calculate new state estimate
-    x = x + K * innovation;
-
-    // Update state covariance
     Eigen::Matrix<float, 3, 3> I;
     I.setIdentity();
-    P = (I - K * H) * P;
+
+    if (m_isHIdentity) {
+        // Reduces to the identity case (see m_isHIdentity) - skips recomputing values already in x/P.
+        Eigen::Matrix<float, 3, 1> innovation = (measurement - x).cwiseProduct(mask);
+        Eigen::Matrix<float, 3, 3> S = P + R;
+        Eigen::Matrix<float, 3, 3> K = P * S.inverse();
+        x = x + K * innovation;
+        P = (I - K) * P;
+    } else {
+        // Compute innovation
+        Eigen::Matrix<float, 3, 1> innovation = measurement - H * x;  // Innovation is [pos; vel; accel]
+        innovation = innovation.cwiseProduct(mask);             // I think this is a fine way to handle situations where we don't get all the measurements at once, but IDK really
+
+        // Calculate innovation covariance
+        Eigen::Matrix<float, 3, 3> S = H * P * H.transpose() + R;
+
+        // Calculate gain
+        Eigen::Matrix<float, 3, 3> K = P * H.transpose() * S.inverse();
+
+        // Calculate new state estimate
+        x = x + K * innovation;
+
+        // Update state covariance
+        P = (I - K * H) * P;
+    }
 }
 
 void KalmanFilter1D::positionDataUpdate(float position) {
