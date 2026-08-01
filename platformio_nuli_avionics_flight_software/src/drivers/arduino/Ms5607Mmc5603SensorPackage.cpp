@@ -39,9 +39,8 @@ static uint8_t readRegister(uint8_t address, uint8_t reg) {
 
 static constexpr float ICM20602_ACCEL_SCALE_FACTOR = 2048.0f; // LSB/g at +-16g
 static constexpr float ICM20602_GYRO_SCALE_FACTOR  = 16.4f;   // LSB/dps at +-2000dps
-// Precomputed reciprocals: this MCU (SAMD21, no FPU) emulates float division in software, markedly
-// slower than a multiply, but the compiler can't do x/CONST -> x*(1/CONST) itself under strict IEEE
-// compliance (no -ffast-math here) since it changes last-bit rounding - so it's done once here instead.
+// Precomputed reciprocals: avoids software-emulated division on no-FPU SAMD21 (SillyGoose), still a
+// harmless win on SAMD51's FPU (SeriousGoose). Compiler can't do this itself under strict IEEE (no -ffast-math).
 // ACCEL_SCALE_FACTOR is a power of two, so its reciprocal is exact and this is bit-for-bit identical
 // to the division it replaces; GYRO_SCALE_FACTOR isn't, so this shifts the result by up to 2 ULP
 // (verified via host-native sweep over the full int16_t range: max ~3.8e-6 rad/s, ~2e-7 relative -
@@ -130,8 +129,7 @@ void Ms5607Mmc5603SensorPackage::readAndInjectImuIcm20602() {
 
 static constexpr float ICM42605_ACCEL_SCALE_FACTOR = 2048.0f; // LSB/g at +-16g
 static constexpr float ICM42605_GYRO_SCALE_FACTOR  = 16.4f;   // LSB/dps at +-2000dps
-// See ICM20602_*_RECIP above for why (no-FPU SAMD21, software float division vs multiply) and the
-// measured error bound (same scale factor values, so the same ~2 ULP / ~3.8e-6 rad/s bound applies).
+// See ICM20602_*_RECIP above for why and the error bound (same scale factors, same ~2 ULP bound).
 static constexpr float ICM42605_ACCEL_SCALE_FACTOR_RECIP = 1.0f / ICM42605_ACCEL_SCALE_FACTOR;
 static constexpr float ICM42605_GYRO_SCALE_FACTOR_RECIP  = 1.0f / ICM42605_GYRO_SCALE_FACTOR;
 // Max measured deviation ~6.1e-5 K over the full int16_t range (verified via host-native sweep).
@@ -308,20 +306,11 @@ uint32_t Ms5607Mmc5603SensorPackage::readBarometerAdc() const {
 }
 
 void Ms5607Mmc5603SensorPackage::computeAndInjectBarometerReading(const uint32_t rawPressure, const uint32_t rawTemperature) {
-    // Pure int64_t fixed-point, matching the MS5607 datasheet's own reference compensation algorithm:
-    // every division by a power of two is an arithmetic right shift instead of a float divide - shifts
-    // are single-cycle on any 32-bit core, whereas this MCU (SAMD21, no FPU) emulates every float op
-    // in software, and this function runs every ~10ms tick. This is also more precise than the float
-    // version it replaces, not less: C2*2^17 (up to ~8.6e9) and C1*2^16 (up to ~4.3e9) both exceed
-    // float's 24-bit mantissa, so folding them into a float expression (as the old code did, per its
-    // own comment) silently lost bits - int64_t carries the full value exactly. OFF/SENS/TEMP are
-    // int64_t (even though most values fit in int32_t) because the D1*SENS and C3/C4*dT intermediates
-    // can overflow 32 bits, matching the datasheet's own variable-width guidance.
-    // Verified numerically (host-native sweep, 3M+ points across the full 24-bit D1/D2 range and 6
-    // coefficient sets incl. datasheet example and all-zero/all-max extremes): not bit-exact vs the
-    // old float path (max ~0.01 K temperature, ~1.2 Pa pressure - the floor-vs-nearest-real-value
-    // difference inherent to integer vs float division), but 100x+ below the sensor's own accuracy
-    // spec (+-0.8C, +-1.5mbar/150Pa), so this is noise-floor-irrelevant.
+    // Pure int64_t fixed-point (MS5607 datasheet's own algorithm): shifts replace float divides,
+    // faster on both no-FPU SAMD21 and FPU SAMD51. Also more precise, not less - C2*2^17/C1*2^16
+    // exceed float's mantissa, so the old float path silently lost bits; int64_t keeps them exact.
+    // OFF/SENS/TEMP are int64_t since the D1*SENS/C3,C4*dT intermediates overflow 32 bits. Verified
+    // (3M+ point sweep): not bit-exact vs the old float path but 100x+ below sensor spec (+-0.8C/+-1.5mbar).
     const int64_t dT = (int64_t)rawTemperature - ((int64_t)m_baroC5 << 8);
     const int64_t TEMP = 2000 + ((dT * (int64_t)m_baroC6) >> 23);
     const int64_t OFF  = ((int64_t)m_baroC2 << 17) + (((int64_t)m_baroC4 * dT) >> 6);

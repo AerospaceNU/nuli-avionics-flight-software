@@ -62,7 +62,8 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
+ArduinoWatchdog watchdog; // must precede serialDebug - petted during its dev-mode wait below
+SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog); // Only wait for serial connection if in dev mode
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 #if IS_BOARD_VERSION(1)
 S25FL512 flash(FLASH_CS_PIN);
@@ -79,7 +80,6 @@ ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 ArduinoDigitalInput powerStatus(STATUS_PIN);
-ArduinoWatchdog watchdog;
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -131,6 +131,8 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
+    watchdog.disable(); // SAMD's WDT survives NVIC_SystemReset()
+    watchdog.enable(4000);
     disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
@@ -204,14 +206,11 @@ void loop() {
     if (state.flightState == PRE_FLIGHT) {
         // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
         if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
-        // Set default log rate
-        logger.setLogDelay(5000);
+        logger.setLogDelay(5000); // Set default log rate
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
-        // Config can differ from the boot-time snapshot (CLI edits on the pad) - log it again here
-        // so a later simulation replay knows the exact configuration that was active at launch.
-        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);
+        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration); // Log config again
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {

@@ -39,22 +39,23 @@ struct SillyGooseLogData {
     float magFieldTeslaRaw_x, magFieldTeslaRaw_y, magFieldTeslaRaw_z;
     float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
     int32_t flightState;
-    bool drogueContinuity, drogueFired, mainContinuity, mainFired, auxContinuity, auxFired;
+    uint8_t drogueState; bool drogueFired;
+    uint8_t mainState; bool mainFired;
+    uint8_t auxState; bool auxFired;
     float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
     float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
     uint32_t gpsUnixTimeS;
     uint16_t gpsHdop, gpsVdop; // raw, scaled by 100 - matches the GPS module's native representation
     uint8_t gpsFixQuality, gpsSatellitesTracked;
 } remove_struct_padding;
-#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tmagFieldTeslaRaw_x\tmagFieldTeslaRaw_y\tmagFieldTeslaRaw_z\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\tauxContinuity\tauxFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d\tgpsLatitudeDeg\tgpsLongitudeDeg\tgpsAltitudeM\tgpsUnixTimeS\tgpsHdop\tgpsVdop\tgpsFixQuality\tgpsSatellitesTracked"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.9f\t%.9f\t%.9f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%lu\t%u\t%u\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.magFieldTeslaRaw_x,d.magFieldTeslaRaw_y,d.magFieldTeslaRaw_z,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.auxContinuity?1:0,d.auxFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d,d.gpsLatitudeDeg,d.gpsLongitudeDeg,d.gpsAltitudeM,d.gpsUnixTimeS,d.gpsHdop,d.gpsVdop,d.gpsFixQuality,d.gpsSatellitesTracked); };
+#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tmagFieldTeslaRaw_x\tmagFieldTeslaRaw_y\tmagFieldTeslaRaw_z\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueState\tdrogueFired\tmainState\tmainFired\tauxState\tauxFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d\tgpsLatitudeDeg\tgpsLongitudeDeg\tgpsAltitudeM\tgpsUnixTimeS\tgpsHdop\tgpsVdop\tgpsFixQuality\tgpsSatellitesTracked"
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.9f\t%.9f\t%.9f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%lu\t%u\t%u\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.magFieldTeslaRaw_x,d.magFieldTeslaRaw_y,d.magFieldTeslaRaw_z,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueState,d.drogueFired?1:0,d.mainState,d.mainFired?1:0,d.auxState,d.auxFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d,d.gpsLatitudeDeg,d.gpsLongitudeDeg,d.gpsAltitudeM,d.gpsUnixTimeS,d.gpsHdop,d.gpsVdop,d.gpsFixQuality,d.gpsSatellitesTracked); };
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
-// MT1 (IMU) sits 90 deg rotated vs SillyGoose's - confirmed via kicad-cli render of both boards'
-// footprint placement, not just the old shared formula. U2 (magnetometer) is unrotated, at the same reference orientation as SillyGoose's IMU, so it keeps the original formula.
+ArduinoWatchdog watchdog; // must precede serialDebug - petted during its dev-mode wait below
+SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog); // Only wait for serial connection if in dev mode
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local().rotateZ90local().rotateX90local();
 const DiscreteRotation magRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, Ms5607Mmc5603SensorPackage::ImuType::ICM42605, true, &magRotation);
@@ -62,14 +63,13 @@ MX25L256 flash(FLASH_CS_PIN);
 UBloxV2 gps(&Serial1);
 SX1262Radio radio(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RESET_PIN, RADIO_BUSY_PIN, RADIO_RX_EN_PIN, RADIO_TX_EN_PIN, 915.0f);
 Alarm radioTransmitTimer;
-ArduinoPyro mainPyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
-ArduinoPyro droguePyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
-ArduinoPyro auxPyro(PYRO3_GATE_PIN, PYRO3_SENSE_PIN, PYRO_SENSE_THRESHOLD);
+ArduinoPyro mainPyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
+ArduinoPyro droguePyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
+ArduinoPyro auxPyro(PYRO3_GATE_PIN, PYRO3_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoWatchdog watchdog;
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -132,7 +132,9 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
+    watchdog.disable(); // SAMD's WDT survives NVIC_SystemReset()
+    watchdog.enable(4000);
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN, RADIO_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
@@ -151,8 +153,8 @@ void setup() {
     hardware.appendMagnetometer(sensorPackage.getMagnetometer());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
-    hardware.appendGPS(&gps);
     hardware.appendRadioLink(&radio);
+    hardware.appendGPS(&gps);
     hardware.setWatchdogTimer(&watchdog);
     hardware.setup();
 
@@ -181,12 +183,7 @@ void setup() {
     radioTransmitTimer.startAlarm(0, 0); // Trigger right away
     // All done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
-
-    if (watchdog.causedLastReset()) {
-        logger.logMessage("Previous run was ended by the watchdog (main loop stalled past its timeout)");
-    }
-    // Enabled last, once setup() can no longer hang. Bench-test value, not flight-tuned: flash writes
-    // aren't the risk (the wait loop pets every spin), but jitter could trip it since it's pet once per tick - measure real tick timing before changing it.
+    if (watchdog.causedLastReset()) logger.logMessage("Previous run was ended by the watchdog (main loop stalled past its timeout)");
     watchdog.enable(100);
     watchdog.pet();
 }
@@ -219,14 +216,11 @@ void loop() {
     if (state.flightState == PRE_FLIGHT) {
         // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
         if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
-        // Set default log rate
-        logger.setLogDelay(5000);
+        logger.setLogDelay(5000); // Set default log rate
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
-        // Config can differ from the boot-time snapshot (CLI edits on the pad) - log it again here
-        // so a later simulation replay knows the exact configuration that was active at launch.
-        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);
+        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -259,12 +253,14 @@ void loop() {
     // Run logging
     SillyGooseLogData logData = {
             state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
-            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
+            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,
+            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
             sensorPackage.getGyroscope()->getVelocitiesRadS_raw().x, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().y, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().z,
             sensorPackage.getGyroscope()->getTemperatureK(),
-            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
+            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
+            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired(), auxPyro.hasContinuity(), auxPyro.isFired(),
+            droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), auxPyro.stateByte(), auxPyro.isFired(),
             state.orientation.tiltMagnitudeDeg,
             state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
             state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,

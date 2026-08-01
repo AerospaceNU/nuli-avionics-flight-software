@@ -14,8 +14,8 @@
 
 #define CLOCK_SPI_DATA 0x00
 
-// 12MHz: both flash chips support 100MHz+, but this is Adafruit's tested practical ceiling for the
-// SAMD21 SPI peripheral - register math allows 24MHz (48MHz ref / 2), untested for signal integrity.
+// 12MHz: both flash chips support 100MHz+, but this is Adafruit's tested ceiling for SAMD21 SPI
+// (SillyGoose); kept as-is on SAMD51 (SeriousGoose, more headroom) since it's a floor, not a limit.
 static constexpr uint32_t FLASH_SPI_CLOCK_HZ = 12000000;
 
 /**
@@ -146,9 +146,9 @@ void FlashMemoryCommon::pageProgram(uint32_t address, const uint8_t* buffer, uin
     enableWrite();
     enableSelectPin();
     m_spiBus->transfer(pageProgramHeader, sizeof(pageProgramHeader));
-    // DMA-driven (still blocks until done), just skipping the old loop's per-byte CPU polling - same
-    // CS lifecycle as before. Not non-blocking: CS must stay asserted the whole transfer, and FRAM shares this bus with no way to know a deferred transfer was still in flight.
-    m_spiBus->transfer(buffer, nullptr, length);
+    // Byte-by-byte, not DMA transfer() - on SeriousGoose (SAMD51/SERCOM1) DMA never completes
+    // (dma_busy never clears, root cause unknown). Slower but reliable; length is tiny per tick.
+    for (uint32_t i = 0; i < length; i++) m_spiBus->transfer(buffer[i]);
     disableSelectPin();
 }
 
@@ -169,7 +169,8 @@ void FlashMemoryCommon::read(uint32_t address, uint8_t* buffer, uint32_t length)
 
     enableSelectPin();
     m_spiBus->transfer(readCommandHeader, sizeof(readCommandHeader));
-    m_spiBus->transfer(nullptr, buffer, length); // DMA-driven, same per-byte-overhead savings as pageProgram()
+    // Byte-by-byte, not DMA transfer() - see pageProgram()'s comment.
+    for (uint32_t i = 0; i < length; i++) buffer[i] = m_spiBus->transfer(CLOCK_SPI_DATA);
     disableSelectPin();
 }
 
