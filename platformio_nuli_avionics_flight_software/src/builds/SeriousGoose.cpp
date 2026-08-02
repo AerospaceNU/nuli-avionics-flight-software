@@ -286,6 +286,7 @@ void loop() {
             serialDebug.message("Radio: %s (RSSI: %d, SNR: %.2f)", (const char*)receivedMessage.data, receivedMessage.rssi, receivedMessage.snr);
         }
     } else {
+        indicatorManager.keepAliveBeep(state.timestamp);
         cliParser.runCli();
         configuration.pushUpdatesToMemory();
         groundStationRelay.tick(state.timestamp, &serialDebug);
