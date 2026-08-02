@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SYSTEMCLOCK_H
 
 #include "Avionics.h"
-#include "ConstantsUnits.h"
+#include "core/generic_hardware/DebugStream.h"
 
 class SystemClock {
 public:

@@ -20,7 +20,7 @@
 #define TEMP_DATA1           0x1D
 #define ACCEL_DATA_X1        0x1F   // Accel + Gyro + Timestamp follow
 
-/* -------- Bank 1 -------- */
+/* -------- Bank 0 -------- */
 #define GYRO_CONFIG0         0x4F
 #define ACCEL_CONFIG0        0x50
 

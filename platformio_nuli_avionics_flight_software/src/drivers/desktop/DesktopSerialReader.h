@@ -6,7 +6,7 @@
 #include <cstring>
 #include <cstdint>
 #include "Avionics.h"
-#include "core/generic_hardware/LineReader.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 #if defined(_WIN32)
 #include <conio.h>

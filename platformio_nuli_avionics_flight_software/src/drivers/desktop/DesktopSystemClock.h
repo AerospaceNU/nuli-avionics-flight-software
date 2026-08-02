@@ -3,7 +3,7 @@
 
 #include <chrono>
 #include "Avionics.h"
-#include "core/generic_hardware/SystemClock.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class DesktopSystemClock final : public SystemClock {
 public:

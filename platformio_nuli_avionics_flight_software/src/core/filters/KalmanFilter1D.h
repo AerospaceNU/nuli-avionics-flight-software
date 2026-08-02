@@ -51,7 +51,7 @@ protected:
     // If you're familiar with state space controllers, F=A, H=C
     Eigen::Matrix<float, 3, 1> x;               // State
     Eigen::Matrix<float, 3, 3> F;               // The state transition matrix
-    Eigen::Matrix<float, 3, 3> H;               // The observation matrix
+    Eigen::Matrix<float, 3, 3> H;               // The observation matrix - if ever made settable, update m_isHIdentity wherever it's set
 
     Eigen::Matrix<float, 1, 3> R_baro;          // Measurement covariance for each sensor
     Eigen::Matrix<float, 1, 3> R_pito;
@@ -67,6 +67,10 @@ protected:
 
 private:
     float processJerkStd = 1.0f;   // @todo tune this more
+
+    // Set once from H in the constructor (see H's comment above) - when H is identity, H*x,
+    // H*P*H.transpose(), P*H.transpose(), and K*H all reduce to their non-H operand, so genericUpdate() skips recomputing values already sitting in x/P.
+    bool m_isHIdentity = false;
 };
 
 

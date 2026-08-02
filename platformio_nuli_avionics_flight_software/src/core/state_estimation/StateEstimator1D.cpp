@@ -1,7 +1,7 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "ConstantsUnits.h"
-#include "core/generic_hardware/Accelerometer.h"
-#include "core/generic_hardware/Barometer.h"
+#include "core/generic_hardware/GenericHardware.h"
+#include <algorithm>
 
 constexpr ConfigurationID_t StateEstimator1D::REQUIRED_CONFIGS[];
 

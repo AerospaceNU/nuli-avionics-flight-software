@@ -1,11 +1,9 @@
 #include <Avionics.h>
-#include "../../core/generic_hardware/GenericSensor.h"
 #include "ArduinoPyro.h"
-#include "../../core/generic_hardware/Pyro.h"
 #include "Arduino.h"
 
 
-void ArduinoPyro::setup(DebugStream* debugStream) {
+void ArduinoPyro::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     pinMode(m_firePin, OUTPUT);
     disable();
 }
@@ -14,8 +12,11 @@ void ArduinoPyro::read() {
     m_continuityValue = analogRead(m_continuityPin);
     if (m_continuityThreshold < 0) {
         m_hasContinuity = m_continuityValue <= -m_continuityThreshold;
+        // No separate armed threshold on digital/inverted boards - mirror hasContinuity(), like below.
+        m_isArmed = m_hasContinuity;
     } else {
         m_hasContinuity = m_continuityValue >= m_continuityThreshold;
+        m_isArmed = m_continuityValue >= m_armedThreshold;
     }
 }
 
@@ -29,6 +30,10 @@ void ArduinoPyro::run() {
 
 bool ArduinoPyro::hasContinuity() const {
     return m_hasContinuity;
+}
+
+bool ArduinoPyro::isArmed() const {
+    return m_isArmed;
 }
 
 void ArduinoPyro::fire() {

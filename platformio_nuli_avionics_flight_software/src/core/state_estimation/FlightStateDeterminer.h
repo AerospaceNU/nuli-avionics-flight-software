@@ -2,7 +2,8 @@
 #define FLIGHT_STATEMACHINE_H
 
 #include "Avionics.h"
-#include "../configuration/Configuration.h"
+#include "core/configuration/Configuration.h"
+
 #include "core/filters/LowPass.h"
 #include "util/Timer.h"
 

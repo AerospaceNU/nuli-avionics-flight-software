@@ -1,14 +1,12 @@
 #ifndef STATEESTIMATORBASIC6D_H
 #define STATEESTIMATORBASIC6D_H
 
-#include "../filters/KalmanFilter1D.h"
+#include "core/filters/KalmanFilter1D.h"
 #include "Avionics.h"
-#include "../configuration/Configuration.h"
+#include "core/configuration/Configuration.h"
 #include "ConstantsUnits.h"
-#include "core/generic_hardware/Accelerometer.h"
-#include "core/generic_hardware/Gyroscope.h"
-#include "core/generic_hardware/Barometer.h"
-#include "../filters/LowPass.h"
+#include "core/generic_hardware/GenericHardware.h"
+#include "core/filters/LowPass.h"
 
 class StateEstimatorBasic6D {
 public:

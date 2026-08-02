@@ -22,5 +22,6 @@
 #include "GPS.h"
 
 #include "DigitalInput.h"
+#include "WatchdogTimer.h"
 
 #endif //GENERICHARDWARE_H

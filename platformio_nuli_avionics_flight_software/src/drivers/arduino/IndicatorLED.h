@@ -18,7 +18,7 @@ public:
         }
     }
 
-    void setup(DebugStream* debugStream) override {
+    void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override {
         pinMode(m_pin, OUTPUT);
     }
 

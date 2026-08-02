@@ -2,8 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
 
 #include "Avionics.h"
-#include "ConstantsUnits.h"
-#include "core/generic_hardware/DebugStream.h"
+#include "core/generic_hardware/GenericHardware.h"
 #include <iostream>
 #include <fstream>
 #include <string>

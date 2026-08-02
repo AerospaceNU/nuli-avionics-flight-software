@@ -4,7 +4,7 @@ ArduinoFram::ArduinoFram(int8_t csPin) : m_AdafruitFram(csPin) {
 
 }
 
-void ArduinoFram::setup(DebugStream *debugStream) {
+void ArduinoFram::setup(DebugStream *debugStream, WatchdogTimer *watchdog) {
     if (m_AdafruitFram.begin()) {
         debugStream->message("FRAM initialized");
     } else {

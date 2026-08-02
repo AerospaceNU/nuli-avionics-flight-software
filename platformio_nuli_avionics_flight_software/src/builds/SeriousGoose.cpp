@@ -1,13 +1,14 @@
 #include "Arduino.h"
 #include "Avionics.h"
-#include "pinmaps/SillyGoosePinmap.h"
+#include "pinmaps/SeriousGoosePinmap.h"
 #include "util/Timer.h"
 #include "drivers/arduino/ArduinoAvionicsHelper.h"
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
+#include "drivers/arduino/UBloxV2.h"
+#include "drivers/arduino/SX1262Radio.h"
 #include "drivers/arduino/Ms5607Mmc5603SensorPackage.h"
 #include "drivers/arduino/MX25L256.h"
-#include "drivers/arduino/S25FL512.h"
 #include "drivers/arduino/ArduinoPyro.h"
 #include "drivers/arduino/ArduinoFram.h"
 #include "drivers/arduino/ArduinoVoltageSensor.h"
@@ -30,56 +31,45 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
-// @todo Have barometer re-init in code/figure out I2C bus lock
-// @todo Disable write in flash driver
-// @todo Fix low pass implementation with dt included
-// @todo Drogue deployment failure detection
-// @todo Update firmware from website
-// @todo Intelligent log memory usage
-// @todo Make sure alignment code in configuration works on 64 bit systems
-// @todo Tune the Q thing in kalman filter
-// @todo Mach lockout in the configurationGPS
-// @todo GUI waits for DIP switch
-// @todo Bootprot checking
-// @todo Burnout detection
-// @todo Watchdog in setup
-// @todo Set PIDs so the web gui can detect V1 vs V2, allow updating to sim firmware
-
-
 // clang-format off
 struct SillyGooseLogData {
     uint32_t timestampMs;
     float pressurePa, barometerTemperatureK;
     float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
+    float magFieldTeslaRaw_x, magFieldTeslaRaw_y, magFieldTeslaRaw_z;
     float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
     int32_t flightState;
-    bool drogueContinuity, drogueFired, mainContinuity, mainFired;
+    uint8_t drogueState; bool drogueFired;
+    uint8_t mainState; bool mainFired;
+    uint8_t auxState; bool auxFired;
     float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
+    float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
+    uint32_t gpsUnixTimeS;
+    uint16_t gpsHdop, gpsVdop; // raw, scaled by 100 - matches the GPS module's native representation
+    uint8_t gpsFixQuality, gpsSatellitesTracked;
 } remove_struct_padding;
-#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d); };
+#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tmagFieldTeslaRaw_x\tmagFieldTeslaRaw_y\tmagFieldTeslaRaw_z\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueState\tdrogueFired\tmainState\tmainFired\tauxState\tauxFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d\tgpsLatitudeDeg\tgpsLongitudeDeg\tgpsAltitudeM\tgpsUnixTimeS\tgpsHdop\tgpsVdop\tgpsFixQuality\tgpsSatellitesTracked"
+void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.9f\t%.9f\t%.9f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d\t%d\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%lu\t%u\t%u\t%d\t%d",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.magFieldTeslaRaw_x,d.magFieldTeslaRaw_y,d.magFieldTeslaRaw_z,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueState,d.drogueFired?1:0,d.mainState,d.mainFired?1:0,d.auxState,d.auxFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d,d.gpsLatitudeDeg,d.gpsLongitudeDeg,d.gpsAltitudeM,d.gpsUnixTimeS,d.gpsHdop,d.gpsVdop,d.gpsFixQuality,d.gpsSatellitesTracked); };
 // clang-format on
 
 // Hardware
 ArduinoSystemClock arduinoClock;
 ArduinoWatchdog watchdog; // must precede serialDebug - petted during its dev-mode wait below
 SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog); // Only wait for serial connection if in dev mode
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
-#if IS_BOARD_VERSION(1)
-S25FL512 flash(FLASH_CS_PIN);
-constexpr Ms5607Mmc5603SensorPackage::ImuType SILLY_GOOSE_IMU_TYPE = Ms5607Mmc5603SensorPackage::ImuType::ICM20602;
-#elif IS_BOARD_VERSION(2)
+const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local().rotateZ90local().rotateX90local();
+const DiscreteRotation magRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
+Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, Ms5607Mmc5603SensorPackage::ImuType::ICM42605, true, &magRotation);
 MX25L256 flash(FLASH_CS_PIN);
-constexpr Ms5607Mmc5603SensorPackage::ImuType SILLY_GOOSE_IMU_TYPE = Ms5607Mmc5603SensorPackage::ImuType::ICM42605;
-#endif
-Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, SILLY_GOOSE_IMU_TYPE, false); // no magnetometer on SillyGoose
-ArduinoPyro droguePyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_SENSE_THRESHOLD);
-ArduinoPyro mainPyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_SENSE_THRESHOLD);
+UBloxV2 gps(&Serial1);
+SX1262Radio radio(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RESET_PIN, RADIO_BUSY_PIN, RADIO_RX_EN_PIN, RADIO_TX_EN_PIN, 915.0f);
+Alarm radioTransmitTimer;
+ArduinoPyro mainPyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
+ArduinoPyro droguePyro(PYRO2_GATE_PIN, PYRO2_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
+ArduinoPyro auxPyro(PYRO3_GATE_PIN, PYRO3_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
 ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE);
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoDigitalInput powerStatus(STATUS_PIN);
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -92,7 +82,10 @@ IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
 // Configuration
-ConfigurationID_t sillyGooseRequiredConfigs[] = {FIRMWARE_VERSION_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c, PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c};
+ConfigurationID_t sillyGooseRequiredConfigs[] = {
+        FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c
+    };
 Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
@@ -104,8 +97,12 @@ Configuration configuration({
 ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
+ConfigurationData<uint32_t> radioTransmitDelay;
 // CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
 ConfigurationCliBindings<FIRMWARE_VERSION_c,
+                         RADIO_FREQUENCY_c,
+                         LORA_SPREADING_FACTOR_c,
+                         RADIO_TRANSMIT_INTERVAL_c,
                          DROGUE_DELAY_c,
                          MAIN_ELEVATION_c,
                          BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
@@ -126,14 +123,18 @@ SimpleFlag testMain("-m", "Send start", false, 255, []() {
     serialDebug.message("Firing main");
     mainPyro.fireFor(pyroFireDuration.get());
 });
-BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+SimpleFlag testAux("-a", "Send start", false, 255, []() {
+    serialDebug.message("Firing aux");
+    auxPyro.fireFor(pyroFireDuration.get());
+});
+BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain, &testAux};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
 
 void setup() {
     // Initialize
     watchdog.disable(); // SAMD's WDT survives NVIC_SystemReset()
     watchdog.enable(4000);
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN, RADIO_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
     configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
@@ -143,14 +144,17 @@ void setup() {
     int16_t flashID = hardware.appendFlashMemory(&flash);
     int16_t drogueID = hardware.appendPyro(&droguePyro);
     int16_t mainID = hardware.appendPyro(&mainPyro);
+    hardware.appendPyro(&auxPyro); // without this, run() never fires -> fireFor() never times out and continuity never updates
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendGenericHardware(&sensorPackage);
     hardware.appendBarometer(sensorPackage.getBarometer());
     hardware.appendAccelerometer(sensorPackage.getAccelerometer());
     hardware.appendGyroscope(sensorPackage.getGyroscope());
+    hardware.appendMagnetometer(sensorPackage.getMagnetometer());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
-    hardware.appendDigitalInput(&powerStatus);
+    hardware.appendRadioLink(&radio);
+    hardware.appendGPS(&gps);
     hardware.setWatchdogTimer(&watchdog);
     hardware.setup();
 
@@ -171,12 +175,17 @@ void setup() {
     drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
     mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
+    radioTransmitDelay = configuration.getConfigurable<RADIO_TRANSMIT_INTERVAL_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
+    // Radio
+    radio.setFrequency(configuration.getConfigurable<RADIO_FREQUENCY_c>().get());
+    radio.setSpreadingFactor(configuration.getConfigurable<LORA_SPREADING_FACTOR_c>().get());
+    radioTransmitTimer.startAlarm(0, 0); // Trigger right away
+    // All done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
-    // Watchdog checks and startup
-    if (watchdog.causedLastReset()) logger.logMessage("Last reset was caused by the watchdog");
-    watchdog.enable(100); // What seems to get most cases. Still disconnected when doing USB stuff sometimes
-    watchdog.pet(); // IDK if this actually helps or if it's redundant with enable
+    if (watchdog.causedLastReset()) logger.logMessage("Previous run was ended by the watchdog (main loop stalled past its timeout)");
+    watchdog.enable(100);
+    watchdog.pet();
 }
 
 void loop() {
@@ -195,6 +204,7 @@ void loop() {
     }
 
     // Determine state
+    state.rawGps = gps.getCoordinates();
     state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
@@ -210,7 +220,7 @@ void loop() {
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
-        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration); // Log config again
+        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -241,16 +251,29 @@ void loop() {
     // Update any changes to the configuration
     configuration.pushUpdatesToMemory();
     // Run logging
-    logger.log({
+    SillyGooseLogData logData = {
             state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
             sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,
             sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
             sensorPackage.getGyroscope()->getVelocitiesRadS_raw().x, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().y, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().z,
             sensorPackage.getGyroscope()->getTemperatureK(),
+            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
+            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
             batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-            droguePyro.hasContinuity(), droguePyro.isFired(), mainPyro.hasContinuity(), mainPyro.isFired(),
+            droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), auxPyro.stateByte(), auxPyro.isFired(),
             state.orientation.tiltMagnitudeDeg,
             state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
-            state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d
-        });
+            state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
+            state.rawGps.latitudeDeg, state.rawGps.longitudeDeg, state.rawGps.altitudeM,
+            gps.getUnixTimeS(), gps.getHDOP(), gps.getVDOP(), gps.getFixQuality(), gps.getSatellitesTracked()
+        };
+    logger.log(logData);
+
+    if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms) && radio.startTransmit(&logData, sizeof(logData))) {
+        radioTransmitTimer.startAlarm(state.timestamp.runtime_ms, radioTransmitDelay.get());
+    }
+    if (radio.isMessageAvailable()) {
+        const RadioLink::RadioMessage receivedMessage = radio.readMessage(); // assumes a null-terminated C string for now
+        serialDebug.message("Radio: %s (RSSI: %d, SNR: %.2f)", (const char*)receivedMessage.data, receivedMessage.rssi, receivedMessage.snr);
+    }
 }

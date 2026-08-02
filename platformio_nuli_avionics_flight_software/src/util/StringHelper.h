@@ -1,6 +1,9 @@
 #ifndef STRINGHELPER_H
 #define STRINGHELPER_H
 
+#include <cstdint>
+#include <cstdarg>
+
 static void reverse_str(char* str, int len) {
     int i = 0, j = len - 1;
     while (i < j) {
