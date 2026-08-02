@@ -12,7 +12,6 @@
 #include "drivers/arduino/ArduinoFram.h"
 #include "drivers/arduino/ArduinoVoltageSensor.h"
 #include "drivers/arduino/IndicatorLED.h"
-#include "drivers/arduino/ArduinoSerialReader.h"
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoDigitalInput.h"
 #include "drivers/arduino/ArduinoWatchdog.h"
@@ -63,7 +62,7 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu
 // Hardware
 ArduinoSystemClock arduinoClock;
 ArduinoWatchdog watchdog; // must precede serialDebug - petted during its dev-mode wait below
-SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog); // Only wait for serial connection if in dev mode
+SerialDebug<500> serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog, !AVIONICS_ARGUMENT_isSim); // Only wait for serial connection if in dev mode
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 #if IS_BOARD_VERSION(1)
 S25FL512 flash(FLASH_CS_PIN);
@@ -87,7 +86,6 @@ FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
 BasicLogger<SillyGooseLogData> logger;
-ArduinoSerialReader<500> serialReader(!AVIONICS_ARGUMENT_isSim);
 IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
@@ -116,18 +114,20 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          BUZZER_ENABLED_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
-SimpleFlag resetBoard("--reset", "Send start", true, 255, []() { NVIC_SystemReset(); });
-SimpleFlag testfire("--fire", "Send start", true, 255, []() {});
-SimpleFlag testDrogue("-d", "Send start", false, 255, []() {
-    serialDebug.message("Firing drogue");
+SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
+SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
+SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) {
+    debugStream->message("Firing drogue");
     droguePyro.fireFor(pyroFireDuration.get());
 });
-SimpleFlag testMain("-m", "Send start", false, 255, []() {
-    serialDebug.message("Firing main");
+SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) {
+    debugStream->message("Firing main");
     mainPyro.fireFor(pyroFireDuration.get());
 });
+SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
+BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
     // Initialize
@@ -157,10 +157,11 @@ void setup() {
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
-    configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
+    configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(resetBoardGroup);
-    cliParser.setup(&serialReader, &serialDebug);
+    cliParser.addFlagGroup(helpGroup);
+    cliParser.addStream(&serialDebug);
     simulationParser.setup(&cliParser, &serialDebug, &hardware);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);

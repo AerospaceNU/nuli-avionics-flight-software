@@ -16,6 +16,16 @@ public:
 
     }
 
+    // Reads characters until a full line is received; returns true once one is ready via getLine()
+    virtual bool readLine() {
+        return false;
+    }
+
+    // Returns the most recently read line, null-terminated. Overwritten by the next readLine().
+    virtual char* getLine() {
+        return nullptr;
+    }
+
     void message(const char* fmt, ...) {
         write("MSG:\t");
         va_list args;

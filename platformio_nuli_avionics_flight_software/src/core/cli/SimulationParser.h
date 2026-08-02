@@ -13,7 +13,7 @@ class SimulationParser {
 public:
     static constexpr unsigned BUFFER_CAPACITY = 100;
 
-    SimulationParser() : m_simFlag("--sim", "Inject comma/space-separated float values into the sim buffer", true, 255, [this]() { this->simCallback(); }) {}
+    SimulationParser() : m_simFlag("--sim", "Injects sim sensor values", true, [this](DebugStream*) { this->simCallback(); }) {}
 
     void setup(IntegratedParser* parser, DebugStream* debug, HardwareAbstraction* hardware) {
         m_parser = parser;

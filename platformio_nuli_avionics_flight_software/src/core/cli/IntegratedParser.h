@@ -3,29 +3,30 @@
 
 #include  "Parser.h"
 #include "core/generic_hardware/GenericHardware.h"
+#include "etl/vector.h"
 
 class IntegratedParser : public Parser {
 public:
-    void setup(LineReader* lineReader, DebugStream* debugStream) {
-        m_lineReader = lineReader;
-        m_debugStream = debugStream;
+    void addStream(DebugStream* debugStream) {
+        m_debugStreams.push_back(debugStream);
     };
 
     void runCli() {
-        if (m_lineReader->readLine()) {
-            const int errorCode = parse(m_lineReader->getLine());
-            if (errorCode == 0) {
-                runFlags();
-                resetFlags();
-            } else {
-                m_debugStream->error("Invalid message: %d, %s", errorCode, m_lineReader->getLine());
+        for (auto stream: m_debugStreams) {
+            if (stream->readLine()) {
+                const int errorCode = parse(stream->getLine());
+                if (errorCode == 0) {
+                    runFlags(stream);
+                    resetFlags();
+                } else {
+                    stream->error("Invalid message: %d, %s", errorCode, stream->getLine());
+                }
             }
         }
     }
 
 private:
-    LineReader* m_lineReader = nullptr;
-    DebugStream* m_debugStream = nullptr;
+    etl::vector<DebugStream*, 5> m_debugStreams;
 };
 
 #endif //INTEGRATEDPARSER_H

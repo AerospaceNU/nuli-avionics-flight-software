@@ -29,13 +29,13 @@ class BasicLogger {
     // clang-format on
 
 public:
-    BasicLogger() : m_logFlag("--log", "Send start", true, 255, [this]() { this->logCallback(); }),
-                    m_startFlag("-b", "", false, 255, []() {}),
-                    m_endFlag("-e", "", false, 255, []() {}),
-                    m_offloadBinaryFlag("-b", "binary", false, 255, []() {}),
-                    m_eraseFlag("--erase", "Send start", true, 255, [this]() { this->eraseCallback(); }),
-                    m_offloadFlag("--offload", "Send start", true, 255, [this]() { this->offloadCallback(); }),
-                    m_streamFlag("--streamLog", "Send start", true, 255, [this]() { this->streamCallback(); }) {}
+    BasicLogger() : m_logFlag("--log", "Logging status", true, [this](DebugStream* debugStream) { this->logCallback(debugStream); }),
+                    m_startFlag("-b", "Begin", false, [](DebugStream*) {}),
+                    m_endFlag("-e", "End", false, [](DebugStream*) {}),
+                    m_offloadBinaryFlag("-b", "Binary format", false, [](DebugStream*) {}),
+                    m_eraseFlag("--erase", "Erases the flight log", true, [this](DebugStream* debugStream) { this->eraseCallback(debugStream); }),
+                    m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }),
+                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }) {}
 
     void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header,
                void (*printFunction)(const LogDataStruct&, DebugStream*),
@@ -162,11 +162,11 @@ public:
         return static_cast<uint32_t>((m_numEntries - m_logWriteIndex) * loopTimeSec);
     }
 
-    void offloadCallback() {
-        if (m_offloadBinaryFlag.isSet()) { binaryOffloadCallback(); return; }
+    void offloadCallback(DebugStream* debugStream) {
+        if (m_offloadBinaryFlag.isSet()) { binaryOffloadCallback(debugStream); return; }
         uint32_t failCount = 0;
-        m_debug->message("Starting Offload");
-        m_debug->data(m_headerStr);
+        debugStream->message("Starting Offload");
+        debugStream->data(m_headerStr);
 
         // Bumped from 512: a reconstructed CONFIG line now includes every registered field
         // (previously a hand-picked subset), including LAUNCH_ANGLE/GYROSCOPE_BIAS printed
@@ -195,11 +195,11 @@ public:
             if (id != LOG_MESSAGE_CONTINUATION && msgBufLen > 0) {
                 if (msgBufLen >= MSG_BUF_SIZE) msgBufLen = MSG_BUF_SIZE - 1;
                 msgBuf[msgBufLen] = '\0';
-                m_debug->data("%s", msgBuf);
+                debugStream->data("%s", msgBuf);
                 msgBufLen = 0;
             }
             if (id != LOG_CONFIG_CONTINUATION && configBufLen > 0) {
-                flushConfigBuffer(configBuf, configBufLen, msgBuf, MSG_BUF_SIZE);
+                flushConfigBuffer(debugStream, configBuf, configBufLen, msgBuf, MSG_BUF_SIZE);
                 configBufLen = 0;
             }
 
@@ -209,9 +209,9 @@ public:
                 failCount++;
                 if (failCount >= 4) break;
             } else if (id == LOG_DATA) {
-                m_printFunction(logData, m_debug);
+                m_printFunction(logData, debugStream);
             } else if (id == LOG_NEW_FLIGHT) {
-                m_debug->data("New flight");
+                debugStream->data("New flight");
             } else if (id == LOG_MESSAGE || id == LOG_MESSAGE_CONTINUATION) {
                 size_t copyLen = sizeof(LogDataStruct);
                 if (msgBufLen + copyLen >= MSG_BUF_SIZE) {
@@ -231,17 +231,17 @@ public:
         if (msgBufLen > 0) {
             if (msgBufLen >= MSG_BUF_SIZE) msgBufLen = MSG_BUF_SIZE - 1;
             msgBuf[msgBufLen] = '\0';
-            m_debug->data("%s", msgBuf);
+            debugStream->data("%s", msgBuf);
         }
-        if (configBufLen > 0) flushConfigBuffer(configBuf, configBufLen, msgBuf, MSG_BUF_SIZE);
-        m_debug->message("Ending Offload");
+        if (configBufLen > 0) flushConfigBuffer(debugStream, configBuf, configBufLen, msgBuf, MSG_BUF_SIZE);
+        debugStream->message("Ending Offload");
     }
 
     // Binary offload: dumps raw packed [id][data] flash records (crc is internal, stripped before
     // sending) framed by a versioned preamble. Host validates magic + struct size + header CRC, so a
     // local struct change can't be silently misparsed; writeRaw blocks on USB backpressure so saturation can't drop records.
-    void binaryOffloadCallback() {
-        m_debug->message("Starting Offload");
+    void binaryOffloadCallback(DebugStream* debugStream) {
+        debugStream->message("Starting Offload");
 
         // Header CRC fingerprints the struct layout (header string is kept in sync with LogDataStruct), so renames/reorders are detected too.
         const uint16_t dataSize = sizeof(LogDataStruct);
@@ -251,8 +251,8 @@ public:
             (uint8_t)(dataSize & 0xFF), (uint8_t)(dataSize >> 8),
             (uint8_t)(headerCrc & 0xFF), (uint8_t)(headerCrc >> 8),
         };
-        if (!m_debug->writeRaw(preamble, sizeof(preamble))) {
-            m_debug->error("Binary offload aborted: host stopped draining (preamble)");
+        if (!debugStream->writeRaw(preamble, sizeof(preamble))) {
+            debugStream->error("Binary offload aborted: host stopped draining (preamble)");
             return;
         }
 
@@ -269,20 +269,20 @@ public:
             failCount = 0;
             // Only [id][data] goes over the wire - crc bytes would silently desync the host's
             // fixed 1+dataSize-per-entry framing, since the preamble never describes them.
-            if (!m_debug->writeRaw(m_dataStructStart, sizeof(InternalStruct_s) - sizeof(m_dataStruct.crc))) {
-                m_debug->error("Binary offload aborted: host stopped draining (entry %d)", i);
+            if (!debugStream->writeRaw(m_dataStructStart, sizeof(InternalStruct_s) - sizeof(m_dataStruct.crc))) {
+                debugStream->error("Binary offload aborted: host stopped draining (entry %d)", i);
                 return;
             }
         }
         const uint8_t terminator = LOG_EMPTY;
-        m_debug->writeRaw(&terminator, 1);
-        m_debug->message("Ending Offload");
+        debugStream->writeRaw(&terminator, 1);
+        debugStream->message("Ending Offload");
     }
 
-    void eraseCallback() {
-        m_debug->message("Erasing all");
+    void eraseCallback(DebugStream* debugStream) {
+        debugStream->message("Erasing all");
         erase();
-        m_debug->message("Done");
+        debugStream->message("Done");
     }
 
     void enableStreaming() {
@@ -293,29 +293,29 @@ public:
         m_enableStreaming = false;
     }
 
-    void logCallback() {
-        m_debug->message("Entries in log: %d", getEntryNumber());
-        m_debug->message("Remaining log length: %d seconds", getRemainingLogLengthSeconds());
+    void logCallback(DebugStream* debugStream) {
+        debugStream->message("Entries in log: %d", getEntryNumber());
+        debugStream->message("Remaining log length: %d seconds", getRemainingLogLengthSeconds());
         if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableLogging = true;
-            m_debug->message("Logging enabled");
+            debugStream->message("Logging enabled");
         } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableLogging = false;
-            m_debug->message("Logging disabled");
+            debugStream->message("Logging disabled");
         } else {
-            m_debug->message(m_enableLogging ? "Logging is enabled" : "Logging is disabled");
+            debugStream->message(m_enableLogging ? "Logging is enabled" : "Logging is disabled");
         }
     }
 
-    void streamCallback() {
+    void streamCallback(DebugStream* debugStream) {
         if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableStreaming = true;
-            m_debug->message("Streaming enabled");
+            debugStream->message("Streaming enabled");
         } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableStreaming = false;
-            m_debug->message("Streaming disabled");
+            debugStream->message("Streaming disabled");
         } else {
-            m_debug->message(m_enableStreaming ? "Streaming is enabled" : "Streaming is disabled");
+            debugStream->message(m_enableStreaming ? "Streaming is enabled" : "Streaming is disabled");
         }
     }
 
@@ -354,19 +354,19 @@ private:
     // whose config could legitimately differ from today's. Only trusts the live field list/offsets
     // to interpret those bytes when both the stored version AND key CRC match today's live ones;
     // otherwise the layout may have changed since this was logged, and guessing would misread it.
-    void flushConfigBuffer(const uint8_t* raw, size_t rawLen, char* lineBuf, size_t lineBufSize) {
+    void flushConfigBuffer(DebugStream* debugStream, const uint8_t* raw, size_t rawLen, char* lineBuf, size_t lineBufSize) {
         if (!m_configuration || rawLen < 8) return;
         uint32_t storedVersion, storedKeyCrc;
         memcpy(&storedVersion, raw, sizeof(storedVersion));
         memcpy(&storedKeyCrc, raw + sizeof(storedVersion), sizeof(storedKeyCrc));
         if (storedVersion != m_configuration->getConfigVersion() || storedKeyCrc != m_configuration->getConfigKeyCrc()) {
-            m_debug->data("CONFIG\t<unable to decode: schema changed since logged, version=%u keyCrc=%u>",
+            debugStream->data("CONFIG\t<unable to decode: schema changed since logged, version=%u keyCrc=%u>",
                           (unsigned)storedVersion, (unsigned)storedKeyCrc);
             return;
         }
         const size_t headerSize = sizeof(storedVersion) + sizeof(storedKeyCrc);
         m_configuration->formatBufferAsText(storedVersion, raw + headerSize, (uint32_t)(rawLen - headerSize), lineBuf, lineBufSize);
-        m_debug->data("%s", lineBuf);
+        debugStream->data("%s", lineBuf);
     }
 
     // Chunks arbitrary bytes across multiple LOG_<X>/LOG_<X>_CONTINUATION records - shared by

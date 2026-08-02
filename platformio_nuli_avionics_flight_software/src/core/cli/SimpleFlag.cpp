@@ -1,7 +1,7 @@
 #include "SimpleFlag.h"
 
-SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, uint8_t uid, const std::function<void(void)> &callback)
-        : BaseFlag(name, helpText, required, uid, callback) {}
+SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback)
+        : BaseFlag(name, helpText, required, callback) {}
 
 const char* SimpleFlag::name() const {
     return m_name;
@@ -16,17 +16,9 @@ CLIReturnCode_e SimpleFlag::parse(char* arg) {
     return CLI_SUCCESS;
 }
 
-void SimpleFlag::run(uint8_t groupUid) {
+void SimpleFlag::run(DebugStream* debugStream) {
     if (m_callback) {
-        // Create a local buffer to hold the boolean value
-        // uint8_t buffer[sizeof(bool)];
-
-        // Copy the boolean value into the buffer
-        // buffer[0] = m_set ? 1 : 0;
-
-        // Pass the buffer to the callback
-        // m_callback(m_name, buffer, sizeof(bool), groupUid, m_identifier, m_dependency);
-        m_callback();
+        m_callback(debugStream);
     }
 }
 
