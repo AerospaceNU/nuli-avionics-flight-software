@@ -22,7 +22,9 @@
 #include "core/state_estimation/FlightStateDeterminer.h"
 #include "core/IndicatorManager.h"
 #include "core/BasicLogger.h"
+#include "core/GroundStationRelay.h"
 #include "core/cli/SimpleFlag.h"
+#include "core/cli/ArgumentFlag.h"
 #include "core/cli/IntegratedParser.h"
 #include "core/cli/SimulationParser.h"
 #include "core/state_estimation/OrientationEstimator.h"
@@ -79,10 +81,11 @@ BasicLogger<SillyGooseLogData> logger;
 IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
+GroundStationRelay groundStationRelay;
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c
     };
 Configuration configuration({
         sillyGooseRequiredConfigs,
@@ -96,6 +99,7 @@ ConfigurationData<float> mainElevation;
 ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
 ConfigurationData<uint32_t> radioTransmitDelay;
+ConfigurationData<uint32_t> groundStationMode;
 // CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
 ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          RADIO_FREQUENCY_c,
@@ -109,6 +113,7 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          PYRO_FIRE_DURATION_c,
                          BOARD_NAME_c,
                          BUZZER_ENABLED_c,
+                         GROUND_STATION_MODE_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
@@ -161,8 +166,10 @@ void setup() {
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
+    groundStationMode = configuration.getConfigurable<GROUND_STATION_MODE_c>();
     configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
+    groundStationRelay.setup(&cliParser, &radio, &gps);
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.addFlagGroup(helpGroup);
     cliParser.addStream(&serialDebug);
@@ -204,77 +211,83 @@ void loop() {
         simulationParser.releaseEntry();
     }
 
-    // Determine state
-    state.rawGps = gps.getCoordinates();
-    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
+    if (!groundStationMode.get()) {
+        // Determine state
+        state.rawGps = gps.getCoordinates();
+        state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
+        state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
+        state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
-    // Turn on/off the buzzer
-    buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
+        // Turn on/off the buzzer
+        buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
 
-    // State machine to determine when to do what
-    if (state.flightState == PRE_FLIGHT) {
-        // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
-        if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
-        logger.setLogDelay(5000); // Set default log rate
-        cliParser.runCli();
-        indicatorManager.beepContinuity(state.timestamp);
-    } else if (state.flightState == ASCENT) {
-        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
-        logger.enableContinuousLogging();
-        indicatorManager.keepAliveBeep(state.timestamp);
-    } else if (state.flightState == DESCENT) {
-        logger.enableContinuousLogging();
-        indicatorManager.keepAliveBeep(state.timestamp);
-        // Fire both pyros at the appropriate conditions
-        static uint8_t deployState = 0; // Ensure each is only fired once
-        if (flightStateDeterminer.getStateTimer()->getTimeElapsed(state.timestamp.runtime_ms) > drogueDelay.get() && deployState == 0) {
-            droguePyro.fireFor(pyroFireDuration.get());
-            deployState = 1;
+        // State machine to determine when to do what
+        if (state.flightState == PRE_FLIGHT) {
+            // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
+            if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
+            logger.setLogDelay(5000); // Set default log rate
+            cliParser.runCli();
+            indicatorManager.beepContinuity(state.timestamp);
+        } else if (state.flightState == ASCENT) {
+            if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
+            logger.enableContinuousLogging();
+            indicatorManager.keepAliveBeep(state.timestamp);
+        } else if (state.flightState == DESCENT) {
+            logger.enableContinuousLogging();
+            indicatorManager.keepAliveBeep(state.timestamp);
+            // Fire both pyros at the appropriate conditions
+            static uint8_t deployState = 0; // Ensure each is only fired once
+            if (flightStateDeterminer.getStateTimer()->getTimeElapsed(state.timestamp.runtime_ms) > drogueDelay.get() && deployState == 0) {
+                droguePyro.fireFor(pyroFireDuration.get());
+                deployState = 1;
+            }
+            static Debounce mainDeployDebounce(200);
+            if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp.runtime_ms) && deployState == 1) {
+                mainPyro.fireFor(pyroFireDuration.get());
+                deployState = 2;
+            }
+        } else if (state.flightState == POST_FLIGHT) {
+            logger.disableContinuousLogging();
+            logger.setLogDelay(5000);
+            cliParser.runCli();
+            indicatorManager.siren(state.timestamp);
+        } else {
+            logger.enableContinuousLogging();
+            cliParser.runCli();
+            indicatorManager.siren(state.timestamp);
         }
-        static Debounce mainDeployDebounce(200);
-        if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp.runtime_ms) && deployState == 1) {
-            mainPyro.fireFor(pyroFireDuration.get());
-            deployState = 2;
+
+        // Update any changes to the configuration
+        configuration.pushUpdatesToMemory();
+        // Run logging
+        SillyGooseLogData logData = {
+                state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
+                sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,
+                sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
+                sensorPackage.getGyroscope()->getVelocitiesRadS_raw().x, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().y, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().z,
+                sensorPackage.getGyroscope()->getTemperatureK(),
+                sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
+                sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
+                batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
+                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), auxPyro.stateByte(), auxPyro.isFired(),
+                state.orientation.tiltMagnitudeDeg,
+                state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
+                state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
+                state.rawGps.latitudeDeg, state.rawGps.longitudeDeg, state.rawGps.altitudeM,
+                gps.getUnixTimeS(), gps.getHDOP(), gps.getVDOP(), gps.getFixQuality(), gps.getSatellitesTracked()
+            };
+        logger.log(logData);
+
+        if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms) && radio.startTransmit(&logData, sizeof(logData))) {
+            radioTransmitTimer.startAlarm(state.timestamp.runtime_ms, radioTransmitDelay.get());
         }
-    } else if (state.flightState == POST_FLIGHT) {
-        logger.disableContinuousLogging();
-        logger.setLogDelay(5000);
-        cliParser.runCli();
-        indicatorManager.siren(state.timestamp);
+        if (radio.isMessageAvailable()) {
+            const RadioLink::RadioMessage receivedMessage = radio.readMessage(); // assumes a null-terminated C string for now
+            serialDebug.message("Radio: %s (RSSI: %d, SNR: %.2f)", (const char*)receivedMessage.data, receivedMessage.rssi, receivedMessage.snr);
+        }
     } else {
-        logger.enableContinuousLogging();
         cliParser.runCli();
-        indicatorManager.siren(state.timestamp);
-    }
-
-    // Update any changes to the configuration
-    configuration.pushUpdatesToMemory();
-    // Run logging
-    SillyGooseLogData logData = {
-            state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
-            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,
-            sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
-            sensorPackage.getGyroscope()->getVelocitiesRadS_raw().x, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().y, sensorPackage.getGyroscope()->getVelocitiesRadS_raw().z,
-            sensorPackage.getGyroscope()->getTemperatureK(),
-            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
-            sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
-            batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-            droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), auxPyro.stateByte(), auxPyro.isFired(),
-            state.orientation.tiltMagnitudeDeg,
-            state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
-            state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
-            state.rawGps.latitudeDeg, state.rawGps.longitudeDeg, state.rawGps.altitudeM,
-            gps.getUnixTimeS(), gps.getHDOP(), gps.getVDOP(), gps.getFixQuality(), gps.getSatellitesTracked()
-        };
-    logger.log(logData);
-
-    if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms) && radio.startTransmit(&logData, sizeof(logData))) {
-        radioTransmitTimer.startAlarm(state.timestamp.runtime_ms, radioTransmitDelay.get());
-    }
-    if (radio.isMessageAvailable()) {
-        const RadioLink::RadioMessage receivedMessage = radio.readMessage(); // assumes a null-terminated C string for now
-        serialDebug.message("Radio: %s (RSSI: %d, SNR: %.2f)", (const char*)receivedMessage.data, receivedMessage.rssi, receivedMessage.snr);
+        configuration.pushUpdatesToMemory();
+        groundStationRelay.tick(state.timestamp, &serialDebug);
     }
 }
