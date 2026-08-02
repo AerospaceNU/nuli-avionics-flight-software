@@ -31,6 +31,8 @@
 #include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
+#include "core/triggers/ExpressionStore.h"
+#include "core/triggers/TriggerConditionStore.h"
 
 // clang-format off
 struct SillyGooseLogData {
@@ -82,6 +84,13 @@ IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
 GroundStationRelay groundStationRelay;
+// Expression-based pyro triggers (arbitrary CLI/FRAM-configured conditions over RocketState_s).
+// Only the aux pyro is wired to one so far - drogue/main keep their existing hardcoded
+// delay/elevation logic below, untouched.
+ExpressionStore expressionStore;
+TriggerConditionStore triggerConditionStore;
+constexpr uint8_t AUX_TRIGGER_ID = 0;
+uint8_t auxTriggerRootId = ExpressionStore::INVALID_ID;
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
@@ -134,6 +143,28 @@ SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debug
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain, &testAux};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* helpGroup[] = {&helpFlag};
+// Aux pyro trigger condition, in notation form (e.g. "((altitudeM < 50) and (velocityMS < 0))").
+// Mirrors ConfigurationCliBinding's get/set shape, but isn't one - the condition string is
+// validated by ExpressionStore::compile() before being kept, which a plain ConfigurationString
+// can't do on its own.
+ArgumentFlag<const char*> auxTriggerSetFlag("-set", "New trigger condition, in notation form", false, [](DebugStream*) {});
+SimpleFlag auxTriggerFlag("-auxTrigger", "Gets/sets the aux pyro's trigger condition", true, [](DebugStream* debugStream) {
+    if (auxTriggerSetFlag.isSet()) {
+        uint8_t newRootId;
+        if (expressionStore.compile(AUX_TRIGGER_ID, auxTriggerSetFlag.getValueDerived(), &newRootId) == ExpressionValueType_e::Boolean) {
+            auxTriggerRootId = newRootId;
+            triggerConditionStore.setCondition(AUX_TRIGGER_ID, auxTriggerSetFlag.getValueDerived());
+            debugStream->message("Aux trigger condition set");
+        } else {
+            debugStream->message("Aux trigger: invalid condition, unchanged");
+        }
+    } else {
+        char buffer[TriggerConditionStore::CONDITION_LEN];
+        expressionStore.conditionToString(auxTriggerRootId, buffer, sizeof(buffer));
+        debugStream->message("Aux trigger condition: %s", buffer);
+    }
+});
+BaseFlag* auxTriggerGroup[] = {&auxTriggerFlag, &auxTriggerSetFlag};
 
 void setup() {
     // Initialize
@@ -172,6 +203,12 @@ void setup() {
     groundStationRelay.setup(&cliParser, &radio, &gps);
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.addFlagGroup(helpGroup);
+    // Trigger conditions live in the same FRAM chip as configuration, just past its region
+    // (TriggerConditionStore::FRAM_OFFSET == MAX_CONFIGURATION_LENGTH) - independent of Configuration
+    // so an invalid/uncompilable condition can never corrupt or invalidate the real configuration.
+    triggerConditionStore.setup(hardware.getFramMemory(framID), &serialDebug);
+    expressionStore.compile(AUX_TRIGGER_ID, triggerConditionStore.getCondition(AUX_TRIGGER_ID), &auxTriggerRootId);
+    cliParser.addFlagGroup(auxTriggerGroup);
     cliParser.addStream(&serialDebug);
     simulationParser.setup(&cliParser, &serialDebug, &hardware);
     stateEstimator1D.setup(&hardware, &configuration);
@@ -218,6 +255,16 @@ void loop() {
         state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
         state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
+        // Aux pyro trigger: fires once when its (CLI/FRAM-configured) condition first evaluates
+        // true. Independent of flightState by design - if you want it gated to a phase of
+        // flight, put that in the condition itself (e.g. "((flightState == 2) and ...)").
+        expressionStore.tick(state);
+        static bool auxTriggerFired = false;
+        if (!auxTriggerFired && expressionStore.getBooleanValue(auxTriggerRootId)) {
+            auxPyro.fireFor(pyroFireDuration.get());
+            auxTriggerFired = true;
+        }
+
         // Turn on/off the buzzer
         buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
 
@@ -259,6 +306,7 @@ void loop() {
 
         // Update any changes to the configuration
         configuration.pushUpdatesToMemory();
+        triggerConditionStore.pushUpdatesToMemory();
         // Run logging
         SillyGooseLogData logData = {
                 state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
