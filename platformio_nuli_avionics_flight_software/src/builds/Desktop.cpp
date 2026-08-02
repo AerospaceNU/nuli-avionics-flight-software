@@ -3,7 +3,6 @@ AVIONICS_DESKTOP_MAIN
 #include "drivers/desktop/FlightDataReader.h"
 #include "drivers/desktop/DesktopDebug.h"
 #include "drivers/desktop/DummySystemClock.h"
-#include "drivers/desktop/DesktopSerialReader.h"
 #include "core/HardwareAbstraction.h"
 #include "core/cli/IntegratedParser.h"
 #include "core/transform/DiscreteRotation.h"
@@ -21,7 +20,7 @@ FlightDataReader flightDataReader;
 
 // Hardware
 DummySystemClock desktopClock(100);
-DesktopDebug debug;
+DesktopDebug<1000> debug;
 Barometer barometer;
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local().rotateZ90local().rotateX90local().inverse();
 Accelerometer accelerometer(&imuRotation);
@@ -34,11 +33,13 @@ FlightStateDeterminer flightStateDeterminer;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
 StateEstimatorBasic6D stateEstimator6D(true);
-DesktopSerialReader<1000> serialReader;
 IntegratedParser cliParser;
 ConfigurationID_t desktopRequiredConfigs[] = {BOARD_NAME_c};
 Configuration configuration({desktopRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS, OrientationEstimator::REQUIRED_CONFIGS});
 ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
+// CLI
+SimpleFlag helpFlag("--help", "Prints all available CLI commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
+BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
     // Setup sim input/output. Start at ts=10145116 to match the prior clipped MBTA_FLIGHT_DATA.txt
@@ -60,8 +61,9 @@ void setup() {
     // Setup components
     debug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
-    configurationCliBindings.setupAll(&configuration, &cliParser, &debug);
-    cliParser.setup(&serialReader, &debug);
+    configurationCliBindings.setupAll(&configuration, &cliParser);
+    cliParser.addFlagGroup(helpGroup);
+    cliParser.addStream(&debug);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
     stateEstimator6D.setup(&hardware, &configuration);

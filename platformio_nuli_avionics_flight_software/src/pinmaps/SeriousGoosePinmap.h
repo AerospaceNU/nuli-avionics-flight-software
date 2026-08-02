@@ -3,7 +3,7 @@
 
 #define SENSE_R1 47.0f
 #define SENSE_R2 10.0f
-#define SILLY_GOOSE_NAME "SeriousGooseV1"
+#define SERIOUS_GOOSE_NAME "SeriousGooseV1"
 
 #define FRAM_CS_PIN (34)
 #define FLASH_CS_PIN (12)

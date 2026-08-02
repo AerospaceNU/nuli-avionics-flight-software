@@ -8,18 +8,17 @@
 #include "drivers/arduino/UBloxV2.h"
 #include "drivers/arduino/SX1262Radio.h"
 #include "drivers/arduino/ArduinoFram.h"
-#include "drivers/arduino/ArduinoSerialReader.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
 #include "core/configuration/ConfigurationCliBinding.h"
 #include "core/cli/IntegratedParser.h"
 #include "core/cli/ArgumentFlag.h"
 #include "core/cli/SimpleFlag.h"
+#include "core/state_estimation/FlightStateDeterminer.h"
+#include "core/state_estimation/OrientationEstimator.h"
+#include "core/state_estimation/StateEstimator1D.h"
 #include <cstring>
 
-// SeriousGooseGround shares the SeriousGoose PCB/pinmap, but runs a minimal firmware that just
-// bridges GPS + radio to USB - no flight state estimation, pyros, or flight logging.
-#define GROUND_STATION_NAME "SeriousGooseGroundV1"
 #define GPS_REPORT_INTERVAL_MS (1000)
 
 // Hex-encodes `length` bytes of `data` into `outHex` (must be at least length*2+1 bytes) - used to
@@ -35,7 +34,7 @@ void bytesToHex(const uint8_t* data, uint8_t length, char* outHex) {
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-SerialDebug serialDebug(AVIONICS_ARGUMENT_isDev); // Only wait for serial connection if in dev mode
+SerialDebug<500> serialDebug(AVIONICS_ARGUMENT_isDev, nullptr, !AVIONICS_ARGUMENT_isSim); // Only wait for serial connection if in dev mode
 ArduinoFram fram(FRAM_CS_PIN);
 UBloxV2 gps(&Serial1);
 SX1262Radio radio(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RESET_PIN, RADIO_BUSY_PIN, RADIO_RX_EN_PIN, RADIO_TX_EN_PIN, 915.0f);
@@ -69,18 +68,41 @@ bool inSafeUplinkWindow(uint32_t nowMs) {
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
-ArduinoSerialReader<500> serialReader(!AVIONICS_ARGUMENT_isSim);
 IntegratedParser cliParser;
 
 // Configuration - RADIO_FREQUENCY/LORA_SPREADING_FACTOR must be set to match the flight
-// computer's radio for the two to talk to each other. There's no RADIO_TRANSMIT_INTERVAL here
-// since uplink is manually triggered via --send rather than sent on a timer.
-ConfigurationID_t groundStationRequiredConfigs[] = {FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, BOARD_NAME_c};
-Configuration configuration({groundStationRequiredConfigs, Configuration::REQUIRED_CONFIGS});
-ConfigurationCliBindings<FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
-
+// computer's radio for the two to talk to each other. The full config ID set is registered
+// (matching SeriousGoose.cpp exactly, even though most of it is unused here - e.g. uplink is
+// manually triggered via --send rather than on a timer, so RADIO_TRANSMIT_INTERVAL does nothing)
+// so the FRAM layout's ID CRC matches between the two builds. SeriousGooseGround shares its PCB
+// with SeriousGoose, so a mismatched ID set would make flashing either firmware onto that shared
+// board look like a "config switch" and reset FRAM to defaults instead of keeping it intact.
+ConfigurationID_t groundStationRequiredConfigs[] = {
+        FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c
+    };
+Configuration configuration({
+        groundStationRequiredConfigs,
+        Configuration::REQUIRED_CONFIGS,
+        FlightStateDeterminer::REQUIRED_CONFIGS,
+        StateEstimator1D::REQUIRED_CONFIGS,
+        OrientationEstimator::REQUIRED_CONFIGS
+    });
+ConfigurationCliBindings<FIRMWARE_VERSION_c,
+                         RADIO_FREQUENCY_c,
+                         LORA_SPREADING_FACTOR_c,
+                         RADIO_TRANSMIT_INTERVAL_c,
+                         DROGUE_DELAY_c,
+                         MAIN_ELEVATION_c,
+                         BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
+                         GROUND_ELEVATION_c,
+                         GROUND_TEMPERATURE_c,
+                         PYRO_FIRE_DURATION_c,
+                         BOARD_NAME_c,
+                         BUZZER_ENABLED_c,
+                         CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
-ArgumentFlag<const char*> sendFlag("--send", "Queue a string payload to send up to the rocket over radio - transmitted at the next predicted safe window (based on the learned downlink cadence) rather than immediately, to avoid colliding with the flight computer's own transmit", true, 255, []() {
+ArgumentFlag<const char*> sendFlag("--send", "Queue a string payload to send up to the rocket over radio - transmitted at the next predicted safe window (based on the learned downlink cadence) rather than immediately, to avoid colliding with the flight computer's own transmit", true, [](DebugStream* debugStream) {
     const char* payload = sendFlag.getValueDerived();
     // +1 for the null terminator; truncated safely if payload ever exceeded the buffer (CLI input never will).
     uint32_t len = (uint32_t)strlen(payload) + 1;
@@ -88,15 +110,17 @@ ArgumentFlag<const char*> sendFlag("--send", "Queue a string payload to send up 
     memcpy(s_pendingSendBuffer, payload, len);
     s_pendingSendBuffer[sizeof(s_pendingSendBuffer) - 1] = '\0';
     s_pendingSendLength = len;
-    serialDebug.message("Uplink queued (%lu bytes) - sending at the next predicted safe window", (unsigned long)len);
+    debugStream->message("Uplink queued (%lu bytes) - sending at the next predicted safe window", (unsigned long)len);
 });
-SimpleFlag resetBoard("--reset", "Reset the board", true, 255, []() { NVIC_SystemReset(); });
+SimpleFlag resetBoard("--reset", "Reset the board", true, [](DebugStream*) { NVIC_SystemReset(); });
+SimpleFlag helpFlag("--help", "Prints all available CLI commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
 BaseFlag* sendGroup[] = {&sendFlag};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
+BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
     disableChipSelectPins({FRAM_CS_PIN}); // Must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
-    configuration.setDefault<BOARD_NAME_c>(GROUND_STATION_NAME); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    configuration.setDefault<BOARD_NAME_c>(SERIOUS_GOOSE_NAME); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
 
     // Setup Hardware
     int16_t framID = hardware.appendFramMemory(&fram);
@@ -108,10 +132,11 @@ void setup() {
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
-    configurationCliBindings.setupAll(&configuration, &cliParser, &serialDebug);
+    configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(sendGroup);
     cliParser.addFlagGroup(resetBoardGroup);
-    cliParser.setup(&serialReader, &serialDebug);
+    cliParser.addFlagGroup(helpGroup);
+    cliParser.addStream(&serialDebug);
     // Radio
     radio.setFrequency(configuration.getConfigurable<RADIO_FREQUENCY_c>().get());
     radio.setSpreadingFactor(configuration.getConfigurable<LORA_SPREADING_FACTOR_c>().get());

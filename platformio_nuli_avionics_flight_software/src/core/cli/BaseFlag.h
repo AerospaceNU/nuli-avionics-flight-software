@@ -5,6 +5,8 @@
 #include "ReturnCodes.h"
 #include <functional>
 
+class DebugStream;
+
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
  *          argc, argv, and argvPos are very hack-ey.
@@ -58,7 +60,7 @@ public:
     /**
      * @brief Dispatches to a pre-set m_callback function.
      */
-    virtual void run(uint8_t groupUid) = 0;
+    virtual void run(DebugStream* debugStream) = 0;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -101,8 +103,7 @@ protected:
      * @param required If a flag is required
      * @param callback
      */
-    // BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag*));
-    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, const std::function<void(void)> &callback);
+    BaseFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback);
 
 
     /**
@@ -124,10 +125,8 @@ protected:
     const char* m_name;         ///< Name, or calling sign, of the flag
     const char* m_helpText;     ///< A flag's help text
     const bool m_required;      ///< If a flag is required
-    const uint8_t m_identifier; ///< command identifier
     bool m_set;                 ///< If a flag is in-use
-    // void (*m_callback)(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);   ///< Callback function. Takes in if a flag is set and its group's uid
-    std::function<void(void)> m_callback;
+    std::function<void(DebugStream*)> m_callback;
     BaseFlag* m_dependency = nullptr;    ///<
 };
 

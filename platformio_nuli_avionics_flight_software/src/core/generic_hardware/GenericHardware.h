@@ -14,7 +14,6 @@
 #include "FlashMemory.h"
 #include "FramMemory.h"
 
-#include "LineReader.h"
 #include "RadioLink.h"
 #include "Indicator.h"
 #include "Pyro.h"
