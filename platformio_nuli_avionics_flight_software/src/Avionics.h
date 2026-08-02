@@ -125,6 +125,14 @@ struct RocketState_s {
     State6D_s state6D;
 };
 
+// Leading byte of every RadioLink packet (both directions) - lets one physical link carry
+// telemetry downlink, remote CLI commands uplink, and remote CLI responses downlink.
+enum RadioMessageType_e : uint8_t {
+    RADIO_MSG_TELEMETRY = 0,
+    RADIO_MSG_CLI_COMMAND = 1,
+    RADIO_MSG_CLI_RESPONSE = 2,
+};
+
 enum AxisDirection : int32_t {
     ERROR_AXIS_DIRECTION,
     POS_X,

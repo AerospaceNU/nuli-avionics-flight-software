@@ -26,8 +26,15 @@ public:
 
     // Call once per loop iteration in place of the normal flight-computer radio TX/RX handling.
     void tick(const Timestamp_s& timestamp, DebugStream* debugStream) {
-        // Periodically report this board's own GPS position over USB
-        if (m_gpsReportTimer.isAlarmFinished(timestamp.runtime_ms)) {
+        // Periodically report this board's own GPS position over USB - suppressed while a CLI
+        // response looks to be actively draining (a chunk seen recently), since GPS reporting
+        // runs on its own timer independent of the radio's packet cadence and would otherwise
+        // inject a "GPS\t..." line into the middle of a still-unterminated response fragment
+        // from a prior tick. Time-based (not a sticky flag cleared on the next telemetry packet)
+        // so it self-heals even if the flying board goes silent mid-response.
+        const bool receivingCliResponse = m_lastCliResponseRxTimeMs != 0 &&
+            (timestamp.runtime_ms - m_lastCliResponseRxTimeMs) < CLI_RESPONSE_QUIET_MS;
+        if (!receivingCliResponse && m_gpsReportTimer.isAlarmFinished(timestamp.runtime_ms)) {
             const Coordinates_s coords = m_gps->getCoordinates();
             debugStream->data("GPS\t%.6f\t%.6f\t%.2f\t%lu\t%u\t%u\t%d\t%d",
                 coords.latitudeDeg, coords.longitudeDeg, coords.altitudeM,
@@ -56,9 +63,17 @@ public:
             // Send before the USB print below - the safe window is finite (~457ms) and a slow host could eat into it.
             trySendPending();
 
-            char hexBuffer[sizeof(message.data) * 2 + 1];
-            bytesToHex(message.data, message.length, hexBuffer);
-            debugStream->data("RADIO_RX\t%d\t%.2f\t%s", message.rssi, message.snr, hexBuffer);
+            if (message.length >= 1 && message.data[0] == RADIO_MSG_CLI_RESPONSE) {
+                m_lastCliResponseRxTimeMs = timestamp.runtime_ms;
+                // Raw pass-through onto this board's own USB stream - reconstructs the flying
+                // board's original CLI text output byte-for-byte (it already contains its own
+                // "\n"s), so neither this firmware nor the host tool need to parse/reformat it.
+                debugStream->writeRaw(message.data + 1, message.length - 1);
+            } else {
+                char hexBuffer[sizeof(message.data) * 2 + 1];
+                bytesToHex(message.data, message.length, hexBuffer);
+                debugStream->data("RADIO_RX\t%d\t%.2f\t%s", message.rssi, message.snr, hexBuffer);
+            }
         }
 
         // Elapsed-time check, not gated on hearing a downlink - keeps firing through lost downlink packets.
@@ -70,12 +85,15 @@ public:
 private:
     void sendCallback(DebugStream* debugStream) {
         const char* payload = m_sendFlag.getValueDerived();
-        // +1 for the null terminator; truncated safely if payload ever exceeded the buffer (CLI input never will).
-        uint32_t len = (uint32_t)strlen(payload) + 1;
-        if (len > sizeof(m_pendingSendBuffer)) len = sizeof(m_pendingSendBuffer);
-        memcpy(m_pendingSendBuffer, payload, len);
-        m_pendingSendBuffer[sizeof(m_pendingSendBuffer) - 1] = '\0';
-        m_pendingSendLength = len;
+        // No null terminator here - the receiving DebugStreamQueue::pushIncoming() appends its
+        // own line delimiter, so one embedded here too would double up (an extra '\0' hits
+        // readLine() as a phantom empty command next tick). Truncated safely if payload ever
+        // exceeded the buffer (CLI input never will).
+        uint32_t len = (uint32_t)strlen(payload);
+        if (len > sizeof(m_pendingSendBuffer) - 1) len = sizeof(m_pendingSendBuffer) - 1;
+        m_pendingSendBuffer[0] = RADIO_MSG_CLI_COMMAND;
+        memcpy(m_pendingSendBuffer + 1, payload, len);
+        m_pendingSendLength = len + 1;
         debugStream->message("Uplink queued (%lu bytes) - sending at the next predicted safe window", (unsigned long)len);
     }
 
@@ -109,6 +127,9 @@ private:
 
     static constexpr uint32_t GPS_REPORT_INTERVAL_MS = 1000;
     static constexpr uint32_t SAFE_WINDOW_FRACTION_PERCENT = 35;
+    // Comfortably more than one radioTransmitDelay cycle, so GPS reporting only resumes once a
+    // response burst has genuinely stopped, not between two of its own chunks.
+    static constexpr uint32_t CLI_RESPONSE_QUIET_MS = 2000;
 
     ArgumentFlag<const char*> m_sendFlag;
     BaseFlag* m_sendGroup[1] = {&m_sendFlag};
@@ -124,6 +145,7 @@ private:
     // Anchor (last confirmed downlink) + cadence predict future downlink times - resynced each rx, but sends don't wait on one.
     uint32_t m_lastDownlinkRxTimeMs = 0; // 0 = no downlink received yet this session
     uint32_t m_downlinkCadenceMs = 0; // 0 = not yet learned (need at least one interval)
+    uint32_t m_lastCliResponseRxTimeMs = 0; // 0 = no CLI response chunk received yet this session
 };
 
 #endif //GROUNDSTATIONRELAY_H

@@ -18,7 +18,7 @@
 template <unsigned N>
 class DesktopDebug final : public DebugStream {
 public:
-    DesktopDebug() = default;
+    DesktopDebug() { m_isHighBandwidth = true; } // stdin/stdout, not a slow relayed link
 
     ~DesktopDebug() override {
         if (fileStream.is_open()) {

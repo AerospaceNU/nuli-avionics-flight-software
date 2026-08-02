@@ -34,8 +34,11 @@ public:
                     m_endFlag("-e", "End", false, [](DebugStream*) {}),
                     m_offloadBinaryFlag("-b", "Binary format", false, [](DebugStream*) {}),
                     m_eraseFlag("--erase", "Erases the flight log", true, [this](DebugStream* debugStream) { this->eraseCallback(debugStream); }),
-                    m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }),
-                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }) {}
+                    // Dumps the whole flash log / streams continuously - both restricted to
+                    // high-bandwidth streams (see BaseFlag::isHighBandwidthOnly), so they're
+                    // silently no-ops over a low-bandwidth link like CLI-over-radio.
+                    m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }, true),
+                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true) {}
 
     void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header,
                void (*printFunction)(const LogDataStruct&, DebugStream*),

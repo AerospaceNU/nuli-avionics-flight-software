@@ -284,7 +284,11 @@ void Parser::FlagGroup_s::resetFlags() {
 
 void Parser::FlagGroup_s::runFlags(DebugStream* debugStream) {
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        if (flags_s[i]->isSet()) flags_s[i]->run(debugStream);
+        // A highBandwidthOnly flag is silently skipped (not an error) on a low-bandwidth stream -
+        // e.g. --offload typed over a CLI-over-radio link just does nothing, rather than flooding it.
+        if (flags_s[i]->isSet() && (!flags_s[i]->isHighBandwidthOnly() || debugStream->isHighBandwidth())) {
+            flags_s[i]->run(debugStream);
+        }
     }
 }
 

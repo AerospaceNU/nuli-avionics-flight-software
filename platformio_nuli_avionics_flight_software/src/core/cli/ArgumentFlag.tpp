@@ -6,12 +6,12 @@
 
 
 template<typename T>
-ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback)
-        : BaseFlag(name, helpText, required, callback), m_defaultValue(defaultValue), m_defaultValueSet(true) {}
+ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly)
+        : BaseFlag(name, helpText, required, callback, highBandwidthOnly), m_defaultValue(defaultValue), m_defaultValueSet(true) {}
 
 template<typename T>
-ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback)
-        : BaseFlag(name, helpText, required, callback), m_defaultValueSet(false) {}
+ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly)
+        : BaseFlag(name, helpText, required, callback, highBandwidthOnly), m_defaultValueSet(false) {}
 
 template<typename T>
 const char* ArgumentFlag<T>::name() const {
@@ -62,6 +62,11 @@ bool ArgumentFlag<T>::isSet() const {
 template<typename T>
 bool ArgumentFlag<T>::isRequired() const {
     return m_required;
+}
+
+template<typename T>
+bool ArgumentFlag<T>::isHighBandwidthOnly() const {
+    return m_highBandwidthOnly;
 }
 
 template<typename T>

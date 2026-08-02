@@ -1,7 +1,7 @@
 #include "SimpleFlag.h"
 
-SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback)
-        : BaseFlag(name, helpText, required, callback) {}
+SimpleFlag::SimpleFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly)
+        : BaseFlag(name, helpText, required, callback, highBandwidthOnly) {}
 
 const char* SimpleFlag::name() const {
     return m_name;
@@ -29,6 +29,10 @@ bool SimpleFlag::isSet() const {
 
 bool SimpleFlag::isRequired() const {
     return m_required;
+}
+
+bool SimpleFlag::isHighBandwidthOnly() const {
+    return m_highBandwidthOnly;
 }
 
 void SimpleFlag::reset() {

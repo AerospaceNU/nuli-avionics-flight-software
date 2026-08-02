@@ -26,6 +26,14 @@ public:
         return nullptr;
     }
 
+    // Whether this stream can afford a highBandwidthOnly-flagged CLI command (see BaseFlag) -
+    // e.g. --offload, --streamLog. Defaults to false (fail safe: an unclassified future stream
+    // silently drops a few commands rather than risking flooding a slow link) - concrete
+    // subclasses that are actually a fast local transport (SerialDebug, DesktopDebug) set this
+    // true in their own constructor. Not virtual: this is a fixed per-instance value, not
+    // behavior, so a plain overwritable member is enough.
+    bool isHighBandwidth() const { return m_isHighBandwidth; }
+
     void message(const char* fmt, ...) {
         write("MSG:\t");
         va_list args;
@@ -96,6 +104,10 @@ public:
     }
 
 protected:
+    // See isHighBandwidth() above. Assigned directly (not via a constructor param) by whichever
+    // concrete stream needs to override the default - e.g. `m_isHighBandwidth = true;` in the body.
+    bool m_isHighBandwidth = false;
+
     // Override to actually output bytes; returns bytes written. Default is a no-op.
     virtual size_t write(const void* buffer, size_t size) {
         (void)buffer;

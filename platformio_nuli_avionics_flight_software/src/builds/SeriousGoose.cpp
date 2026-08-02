@@ -25,6 +25,7 @@
 #include "core/GroundStationRelay.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
+#include "core/cli/DebugStreamQueue.h"
 #include "core/cli/IntegratedParser.h"
 #include "core/cli/SimulationParser.h"
 #include "core/state_estimation/OrientationEstimator.h"
@@ -82,6 +83,7 @@ IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
 GroundStationRelay groundStationRelay;
+DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see loop()'s radio TX/RX handling
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
@@ -166,13 +168,13 @@ void setup() {
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
-    groundStationMode = configuration.getConfigurable<GROUND_STATION_MODE_c>();
     configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
     groundStationRelay.setup(&cliParser, &radio, &gps);
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.addFlagGroup(helpGroup);
     cliParser.addStream(&serialDebug);
+    cliParser.addStream(&radioCli);
     simulationParser.setup(&cliParser, &serialDebug, &hardware);
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
@@ -185,6 +187,7 @@ void setup() {
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     radioTransmitDelay = configuration.getConfigurable<RADIO_TRANSMIT_INTERVAL_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
+    groundStationMode = configuration.getConfigurable<GROUND_STATION_MODE_c>();
     // Radio
     radio.setFrequency(configuration.getConfigurable<RADIO_FREQUENCY_c>().get());
     radio.setSpreadingFactor(configuration.getConfigurable<LORA_SPREADING_FACTOR_c>().get());
@@ -278,14 +281,32 @@ void loop() {
             };
         logger.log(logData);
 
-        if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms) && radio.startTransmit(&logData, sizeof(logData))) {
-            radioTransmitTimer.startAlarm(state.timestamp.runtime_ms, radioTransmitDelay.get());
+        if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms)) {
+            // A pending CLI response (from a command received over radioCli below) takes this
+            // transmit slot instead of telemetry - it'll resume telemetry once drained.
+            bool sent;
+            if (radioCli.hasOutgoing()) {
+                uint8_t txBuffer[129]; // 1 type byte + up to 128 payload bytes
+                txBuffer[0] = RADIO_MSG_CLI_RESPONSE;
+                uint8_t n = radioCli.popOutgoing(txBuffer + 1, sizeof(txBuffer) - 1);
+                sent = radio.startTransmit(txBuffer, n + 1);
+            } else {
+                struct { uint8_t type; SillyGooseLogData payload; } remove_struct_padding txBuffer = {RADIO_MSG_TELEMETRY, logData};
+                sent = radio.startTransmit(&txBuffer, sizeof(txBuffer));
+            }
+            if (sent) radioTransmitTimer.startAlarm(state.timestamp.runtime_ms, radioTransmitDelay.get());
         }
         if (radio.isMessageAvailable()) {
-            const RadioLink::RadioMessage receivedMessage = radio.readMessage(); // assumes a null-terminated C string for now
-            serialDebug.message("Radio: %s (RSSI: %d, SNR: %.2f)", (const char*)receivedMessage.data, receivedMessage.rssi, receivedMessage.snr);
+            const RadioLink::RadioMessage receivedMessage = radio.readMessage();
+            if (receivedMessage.length >= 1 && receivedMessage.data[0] == RADIO_MSG_CLI_COMMAND) {
+                radioCli.pushIncoming(receivedMessage.data + 1, receivedMessage.length - 1);
+            } else {
+                serialDebug.warn("Radio: unrecognized message type %u (RSSI: %d, SNR: %.2f)", receivedMessage.data[0], receivedMessage.rssi, receivedMessage.snr);
+            }
         }
     } else {
+        buzzer.setEnabled(false);
+        stateEstimator1D.reset();
         indicatorManager.keepAliveBeep(state.timestamp);
         cliParser.runCli();
         configuration.pushUpdatesToMemory();

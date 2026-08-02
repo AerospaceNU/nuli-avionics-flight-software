@@ -13,7 +13,9 @@ class SimulationParser {
 public:
     static constexpr unsigned BUFFER_CAPACITY = 100;
 
-    SimulationParser() : m_simFlag("--sim", "Injects sim sensor values", true, [this](DebugStream*) { this->simCallback(); }) {}
+    // Continuous, high-rate sensor injection (fed from a host script) - same "no streaming"
+    // category as BasicLogger's --streamLog, so restricted to high-bandwidth streams too.
+    SimulationParser() : m_simFlag("--sim", "Injects sim sensor values", true, [this](DebugStream*) { this->simCallback(); }, true) {}
 
     void setup(IntegratedParser* parser, DebugStream* debug, HardwareAbstraction* hardware) {
         m_parser = parser;
