@@ -1,6 +1,8 @@
 #ifndef TIMER_H
 #define TIMER_H
 
+#include <cstdint>
+
 /**
  * @class Debounce
  * @brief Utility class to debounce boolean signals.

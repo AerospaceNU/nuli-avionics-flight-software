@@ -1,0 +1,38 @@
+name: CLI Tests
+
+on:
+  push:
+    branches:
+      - main
+      - not-flight-tested
+  pull_request:
+    branches:
+      - main
+      - not-flight-tested
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cli-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Build & run FlagTest/ParserTest
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: cmake -S . -B build
+
+      - name: Build FlagTest and ParserTest
+        run: cmake --build build --target FlagTest ParserTest --parallel
+
+      - name: Run tests
+        working-directory: build
+        run: ctest --output-on-failure

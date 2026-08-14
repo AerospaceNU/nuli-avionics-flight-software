@@ -5,8 +5,6 @@ This is the Code for the Receiver
 
 #include <Arduino.h>
 #include <RadioLib.h>
-#include <string.h>
-#include <cstring>
 
 // External E22-900M30S (SX1262)
 // Redefine these pins as necessary. It is correct for the one I put together - Riley

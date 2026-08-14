@@ -2,6 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_INDICATOR_H
 
 #include "Avionics.h"
+#include "core/generic_hardware/GenericAvionicsHardware.h"
 
 class Indicator : public GenericAvionicsHardware {
 public:
@@ -13,7 +14,7 @@ public:
         VISUAL,
     };
 
-    virtual void setup(DebugStream *debugStream) {}
+    virtual void setup(DebugStream *debugStream, WatchdogTimer *watchdog) {}
 
     virtual void on() = 0;
 

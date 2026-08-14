@@ -5,6 +5,8 @@
 #include "ReturnCodes.h"
 #include <functional>
 
+class DebugStream;
+
 /**
  * @TODO: Change up parse implementation. Current implementation by passing in
  *          argc, argv, and argvPos are very hack-ey.
@@ -58,7 +60,7 @@ public:
     /**
      * @brief Dispatches to a pre-set m_callback function.
      */
-    virtual void run(uint8_t groupUid) = 0;
+    virtual void run(DebugStream* debugStream) = 0;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -71,6 +73,15 @@ public:
      * @return true if required
      */
     virtual bool isRequired() const = 0;
+
+    /**
+     * @brief Tells the caller if this flag may only run on a high-bandwidth DebugStream
+     * @details Checked by Parser::FlagGroup_s::runFlags() before invoking run() - a flag
+     * marked true is silently skipped (not an error) on a stream whose isHighBandwidth()
+     * is false, e.g. a CLI channel relayed over a slow radio link.
+     * @return true if restricted to high-bandwidth streams
+     */
+    virtual bool isHighBandwidthOnly() const = 0;
 
     /**
      * @brief Resets all dynamic parameters of flag
@@ -100,9 +111,10 @@ protected:
      * @param helpText A flag's help text
      * @param required If a flag is required
      * @param callback
+     * @param highBandwidthOnly If true, run() is skipped on a stream whose isHighBandwidth() is
+     * false (see DebugStream) - default false, i.e. allowed over every communication method
      */
-    // BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, void (*callback)(const char* name, uint8_t*, uint32_t length, uint8_t, uint8_t, BaseFlag*));
-    BaseFlag(const char* name, const char* helpText, bool required, uint8_t uid, const std::function<void(void)> &callback);
+    BaseFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly = false);
 
 
     /**
@@ -124,10 +136,9 @@ protected:
     const char* m_name;         ///< Name, or calling sign, of the flag
     const char* m_helpText;     ///< A flag's help text
     const bool m_required;      ///< If a flag is required
-    const uint8_t m_identifier; ///< command identifier
+    const bool m_highBandwidthOnly; ///< If true, skipped on a low-bandwidth DebugStream
     bool m_set;                 ///< If a flag is in-use
-    // void (*m_callback)(const char* name, uint8_t* data, uint32_t length, uint8_t group_uid, uint8_t flag_uid, BaseFlag* dependency);   ///< Callback function. Takes in if a flag is set and its group's uid
-    std::function<void(void)> m_callback;
+    std::function<void(DebugStream*)> m_callback;
     BaseFlag* m_dependency = nullptr;    ///<
 };
 

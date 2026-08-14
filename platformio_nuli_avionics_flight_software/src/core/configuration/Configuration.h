@@ -3,9 +3,8 @@
 
 #include "Avionics.h"
 #include "ConfigurationRegistryWraper.h"
-#include "../HardwareAbstraction.h"
-#include "../generic_hardware/FramMemory.h"
-#include "../generic_hardware/DebugStream.h"
+#include "core/HardwareAbstraction.h"
+#include "core/generic_hardware/GenericHardware.h"
 #include <cstddef>  // std::max_align_t
 #include <cstdint>  // uintptr_t
 
@@ -189,6 +188,37 @@ public:
      * @details Should be called every loop. Manages CRCs and efficiently blocks FRAM writes
      */
     void pushUpdatesToMemory();
+
+    /**
+     * @brief Raw bytes of every registered "real" config value (excludes the 3 internal CRC/version
+     * fields), in sorted-ID order
+     * @details Lets a caller (BasicLogger::logConfig()) snapshot the whole configuration generically,
+     * with no per-board struct to keep in sync as fields are added.
+     * @param outLength Set to the number of valid bytes in the returned buffer (0 if none)
+     * @return Pointer into the internal data buffer; nullptr if fewer than 4 configs are registered
+     */
+    const uint8_t* getConfigDataBuffer(uint32_t& outLength) const;
+
+    /// @brief Schema-compatibility version (CONFIGURATION_VERSION_c) - tags a logged config snapshot
+    uint32_t getConfigVersion() const { return m_configurationVersion.get(); }
+
+    /// @brief CRC over the registered config ID set (CONFIGURATION_ALL_ID_CRC_c) - tags a logged config snapshot
+    uint32_t getConfigKeyCrc() const { return m_configurationAllIdCRC.get(); }
+
+    /**
+     * @brief Formats an arbitrary config-value buffer as "CONFIG\tNAME=value\t..." text
+     * @details rawConfigBytes must be laid out exactly like getConfigDataBuffer()'s own return (same
+     * registered field set/order/size) - lets a caller decode a snapshot that ISN'T necessarily this
+     * object's own live values (e.g. one read back from flash, logged during an earlier boot),
+     * using today's live field list/offsets to interpret it. Never touches this object's own values.
+     * @param version Schema-compatibility version to report alongside the fields (CONFIGURATION_VERSION_c
+     * isn't part of rawConfigBytes - it's tracked separately by whatever logged the snapshot)
+     * @param rawConfigBytes Buffer of config values in the same layout as getConfigDataBuffer()
+     * @param rawConfigBytesLen Length of rawConfigBytes
+     * @param buf Output text buffer
+     * @param bufSize Size of buf
+     */
+    void formatBufferAsText(uint32_t version, const uint8_t* rawConfigBytes, uint32_t rawConfigBytesLen, char* buf, size_t bufSize) const;
 
 private:
     BaseConfigurationData_s* getBaseConfigurationData(ConfigurationID_t id);

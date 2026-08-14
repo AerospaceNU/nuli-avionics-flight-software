@@ -1,5 +1,5 @@
 #include "Configuration.h"
-#include "../HardwareAbstraction.h"
+#include "core/HardwareAbstraction.h"
 #include "util/CRC.h"
 
 constexpr ConfigurationID_t Configuration::REQUIRED_CONFIGS[];
@@ -236,4 +236,39 @@ uint32_t Configuration::calculateAllIdCrc() const {
         allIDs[i] = m_configurations[i].id;
     }
     return crc32(&allIDs, m_numConfigurations * sizeof(ConfigurationID_t));
+}
+
+void Configuration::formatBufferAsText(const uint32_t version, const uint8_t* rawConfigBytes, const uint32_t rawConfigBytesLen, char* buf, size_t bufSize) const {
+    size_t pos = 0;
+    auto append = [&](const char* s) {
+        while (*s && pos + 1 < bufSize) buf[pos++] = *s++;
+    };
+    append("CONFIG");
+    for (uint32_t i = 3; i < m_numConfigurations; i++) {
+        const uint32_t offset = static_cast<uint32_t>(m_configurations[i].data - m_configurations[3].data);
+        if (offset + m_configurations[i].size > rawConfigBytesLen) break; // defensive: stored buffer shorter than the live layout expects
+        append("\t");
+        append(getConfigurationName(m_configurations[i].id));
+        append("=");
+        if (pos < bufSize) pos += (size_t)getConfigurationPrint(m_configurations[i].id, rawConfigBytes + offset, buf + pos, bufSize - pos);
+    }
+    // CONFIGURATION_VERSION isn't part of rawConfigBytes (it's the record's own header field, not
+    // a registered "real" config), but the old hand-written text format always showed it - restore it.
+    append("\tCONFIGURATION_VERSION=");
+    if (pos < bufSize) pos += (size_t)mini_snprintf(buf + pos, (int)(bufSize - pos), "%u", (unsigned)version);
+    if (pos < bufSize) buf[pos] = '\0';
+    else if (bufSize > 0) buf[bufSize - 1] = '\0';
+}
+
+const uint8_t* Configuration::getConfigDataBuffer(uint32_t& outLength) const {
+    // Indices 0/1/2 are always CONFIGURATION_CRC/CONFIGURATION_ALL_ID_CRC/CONFIGURATION_VERSION
+    // (enforced by hasError()'s ordering check) - real fields start at index 3.
+    if (m_numConfigurations <= 3) {
+        outLength = 0;
+        return nullptr;
+    }
+    const uint8_t* start = m_configurations[3].data;
+    const uint8_t* end = m_configurations[m_numConfigurations - 1].data + m_configurations[m_numConfigurations - 1].size;
+    outLength = static_cast<uint32_t>(end - start);
+    return start;
 }

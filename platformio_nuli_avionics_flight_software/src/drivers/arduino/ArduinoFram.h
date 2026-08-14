@@ -10,7 +10,7 @@ class ArduinoFram : public FramMemory {
 public:
     explicit ArduinoFram(int8_t csPin);
 
-    void setup(DebugStream *debugStream) override;
+    void setup(DebugStream *debugStream, WatchdogTimer *watchdog) override;
 
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override;
 

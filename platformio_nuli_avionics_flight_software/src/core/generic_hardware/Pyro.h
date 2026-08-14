@@ -15,7 +15,7 @@ public:
      * @brief Initializes the pyro
      * @details Sets up the input/output pins
      */
-    void setup(DebugStream* debugStream) override {}
+    void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override {}
 
     /**
      * @brief Reads in the continuity state
@@ -30,6 +30,23 @@ public:
      * @return If there is continuity
      */
     virtual bool hasContinuity() const { return false; }
+
+    /**
+     * @brief Returns if the channel has continuity AND is armed
+     * @details Boards with only a single continuity threshold (e.g. SillyGoose) have no separate
+     * notion of "armed" - for them this defaults to just mirroring hasContinuity(), so continuity
+     * alone reads as armed. Boards with a second, higher threshold (e.g. SeriousGoose) override
+     * this to distinguish "igniter detected but not armed" from "armed and ready to fire".
+     * @return If the channel is armed
+     */
+    virtual bool isArmed() const { return hasContinuity(); }
+
+    /**
+     * @brief Packs this channel's continuity/armed reading into a single 0/1/2 state byte, for
+     * logging/telemetry formats that store one byte per pyro channel (0 = no continuity, 1 =
+     * continuity but not armed, 2 = armed).
+     */
+    uint8_t stateByte() const { return isArmed() ? 2 : (hasContinuity() ? 1 : 0); }
 
 
     /**

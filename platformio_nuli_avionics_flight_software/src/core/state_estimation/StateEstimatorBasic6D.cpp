@@ -1,7 +1,4 @@
 #include "core/state_estimation//StateEstimatorBasic6D.h"
-#include "util/Timer.h"
-#include "core/transform/Vector3DTransform.h"
-#include "core/transform/DiscreteRotation.h"
 
 #define RAD_TO_DEG_M(x) ((x) * (180.0f / M_PI))
 

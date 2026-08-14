@@ -1,4 +1,5 @@
 #include "HardwareAbstraction.h"
+#include "ConstantsUnits.h"
 #include <cmath>
 
 HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz) {
@@ -11,7 +12,8 @@ void HardwareAbstraction::setup() {
     m_debug->setup();
     m_debug->message("SETTING UP HARDWARE");
     m_systemClock->setup(m_debug);
-    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) hardwareDevice->setup(m_debug);
+    m_watchdog->setup(m_debug);
+    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) hardwareDevice->setup(m_debug, m_watchdog);
     m_debug->message("HARDWARE SET UP COMPLETE\r\n");
 }
 
@@ -20,6 +22,7 @@ void HardwareAbstraction::runAndReadAllHardware() const {
         hardwareDevice->run();
         hardwareDevice->read();
     }
+    m_watchdog->pet(); // last, so a hang anywhere above prevents this tick's pet
 }
 
 void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {

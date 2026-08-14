@@ -4,6 +4,8 @@
 #include <cstdlib>
 #include "IntegratedParser.h"
 #include "ArgumentFlag.h"
+#include "core/generic_hardware/WatchdogTimer.h"
+#include "core/HardwareAbstraction.h"
 #include "etl/circular_buffer.h"
 
 template <unsigned N>
@@ -11,17 +13,23 @@ class SimulationParser {
 public:
     static constexpr unsigned BUFFER_CAPACITY = 100;
 
-    SimulationParser() : m_simFlag("--sim", "Inject comma/space-separated float values into the sim buffer", true, 255, [this]() { this->simCallback(); }) {}
+    // Continuous, high-rate sensor injection (fed from a host script) - same "no streaming"
+    // category as BasicLogger's --streamLog, so restricted to high-bandwidth streams too.
+    SimulationParser() : m_simFlag("--sim", "Injects sim sensor values", true, [this](DebugStream*) { this->simCallback(); }, true) {}
 
-    void setup(IntegratedParser* parser, DebugStream* debug) {
+    void setup(IntegratedParser* parser, DebugStream* debug, HardwareAbstraction* hardware) {
         m_parser = parser;
         m_debug = debug;
+        // Single instance, owned by HardwareAbstraction - not injected separately.
+        m_watchdog = &hardware->getWatchdogTimer();
         m_parser->addFlagGroup(m_simGroup);
     }
 
     void waitForEntry() const {
-        // Drain at least one line (block if buffer is empty)
+        // Waits as long as the host harness takes, so pets every spin - *Sim envs extend the real
+        // board envs (run on real hardware), so an un-pet wait here would reset-loop the board.
         while (m_simDataBuffer.empty()) {
+            m_watchdog->petInLoop();
             m_parser->runCli();
         }
         // Absorb python's per-report burst. Should be >= python's BURST so the
@@ -67,6 +75,7 @@ private:
     etl::circular_buffer<SimDataEntry, BUFFER_CAPACITY> m_simDataBuffer;
     IntegratedParser* m_parser = nullptr;
     DebugStream* m_debug = nullptr;
+    WatchdogTimer* m_watchdog = nullptr;
 };
 
 #endif //SIMULATIONPARSER_H

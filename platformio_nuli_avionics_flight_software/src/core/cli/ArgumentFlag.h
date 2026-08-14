@@ -26,7 +26,7 @@ public:
      * @param helpText A flag's help text
      * @param m_required If a flag is required
      */
-    ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required, uint8_t uid, const std::function<void(void)> &callback);
+    ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool m_required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly = false);
 
     /**
      * @brief Alternative constructor for an ArgumentFlag
@@ -39,7 +39,7 @@ public:
      * @param m_required If a flag is required
      * @param callback
      */
-    ArgumentFlag(const char* name, const char* helpText, bool m_required, uint8_t uid, const std::function<void(void)> &callback);
+    ArgumentFlag(const char* name, const char* helpText, bool m_required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly = false);
 
     /**
      * @brief Retrieves the flag's name
@@ -65,7 +65,7 @@ public:
     /**
      * @brief Dispatches to a pre-set m_callback function.
      */
-    void run(uint8_t groupUid) override;
+    void run(DebugStream* debugStream) override;
 
     /**
      * @brief Tells the caller if this flag has been set.
@@ -78,6 +78,12 @@ public:
      * @return true if required
      */
     bool isRequired() const override;
+
+    /**
+     * @brief Tells the caller if this flag may only run on a high-bandwidth DebugStream
+     * @return true if restricted to high-bandwidth streams
+     */
+    bool isHighBandwidthOnly() const override;
 
     /**
      * @brief Resets all dynamic parameters of flag
@@ -105,8 +111,6 @@ protected:
     void getValueRaw(void* outValue) const override;
 
 private:
-    uint32_t myStrlen(const char* str);
-
     bool m_defaultValueSet = false; ///< if a default value has been set
     T m_defaultValue;   ///< default value when not provided by the user
     T m_argument;       ///< value of the flag

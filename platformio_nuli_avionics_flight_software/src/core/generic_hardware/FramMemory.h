@@ -2,12 +2,14 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONMEMORY_H
 
 #include "core/generic_hardware/DebugStream.h"
-#include "GenericHardware.h"
+#include "GenericAvionicsHardware.h"
+#include <cstring>
+#include <cstdint>
 
 class FramMemory: public GenericAvionicsHardware {
 public:
     virtual ~FramMemory() = default;
-    virtual void setup(DebugStream* debugStream) {};
+    virtual void setup(DebugStream* debugStream, WatchdogTimer* watchdog) {};
 
     virtual void write(uint32_t address, const uint8_t* buffer, uint32_t length) = 0;
 
@@ -17,9 +19,7 @@ public:
 /**
  * @class VolatileConfigurationMemory
  * @brief For board without non-volatile memory for configuration
- * @details Allows the configuration API to be used for boards without
- * non-volatile memory, however it will reset every time the code restarts.
- * This is needed because the configuration API is guaranteed to be available.
+ * @details Lets the configuration API stay guaranteed-available on boards with no real non-volatile memory - resets to defaults every restart though.
  * @tparam N Size of the memory
  */
 template <unsigned N>
