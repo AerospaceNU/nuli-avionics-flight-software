@@ -140,7 +140,7 @@ private:
 
     // Half-duplex, shared channel with the flight computer's downlink - --send queues its payload and
     // fires at a predicted safe window (learned cadence), not immediately/reactively, so bad downlink rx can't block uplink.
-    char m_pendingSendBuffer[256] = {};
+    char m_pendingSendBuffer[255] = {}; // matches RadioLink::RadioMessage::data / RADIOLIB_SX126X_MAX_PACKET_LENGTH
     uint32_t m_pendingSendLength = 0; // 0 = nothing queued
     // Anchor (last confirmed downlink) + cadence predict future downlink times - resynced each rx, but sends don't wait on one.
     uint32_t m_lastDownlinkRxTimeMs = 0; // 0 = no downlink received yet this session

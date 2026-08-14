@@ -209,7 +209,7 @@ public:
             // A corrupt entry (id survived a torn write, payload didn't - see computeCrc()) is
             // skipped exactly like an empty one, so external output never sees a foreign line.
             if (id == LOG_EMPTY || computeCrc(m_dataStruct) != m_dataStruct.crc) {
-                failCount++;
+                if (id == LOG_EMPTY) failCount++;
                 if (failCount >= 4) break;
             } else if (id == LOG_DATA) {
                 m_printFunction(logData, debugStream);

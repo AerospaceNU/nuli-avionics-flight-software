@@ -18,7 +18,7 @@ public:
     // bytes past capacity rather than blocking/asserting - a too-long command just fails to
     // parse, same as it would if truncated over a flaky serial link.
     void pushIncoming(const uint8_t* data, uint8_t length) {
-        for (uint8_t i = 0; i < length && !m_input.full(); ++i) m_input.push(data[i]);
+        for (uint8_t i = 0; i < length && m_input.size() + 1 < InputSize; i++) m_input.push(data[i]);
         if (!m_input.full()) m_input.push('\0');
     }
 
