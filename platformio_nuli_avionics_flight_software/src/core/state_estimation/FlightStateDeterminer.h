@@ -23,6 +23,12 @@ public:
 
     bool isStateTransitionTick() const;
 
+    float getMaxAltitude() const;
+
+    float getMaxVelocity() const;
+
+    float getMaxAcceleration() const;
+
 private:
     bool hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D);
 
@@ -37,6 +43,8 @@ private:
 
     float m_landingDetectionReferenceAltitude = 0;
     float m_maxAltitude = -999999999.0f;
+    float m_maxVelocity = -999999999.0f;
+    float m_maxAcceleration = -999999999.0f;
 
     StopWatch m_stateStopWatch;
 

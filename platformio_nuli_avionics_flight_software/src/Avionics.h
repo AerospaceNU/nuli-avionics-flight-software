@@ -50,6 +50,7 @@ constexpr uint8_t MAX_RADIO_TRANSMITTER_LINK_NUM = 4;
 constexpr uint8_t MAX_INDICATOR_NUM = 4;
 constexpr uint8_t MAX_GENERIC_HARDWARE_NUM = 50;
 constexpr uint8_t MAX_DIGITAL_INPUT_NUM = 5;
+constexpr uint8_t MAX_INDICATOR_NUM_BEEP_NUM = 4;
 // Configuration max size paramiters
 constexpr uint8_t MAX_CONFIGURATION_NUM = 30;
 constexpr uint16_t MAX_CONFIGURATION_LENGTH = 500;
