@@ -96,7 +96,10 @@ public:
         }
     }
 
-void configureBeepNums(const Timestamp_s& timestamp, const std::initializer_list<uint32_t> nums) {
+    template <uint8_t N>
+	void configureBeepNums(const Timestamp_s& timestamp, const uint32_t (&nums)[N]) {
+        static_assert(N <= MAX_INDICATOR_NUM_BEEP_NUM, "Too many indicator numbers");
+
         NumBeep &m_nbs = m_numBeepState;
         uint32_t time = 0;
         m_nbs.timeLast = timestamp.runtime_ms;
@@ -128,6 +131,9 @@ void configureBeepNums(const Timestamp_s& timestamp, const std::initializer_list
 
     void beepNums(const Timestamp_s &timestamp) {
         NumBeep &m_nbs = m_numBeepState;
+        if (m_nbs.segmentCount == 0) // Uninitialized
+            return;
+
         m_nbs.timeDelta += timestamp.runtime_ms - m_nbs.timeLast;
         m_nbs.timeLast = timestamp.runtime_ms;
         int32_t timeToNext;
@@ -177,7 +183,7 @@ void configureBeepNums(const Timestamp_s& timestamp, const std::initializer_list
         };
 
         static constexpr uint32_t MAX_DIGITS = 10;
-        static constexpr uint32_t MAX_SEGMENT_COUNT = (MAX_DIGITS + 1) * MAX_INDICATOR_NUM;
+        static constexpr uint32_t MAX_SEGMENT_COUNT = (MAX_DIGITS + 1) * MAX_INDICATOR_NUM_BEEP_NUM;
         static constexpr uint32_t DIGIT_HOLD_MS = 200;
         static constexpr uint32_t DIGIT_SPACING_MS = 500;
         static constexpr uint32_t LONG_SPACING_MS = 1000;
