@@ -250,10 +250,16 @@ void loop() {
                 deployState = 2;
             }
         } else if (state.flightState == POST_FLIGHT) {
+            if (flightStateDeterminer.isStateTransitionTick()) {
+                uint32_t maxAltitude = max(flightStateDeterminer.getMaxAltitude(), 0);
+                uint32_t maxVelocity = max(flightStateDeterminer.getMaxVelocity(), 0);
+                uint32_t maxAcceleration = max(flightStateDeterminer.getMaxAcceleration(), 0);
+                indicatorManager.configureBeepNums(state.timestamp, {maxAltitude, maxVelocity, maxAcceleration});
+            }
             logger.disableContinuousLogging();
             logger.setLogDelay(5000);
             cliParser.runCli();
-            indicatorManager.siren(state.timestamp);
+            indicatorManager.beepNums(state.timestamp);
         } else {
             logger.enableContinuousLogging();
             cliParser.runCli();

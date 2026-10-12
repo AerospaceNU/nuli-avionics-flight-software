@@ -35,6 +35,12 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
         if (apogeeReached(timestamp, state1D)) {
             setFlightState(timestamp, DESCENT);
         }
+        if (state1D.velocityMS > m_maxVelocity) {
+            m_maxVelocity = state1D.velocityMS;
+        }
+        if (state1D.accelerationMSS > m_maxAcceleration) {
+            m_maxAcceleration = state1D.accelerationMSS;
+        }
     } else if (getFlightState() == DESCENT) {
         if (hasLanded(timestamp, state1D)) {
             setFlightState(timestamp, POST_FLIGHT);
@@ -132,4 +138,16 @@ const StopWatch* FlightStateDeterminer::getStateTimer() const {
 
 bool FlightStateDeterminer::isStateTransitionTick() const {
     return m_stateTransitionTick;
+}
+
+float FlightStateDeterminer::getMaxAltitude() const {
+    return m_maxAltitude;
+}
+
+float FlightStateDeterminer::getMaxVelocity() const {
+    return m_maxVelocity;
+}
+
+float FlightStateDeterminer::getMaxAcceleration() const {
+    return m_maxAcceleration;
 }
