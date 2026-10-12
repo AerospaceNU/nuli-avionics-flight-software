@@ -5,6 +5,7 @@ constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
 void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
+    m_firstStageBurnout = m_configuration->getConfigurable<FIRST_STAGE_BURNOUT_c>();
     m_machLockDebounce.check(true, 0); // This allows this check to be true ASAP if you never go above mach. Kinda a hack for now
 
     // We need to determine the initial "boot" state
@@ -32,6 +33,11 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
             setFlightState(timestamp, ASCENT);
         }
     } else if (getFlightState() == ASCENT) {
+        // Check for burnout
+        if (m_burnoutDebounce.check(state1D.accelerationMSS < 0, timestamp.runtime_ms) && !m_firstStageBurnout.get()) {
+            m_firstStageBurnout.set(true);
+        }
+        // Check for apogee
         if (apogeeReached(timestamp, state1D)) {
             setFlightState(timestamp, DESCENT);
         }
@@ -124,6 +130,9 @@ void FlightStateDeterminer::setFlightState(const Timestamp_s& timestamp, const F
     m_stateTransitionTick = true;
     m_flightState.set(flightState);
     m_stateStopWatch.startWatch(timestamp.runtime_ms);
+    if (flightState == ASCENT) {
+        m_firstStageBurnout.set(false);
+    }
 }
 
 const StopWatch* FlightStateDeterminer::getStateTimer() const {
@@ -132,4 +141,8 @@ const StopWatch* FlightStateDeterminer::getStateTimer() const {
 
 bool FlightStateDeterminer::isStateTransitionTick() const {
     return m_stateTransitionTick;
+}
+
+bool FlightStateDeterminer::getFirstStageBurnout() const {
+    return m_firstStageBurnout.get();
 }
