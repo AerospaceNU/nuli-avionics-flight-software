@@ -16,6 +16,7 @@
 #include "drivers/arduino/IndicatorBuzzer.h"
 #include "drivers/arduino/ArduinoDigitalInput.h"
 #include "drivers/arduino/ArduinoWatchdog.h"
+#include "drivers/arduino/ArduinoServo.h"
 #include "core/HardwareAbstraction.h"
 #include "core/configuration/Configuration.h"
 #include "core/configuration/ConfigurationCliBinding.h"
@@ -72,6 +73,7 @@ ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
+ArduinoServo airbrakeServo(AUX_1_PIN, 0, 90); // Position 1 stowed, position 2 deployed - angles are placeholders, tune on the bench
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -160,6 +162,7 @@ void setup() {
     hardware.appendMagnetometer(sensorPackage.getMagnetometer());
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
+    hardware.appendGenericHardware(&airbrakeServo); // Its setup() drives the servo to position 1
     hardware.appendRadioLink(&radio);
     hardware.appendGPS(&gps);
     hardware.setWatchdogTimer(&watchdog);
@@ -250,14 +253,26 @@ void loop() {
                 deployState = 2;
             }
         } else if (state.flightState == POST_FLIGHT) {
+            if (flightStateDeterminer.isStateTransitionTick()) {
+                uint32_t maxAltitude = max(flightStateDeterminer.getMaxAltitude(), 0);
+                uint32_t maxVelocity = max(flightStateDeterminer.getMaxVelocity(), 0);
+                uint32_t maxAcceleration = max(flightStateDeterminer.getMaxAcceleration(), 0);
+                indicatorManager.configureBeepNums(state.timestamp, {maxAltitude, maxVelocity, maxAcceleration});
+            }
             logger.disableContinuousLogging();
             logger.setLogDelay(5000);
             cliParser.runCli();
-            indicatorManager.siren(state.timestamp);
+            indicatorManager.beepNums(state.timestamp);
         } else {
             logger.enableContinuousLogging();
             cliParser.runCli();
             indicatorManager.siren(state.timestamp);
+        }
+
+        // Airbrakes: move to position 2 three seconds after first stage burnout
+        if (flightStateDeterminer.getFirstStageBurnout() && !airbrakeServo.isAtPosition2() &&
+            flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms) >= 3000) {
+            airbrakeServo.moveToPosition2();
         }
 
         // Update any changes to the configuration
