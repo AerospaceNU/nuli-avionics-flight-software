@@ -73,7 +73,7 @@ ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoServo airbrakeServo(AUX_1_PIN, 0, 90); // Position 1 stowed, position 2 deployed - angles are placeholders, tune on the bench
+ArduinoServo airbrakeServo(AUX_2_PIN, -190, 190); // Position 1 stowed, position 2 deployed - angles are placeholders, tune on the bench
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -134,9 +134,23 @@ SimpleFlag testAux("-a", "Fires aux", false, [](DebugStream* debugStream) {
     debugStream->message("Firing aux");
     auxPyro.fireFor(pyroFireDuration.get());
 });
+SimpleFlag servoToggle("--servo", "Toggles the airbrake servo between its two positions, PRE_FLIGHT only", true, [](DebugStream* debugStream) {
+    if (flightStateDeterminer.getFlightState() != PRE_FLIGHT) {
+        debugStream->error("Servo toggle is PRE_FLIGHT only");
+        return;
+    }
+    if (airbrakeServo.isAtPosition2()) {
+        airbrakeServo.moveToPosition1();
+        debugStream->message("Airbrake servo stowed (position 1)");
+    } else {
+        airbrakeServo.moveToPosition2();
+        debugStream->message("Airbrake servo deployed (position 2)");
+    }
+});
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
 BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain, &testAux};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
+BaseFlag* servoGroup[] = {&servoToggle};
 BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
@@ -175,6 +189,7 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     groundStationRelay.setup(&cliParser, &radio, &gps);
     cliParser.addFlagGroup(resetBoardGroup);
+    cliParser.addFlagGroup(servoGroup);
     cliParser.addFlagGroup(helpGroup);
     cliParser.addStream(&serialDebug);
     cliParser.addStream(&radioCli);
@@ -200,6 +215,8 @@ void setup() {
     if (watchdog.causedLastReset()) logger.logMessage("Previous run was ended by the watchdog (main loop stalled past its timeout)");
     watchdog.enable(100);
     watchdog.pet();
+
+    auxPyro.fire();
 }
 
 void loop() {
