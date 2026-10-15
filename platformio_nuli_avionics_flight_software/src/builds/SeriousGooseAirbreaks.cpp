@@ -44,7 +44,7 @@ struct SillyGooseLogData {
     int32_t flightState;
     uint8_t drogueState; bool drogueFired;
     uint8_t mainState; bool mainFired;
-    uint8_t auxState; bool auxFired; ///< auxState carries the servo position (1 or 2) on this build - aux has no igniter to report continuity for. Name kept so the log header, and the CRC the ground tool fingerprints it by, match SeriousGoose
+    uint8_t auxState; bool auxFired;
     float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
     float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
     uint32_t gpsUnixTimeS;
@@ -73,7 +73,7 @@ ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoServo airbrakeServo(AUX_2_PIN, 0, 190); // Position 1 stowed, position 2 deployed - angles are placeholders, tune on the bench
+ArduinoServo airbrakeServo(AUX_2_PIN, 0, 190);
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
@@ -144,7 +144,7 @@ SimpleFlag servoToggle("--servo", "Toggles the airbrake servo between its two po
     }
 });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain}; // No -a: aux holds the servo's ground return, and fireFor() would time out and drop it
+BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* servoGroup[] = {&servoToggle};
 BaseFlag* helpGroup[] = {&helpFlag};
@@ -163,7 +163,7 @@ void setup() {
     int16_t flashID = hardware.appendFlashMemory(&flash);
     int16_t drogueID = hardware.appendPyro(&droguePyro);
     int16_t mainID = hardware.appendPyro(&mainPyro);
-    hardware.appendPyro(&auxPyro); // without this, run() never fires -> fireFor() never times out and continuity never updates
+    hardware.appendPyro(&auxPyro);
     hardware.appendVoltageSensor(&batteryVoltageSensor);
     hardware.appendGenericHardware(&sensorPackage);
     hardware.appendBarometer(sensorPackage.getBarometer());
@@ -174,10 +174,10 @@ void setup() {
     hardware.appendIndicator(&buzzer);
     hardware.appendRadioLink(&radio);
     hardware.appendGPS(&gps);
-    hardware.appendGenericHardware(&airbrakeServo); // Appended last so its setup() attaches - and starts pulsing the signal line - immediately before auxPyro.fire() below
+    hardware.appendGenericHardware(&airbrakeServo);
     hardware.setWatchdogTimer(&watchdog);
     hardware.setup();
-    auxPyro.fire(); // J5 switches the low side, so this closes the servo's ground return. Until it runs the servo back-feeds through its signal pin
+    auxPyro.fire();
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
@@ -281,7 +281,6 @@ void loop() {
             indicatorManager.siren(state.timestamp);
         }
 
-        // Airbrakes: move to position 2 three seconds after first stage burnout
         if (flightStateDeterminer.getFirstStageBurnout() && !airbrakeServo.isAtPosition2() &&
             flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms) >= 3000) {
             airbrakeServo.moveToPosition2();
@@ -299,7 +298,7 @@ void loop() {
                 sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
                 sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
                 batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), uint8_t(airbrakeServo.isAtPosition2() ? 2 : 1), auxPyro.isFired(), // Servo position in the auxState column - see the struct
+                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), uint8_t(airbrakeServo.isAtPosition2() ? 2 : 1), auxPyro.isFired(),
                 state.orientation.tiltMagnitudeDeg,
                 state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
                 state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,

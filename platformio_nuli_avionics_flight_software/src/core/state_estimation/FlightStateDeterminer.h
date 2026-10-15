@@ -52,7 +52,7 @@ private:
     float m_maxAcceleration = -999999999.0f;
 
     StopWatch m_stateStopWatch;
-    StopWatch m_burnoutStopWatch; ///< Started the tick burnout is detected - see getBurnoutTimer()
+    StopWatch m_burnoutStopWatch;
 
     Debounce m_launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
     Debounce m_burnoutDebounce = Debounce(BURNOUT_DEBOUNCE_TIMER_MS);

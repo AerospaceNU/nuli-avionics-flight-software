@@ -6,7 +6,7 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
     m_firstStageBurnout = m_configuration->getConfigurable<FIRST_STAGE_BURNOUT_c>();
-    m_firstStageBurnout.set(false); // A reboot cannot happen mid-burn, and m_burnoutStopWatch is unstarted until burnout is seen
+    m_firstStageBurnout.set(false);
     m_machLockDebounce.check(true, 0); // This allows this check to be true ASAP if you never go above mach. Kinda a hack for now
 
     // We need to determine the initial "boot" state
