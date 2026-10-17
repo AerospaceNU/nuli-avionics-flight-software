@@ -1,0 +1,386 @@
+diff --git b/platformio_nuli_avionics_flight_software/src/builds/SeriousGoose.cpp a/platformio_nuli_avionics_flight_software/src/builds/SeriousGoose.cpp
+index 1c988a0c..95f21242 100644
+--- b/platformio_nuli_avionics_flight_software/src/builds/SeriousGoose.cpp
++++ a/platformio_nuli_avionics_flight_software/src/builds/SeriousGoose.cpp
+@@ -55,7 +55,7 @@ LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
+     } remove_struct_padding;
+ )
+ // clang-format on
+-static constexpr const char* LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
++static constexpr auto& LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
+ void printLog(const SillyGooseLogData &d, DebugStream *debug) {
+     BasicLoggerHelper::genericBasicLogDataPrinter<HEADER_OUTPUT>(d, debug);
+ }
+@@ -142,6 +142,15 @@ SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debug
+ BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain, &testAux};
+ BaseFlag* resetBoardGroup[] = {&resetBoard};
+ BaseFlag* helpGroup[] = {&helpFlag};
++// Dev builds only (registered in setup()): deliberately leaves the barometer holding the I2C bus, to
++// exercise Ms5607Mmc5603SensorPackage's bus recovery on real hardware
++SimpleFlag i2cLockTestReboot("-r", "Reboot straight after locking, so the boot-time clear has to free it", false, [](DebugStream*) {});
++SimpleFlag i2cLockTest("--i2cLockTest", "Dev: locks the I2C bus to test recovery", true, [](DebugStream* debugStream) {
++    const char* result = sensorPackage.induceBusLockForTest();
++    if (i2cLockTestReboot.isSet()) NVIC_SystemReset(); // before the next read() can recover it
++    debugStream->message("%s", result);
++});
++BaseFlag* i2cLockTestGroup[] = {&i2cLockTest, &i2cLockTestReboot};
+ 
+ void setup() {
+     // Initialize
+@@ -179,6 +188,7 @@ void setup() {
+     groundStationRelay.setup(&cliParser, &radio, &gps);
+     cliParser.addFlagGroup(resetBoardGroup);
+     cliParser.addFlagGroup(helpGroup);
++    if (AVIONICS_ARGUMENT_isDev) cliParser.addFlagGroup(i2cLockTestGroup);
+     cliParser.addStream(&serialDebug);
+     cliParser.addStream(&radioCli);
+     simulationParser.setup(&cliParser, &serialDebug, &hardware);
+diff --git b/platformio_nuli_avionics_flight_software/src/builds/SillyGoose.cpp a/platformio_nuli_avionics_flight_software/src/builds/SillyGoose.cpp
+index 6001ddd4..d8af9ba6 100644
+--- b/platformio_nuli_avionics_flight_software/src/builds/SillyGoose.cpp
++++ a/platformio_nuli_avionics_flight_software/src/builds/SillyGoose.cpp
+@@ -60,7 +60,7 @@ LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
+     } remove_struct_padding;
+ )
+ // clang-format on
+-static constexpr const char* LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
++static constexpr auto& LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
+ void printLog(const SillyGooseLogData &d, DebugStream *debug) {
+     BasicLoggerHelper::genericBasicLogDataPrinter<HEADER_OUTPUT>(d, debug);
+ }
+@@ -134,6 +134,15 @@ SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debug
+ BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain};
+ BaseFlag* resetBoardGroup[] = {&resetBoard};
+ BaseFlag* helpGroup[] = {&helpFlag};
++// Dev builds only (registered in setup()): deliberately leaves the barometer holding the I2C bus, to
++// exercise Ms5607Mmc5603SensorPackage's bus recovery on real hardware
++SimpleFlag i2cLockTestReboot("-r", "Reboot straight after locking, so the boot-time clear has to free it", false, [](DebugStream*) {});
++SimpleFlag i2cLockTest("--i2cLockTest", "Dev: locks the I2C bus to test recovery", true, [](DebugStream* debugStream) {
++    const char* result = sensorPackage.induceBusLockForTest();
++    if (i2cLockTestReboot.isSet()) NVIC_SystemReset(); // before the next read() can recover it
++    debugStream->message("%s", result);
++});
++BaseFlag* i2cLockTestGroup[] = {&i2cLockTest, &i2cLockTestReboot};
+ 
+ void setup() {
+     // Initialize
+@@ -167,6 +176,7 @@ void setup() {
+     cliParser.addFlagGroup(testfireGroup);
+     cliParser.addFlagGroup(resetBoardGroup);
+     cliParser.addFlagGroup(helpGroup);
++    if (AVIONICS_ARGUMENT_isDev) cliParser.addFlagGroup(i2cLockTestGroup);
+     cliParser.addStream(&serialDebug);
+     simulationParser.setup(&cliParser, &serialDebug, &hardware);
+     stateEstimator1D.setup(&hardware, &configuration);
+diff --git b/platformio_nuli_avionics_flight_software/src/drivers/arduino/I2cBusRecovery.h a/platformio_nuli_avionics_flight_software/src/drivers/arduino/I2cBusRecovery.h
+index d237a028..ab75d8a2 100644
+--- b/platformio_nuli_avionics_flight_software/src/drivers/arduino/I2cBusRecovery.h
++++ a/platformio_nuli_avionics_flight_software/src/drivers/arduino/I2cBusRecovery.h
+@@ -3,24 +3,35 @@
+ 
+ #include <Arduino.h>
+ 
++/**
++ * @brief Result of recoverI2cBus().
++ */
+ struct I2cBusRecoveryResult {
+-    bool sdaWasLow = false;
+-    bool sclWasLow = false;
+-    uint8_t clocks = 0;
+-    bool released = false;
++    bool sdaWasLow = false; ///< A device was holding SDA - the lock-up this exists to clear
++    bool sclWasLow = false; ///< A device was holding SCL past the stretch allowance - can't be cleared from here
++    uint8_t clocks = 0;     ///< SCL pulses it took for the device to let go of SDA
++    bool released = false;  ///< Both lines high afterwards, i.e. the bus is usable
+ };
+ 
+ /**
+- * @brief Frees an I2C bus a device is holding, with the I2C spec's bus-clear sequence (UM10204 3.1.16)
+- * @details A device that was mid-byte when the MCU reset keeps holding SDA until it gets the rest of its clocks.
+- * Call before Wire.begin() or after Wire.end(). Takes ~0.2 ms, at most ~1.4 ms.
++ * @brief Frees an I2C bus a device is holding, with the I2C spec's bus-clear sequence (UM10204 3.1.16).
++ * @details A device that was mid-byte when the MCU reset (a flash, --reset, the watchdog) keeps
++ * driving SDA low, waiting for clocks that will never come, and only losing power resets it. Until
++ * then every transaction fails: the SAMD core sees a busy bus and returns at once, so reads come back
++ * 0xFF and the barometer's calibration reads as zeros. Clocking SCL by hand until the device finishes
++ * its byte and releases SDA (at most 9 clocks: 8 bits + ACK), then sending a STOP, frees it without a
++ * power cycle. Harmless on a healthy bus - no clocks are sent, just a STOP on an idle bus.
++ * @note The I2C peripheral must not own the pins: call before Wire.begin(), or after Wire.end().
++ * pinMode() takes the pins off the peripheral mux and Wire.begin() hands them back. Takes ~0.2 ms
++ * (bounded to ~1.4 ms if a device is stretching the clock).
+  */
+ inline I2cBusRecoveryResult recoverI2cBus(const uint8_t sdaPin, const uint8_t sclPin) {
+-    constexpr uint32_t HALF_PERIOD_US = 5;
+-    constexpr uint8_t MAX_CLOCKS = 16;
++    constexpr uint32_t HALF_PERIOD_US = 5;        // 100 kHz
++    constexpr uint8_t MAX_CLOCKS = 16;            // 9 frees any one byte; the rest covers a device that keeps going
+     constexpr uint32_t SCL_STRETCH_ALLOWANCE_US = 1000;
+ 
+     I2cBusRecoveryResult result;
++    // Open-drain by hand: "high" is released to the pull-ups (input), "low" is driven
+     pinMode(sdaPin, INPUT_PULLUP);
+     pinMode(sclPin, INPUT_PULLUP);
+     delayMicroseconds(HALF_PERIOD_US);
+@@ -29,7 +40,7 @@ inline I2cBusRecoveryResult recoverI2cBus(const uint8_t sdaPin, const uint8_t sc
+         result.sclWasLow = true;
+         const uint32_t start = micros();
+         while (digitalRead(sclPin) == LOW && micros() - start < SCL_STRETCH_ALLOWANCE_US) {}
+-        if (digitalRead(sclPin) == LOW) return result;
++        if (digitalRead(sclPin) == LOW) return result; // not a lock-up the master can clock out of
+     }
+ 
+     result.sdaWasLow = digitalRead(sdaPin) == LOW;
+@@ -42,6 +53,7 @@ inline I2cBusRecoveryResult recoverI2cBus(const uint8_t sdaPin, const uint8_t sc
+         result.clocks++;
+     }
+ 
++    // STOP (SDA rising while SCL is high) - ends whatever transaction the device thinks is still open
+     digitalWrite(sdaPin, LOW);
+     pinMode(sdaPin, OUTPUT);
+     delayMicroseconds(HALF_PERIOD_US);
+@@ -52,4 +64,92 @@ inline I2cBusRecoveryResult recoverI2cBus(const uint8_t sdaPin, const uint8_t sc
+     return result;
+ }
+ 
++/**
++ * @brief Test aid: leaves the device at `address` holding SDA low, the way a reset in the middle of a
++ * read does, so recoverI2cBus() can be exercised on real hardware.
++ * @details Bit-bangs a START and a read of `address` (optionally preceded by writing `command`, then a
++ * repeated START - e.g. the MS5607's ADC read), clocks the address and ACK, then stops clocking at the
++ * first data bit the device drives low - it keeps driving it until it gets more clocks.
++ * Same pin rules as recoverI2cBus(). Not for flight code.
++ */
++enum class I2cTestLockResult : uint8_t { Locked, BusAlreadyHeld, NoAck, OnlyOnes };
++
++inline I2cTestLockResult induceI2cLockForTest(const uint8_t sdaPin, const uint8_t sclPin, const uint8_t address, const int16_t command = -1) {
++    constexpr uint32_t HALF_PERIOD_US = 5;
++    auto release = [](uint8_t pin) { pinMode(pin, INPUT_PULLUP); };
++    auto drive = [](uint8_t pin) { digitalWrite(pin, LOW); pinMode(pin, OUTPUT); };
++    // Sends one byte (SCL low on entry and exit) and returns whether the device ACKed it
++    auto sendByte = [&](uint8_t value) {
++        for (int bit = 7; bit >= 0; bit--) {
++            if (value & (1 << bit)) release(sdaPin); else drive(sdaPin);
++            delayMicroseconds(HALF_PERIOD_US);
++            release(sclPin);
++            delayMicroseconds(HALF_PERIOD_US);
++            drive(sclPin);
++        }
++        release(sdaPin); // device ACKs by pulling SDA low on this clock
++        delayMicroseconds(HALF_PERIOD_US);
++        release(sclPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        const bool acked = digitalRead(sdaPin) == LOW;
++        drive(sclPin);
++        return acked;
++    };
++    auto start = [&]() { // START (or repeated START): SDA falls while SCL is high
++        release(sdaPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        release(sclPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        drive(sdaPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        drive(sclPin);
++    };
++    release(sdaPin);
++    release(sclPin);
++    delayMicroseconds(HALF_PERIOD_US);
++    if (digitalRead(sdaPin) == LOW || digitalRead(sclPin) == LOW) return I2cTestLockResult::BusAlreadyHeld;
++
++    bool acked = true;
++    if (command >= 0) {
++        start();
++        acked = sendByte((uint8_t)(address << 1)) && sendByte((uint8_t)command);
++    }
++    if (acked) {
++        start();
++        acked = sendByte((uint8_t)((address << 1) | 1));
++    }
++    if (!acked) {
++        release(sdaPin); // STOP so the bus is left clean
++        delayMicroseconds(HALF_PERIOD_US);
++        drive(sdaPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        release(sclPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        release(sdaPin);
++        return I2cTestLockResult::NoAck;
++    }
++
++    // The device now shifts data out while SCL is low - stop at the first 0 bit it drives
++    for (int byte = 0; byte < 3; byte++) {
++        for (int bit = 0; bit < 8; bit++) {
++            delayMicroseconds(HALF_PERIOD_US);
++            if (digitalRead(sdaPin) == LOW) {
++                release(sclPin); // leave SCL idle-high: the device keeps holding SDA, like after a reset
++                return I2cTestLockResult::Locked;
++            }
++            release(sclPin);
++            delayMicroseconds(HALF_PERIOD_US);
++            drive(sclPin);
++        }
++        drive(sdaPin); // ACK so it sends another byte
++        delayMicroseconds(HALF_PERIOD_US);
++        release(sclPin);
++        delayMicroseconds(HALF_PERIOD_US);
++        drive(sclPin);
++        release(sdaPin);
++    }
++    release(sclPin);
++    return I2cTestLockResult::OnlyOnes; // device only sent 1s - nothing to hold
++}
++
+ #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_I2CBUSRECOVERY_H
+diff --git b/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.cpp a/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.cpp
+index 8a9b4f72..f15afc41 100644
+--- b/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.cpp
++++ a/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.cpp
+@@ -253,6 +253,7 @@ bool Ms5607Mmc5603SensorPackage::readBarometerCalibration() {
+                       baroReadUInt16(MS5607_PROM_READ + 8, m_baroC4) &&
+                       baroReadUInt16(MS5607_PROM_READ + 10, m_baroC5) &&
+                       baroReadUInt16(MS5607_PROM_READ + 12, m_baroC6);
++    // All-zero or all-0xFFFF coefficients are a bus that answered nothing, not a real PROM
+     const bool plausible = (m_baroC1 | m_baroC2 | m_baroC3 | m_baroC4 | m_baroC5 | m_baroC6) != 0 &&
+                            (m_baroC1 & m_baroC2 & m_baroC3 & m_baroC4 & m_baroC5 & m_baroC6) != 0xFFFF;
+     m_baroCalibrated = read && plausible;
+@@ -427,6 +428,8 @@ bool Ms5607Mmc5603SensorPackage::readAndInjectMag() {
+  * ========================= */
+ 
+ void Ms5607Mmc5603SensorPackage::recoverBus() {
++    // Wire.end() hands the pins back to GPIO for the bus clear; Wire.begin() re-arms the peripheral
++    // and resets its bus-state machine, which otherwise keeps reporting the bus busy
+     Wire.end();
+     const I2cBusRecoveryResult result = recoverI2cBus(PIN_WIRE_SDA, PIN_WIRE_SCL);
+     Wire.begin();
+@@ -434,8 +437,16 @@ void Ms5607Mmc5603SensorPackage::recoverBus() {
+     m_busRecoveries++;
+     if (!m_busFaulted) {
+         m_busFaulted = true;
+-        m_debugStream->warn("I2C transfer failed - bus cleared: SDA %s, SCL %s, %d clocks, %s", result.sdaWasLow ? "low" : "high", result.sclWasLow ? "low" : "high", result.clocks, result.released ? "released" : "still held");
++        if (result.sdaWasLow) {
++            m_debugStream->warn("I2C transfer failed - a device was holding SDA, %s after %d clocks", result.released ? "released" : "still held", result.clocks);
++        } else if (!result.released) {
++            m_debugStream->warn("I2C transfer failed - bus still held after a clear (SCL %s)", result.sclWasLow ? "held low" : "free");
++        } else {
++            m_debugStream->warn("I2C transfer failed - bus was free, re-initialized the peripheral");
++        }
+     }
++    // Calibration only needs reading once; if it never came through, try again now the bus is free.
++    // It costs ~3 ms (reset + PROM reads), so a barometer that's simply dead is retried every 100th clear, not every tick.
+     if (result.released && !m_baroCalibrated && m_busRecoveries % 100 == 1 && readBarometerCalibration()) {
+         m_debugStream->message("MS5607 initialized (after I2C recovery)");
+     }
+@@ -452,9 +463,13 @@ Ms5607Mmc5603SensorPackage::Ms5607Mmc5603SensorPackage(const Vector3DTransform*
+ void Ms5607Mmc5603SensorPackage::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
+     m_debugStream = debugStream;
+ 
++    // A reset while a device was mid-byte leaves it holding the bus until it loses power - clear that
++    // first, or every sensor below fails to initialize
+     const I2cBusRecoveryResult busClear = recoverI2cBus(PIN_WIRE_SDA, PIN_WIRE_SCL);
+-    if (busClear.sdaWasLow || !busClear.released) {
+-        m_debugStream->warn("I2C bus was held at boot: SDA %s, SCL %s, %d clocks, %s", busClear.sdaWasLow ? "low" : "high", busClear.sclWasLow ? "low" : "high", busClear.clocks, busClear.released ? "released" : "still held");
++    if (busClear.sdaWasLow) {
++        m_debugStream->warn("I2C bus was held at boot - SDA %s after %d clocks", busClear.released ? "released" : "still held", busClear.clocks);
++    } else if (!busClear.released) {
++        m_debugStream->error("I2C bus held at boot (SCL %s) - needs a power cycle", busClear.sclWasLow ? "held low" : "free");
+     }
+ 
+     Wire.begin();
+@@ -477,6 +492,8 @@ void Ms5607Mmc5603SensorPackage::read() {
+     // Temperature shares pressure's ADC, so it's triggered, waited out, and read before pressure
+     // restarts (margin covers this every tick - see OSR comment above). IMU read (~580us) already
+     // exceeds the ~600us temp conversion and must happen this tick anyway, so doing it here overlaps the two - the wait below should be instant.
++    // A sensor whose transfer fails isn't injected (it keeps its last reading): a failed read is
++    // 0xFF bytes, not a measurement.
+     uint32_t rawPressure = 0, rawTemperature = 0;
+     bool baroOk = readBarometerAdc(rawPressure);
+     baroOk = triggerTemperatureConversion() && baroOk;
+@@ -488,11 +505,11 @@ void Ms5607Mmc5603SensorPackage::read() {
+     if (baroOk && m_baroCalibrated) {
+         computeAndInjectBarometerReading(rawPressure, rawTemperature);
+     } else {
+-        m_barometer.invalidate();
++        m_barometer.invalidate(); // keeps the last values, but nothing downstream treats them as a measurement
+     }
+ 
+     if (!baroOk || !othersOk || !m_baroCalibrated) {
+-        recoverBus();
++        recoverBus(); // ~0.2 ms, so cheap enough to retry every tick until the bus comes back
+     } else if (m_busFaulted) {
+         m_busFaulted = false;
+         m_debugStream->message("I2C reads working again (%lu bus clears)", (unsigned long)m_busRecoveries);
+@@ -501,6 +518,28 @@ void Ms5607Mmc5603SensorPackage::read() {
+     triggerPressureConversion(); // restart for the next cycle
+ }
+ 
++const char* Ms5607Mmc5603SensorPackage::induceBusLockForTest() {
++    // The barometer is mid-conversion here (read() restarts one every tick) and doesn't ACK until it
++    // finishes - let it, so the lock is the barometer's, like the one seen on hardware. Fall back to
++    // the IMU if it still won't answer.
++    delay(10);
++    Wire.end();
++    I2cTestLockResult result = induceI2cLockForTest(PIN_WIRE_SDA, PIN_WIRE_SCL, MS5607_ADDR, MS5607_ADC_READ);
++    bool byImu = false;
++    if (result == I2cTestLockResult::NoAck || result == I2cTestLockResult::OnlyOnes) {
++        result = induceI2cLockForTest(PIN_WIRE_SDA, PIN_WIRE_SCL, m_imuType == ImuType::ICM20602 ? ICM20602_ADDR : ICM42605_ADDR);
++        byImu = true;
++    }
++    Wire.begin(); // peripheral back, bus still held - the next read() finds it that way
++    Wire.setClock(400000);
++    switch (result) {
++        case I2cTestLockResult::Locked: return byImu ? "I2C bus locked by the IMU" : "I2C bus locked by the barometer";
++        case I2cTestLockResult::BusAlreadyHeld: return "Couldn't lock the I2C bus: already held";
++        case I2cTestLockResult::NoAck: return "Couldn't lock the I2C bus: no device ACKed";
++        default: return "Couldn't lock the I2C bus: devices only sent 1 bits";
++    }
++}
++
+ Accelerometer* Ms5607Mmc5603SensorPackage::getAccelerometer() {
+     return &m_accelerometer;
+ }
+diff --git b/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.h a/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.h
+index 5a71aecf..836f36c1 100644
+--- b/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.h
++++ a/platformio_nuli_avionics_flight_software/src/drivers/arduino/Ms5607Mmc5603SensorPackage.h
+@@ -28,12 +28,18 @@ public:
+      */
+     explicit Ms5607Mmc5603SensorPackage(const Vector3DTransform* transform, ImuType imuType, bool hasMagnetometer, const Vector3DTransform* magTransform = nullptr);
+ 
+-    /** @brief Clears the I2C bus (see recoverI2cBus()), then initializes the IMU, barometer, and (if present) magnetometer, and starts the first barometer conversion. */
++    /** @brief Clears the I2C bus if a device is holding it (see recoverI2cBus()), then initializes the IMU, barometer, and (if present) magnetometer, and starts the first barometer conversion. */
+     void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override;
+ 
+-    /** @brief Reads the IMU, magnetometer (if present), and barometer every call - waits out any remaining pressure conversion time rather than skipping it, then resolves pressure+temperature and restarts the conversion (see class comment). Normally instant; bounded to ~4.54ms + ~600us worst case. A sensor whose transfer fails keeps its last reading, and the bus is cleared. */
++    /** @brief Reads the IMU, magnetometer (if present), and barometer every call - waits out any remaining pressure conversion time rather than skipping it, then resolves pressure+temperature and restarts the conversion (see class comment). Normally instant; bounded to ~4.54ms + ~600us worst case. A sensor whose transfer fails keeps its last reading instead of getting garbage, and the bus is cleared before the next tick. */
+     void read() override;
+ 
++    /**
++     * @brief Test aid (Dev builds' --i2cLockTest): leaves a sensor holding SDA, the way a reset mid-read does, so the next read() has to recover the bus.
++     * @return what happened, as text for the CLI reply.
++     */
++    const char* induceBusLockForTest();
++
+     /** @return the accelerometer injector class, for registering with HardwareAbstraction */
+     Accelerometer* getAccelerometer();
+ 
+@@ -51,8 +57,8 @@ private:
+     void setupImu();
+     bool readAndInjectImu();
+ 
+-    void setupImuIcm20602();
+     bool readAndInjectImuIcm20602();
++    void setupImuIcm20602();
+ 
+     void setupImuIcm42605();
+     bool readAndInjectImuIcm42605();
+@@ -90,7 +96,10 @@ private:
+ 
+     // ---- Barometer calibration (read from PROM at setup) and conversion state ----
+     uint16_t m_baroC1 = 0, m_baroC2 = 0, m_baroC3 = 0, m_baroC4 = 0, m_baroC5 = 0, m_baroC6 = 0;
++    // False until the PROM read succeeds - with zero coefficients the compensation math turns any
++    // reading into exactly 0 Pa / 20 C, so no barometer reading is injected until then
+     bool m_baroCalibrated = false;
++    // Set while I2C transfers are failing, so the warning and the "working again" message each print once
+     bool m_busFaulted = false;
+     uint32_t m_busRecoveries = 0;
+     // Start time of whichever conversion is in flight. Always the pressure conversion at the top of
