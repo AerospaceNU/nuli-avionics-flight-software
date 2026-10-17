@@ -144,7 +144,7 @@ struct FlightParams {
     bool accelSaturates;
 };
 
-struct Truth { double liftoffS = -1, apogeeS = -1, apogeeM = 0, touchdownS = -1, maxSpeed = 0, maxMach = 0; };
+struct Truth { double liftoffS = -1, apogeeS = -1, apogeeM = 0, touchdownS = -1, maxSpeed = 0, maxMach = 0, transonicStartS = -1, transonicEndS = -1; };
 struct Result {
     std::vector<std::string> fails;
     double launchS = -1, descentS = -1, drogueS = -1, drogueSpeed = 0, mainS = -1, mainAltM = 0, landedS = -1, fwApogeeM = -1e9;
@@ -198,6 +198,7 @@ static Result fly(const FlightParams& p, std::mt19937_64& rng, Truth& truth) {
                 truth.maxSpeed = std::max(truth.maxSpeed, fabs(v));
                 truth.maxMach = std::max(truth.maxMach, mach);
                 if (h > truth.apogeeM) { truth.apogeeM = h; truth.apogeeS = t; }
+                if (v > 0 && mach >= 0.8) { if (truth.transonicStartS < 0) truth.transonicStartS = t; truth.transonicEndS = t; }
             }
             if (landed && truth.touchdownS < 0) truth.touchdownS = t;
         }
@@ -373,8 +374,18 @@ int main(int argc, char** argv) {
     for (int f = 0; f < flights; f++) {
         const uint64_t seed = seed0 + (uint64_t)f;
         std::mt19937_64 rng(seed);
-        FlightParams p = randomFlight(rng, scenario);
+        // rebootmach / reboothighalt: a spikes / highalt flight rebooted while it's climbing at Mach >= 0.8
+        const bool rebootFast = scenario == "rebootmach" || scenario == "reboothighalt";
+        FlightParams p = randomFlight(rng, scenario == "rebootmach" ? "spikes" : scenario == "reboothighalt" ? "highalt" : scenario);
         Truth truth;
+        if (rebootFast) {
+            std::mt19937_64 probe(seed);
+            Truth t0;
+            fly(p, probe, t0);
+            if (t0.transonicStartS < 0) continue;
+            std::uniform_real_distribution<double> u(0, 1);
+            p.rebootAtS = t0.transonicStartS + (t0.transonicEndS - t0.transonicStartS) * u(rng);
+        }
         if (scenario == "outage") { // the barometer stops reading for 1-15 s somewhere in the flight
             std::mt19937_64 probe(seed);
             Truth t0;

@@ -1,7 +1,8 @@
 """Runs the desktop build on every case in cases.json and checks the flight events in its offload.
 
 Event times are on the input log's own clock (seconds), so a case's expected windows come straight
-from the original flight or the synthetic flight's truth.
+from the original flight or the synthetic flight's truth. A case with "known_issue" is expected to
+fail (reported as KNOWN); if it passes, the check fails so the label gets removed.
 usage: check_sim.py DESKTOP_EXE CASES_JSON [CASE_NAME]
 """
 import gzip
@@ -111,6 +112,8 @@ def check_case(desktop, case, data_dir, work_dir):
     rows = flight_rows(read_text(output), reboots_ms)
     found = events(rows, sim_start_ms(log_text))
     failures = invariant_failures(rows, bool(reboots_ms))
+    if not rows:
+        failures.append("no rows in the offload")
     if "apogee" in found and "drogue" in found and not reboots_ms:
         delay = found["drogue"] - found["apogee"]
         if not DROGUE_AFTER_APOGEE_S[0] <= delay <= DROGUE_AFTER_APOGEE_S[1]:
@@ -142,8 +145,15 @@ def main():
             if only and case["name"] != only:
                 continue
             failures, summary = check_case(desktop, case, data_dir, work_dir)
-            failed += bool(failures)
-            print(f"{'FAIL' if failures else 'ok  '} {case['name']}: {summary}")
+            known = case.get("known_issue")
+            if known and failures:
+                print(f"KNOWN {case['name']}: {known} | {summary}")
+            elif known:
+                failed += 1
+                print(f"FAIL {case['name']}: known issue no longer reproduces - remove known_issue from the case ({known})")
+            else:
+                failed += bool(failures)
+                print(f"{'FAIL' if failures else 'ok  '} {case['name']}: {summary}")
             for failure in failures:
                 print(f"       {failure}")
     return 1 if failed else 0

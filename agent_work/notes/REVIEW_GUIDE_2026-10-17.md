@@ -9,9 +9,10 @@
 | 3. agent_work | all tooling and notes of the session | no firmware |
 
 Test evidence lives in `flight_STRESS_TEST_FIXES_2026-10-16.md` (harness, hardware) and in CI:
-`ctest -R ^sim_` (29 flights, see `tests/sim/cases.json`). Against the pre-session flight code 16 of
-those 29 fail; with this commit all pass, and the three real logs in `agent_work/.../run.sh` change
-state on exactly the same ticks as before.
+`ctest -R ^sim_` (40 flights, see `tests/sim/cases.json`). Against the pre-session flight code 16 of
+the first 29 fail; the 5 transonic-reboot cases (section 10) also fail on the morning push; with this
+commit all pass, and the three real logs in `agent_work/.../run.sh` change state on exactly the same
+ticks as before. Section 10 is what changed after the morning push (Mach flag, review fixes, CI).
 
 ## 1. Flight logic
 
@@ -33,21 +34,23 @@ state on exactly the same ticks as before.
   Options considered: two messages by flight state (was), one message (chosen), none.
 
 ### `FlightStateDeterminer`
-- `hasLaunched`: no valid barometer, no launch (from the earlier launch-gate change).
+- `hasLaunched`: no valid barometer, no launch (from the earlier launch-gate change). An invalid tick
+  is skipped, not a debounce reset (section 10).
 - `hasLanded`: the raw barometric altitude (0.1 s low-pass) must also be steady. When the main opens
   the filter overshoots the deceleration and sits still for seconds while the measurement catches
   up - that alone looked like a landing ~150 m up (POST_FLIGHT, logging off, CLI on, mid-air).
   Invalid-barometer ticks are skipped, not counted and not a reset (a reset never let a board with
   scattered failed reads land).
 - UNKNOWN (boot after an unfinished flight):
-  - accumulates only valid-barometer ticks;
+  - waits for valid-barometer ticks: an invalid tick returns before the window or its timers advance;
   - `highAboveGround` = the highest valid altitude seen > LAUNCH_ALTITUDE_THRESHOLD_M: keep watching
     for motion up to UNKNOWN_STATE_HIGH_TIMER_MS (10 s) instead of deciding PRE_FLIGHT at 1 s. A
     reboot at apogee (ejection brownout) is nearly motionless for a second; it used to go PRE_FLIGHT
     and fire nothing. Motion is still required, so a board powered up at a higher site stays put.
   - `m_machLockoutClearedAtBoot`: the lockout debounce counts from boot, so a resumed flight waited
-    5 s before apogee could be called (drogue at 60 m/s, main under 80 m). If the window's speed was
-    already below the lockout speed it's cleared, until the speed next exceeds it.
+    5 s before apogee could be called (drogue at 60 m/s, main under 80 m). It's cleared when the
+    stored state was DESCENT (the board already called apogee before the reboot), until the speed
+    next exceeds the lockout speed; PRE_FLIGHT drops it. See section 10 for why not the window speed.
   - `resetUnknownStateDetection()` replaces the duplicated reset block.
 
 ### `KalmanFilter1D`
@@ -98,11 +101,13 @@ state on exactly the same ticks as before.
   test per case in `tests/sim/cases.json`, checked by `tests/sim/check_sim.py`: windows for launch,
   apogee, drogue, main (+ altitude), landing on the input log's clock, plus invariants on every case
   (no pyro in PRE_FLIGHT, drogue 0.9-1.2 s after apogee, main after drogue, no backwards states).
-- Data (`tests/sim/data`, 8.8 MB gz): 9 AerospaceNU logs (GPL-3 like this repo, incl. the real
-  Haybales mid-descent reboot), 4 RocketPy logs (Prometheus x2, Hedy, Juno III; MIT, notice in `tests/sim/data/README.md`),
-  15 synthetic weird flights (Mach 1-3, 27 and 30 km, hot high site, dead/dying barometer, outages,
-  dropouts, reboots during boost, near apogee and under the drogue, garbled log file). Regenerate with
-  `agent_work/scripts/ci_data/make_ci_cases.py`.
+- Data (`tests/sim/data`, 10.7 MB gz): 9 AerospaceNU SillyGoose logs (GPL-3 like this repo, incl. the
+  real Haybales mid-descent reboot), 6 more AerospaceNU logs from FCB v0/v2 and a ground station plus
+  the Haybales post-reboot log alone (converted by `agent_work/scripts/ci_data/convert_rocket_flight_data.py`),
+  4 RocketPy logs (Prometheus x2, Hedy, Juno III; MIT, notice in `tests/sim/data/README.md`),
+  20 synthetic weird flights (Mach 1-3, 27 and 30 km, hot high site, dead/dying barometer, outages,
+  dropouts, reboots during boost, near apogee, under the drogue and in the transonic/supersonic climb,
+  garbled log file). Regenerate with `agent_work/scripts/ci_data/make_ci_cases.py`.
 
 ## 5. USB CLI echo (`drivers/arduino/SerialDebug.h`)
 - Release builds echo every received character. The echo was one `Serial.print(c)` per character
@@ -165,3 +170,49 @@ never accepted a sample (it only takes readings within 1 m/s^2 of 1 g), so a reb
 the axis from an empty filter (NEG_Z) and overwrote the one stored in FRAM - the accel launch check
 then missed the burn. Now nothing is updated until the low-pass has a sample (`LowPass::isInitialized`).
 Stress `reboot` 3000 flights: NO_LAUNCH 2 -> 0; every other scenario identical; real logs same ticks.
+
+## 10. After the morning push (2026-10-17 afternoon)
+Firmware, all in `FlightStateDeterminer.cpp`:
+- **Mach-lockout clear after a reboot = stored DESCENT.** The pushed version cleared it when the
+  UNKNOWN window's velocity low-pass was below 150 m/s. Right after a reboot the filter starts
+  uncertain (P = 1000 I) and takes the first transonic pressure samples at face value, so the low-pass
+  read slow while the rocket was at Mach ~1: drogue 21-33 s before apogee at 250-330 m/s.
+  Stress, 3000 flights each (`agent_work/logs/stress/*_reboot{mach,highalt,}.txt`):
+
+  | clear rule | rebootmach (transonic reboot) | reboot (subsonic) |
+  |---|---|---|
+  | window velocity < 150 (pushed) | 276 fail (drogue at 250-330 m/s) | 0 FAST_DROGUE, 0 LOW_MAIN |
+  | window altitude range (tried) | 14 fail | - |
+  | never clear | 0 | 60 FAST_DROGUE (60-74 m/s), 51 LOW_MAIN |
+  | **stored state was DESCENT (chosen)** | **0** | 22 FAST_DROGUE (61-68 m/s), 0 LOW_MAIN |
+
+  The 22 are reboots in the ~0.5 s between true apogee and the board calling it (stored ASCENT): the
+  5 s lockout then delays the drogue to ~5 s past apogee. Options if that matters: shorter lockout
+  after a reboot when the window is slow *and* below a speed the transonic artifacts can't fake.
+- **Launch gate skips invalid barometer ticks** instead of resetting the debounce (review H1). With
+  20-30 % failed reads a reset never let the 0.5 s debounce finish, while PRE_FLIGHT kept re-learning
+  the ground under the climbing rocket: main fired up to 3.5 km up, 7/40 launches never detected.
+  Now 0/40 at 20 % and 30 %; `faults` identical.
+- **UNKNOWN waits for a valid barometer** before its window/timers advance (review C2). The MS5607
+  driver retries calibration every 100 failed ticks, one tick after the 1 s decision, so a barometer
+  unreadable for >1 s after a reboot decided PRE_FLIGHT mid-flight: 40/40 no landing, 34 no main.
+  Now 1/40 (an unrelated hop), also at 2 s; 5 s outage: 5/40.
+
+CI and test data:
+- 5 transonic/supersonic reboot cases (`syn_*_reboot_<time>`, reboot times from the sweep) - each
+  fails on the pushed code (drogue 21-33 s early) and passes now. They share the base flight's data file.
+- `syn_one_bad_read_per_second` had its 0 Pa rows in sparse stretches too, which the sim interpolated
+  into valid-looking 79 -> 0 -> 79 kPa ramps (that was the sweep's "+32 s late drogue"); failed reads are
+  now only placed in dense stretches.
+- Raw SillyGoose logs go from a pad row every 5 s straight into boost; the sim interpolated a 2-5 s
+  climb and launched 1.3-3.6 s early. A row holding the pad values 40 ms before fast logging starts is
+  inserted (real-case windows moved by that amount).
+- 6 cases from the rest of rocket-flight-data (FCB v0 x3, FCB v2, ground station, Haybales post-reboot
+  log alone), converted by `convert_rocket_flight_data.py` (formats/units in its manifest).
+- `check_sim.py`: an empty offload fails; `known_issue` cases report KNOWN and fail once they pass.
+- `desktop-sim.yml`: `ctest --no-tests=error` (no Python -> no sim tests -> used to pass);
+  `cli-tests.yml`: `-E "^sim_"` (it doesn't build the desktop target) - verified on GitHub on a
+  temporary branch.
+
+Not applied (review findings with data, owner's call) - see PENDING.md: KalmanFilter1D masked update
+(H2), backup apogee timer for a dead I2C bus (C3), UNKNOWN on the pad at a high site (C4).

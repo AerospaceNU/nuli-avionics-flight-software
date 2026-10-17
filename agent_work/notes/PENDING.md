@@ -172,3 +172,48 @@ higher than 2/3000. Options (owner's call, each has a pad-safety side):
 - Measured: SeriousGoose boots to its first loop in 374 ms (release build, `boot_capture.py`). So the
   window is liftoff to ~0.3 s, plus 0.37 s of boot; a motor still burning ~0.5 s after the reboot is
   caught by the accel check - short motors / late-burn brownouts are the exposure.
+
+## From the adversarial review (`ADVERSARIAL_REVIEW_2026-10-17.md`; fixed: C1, C2, H1, two CI gaps)
+
+### KalmanFilter1D masks the innovation but not K or P (H2, predates the session)
+`genericUpdate` computes K from the full `P + R`, so every update also acts as a "velocity = current
+estimate" measurement (R = 5) and shrinks P on axes not measured: the "coast" during an outage is
+overconfident and P = 1000 at boot lasts one tick for velocity. Masking properly
+(`M = mask.asDiagonal(); S = M P M + R; K = P M S^-1; P = (I - K M) P`) measured, 1000 flights each:
+outage 39 -> 7 failures, reboot 228 -> 69 (NO_LANDING 220 -> 61), clean/mach/spikes/rebootmach 0 -> 0,
+highalt same, **faults 0 -> 2 FALSE_LAUNCH**: a corrupt config boots UNKNOWN with ground 0 at a 720 m
+site, and the now-undamped velocity (noisy barometer) trips UNKNOWN's 5 m / 3 m/s motion test on the
+pad -> ASCENT -> drogue and main on the pad. So it's a retune, not a one-line fix: it needs UNKNOWN's
+motion test (and probably processJerkStd / R) re-tuned with it. Not applied.
+
+### A dead I2C bus in flight fires nothing (C3)
+Barometer and IMU share the bus; the accelerometer has no validity flag, so its last boost sample stays
+frozen and the coasting filter integrates it (fw apogee 166-967 km, 20/20 no pyros). With a working
+accelerometer still 20/20 no main. Options: accelerometer validity (driver read failure -> invalid ->
+filter predicts only), and a backup timer (drogue at burnout + expected time to apogee, main at
+drogue + time to fall to MAIN_ELEVATION at a typical drogue rate) when the barometer has been out.
+
+### UNKNOWN boot on the pad at a high site with motion (C4)
+A board booting UNKNOWN (fresh/corrupt config, or an unfinished flight) more than 100 m above its
+stored ground keeps watching for motion for 11 s (was 1 s). Carried down at >= 3 m/s in that window
+(a car, a person walking downhill fast) it calls ASCENT -> apogee -> drogue. Still: never; motion
+after 12 s: never. Options: require the motion to be a climb or fall faster than a person/vehicle
+(e.g. 10 m/s), or require the stored state to have been ASCENT/DESCENT (not a fresh config) for the
+10 s wait.
+
+### Smaller review items, not changed
+- M2: above the tropopause the temperature is the ground temperature's ISA offset; at a 313 K site
+  27 km reads +2.1 km vs ISA (the 124 m figure in the guide holds at 288 K).
+- M3 (suspected): an MS5607 temperature ADC read of 0 (conversion not finished) gives ~44.7 kPa and
+  passes as valid; the 600 us wait equals the datasheet maximum.
+- M4: SleepyDog rounds the 100 ms watchdog down to 62.5 ms - the timing budget in the notes is 62.5 ms.
+- M1 CI gaps left: main_altitude checks the firmware's own estimate; reboot cases skip the state-order
+  invariants and the drogue-delay check; the desktop clock is sample index x 10 ms (a log not on a 10 ms
+  grid plays fast - convert_rocket_flight_data.py resamples); board logs can't mark invalid reads.
+- L2: one non-finite barometer temperature (pressure valid) poisons the ground-temperature low-pass
+  until reboot (MS5607 temperatures are integers, so only reachable from the desktop/log path).
+- L3: the orientation guard leaves accelerometer launch detection off on a fresh config until a 1 g sample.
+- L4/L5: SAMD Wire has no timeouts (a slave holding SCL low hangs until the watchdog); `recoverBus()`
+  runs every tick forever if calibration or the magnetometer is dead.
+- L6/L7/L9: binary offload of a garbage tail walks all of flash; float printing UB for |x| >= 2^64;
+  the desktop build relies on transitive includes.

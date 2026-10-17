@@ -16,6 +16,7 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
         setFlightState(bootTimestamp, PRE_FLIGHT);
     }
     // Rebooted mid-flight: can no longer trust that state
+    m_machLockoutClearedAtBoot = getFlightState() == DESCENT;
     if (getFlightState() == ASCENT || getFlightState() == DESCENT) {
         setFlightState(bootTimestamp, UNKNOWN_FLIGHT_STATE);
     }
@@ -53,14 +54,13 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
     } else if (getFlightState() == POST_FLIGHT) {
         // Nothing to do
     } else if (getFlightState() == UNKNOWN_FLIGHT_STATE) {
-        if (state1D.barometerValid) {
-            m_unknownStateVelocityLowPass.update(state1D.velocityMS);
-            if (state1D.altitudeM > m_unknownStateMaximumAltitude) {
-                m_unknownStateMaximumAltitude = state1D.altitudeM;
-            }
-            if (state1D.altitudeM < m_unknownStateMinimumAltitude) {
-                m_unknownStateMinimumAltitude = state1D.altitudeM;
-            }
+        if (!state1D.barometerValid) return getFlightState();
+        m_unknownStateVelocityLowPass.update(state1D.velocityMS);
+        if (state1D.altitudeM > m_unknownStateMaximumAltitude) {
+            m_unknownStateMaximumAltitude = state1D.altitudeM;
+        }
+        if (state1D.altitudeM < m_unknownStateMinimumAltitude) {
+            m_unknownStateMinimumAltitude = state1D.altitudeM;
         }
         if (m_unknownStateTimer.check(true, timestamp.runtime_ms)) {
             const bool sufficientDeltaAltitude = m_unknownStateMaximumAltitude - m_unknownStateMinimumAltitude > UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M;
@@ -68,11 +68,11 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
             const bool highAboveGround = m_unknownStateMaximumAltitude > LAUNCH_ALTITUDE_THRESHOLD_M;
             if (sufficientDeltaAltitude && sufficientVelocity) {
                 setFlightState(timestamp, ASCENT); // ASCENT quickly moves on to DESCENT if already past apogee
-                m_machLockoutClearedAtBoot = m_unknownStateVelocityLowPass.value() < MACH_LOCKOUT_THRESHOLD_MS;
             } else if (highAboveGround && !m_unknownStateHighTimer.check(true, timestamp.runtime_ms)) {
                 return getFlightState();
             } else {
                 setFlightState(timestamp, PRE_FLIGHT);
+                m_machLockoutClearedAtBoot = false;
             }
             resetUnknownStateDetection();
         }
@@ -83,10 +83,7 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
 }
 
 bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D) {
-    if (!state1D.barometerValid) {
-        m_launchDebounce.reset();
-        return false;
-    }
+    if (!state1D.barometerValid) return false;
     const bool aboveLaunchAcceleration = state1D.accelerationMSS >= LAUNCH_ACCELERATION_THRESHOLD_MSS;
     // Ground reference also tracks altitude in PRE_FLIGHT; only its slow low pass in StateEstimator1D lets this trigger
     const bool aboveLaunchAltitude = state1D.altitudeM >= LAUNCH_ALTITUDE_THRESHOLD_M;
