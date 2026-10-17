@@ -23,13 +23,22 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
 State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
     // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     float pressurePa = getPressurePa();
-    float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
     float accelerationMSS = getAccelerationMSS(flightState);
+
+    if (m_barometerValid && m_barometerInvalidTicks >= BAROMETER_INVALID_REPORT_TICKS) m_hardware->getDebugStream()->message("Barometer reading valid again");
+    m_barometerInvalidTicks = m_barometerValid ? 0 : m_barometerInvalidTicks + 1;
+    if (m_barometerInvalidTicks == BAROMETER_INVALID_REPORT_TICKS) m_hardware->getDebugStream()->warn("No valid barometer reading");
+    if (m_barometerValid) m_barometerEverValid = true;
+    if (!m_barometerEverValid) {
+        m_currentState1D = {};
+        return m_currentState1D;
+    }
 
     if (flightState == PRE_FLIGHT) {
         updateBoardOrientationReference(timestamp);
-        updateGroundElevationReference(altitudeRawM, timestamp);
+        if (m_barometerValid) updateGroundElevationReference(pressurePa, timestamp);
     }
+    float altitudeRawM = Barometer::calculateAltitudeM(pressurePa, m_groundTemperature.get());
 
     if (m_reInitializeKalman) {
         m_kalmanFilter.restState(altitudeRawM - m_groundElevation.get(), m_kalmanFilter.getVelocity(), m_kalmanFilter.getAcceleration());
@@ -43,12 +52,17 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
     m_kalmanFilter.setBarometerCovariance(1.0f + machRamp * (1.0f / 0.3f - 1.0f));
 
     m_kalmanFilter.predict();
-    m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
+    if (m_barometerValid) {
+        m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
+    } else {
+        m_kalmanFilter.accelerationDataUpdate(accelerationMSS);
+    }
 
     m_currentState1D.altitudeM = m_kalmanFilter.getPosition();
     m_currentState1D.velocityMS = m_kalmanFilter.getVelocity();
     m_currentState1D.accelerationMSS = m_kalmanFilter.getAcceleration();
     m_currentState1D.unfilteredNoOffsetAltitudeM = altitudeRawM;
+    m_currentState1D.barometerValid = m_barometerValid;
 
     return m_currentState1D;
 }
@@ -68,6 +82,7 @@ float StateEstimator1D::getPressurePa() {
         }
     }
 
+    m_barometerValid = count > 0;
     if (count == 0) {
         return m_lastPressure;
     }
@@ -103,22 +118,24 @@ float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) con
 void StateEstimator1D::reset() {
     m_reInitializeKalman = true;
     m_needNewGroundReference = true;
-    m_groundElevationReferenceLowPass.reset();
+    m_groundPressureReferenceLowPass.reset();
 }
 
-void StateEstimator1D::updateGroundElevationReference(const float unfilteredAltitudeM, const Timestamp_s& timestamp) {
+void StateEstimator1D::updateGroundElevationReference(const float pressurePa, const Timestamp_s& timestamp) {
     // Ground elevation
     m_groundTemperatureReferenceLowPass.update(m_hardware->getBarometer(0)->getTemperatureK());
-    m_groundElevationReferenceLowPass.update(unfilteredAltitudeM);
+    m_groundPressureReferenceLowPass.update(pressurePa);
     if (m_needNewGroundReference || m_groundElevationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {
         m_groundElevationReferenceTimer.startAlarm(timestamp.runtime_ms, GROUND_REFERENCE_UPDATE_DELAY);
-        bool groundElevationChanged = abs(m_groundElevation.get() - m_groundElevationReferenceLowPass.value()) > 2.0f;
-        bool groundTemperatureChanged = abs(m_groundTemperature.get() - m_groundTemperatureReferenceLowPass.value()) > 2.0f;
+        const float groundTemperature = m_groundTemperatureReferenceLowPass.value();
+        const float groundElevation = Barometer::calculateAltitudeM(m_groundPressureReferenceLowPass.value(), groundTemperature);
+        bool groundElevationChanged = std::fabs(m_groundElevation.get() - groundElevation) > 2.0f;
+        bool groundTemperatureChanged = std::fabs(m_groundTemperature.get() - groundTemperature) > 2.0f;
         if (m_needNewGroundReference || groundElevationChanged || groundTemperatureChanged) {
             m_needNewGroundReference = false;
             m_reInitializeKalman = true;
-            m_groundElevation.set(m_groundElevationReferenceLowPass.value());
-            m_groundTemperature.set(m_groundTemperatureReferenceLowPass.value());
+            m_groundElevation.set(groundElevation);
+            m_groundTemperature.set(groundTemperature);
             m_hardware->getDebugStream()->message("Ground elevation set to %f, %f", m_groundElevation.get(), m_groundTemperature.get());
         }
     }
@@ -132,6 +149,7 @@ void StateEstimator1D::updateBoardOrientationReference(const Timestamp_s& timest
         m_lowPassAY.update(accelerations.y);
         m_lowPassAZ.update(accelerations.z);
     }
+    if (!m_lowPassAX.isInitialized()) return;
     accelerations = {m_lowPassAX.value(), m_lowPassAY.value(), m_lowPassAZ.value()};
 
     if (m_needNewGroundReference || m_boardOrientationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {

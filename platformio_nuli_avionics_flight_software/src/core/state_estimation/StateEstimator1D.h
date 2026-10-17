@@ -27,7 +27,7 @@ private:
 
     float getAccelerationMSS(const FlightState_e &flightState) const;
 
-    void updateGroundElevationReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
+    void updateGroundElevationReference(float pressurePa, const Timestamp_s& timestamp);
 
     void updateGroundTemperatureReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
 
@@ -45,12 +45,16 @@ private:
     KalmanFilter1D m_kalmanFilter;
 
     float m_lastPressure = Constants::ATMOSPHERIC_PRESSURE_PA;
+    bool m_barometerValid = false;
+    bool m_barometerEverValid = false;
+    static constexpr uint32_t BAROMETER_INVALID_REPORT_TICKS = 10;
+    uint32_t m_barometerInvalidTicks = 0;
 
     LowPass m_groundTemperatureReferenceLowPass{0.01};
 
     bool m_reInitializeKalman = true;
     bool m_needNewGroundReference = true;
-    LowPass m_groundElevationReferenceLowPass{0.01};
+    LowPass m_groundPressureReferenceLowPass{0.01};
     Alarm m_groundElevationReferenceTimer;
 
     LowPass m_lowPassAX{0.01};

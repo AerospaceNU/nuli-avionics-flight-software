@@ -19,7 +19,7 @@
  *      - This is not very high, and can be easily achieved by shaking the device
  */
 // Launch detection
-constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0; ///, FCB used 20 m/s^2. This
+constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0;
 constexpr float LAUNCH_ALTITUDE_THRESHOLD_M = 100.0;
 constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
 // Burnout
@@ -32,10 +32,13 @@ constexpr float MACH_LOCKOUT_THRESHOLD_MS = 150.0;
 // Landing detection
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
+// Main deployment
+constexpr uint32_t MAIN_DEPLOY_DEBOUNCE_TIMER_MS = 200;
 // On boot state detection
 constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
 constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
+constexpr uint32_t UNKNOWN_STATE_HIGH_TIMER_MS = 10000;
 constexpr uint32_t GROUND_REFERENCE_UPDATE_DELAY = 2000;
 
 // Hardware Abstraction max size parameters
@@ -102,6 +105,7 @@ struct State1D_s {
     float velocityMS;
     float accelerationMSS;
     float unfilteredNoOffsetAltitudeM;
+    bool barometerValid; ///< False while altitude comes from a held pressure rather than a measurement
 };
 
 struct Orientation_s {
@@ -179,10 +183,6 @@ struct GyroscopeBias_s {
 #include "Arduino.h"
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
-#else
-void setup();
-void loop();
-#define AVIONICS_DESKTOP_MAIN  int main() { setup(); while (true) loop(); }
 #endif
 #include <string.h>
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

@@ -9,7 +9,7 @@
 
 class OrientationEstimator {
 public:
-    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {GYROSCOPE_BIAS_c, LAUNCH_ANGLE_c};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {GYROSCOPE_BIAS_c, LAUNCH_ANGLE_c, BOARD_ORIENTATION_c};
 
     void setup(HardwareAbstraction* hardware, Configuration* configuration);
 

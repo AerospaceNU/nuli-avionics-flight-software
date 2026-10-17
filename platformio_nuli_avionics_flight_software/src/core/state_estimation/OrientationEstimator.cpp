@@ -128,7 +128,7 @@ float OrientationEstimator::computeTilt(const Quaternion& q) const {
     Quaternion bodyZ(0.0f, 0.0f, 0.0f, 1.0f);
 
     // We actually want to compare against whatever axis we think is along the length of the rocket
-    uint32_t direction = m_boardOrientation.get();
+    const int32_t direction = m_boardOrientation.get();
     if (direction == POS_X) bodyZ = Quaternion(1, 0, 0);
     else if (direction == NEG_X) bodyZ = Quaternion(-1, 0, 0);
     else if (direction == POS_Y) bodyZ = Quaternion(0, 1, 0);

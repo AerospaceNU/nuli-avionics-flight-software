@@ -38,9 +38,10 @@ public:
                     // high-bandwidth streams (see BaseFlag::isHighBandwidthOnly), so they're
                     // silently no-ops over a low-bandwidth link like CLI-over-radio.
                     m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }, true),
-                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true) {}
+                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true),
+                    m_formatFlag("--logFormat", "Prints the log data struct definition", true, [this](DebugStream* debugStream) { this->printFormat(debugStream); }, true) {}
 
-    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header,
+    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, const char* format,
                void (*printFunction)(const LogDataStruct&, DebugStream*),
                Configuration* configuration = nullptr) {
         m_hardware = hardware;
@@ -48,6 +49,7 @@ public:
         m_flash = m_hardware->getFlashMemory(flashID);
         m_logWriteIndex = 0;
         m_headerStr = header;
+        m_formatStr = format;
         m_printFunction = printFunction;
         m_configuration = configuration;
         m_watchdog = &m_hardware->getWatchdogTimer(); // single instance, owned by HardwareAbstraction - not injected separately
@@ -59,6 +61,7 @@ public:
         parser->addFlagGroup(m_offloadGroup);
         parser->addFlagGroup(m_logGroup);
         parser->addFlagGroup(m_streamGroup);
+        parser->addFlagGroup(m_formatGroup);
 
         m_numEntries = m_flash->getMemorySizeBytes() / sizeof(InternalStruct_s);
 
@@ -169,6 +172,7 @@ public:
         if (m_offloadBinaryFlag.isSet()) { binaryOffloadCallback(debugStream); return; }
         uint32_t failCount = 0;
         debugStream->message("Starting Offload");
+        printFormat(debugStream);
         debugStream->data(m_headerStr);
 
         // Bumped from 512: a reconstructed CONFIG line now includes every registered field
@@ -245,6 +249,7 @@ public:
     // local struct change can't be silently misparsed; writeRaw blocks on USB backpressure so saturation can't drop records.
     void binaryOffloadCallback(DebugStream* debugStream) {
         debugStream->message("Starting Offload");
+        printFormat(debugStream);
 
         // Header CRC fingerprints the struct layout (header string is kept in sync with LogDataStruct), so renames/reorders are detected too.
         const uint16_t dataSize = sizeof(LogDataStruct);
@@ -265,11 +270,11 @@ public:
 
             uint8_t id;
             offload(i, id); // loads m_dataStruct = {id, data, crc}
-            if (id == LOG_EMPTY || computeCrc(m_dataStruct) != m_dataStruct.crc) {
+            if (id == LOG_EMPTY) {
                 if (++failCount >= 4) break;
                 continue;
             }
-            failCount = 0;
+            if (computeCrc(m_dataStruct) != m_dataStruct.crc) continue;
             // Only [id][data] goes over the wire - crc bytes would silently desync the host's
             // fixed 1+dataSize-per-entry framing, since the preamble never describes them.
             if (!debugStream->writeRaw(m_dataStructStart, sizeof(InternalStruct_s) - sizeof(m_dataStruct.crc))) {
@@ -313,6 +318,7 @@ public:
     void streamCallback(DebugStream* debugStream) {
         if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableStreaming = true;
+            printFormat(debugStream);
             debugStream->message("Streaming enabled");
         } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableStreaming = false;
@@ -339,6 +345,14 @@ public:
     }
 
 private:
+    void printFormat(DebugStream* debugStream) {
+        if (!m_formatStr) return;
+        static const char prefix[] = "LOG_FORMAT\t";
+        debugStream->writeRaw(prefix, sizeof(prefix) - 1);
+        debugStream->writeRaw(m_formatStr, strlen(m_formatStr));
+        debugStream->writeRaw("\n", 1);
+    }
+
     static uint16_t computeCrc(const InternalStruct_s& entry) {
         return crc16(&entry, sizeof(InternalStruct_s) - sizeof(entry.crc));
     }
@@ -410,11 +424,13 @@ private:
     SimpleFlag m_eraseFlag;
     SimpleFlag m_offloadFlag;
     SimpleFlag m_streamFlag;
+    SimpleFlag m_formatFlag;
 
     BaseFlag* m_logGroup[3] = {&m_logFlag, &m_startFlag, &m_endFlag};
     BaseFlag* m_eraseGroup[1] = {&m_eraseFlag};
     BaseFlag* m_offloadGroup[2] = {&m_offloadFlag, &m_offloadBinaryFlag};
     BaseFlag* m_streamGroup[3] = {&m_streamFlag, &m_startFlag, &m_endFlag};
+    BaseFlag* m_formatGroup[1] = {&m_formatFlag};
 
     HardwareAbstraction* m_hardware = nullptr;
     DebugStream* m_debug = nullptr;
@@ -431,6 +447,7 @@ private:
     uint32_t m_currentTick = 0;
 
     const char* m_headerStr = nullptr;
+    const char* m_formatStr = nullptr;
     void (*m_printFunction)(const LogDataStruct&, DebugStream*) = nullptr;
 
     Configuration* m_configuration = nullptr;

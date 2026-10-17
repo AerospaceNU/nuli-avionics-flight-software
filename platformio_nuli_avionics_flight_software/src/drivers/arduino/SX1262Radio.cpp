@@ -100,14 +100,11 @@ bool SX1262Radio::setFrequency(float frequencyMHz) {
 
     m_radio.standby(); // the chip requires standby mode to accept a new frequency
     const int16_t state = m_radio.setFrequency(frequencyMHz);
-    if (state != RADIOLIB_ERR_NONE) {
-        m_debugStream->error("SX1262Radio setFrequency failed. Code: %d", state);
-        return false;
-    }
-    m_frequencyMHz = frequencyMHz;
+    if (state != RADIOLIB_ERR_NONE) m_debugStream->error("SX1262Radio setFrequency failed. Code: %d", state);
+    if (state == RADIOLIB_ERR_NONE) m_frequencyMHz = frequencyMHz;
 
     if (wasReceiving) startReceive();
-    return true;
+    return state == RADIOLIB_ERR_NONE;
 }
 
 bool SX1262Radio::setSpreadingFactor(uint8_t spreadingFactor) {
@@ -118,13 +115,10 @@ bool SX1262Radio::setSpreadingFactor(uint8_t spreadingFactor) {
 
     m_radio.standby(); // the chip requires standby mode to accept new modulation parameters
     const int16_t state = m_radio.setSpreadingFactor(spreadingFactor);
-    if (state != RADIOLIB_ERR_NONE) {
-        m_debugStream->error("SX1262Radio setSpreadingFactor failed. Code: %d", state);
-        return false;
-    }
+    if (state != RADIOLIB_ERR_NONE) m_debugStream->error("SX1262Radio setSpreadingFactor failed. Code: %d", state);
 
     if (wasReceiving) startReceive();
-    return true;
+    return state == RADIOLIB_ERR_NONE;
 }
 
 bool SX1262Radio::isMessageAvailable() const {

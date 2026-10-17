@@ -1,5 +1,6 @@
 #include "Ms5607Mmc5603SensorPackage.h"
 #include "ConstantsUnits.h"
+#include "I2cBusRecovery.h"
 #include <Arduino.h>
 #include <Wire.h>
 
@@ -80,11 +81,11 @@ void Ms5607Mmc5603SensorPackage::setupImuIcm20602() {
     }
 }
 
-void Ms5607Mmc5603SensorPackage::readAndInjectImuIcm20602() {
+bool Ms5607Mmc5603SensorPackage::readAndInjectImuIcm20602() {
     Wire.beginTransmission(ICM20602_ADDR);
     Wire.write(ICM20602_ACCEL_XOUT_H);
-    Wire.endTransmission(false);
-    Wire.requestFrom(ICM20602_ADDR, (uint8_t)14); // 6 accel + 2 temp + 6 gyro
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom(ICM20602_ADDR, (uint8_t)14) != 14) return false; // 6 accel + 2 temp + 6 gyro
 
     uint8_t buf[14];
     for (unsigned char & i : buf) i = Wire.read();
@@ -112,6 +113,7 @@ void Ms5607Mmc5603SensorPackage::readAndInjectImuIcm20602() {
 
     m_accelerometer.inject(accelerationsMSS, temperatureK);
     m_gyroscope.inject(velocitiesRadS, temperatureK);
+    return true;
 }
 
 /* =========================
@@ -158,12 +160,12 @@ void Ms5607Mmc5603SensorPackage::setupImuIcm42605() {
     }
 }
 
-void Ms5607Mmc5603SensorPackage::readAndInjectImuIcm42605() {
+bool Ms5607Mmc5603SensorPackage::readAndInjectImuIcm42605() {
     icm42605SelectBank(0);
     Wire.beginTransmission(ICM42605_ADDR);
     Wire.write(ICM42605_TEMP_DATA1);
-    Wire.endTransmission(false);
-    Wire.requestFrom(ICM42605_ADDR, (uint8_t)16); // temp(2) + accel(6) + gyro(6) + timestamp(2, ignored)
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom(ICM42605_ADDR, (uint8_t)16) != 16) return false; // temp(2) + accel(6) + gyro(6) + timestamp(2, ignored)
 
     uint8_t buf[16];
     for (unsigned char & i : buf) i = Wire.read();
@@ -191,6 +193,7 @@ void Ms5607Mmc5603SensorPackage::readAndInjectImuIcm42605() {
 
     m_accelerometer.inject(accelerationsMSS, temperatureK);
     m_gyroscope.inject(velocitiesRadS, temperatureK);
+    return true;
 }
 
 /* =========================
@@ -205,12 +208,8 @@ void Ms5607Mmc5603SensorPackage::setupImu() {
     }
 }
 
-void Ms5607Mmc5603SensorPackage::readAndInjectImu() {
-    if (m_imuType == ImuType::ICM20602) {
-        readAndInjectImuIcm20602();
-    } else {
-        readAndInjectImuIcm42605();
-    }
+bool Ms5607Mmc5603SensorPackage::readAndInjectImu() {
+    return m_imuType == ImuType::ICM20602 ? readAndInjectImuIcm20602() : readAndInjectImuIcm42605();
 }
 
 /* =========================
@@ -235,7 +234,7 @@ static bool baroReadUInt16(uint8_t promAddr, uint16_t& value) {
     Wire.beginTransmission(MS5607_ADDR);
     Wire.write(promAddr);
     if (Wire.endTransmission() != 0) return false;
-    Wire.requestFrom(MS5607_ADDR, (uint8_t)2);
+    if (Wire.requestFrom(MS5607_ADDR, (uint8_t)2) != 2) return false;
     const uint8_t hi = Wire.read();
     const uint8_t lo = Wire.read();
     value = ((uint16_t)hi << 8) | lo;
@@ -248,12 +247,16 @@ bool Ms5607Mmc5603SensorPackage::readBarometerCalibration() {
     if (Wire.endTransmission() != 0) return false;
     delay(3); // datasheet: wait for internal register reload after reset
 
-    return baroReadUInt16(MS5607_PROM_READ + 2, m_baroC1) &&
-           baroReadUInt16(MS5607_PROM_READ + 4, m_baroC2) &&
-           baroReadUInt16(MS5607_PROM_READ + 6, m_baroC3) &&
-           baroReadUInt16(MS5607_PROM_READ + 8, m_baroC4) &&
-           baroReadUInt16(MS5607_PROM_READ + 10, m_baroC5) &&
-           baroReadUInt16(MS5607_PROM_READ + 12, m_baroC6);
+    const bool read = baroReadUInt16(MS5607_PROM_READ + 2, m_baroC1) &&
+                      baroReadUInt16(MS5607_PROM_READ + 4, m_baroC2) &&
+                      baroReadUInt16(MS5607_PROM_READ + 6, m_baroC3) &&
+                      baroReadUInt16(MS5607_PROM_READ + 8, m_baroC4) &&
+                      baroReadUInt16(MS5607_PROM_READ + 10, m_baroC5) &&
+                      baroReadUInt16(MS5607_PROM_READ + 12, m_baroC6);
+    const bool plausible = (m_baroC1 | m_baroC2 | m_baroC3 | m_baroC4 | m_baroC5 | m_baroC6) != 0 &&
+                           (m_baroC1 & m_baroC2 & m_baroC3 & m_baroC4 & m_baroC5 & m_baroC6) != 0xFFFF;
+    m_baroCalibrated = read && plausible;
+    return m_baroCalibrated;
 }
 
 void Ms5607Mmc5603SensorPackage::setupBarometer() {
@@ -264,18 +267,20 @@ void Ms5607Mmc5603SensorPackage::setupBarometer() {
     }
 }
 
-void Ms5607Mmc5603SensorPackage::triggerPressureConversion() {
+bool Ms5607Mmc5603SensorPackage::triggerPressureConversion() {
     Wire.beginTransmission(MS5607_ADDR);
     Wire.write(PRESSURE_CONV_CMD);
-    Wire.endTransmission();
+    const bool ok = Wire.endTransmission() == 0;
     m_baroConversionStartUs = micros();
+    return ok;
 }
 
-void Ms5607Mmc5603SensorPackage::triggerTemperatureConversion() {
+bool Ms5607Mmc5603SensorPackage::triggerTemperatureConversion() {
     Wire.beginTransmission(MS5607_ADDR);
     Wire.write(TEMP_CONV_CMD);
-    Wire.endTransmission();
+    const bool ok = Wire.endTransmission() == 0;
     m_baroConversionStartUs = micros();
+    return ok;
 }
 
 void Ms5607Mmc5603SensorPackage::waitForTemperatureConversion() const {
@@ -292,17 +297,18 @@ void Ms5607Mmc5603SensorPackage::waitForPressureConversion() const {
     while (micros() - m_baroConversionStartUs < PRESSURE_CONV_DELAY_US) {}
 }
 
-uint32_t Ms5607Mmc5603SensorPackage::readBarometerAdc() const {
+bool Ms5607Mmc5603SensorPackage::readBarometerAdc(uint32_t& value) const {
     Wire.beginTransmission(MS5607_ADDR);
     Wire.write(MS5607_ADC_READ);
-    Wire.endTransmission(false); // repeated start, not a full stop+restart - matches readRegister()
+    if (Wire.endTransmission(false) != 0) return false; // repeated start, not a full stop+restart - matches readRegister()
     // No stop after reading either: both call sites in read() are immediately followed (non-I2C work
     // aside) by another MS5607 command, so trigger*Conversion() picks up with a repeated start instead of a fresh one.
-    Wire.requestFrom(MS5607_ADDR, (uint8_t)3, false);
+    if (Wire.requestFrom(MS5607_ADDR, (uint8_t)3, false) != 3) return false;
     const uint8_t b0 = Wire.read();
     const uint8_t b1 = Wire.read();
     const uint8_t b2 = Wire.read();
-    return ((uint32_t)b0 << 16) | ((uint32_t)b1 << 8) | b2;
+    value = ((uint32_t)b0 << 16) | ((uint32_t)b1 << 8) | b2;
+    return true;
 }
 
 void Ms5607Mmc5603SensorPackage::computeAndInjectBarometerReading(const uint32_t rawPressure, const uint32_t rawTemperature) {
@@ -386,11 +392,11 @@ void Ms5607Mmc5603SensorPackage::setupMagnetometer() {
     }
 }
 
-void Ms5607Mmc5603SensorPackage::readAndInjectMag() {
+bool Ms5607Mmc5603SensorPackage::readAndInjectMag() {
     Wire.beginTransmission(MMC5603_ADDR);
     Wire.write(MMC5603_XOUT0);
-    Wire.endTransmission(false);
-    Wire.requestFrom(MMC5603_ADDR, (uint8_t)6); // reading these also clears Meas_m_done
+    if (Wire.endTransmission(false) != 0) return false;
+    if (Wire.requestFrom(MMC5603_ADDR, (uint8_t)6) != 6) return false; // reading these also clears Meas_m_done
 
     uint8_t buf[6];
     for (unsigned char & i : buf) i = Wire.read();
@@ -413,6 +419,26 @@ void Ms5607Mmc5603SensorPackage::readAndInjectMag() {
     // The MMC5603NJ's own die temperature channel isn't read (not needed for this application, and
     // it isn't part of CMM anyway - it would need its own on-demand trigger/poll path for no real benefit) - left at 0.
     m_magnetometer.inject(magneticFieldTesla, 0.0);
+    return true;
+}
+
+/* =========================
+ * I2C bus recovery
+ * ========================= */
+
+void Ms5607Mmc5603SensorPackage::recoverBus() {
+    Wire.end();
+    const I2cBusRecoveryResult result = recoverI2cBus(PIN_WIRE_SDA, PIN_WIRE_SCL);
+    Wire.begin();
+    Wire.setClock(400000);
+    m_busRecoveries++;
+    if (!m_busFaulted) {
+        m_busFaulted = true;
+        m_debugStream->warn("I2C transfer failed - bus cleared: SDA %s, SCL %s, %d clocks, %s", result.sdaWasLow ? "low" : "high", result.sclWasLow ? "low" : "high", result.clocks, result.released ? "released" : "still held");
+    }
+    if (result.released && !m_baroCalibrated && m_busRecoveries % 100 == 1 && readBarometerCalibration()) {
+        m_debugStream->message("MS5607 initialized (after I2C recovery)");
+    }
 }
 
 /* =========================
@@ -425,6 +451,11 @@ Ms5607Mmc5603SensorPackage::Ms5607Mmc5603SensorPackage(const Vector3DTransform* 
 
 void Ms5607Mmc5603SensorPackage::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     m_debugStream = debugStream;
+
+    const I2cBusRecoveryResult busClear = recoverI2cBus(PIN_WIRE_SDA, PIN_WIRE_SCL);
+    if (busClear.sdaWasLow || !busClear.released) {
+        m_debugStream->warn("I2C bus was held at boot: SDA %s, SCL %s, %d clocks, %s", busClear.sdaWasLow ? "low" : "high", busClear.sclWasLow ? "low" : "high", busClear.clocks, busClear.released ? "released" : "still held");
+    }
 
     Wire.begin();
     Wire.setClock(400000);
@@ -446,13 +477,27 @@ void Ms5607Mmc5603SensorPackage::read() {
     // Temperature shares pressure's ADC, so it's triggered, waited out, and read before pressure
     // restarts (margin covers this every tick - see OSR comment above). IMU read (~580us) already
     // exceeds the ~600us temp conversion and must happen this tick anyway, so doing it here overlaps the two - the wait below should be instant.
-    const uint32_t rawPressure = readBarometerAdc();
-    triggerTemperatureConversion();
-    if (m_hasMagnetometer) readAndInjectMag(); // CMM free-runs in the background - just read whatever's latest
-    readAndInjectImu();
+    uint32_t rawPressure = 0, rawTemperature = 0;
+    bool baroOk = readBarometerAdc(rawPressure);
+    baroOk = triggerTemperatureConversion() && baroOk;
+    bool othersOk = true;
+    if (m_hasMagnetometer) othersOk = readAndInjectMag(); // CMM free-runs in the background - just read whatever's latest
+    othersOk = readAndInjectImu() && othersOk;
     waitForTemperatureConversion();
-    const uint32_t rawTemperature = readBarometerAdc();
-    computeAndInjectBarometerReading(rawPressure, rawTemperature);
+    baroOk = readBarometerAdc(rawTemperature) && baroOk;
+    if (baroOk && m_baroCalibrated) {
+        computeAndInjectBarometerReading(rawPressure, rawTemperature);
+    } else {
+        m_barometer.invalidate();
+    }
+
+    if (!baroOk || !othersOk || !m_baroCalibrated) {
+        recoverBus();
+    } else if (m_busFaulted) {
+        m_busFaulted = false;
+        m_debugStream->message("I2C reads working again (%lu bus clears)", (unsigned long)m_busRecoveries);
+        m_busRecoveries = 0;
+    }
     triggerPressureConversion(); // restart for the next cycle
 }
 

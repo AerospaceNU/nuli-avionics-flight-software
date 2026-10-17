@@ -1,30 +1,30 @@
 #ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DESKTOPSYSTEMCLOCK_H
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DESKTOPSYSTEMCLOCK_H
 
-#include <chrono>
 #include "Avionics.h"
+#include "ConstantsUnits.h"
 #include "core/generic_hardware/GenericHardware.h"
 
+/**
+ * @class DesktopSystemClock
+ * @brief Simulated time, set by the caller before each loop so the loop never waits
+ */
 class DesktopSystemClock final : public SystemClock {
 public:
-    DesktopSystemClock() {
-        startTime = std::chrono::steady_clock::now();
+    void setRuntimeMs(const uint32_t runtimeMs) {
+        m_runtimeMs = runtimeMs;
     }
 
     uint32_t currentRuntimeMs() override {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - startTime).count();
-        return static_cast<uint32_t>(elapsed);
+        return m_runtimeMs;
     }
 
     uint32_t currentRuntimeUs() override {
-        auto now = std::chrono::steady_clock::now();
-        auto elapsed = std::chrono::duration_cast<std::chrono::microseconds>(now - startTime).count();
-        return static_cast<uint32_t>(elapsed);
+        return m_runtimeMs * Units::MS_TO_US;
     }
 
 private:
-    std::chrono::steady_clock::time_point startTime;
+    uint32_t m_runtimeMs = 0;
 };
 
 #endif // PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DESKTOPSYSTEMCLOCK_H

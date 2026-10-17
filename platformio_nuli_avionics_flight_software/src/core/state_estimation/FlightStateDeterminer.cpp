@@ -56,26 +56,28 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
     } else if (getFlightState() == POST_FLIGHT) {
         // Nothing to do
     } else if (getFlightState() == UNKNOWN_FLIGHT_STATE) {
-        m_unknownStateVelocityLowPass.update(state1D.velocityMS);
-        if (state1D.altitudeM > m_unknownStateMaximumAltitude) {
-            m_unknownStateMaximumAltitude = state1D.altitudeM;
-        }
-        if (state1D.altitudeM < m_unknownStateMinimumAltitude) {
-            m_unknownStateMinimumAltitude = state1D.altitudeM;
+        if (state1D.barometerValid) {
+            m_unknownStateVelocityLowPass.update(state1D.velocityMS);
+            if (state1D.altitudeM > m_unknownStateMaximumAltitude) {
+                m_unknownStateMaximumAltitude = state1D.altitudeM;
+            }
+            if (state1D.altitudeM < m_unknownStateMinimumAltitude) {
+                m_unknownStateMinimumAltitude = state1D.altitudeM;
+            }
         }
         if (m_unknownStateTimer.check(true, timestamp.runtime_ms)) {
             const bool sufficientDeltaAltitude = m_unknownStateMaximumAltitude - m_unknownStateMinimumAltitude > UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M;
             const bool sufficientVelocity = std::fabs(m_unknownStateVelocityLowPass.value()) > UNKNOWN_STATE_VELOCITY_THRESHOLD_MS;
+            const bool highAboveGround = m_unknownStateMaximumAltitude > LAUNCH_ALTITUDE_THRESHOLD_M;
             if (sufficientDeltaAltitude && sufficientVelocity) {
                 setFlightState(timestamp, ASCENT); // Always set to ascent to because ASCENT will rapidly determine if in ASCENT or DESCENT
+                m_machLockoutClearedAtBoot = m_unknownStateVelocityLowPass.value() < MACH_LOCKOUT_THRESHOLD_MS;
+            } else if (highAboveGround && !m_unknownStateHighTimer.check(true, timestamp.runtime_ms)) {
+                return getFlightState();
             } else {
                 setFlightState(timestamp, PRE_FLIGHT);
             }
-            // Reset in case we ever use the state again, but this shouldn't happen
-            m_unknownStateTimer.reset();
-            m_unknownStateVelocityLowPass.reset();
-            m_unknownStateMaximumAltitude = -999999999.0f;
-            m_unknownStateMinimumAltitude = 99999999.0f;
+            resetUnknownStateDetection();
         }
     } else {
         setFlightState(timestamp, UNKNOWN_FLIGHT_STATE);
@@ -84,6 +86,10 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
 }
 
 bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D) {
+    if (!state1D.barometerValid) {
+        m_launchDebounce.reset();
+        return false;
+    }
     // We have launched if we have seen a sufficiently high acceleration for enough time
     const bool aboveLaunchAcceleration = state1D.accelerationMSS >= LAUNCH_ACCELERATION_THRESHOLD_MSS;
     // We have also launched if we have reached a high enough altitude
@@ -101,7 +107,9 @@ bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const Stat
 
 bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D) {
     // Mach lockout
-    if (m_machLockDebounce.check(state1D.velocityMS < MACH_LOCKOUT_THRESHOLD_MS, timestamp.runtime_ms)) {
+    const bool belowMachLockout = state1D.velocityMS < MACH_LOCKOUT_THRESHOLD_MS;
+    if (!belowMachLockout) m_machLockoutClearedAtBoot = false;
+    if (m_machLockDebounce.check(belowMachLockout, timestamp.runtime_ms) || m_machLockoutClearedAtBoot) {
         // Track maximum altitude
         if (state1D.altitudeM > m_maxAltitude) {
             m_maxAltitude = state1D.altitudeM;
@@ -119,14 +127,29 @@ bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const St
 }
 
 bool FlightStateDeterminer::hasLanded(const Timestamp_s& timestamp, const State1D_s& state1D) {
-    const bool aboveAltitudeChangedThreshold = std::fabs(m_landingDetectionReferenceAltitude - state1D.altitudeM) > LANDING_ALTITUDE_CHANGE_THRESHOLD_M;
-    if (aboveAltitudeChangedThreshold) {
+    if (!state1D.barometerValid) return false;
+    const float rawAltitudeM = m_landingRawAltitudeLowPass.update(state1D.unfilteredNoOffsetAltitudeM);
+    const bool filteredChanged = std::fabs(m_landingDetectionReferenceAltitude - state1D.altitudeM) > LANDING_ALTITUDE_CHANGE_THRESHOLD_M;
+    const bool rawChanged = std::fabs(m_landingDetectionReferenceRawAltitude - rawAltitudeM) > LANDING_ALTITUDE_CHANGE_THRESHOLD_M;
+    if (filteredChanged) {
         m_landingDetectionReferenceAltitude = state1D.altitudeM;
     }
+    if (rawChanged) {
+        m_landingDetectionReferenceRawAltitude = rawAltitudeM;
+    }
+    const bool aboveAltitudeChangedThreshold = filteredChanged || rawChanged;
     if (m_landingDebounce.check(!aboveAltitudeChangedThreshold, timestamp.runtime_ms)) {
         return true;
     }
     return false;
+}
+
+void FlightStateDeterminer::resetUnknownStateDetection() {
+    m_unknownStateTimer.reset();
+    m_unknownStateHighTimer.reset();
+    m_unknownStateVelocityLowPass.reset();
+    m_unknownStateMaximumAltitude = -999999999.0f;
+    m_unknownStateMinimumAltitude = 99999999.0f;
 }
 
 FlightState_e FlightStateDeterminer::getFlightState() const {

@@ -15,8 +15,7 @@ void ArduinoWatchdog::setup(DebugStream* debugStream) {
 }
 
 void ArduinoWatchdog::enable(const uint32_t timeoutMs) {
-    Watchdog.enable((int)timeoutMs);
-    m_timeoutMs = timeoutMs;
+    m_timeoutMs = (uint32_t)Watchdog.enable((int)timeoutMs);
     m_enabled = true;
 }
 

@@ -4,6 +4,9 @@
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
 #include "core/cli/ReturnCodes.h"
+#include "core/cli/IntegratedParser.h"
+#include <string>
+#include <vector>
 
 void callback(DebugStream*) {}
 
@@ -246,4 +249,42 @@ TEST(ParserTest, TestRunFlagsSkipsUnsetFlags) {
     ASSERT_EQ(testParserA.runFlags(&stream), CLI_SUCCESS);
     EXPECT_TRUE(aRan);
     EXPECT_FALSE(bRan);
+}
+
+class ScriptedDebugStream : public DebugStream {
+public:
+    std::vector<std::string> lines;
+
+    bool readLine() override {
+        if (lines.empty()) return false;
+        m_line = lines.front();
+        lines.erase(lines.begin());
+        return true;
+    }
+
+    char* getLine() override { return &m_line[0]; }
+
+protected:
+    size_t write(const void* buffer, size_t size) override { return size; }
+
+private:
+    std::string m_line;
+};
+
+TEST(ParserTest, TestFailedParseLeavesNoFlagSet) {
+    IntegratedParser parser;
+    ScriptedDebugStream stream;
+    bool drogueFired = false, mainFired = false;
+    SimpleFlag fire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
+    SimpleFlag drogue("-d", "Fires drogue", false, [&drogueFired](DebugStream*) { drogueFired = true; });
+    SimpleFlag mainPyro("-m", "Fires main", false, [&mainFired](DebugStream*) { mainFired = true; });
+    BaseFlag* fireGroup[] = {&fire, &drogue, &mainPyro};
+    parser.addFlagGroup(fireGroup);
+    parser.addStream(&stream);
+
+    stream.lines = {"--fire -d -x -y", "--fire -m"};
+    parser.runCli();
+    parser.runCli();
+    EXPECT_FALSE(drogueFired);
+    EXPECT_TRUE(mainFired);
 }

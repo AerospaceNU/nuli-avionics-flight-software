@@ -1,3 +1,6 @@
+#ifndef CONFIGURATIONCLIBINDING_H
+#define CONFIGURATIONCLIBINDING_H
+
 #include <type_traits>
 #include <cstdint>
 #include <tuple>
@@ -35,8 +38,8 @@ public:
 
     void callback(DebugStream* debugStream) {
         if (m_setValueFlag.isSet()) {
-            m_data.set(m_setValueFlag.getValueDerived());
-            printValue(debugStream, name(), "has been set to", m_data.get());
+            const bool accepted = m_data.set(m_setValueFlag.getValueDerived());
+            printValue(debugStream, name(), accepted ? "has been set to" : "rejected, still set to", m_data.get());
         } else {
             printValue(debugStream, name(), "is set to", m_data.get());
         }
@@ -123,3 +126,5 @@ private:
         (void)dummy; // suppress unused warning
     }
 };
+
+#endif //CONFIGURATIONCLIBINDING_H

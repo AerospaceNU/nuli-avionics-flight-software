@@ -28,10 +28,10 @@ public:
      */
     explicit Ms5607Mmc5603SensorPackage(const Vector3DTransform* transform, ImuType imuType, bool hasMagnetometer, const Vector3DTransform* magTransform = nullptr);
 
-    /** @brief Initializes the IMU, barometer, and (if present) magnetometer, and starts the first barometer conversion. */
+    /** @brief Clears the I2C bus (see recoverI2cBus()), then initializes the IMU, barometer, and (if present) magnetometer, and starts the first barometer conversion. */
     void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override;
 
-    /** @brief Reads the IMU, magnetometer (if present), and barometer every call - waits out any remaining pressure conversion time rather than skipping it, then resolves pressure+temperature and restarts the conversion (see class comment). Normally instant; bounded to ~4.54ms + ~600us worst case. */
+    /** @brief Reads the IMU, magnetometer (if present), and barometer every call - waits out any remaining pressure conversion time rather than skipping it, then resolves pressure+temperature and restarts the conversion (see class comment). Normally instant; bounded to ~4.54ms + ~600us worst case. A sensor whose transfer fails keeps its last reading, and the bus is cleared. */
     void read() override;
 
     /** @return the accelerometer injector class, for registering with HardwareAbstraction */
@@ -49,27 +49,30 @@ public:
 private:
     // ---- IMU (ICM20602 or ICM42605, chosen by m_imuType) ----
     void setupImu();
-    void readAndInjectImu();
+    bool readAndInjectImu();
 
     void setupImuIcm20602();
-    void readAndInjectImuIcm20602();
+    bool readAndInjectImuIcm20602();
 
     void setupImuIcm42605();
-    void readAndInjectImuIcm42605();
+    bool readAndInjectImuIcm42605();
 
     // ---- Barometer (MS5607) ----
     void setupBarometer();
     bool readBarometerCalibration();
-    void triggerPressureConversion();
-    void triggerTemperatureConversion();
-    uint32_t readBarometerAdc() const;
+    bool triggerPressureConversion();
+    bool triggerTemperatureConversion();
+    bool readBarometerAdc(uint32_t& value) const;
     void waitForPressureConversion() const;
     void waitForTemperatureConversion() const;
     void computeAndInjectBarometerReading(uint32_t rawPressure, uint32_t rawTemperature);
 
     // ---- Magnetometer (MMC5603NJ) ----
     void setupMagnetometer();
-    void readAndInjectMag();
+    bool readAndInjectMag();
+
+    // ---- I2C bus recovery ----
+    void recoverBus();
 
     // ---- Injector instances exposed to HardwareAbstraction ----
     Accelerometer m_accelerometer;
@@ -87,6 +90,9 @@ private:
 
     // ---- Barometer calibration (read from PROM at setup) and conversion state ----
     uint16_t m_baroC1 = 0, m_baroC2 = 0, m_baroC3 = 0, m_baroC4 = 0, m_baroC5 = 0, m_baroC6 = 0;
+    bool m_baroCalibrated = false;
+    bool m_busFaulted = false;
+    uint32_t m_busRecoveries = 0;
     // Start time of whichever conversion is in flight. Always the pressure conversion at the top of
     // read() - triggerTemperatureConversion() repurposes it mid-call, but triggerPressureConversion() overwrites it again before read() returns.
     uint32_t m_baroConversionStartUs = 0;
