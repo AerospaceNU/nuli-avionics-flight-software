@@ -1,22 +1,16 @@
 #include "UBloxV2.h"
 
-// Retries for setAutoPVT/setAutoDOP at setup - a lost ACK (e.g. right after the baud-rate switch in
-// connectAtBaud) would otherwise silently leave read()'s getters falling back to their blocking-poll
-// path every tick, which GPS_GETTER_MAX_WAIT_MS below bounds but shouldn't have to rely on.
+// A lost setAutoPVT/setAutoDOP ACK would leave read()'s getters on their blocking-poll path
 static constexpr uint8_t AUTO_REPORT_ENABLE_RETRIES = 3;
 
-// Passed to every getter in read(): a no-op when auto-reporting is actually flowing (the library only
-// enters its blocking poll-and-wait path when auto-reporting isn't active), but bounds that fallback
-// path to well under the flight computer's watchdog timeout if auto-reporting ever silently drops out
-// after setup - 8 getters * 5ms is still comfortably inside a 100ms watchdog window.
+// Only used if auto-reporting drops out: bounds the blocking poll (8 getters * 5 ms << 100 ms watchdog)
 static constexpr uint16_t GPS_GETTER_MAX_WAIT_MS = 5;
 
 UBloxV2::UBloxV2(HardwareSerial* serial, uint8_t navigationRateHz, uint32_t baudRate) :
     m_serial(serial), m_navigationRateHz(navigationRateHz), m_baudRate(baudRate) {}
 
 namespace {
-    // Library defaults to 1100ms maxWait, retried up to 3x in places - unbounded, setup() could block
-    // tens of seconds if the module is slow to ACK. 150ms is generous for UART; caps the worst case at a few seconds.
+    // Library default 1100 ms (retried up to 3x) could block setup() for tens of seconds
     constexpr uint16_t GPS_CONFIG_MAX_WAIT_MS = 150;
 }
 
@@ -29,8 +23,7 @@ bool UBloxV2::connectAtBaud(uint32_t baud) {
 void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     m_debugStream = debugStream;
 
-    // Target baud is the module's own persisted setting (survives MCU reset/reflash) - try it first;
-    // fall back to factory-default 9600 (and reconfigure) only if that fails, i.e. a fresh module.
+    // The module keeps its baud across MCU resets; 9600 is the factory default
     if (!connectAtBaud(m_baudRate)) {
         if (!connectAtBaud(9600)) {
             debugStream->error("UBloxV2 GPS failed to respond at %lu or 9600 baud", (unsigned long)m_baudRate);
@@ -44,17 +37,12 @@ void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
         }
     }
 
-    m_gps.setUART1Output(COM_TYPE_UBX, GPS_CONFIG_MAX_WAIT_MS); // Only speak UBX binary, no need for the module to also spend time on NMEA
-    m_gps.setDynamicModel(DYN_MODEL_AIRBORNE4g, GPS_CONFIG_MAX_WAIT_MS); // Best suited for the high acceleration/altitude profile of a rocket flight
+    m_gps.setUART1Output(COM_TYPE_UBX, GPS_CONFIG_MAX_WAIT_MS);
+    m_gps.setDynamicModel(DYN_MODEL_AIRBORNE4g, GPS_CONFIG_MAX_WAIT_MS);
     if (!m_gps.setNavigationFrequency(m_navigationRateHz, GPS_CONFIG_MAX_WAIT_MS)) {
         debugStream->warn("UBloxV2 GPS rejected %u Hz navigation rate", m_navigationRateHz);
     }
-    // Have the module push fixes automatically instead of polling, so read() doesn't block on a
-    // request/response round trip every loop. NAV-PVT (fix/lat/lon/alt/time) and NAV-DOP (HDOP) need
-    // auto-reporting enabled independently - without setAutoDOP, getHorizontalDOP() falls back to a
-    // blocking poll. Retried a few times since a lost ACK here would otherwise silently persist for
-    // the rest of the flight; read()'s getters are still bounded by GPS_GETTER_MAX_WAIT_MS even if
-    // every retry fails, so this logs rather than aborting the rest of setup().
+    // Auto-reporting keeps read() from polling; NAV-PVT and NAV-DOP must be enabled separately
     bool autoPvtEnabled = false;
     for (uint8_t attempt = 0; attempt < AUTO_REPORT_ENABLE_RETRIES && !autoPvtEnabled; attempt++) {
         autoPvtEnabled = m_gps.setAutoPVT(true, GPS_CONFIG_MAX_WAIT_MS);
@@ -79,7 +67,7 @@ void UBloxV2::read() {
 
     m_fixQuality = m_gps.getFixType(GPS_GETTER_MAX_WAIT_MS);
     m_satellitesTracked = m_gps.getSIV(GPS_GETTER_MAX_WAIT_MS);
-    m_hdop = m_gps.getHorizontalDOP(GPS_GETTER_MAX_WAIT_MS); // raw, scaled by 100 - matches the module's native representation
+    m_hdop = m_gps.getHorizontalDOP(GPS_GETTER_MAX_WAIT_MS); // scaled by 100
     m_vdop = m_gps.getVerticalDOP(GPS_GETTER_MAX_WAIT_MS);
 
     m_coordinates.latitudeDeg = (float)(m_gps.getLatitude(GPS_GETTER_MAX_WAIT_MS) / 10000000.0);

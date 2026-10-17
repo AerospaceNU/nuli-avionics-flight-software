@@ -10,36 +10,15 @@ class RFM9xRadio : public RadioLink {
 public:
     RFM9xRadio(float frequency);
 
-    /**
-     * @brief Setup radio hardware and pins
-     */
     void setup() override;
 
-    /**
-     * @brief Ask the radio if there is any new data, if so buffer it.
-     */
+    /** @brief Buffers any newly received packet */
     void loopOnce() override;
 
-    /**
-     * @brief Checks if there is data in the internal buffer for the user to
-     * retrieve. Data comes from the radio.
-     * @return True if data in buffer.
-     */
     bool hasNewData() override;
 
-    /**
-     * @brief Retrieve from the buffer, and then give it to the caller.
-     * @param data Where to put buffered data into.
-     * @param maxLength Maximum length, in bytes, to return to user.
-     * @return Amount of data retrieved.
-     */
     uint32_t getData(uint8_t *data, uint32_t maxLength) override;
 
-    /**
-     * @brief Sends data over radio
-     * @param data Data to send
-     * @param length Amount of data to send
-     */
     void transmit(uint8_t *data, uint32_t length) override;
 
 protected:

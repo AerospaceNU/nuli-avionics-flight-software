@@ -1,8 +1,7 @@
 #include "MX25L256.h"
 
 static const FlashMemoryData_s deviceData = {
-    // 8 min covers the Winbond W25Q256JVFIQ's rated 400s chip-erase max too (some SillyGoose V2
-    // boards use it instead - same page/sector/memory size and commands, per its datasheet).
+    // 8 min also covers the W25Q256JVFIQ (400 s chip-erase max) fitted on some SillyGoose V2 boards
     .eraseAllTime = 1000 * 60 * 8,
     .sectorSize = 262144 / 4,
     .memorySize = 33554432,

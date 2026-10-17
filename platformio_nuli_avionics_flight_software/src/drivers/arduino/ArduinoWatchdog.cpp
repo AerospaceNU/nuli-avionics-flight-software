@@ -1,10 +1,9 @@
 #include "ArduinoWatchdog.h"
 #include <Arduino.h>
-#include <Adafruit_SleepyDog.h> // lib_deps: adafruit/Adafruit SleepyDog Library
+#include <Adafruit_SleepyDog.h>
 
 namespace {
-    // Bit 5 flags a watchdog reset on both SAMD21 (PM->RCAUSE.bit.WDT) and SAMD51 (RSTC->RCAUSE.bit.WDT)
-    // - confirmed against both chips' CMSIS headers. Adafruit_SleepyDog's resetCause() wraps whichever applies.
+    // RCAUSE.WDT is bit 5 on both SAMD21 (PM) and SAMD51 (RSTC)
     constexpr uint8_t RCAUSE_WDT_BIT = 0x20;
 }
 

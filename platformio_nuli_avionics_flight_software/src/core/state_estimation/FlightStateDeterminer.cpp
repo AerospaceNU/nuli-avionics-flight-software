@@ -7,21 +7,20 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
     m_firstStageBurnout = m_configuration->getConfigurable<FIRST_STAGE_BURNOUT_c>();
     m_firstStageBurnout.set(false);
-    m_machLockDebounce.check(true, 0); // This allows this check to be true ASAP if you never go above mach. Kinda a hack for now
+    m_machLockDebounce.check(true, 0); // primes the debounce so it can pass ASAP if mach is never reached
 
-    // We need to determine the initial "boot" state
     constexpr Timestamp_s bootTimestamp = {0, 0, 0};
 
-    // If a flight was completed, we can assume that we are not currently in the air
+    // A completed flight means we are not in the air now
     if (getFlightState() == POST_FLIGHT) {
         setFlightState(bootTimestamp, PRE_FLIGHT);
     }
-    // If we have any other state that's not PRE_FLIGHT or POST_FLIGHT, we can no longer be sure that we are in that state.
+    // Rebooted mid-flight: can no longer trust that state
     if (getFlightState() == ASCENT || getFlightState() == DESCENT) {
         setFlightState(bootTimestamp, UNKNOWN_FLIGHT_STATE);
     }
 
-    // This should never happen, but if it does: we assume we are in PRE_FLIGHT
+    // Should never happen
     if (getFlightState() != UNKNOWN_FLIGHT_STATE && getFlightState() != PRE_FLIGHT) {
         setFlightState(bootTimestamp, PRE_FLIGHT);
     }
@@ -34,12 +33,10 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
             setFlightState(timestamp, ASCENT);
         }
     } else if (getFlightState() == ASCENT) {
-        // Check for burnout
         if (m_burnoutDebounce.check(state1D.accelerationMSS < 0, timestamp.runtime_ms) && !m_firstStageBurnout.get()) {
             m_firstStageBurnout.set(true);
             m_burnoutStopWatch.startWatch(timestamp.runtime_ms);
         }
-        // Check for apogee
         if (apogeeReached(timestamp, state1D)) {
             setFlightState(timestamp, DESCENT);
         }
@@ -70,7 +67,7 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
             const bool sufficientVelocity = std::fabs(m_unknownStateVelocityLowPass.value()) > UNKNOWN_STATE_VELOCITY_THRESHOLD_MS;
             const bool highAboveGround = m_unknownStateMaximumAltitude > LAUNCH_ALTITUDE_THRESHOLD_M;
             if (sufficientDeltaAltitude && sufficientVelocity) {
-                setFlightState(timestamp, ASCENT); // Always set to ascent to because ASCENT will rapidly determine if in ASCENT or DESCENT
+                setFlightState(timestamp, ASCENT); // ASCENT quickly moves on to DESCENT if already past apogee
                 m_machLockoutClearedAtBoot = m_unknownStateVelocityLowPass.value() < MACH_LOCKOUT_THRESHOLD_MS;
             } else if (highAboveGround && !m_unknownStateHighTimer.check(true, timestamp.runtime_ms)) {
                 return getFlightState();
@@ -90,15 +87,9 @@ bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const Stat
         m_launchDebounce.reset();
         return false;
     }
-    // We have launched if we have seen a sufficiently high acceleration for enough time
     const bool aboveLaunchAcceleration = state1D.accelerationMSS >= LAUNCH_ACCELERATION_THRESHOLD_MSS;
-    // We have also launched if we have reached a high enough altitude
-    // Note that the ground reference recalculation creates a race condition here:
-    // Pose is measured relative to the ground, and the ground reference is updated in PRE_FLIGHT
-    // This means that if the ground reference was updated every tick to be the current altitude, this would never trigger.
-    // A low pass filter with a low constant is used in StateEstimator1D to allow the race condition to work out.
+    // Ground reference also tracks altitude in PRE_FLIGHT; only its slow low pass in StateEstimator1D lets this trigger
     const bool aboveLaunchAltitude = state1D.altitudeM >= LAUNCH_ALTITUDE_THRESHOLD_M;
-    // Run the debounce check
     if (m_launchDebounce.check(aboveLaunchAcceleration || aboveLaunchAltitude, timestamp.runtime_ms)) {
         return true;
     }
@@ -106,15 +97,12 @@ bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const Stat
 }
 
 bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D) {
-    // Mach lockout
     const bool belowMachLockout = state1D.velocityMS < MACH_LOCKOUT_THRESHOLD_MS;
     if (!belowMachLockout) m_machLockoutClearedAtBoot = false;
     if (m_machLockDebounce.check(belowMachLockout, timestamp.runtime_ms) || m_machLockoutClearedAtBoot) {
-        // Track maximum altitude
         if (state1D.altitudeM > m_maxAltitude) {
             m_maxAltitude = state1D.altitudeM;
         }
-        // Run debounce checks
         const bool goingDown = state1D.velocityMS < 0;
         const bool belowApogeeChangeThreshold = state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M;
         if (m_apogeeDebounce.check(goingDown && belowApogeeChangeThreshold, timestamp.runtime_ms)) {

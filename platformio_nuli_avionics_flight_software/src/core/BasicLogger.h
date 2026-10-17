@@ -24,7 +24,7 @@ class BasicLogger {
     struct InternalStruct_s {
         uint8_t id = 0;
         LogDataStruct data;
-        uint16_t crc = 0; // CRC16 over id+data - lets offload() callers detect a torn/corrupted entry
+        uint16_t crc = 0; // CRC16 over id+data, detects torn/corrupted entries
     } remove_struct_padding;
     // clang-format on
 
@@ -34,9 +34,7 @@ public:
                     m_endFlag("-e", "End", false, [](DebugStream*) {}),
                     m_offloadBinaryFlag("-b", "Binary format", false, [](DebugStream*) {}),
                     m_eraseFlag("--erase", "Erases the flight log", true, [this](DebugStream* debugStream) { this->eraseCallback(debugStream); }),
-                    // Dumps the whole flash log / streams continuously - both restricted to
-                    // high-bandwidth streams (see BaseFlag::isHighBandwidthOnly), so they're
-                    // silently no-ops over a low-bandwidth link like CLI-over-radio.
+                    // High-bandwidth only (see BaseFlag): silently ignored over CLI-over-radio
                     m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }, true),
                     m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true),
                     m_formatFlag("--logFormat", "Prints the log data struct definition", true, [this](DebugStream* debugStream) { this->printFormat(debugStream); }, true) {}
@@ -52,10 +50,9 @@ public:
         m_formatStr = format;
         m_printFunction = printFunction;
         m_configuration = configuration;
-        m_watchdog = &m_hardware->getWatchdogTimer(); // single instance, owned by HardwareAbstraction - not injected separately
+        m_watchdog = &m_hardware->getWatchdogTimer();
         m_loopTime = hardware->getTargetLoopTimeMs();
 
-        // Setup CLI interface
         m_offloadBinaryFlag.setDependency(&m_offloadBinaryFlag);
         parser->addFlagGroup(m_eraseGroup);
         parser->addFlagGroup(m_offloadGroup);
@@ -65,9 +62,10 @@ public:
 
         m_numEntries = m_flash->getMemorySizeBytes() / sizeof(InternalStruct_s);
 
+        // Binary search for the first LOG_EMPTY entry
         uint32_t left = 0;
-        uint32_t right = m_numEntries; // exclusive upper bound
-        uint32_t firstEmpty = m_numEntries; // default if nothing is LOG_EMPTY
+        uint32_t right = m_numEntries; // exclusive
+        uint32_t firstEmpty = m_numEntries;
 
         while (left < right) {
             uint32_t mid = left + (right - left) / 2;
@@ -75,14 +73,13 @@ public:
             offload(mid, id);
 
             if (id == LOG_EMPTY) {
-                firstEmpty = mid; // possible candidate
-                right = mid; // search left half
+                firstEmpty = mid;
+                right = mid;
             } else {
-                left = mid + 1; // search right half
+                left = mid + 1;
             }
         }
 
-        // firstEmpty is now the first index where id == LOG_EMPTY
         m_logWriteIndex = firstEmpty;
 
         m_debug->message("Logging setup, starting at entry: %d, index: %d", getEntryNumber(), (m_logWriteIndex * sizeof(InternalStruct_s)));
@@ -113,11 +110,8 @@ public:
         logChunked(reinterpret_cast<const uint8_t*>(str), strlen(str) + 1, LOG_MESSAGE, LOG_MESSAGE_CONTINUATION);
     }
 
-    // Snapshots the whole configuration (every registered field, whatever they are - no per-board
-    // struct to keep in sync) to flash, versioned and key-CRC'd so an offload can tell whether it's
-    // still safe to decode later. Called once at boot and once at ASCENT (launch), since config can
-    // legitimately change between the two (CLI edits on the pad) and a simulator replaying this
-    // flight later needs to know which one actually applied.
+    // Logs every config field with version + key CRC so offload can tell if it is still decodable.
+    // Called at boot and again at ASCENT, since pad CLI edits can change config in between.
     void logConfig(Configuration* configuration) {
         if (!configuration) return;
         if (getRemainingLogLengthSeconds() <= 5) return;
@@ -146,8 +140,7 @@ public:
         m_logWriteIndex = 0;
     }
 
-    // Does not verify crc itself - callers that need to know an entry wasn't torn/corrupted should
-    // compare computeCrc(m_dataStruct) against m_dataStruct.crc afterward (see offloadCallback()).
+    // Does not check the crc: compare computeCrc(m_dataStruct) with m_dataStruct.crc afterward
     LogDataStruct offload(const uint32_t index, uint8_t& id) {
         m_flash->read(index * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s));
         id = m_dataStruct.id;
@@ -175,30 +168,24 @@ public:
         printFormat(debugStream);
         debugStream->data(m_headerStr);
 
-        // Bumped from 512: a reconstructed CONFIG line now includes every registered field
-        // (previously a hand-picked subset), including LAUNCH_ANGLE/GYROSCOPE_BIAS printed
-        // component-wise - comfortably exceeds the old size on its own.
+        // Also holds a reconstructed CONFIG line (every field), which exceeds 512
         constexpr size_t MSG_BUF_SIZE = 1024;
         char msgBuf[MSG_BUF_SIZE];
         size_t msgBufLen = 0;
 
-        // Header {version, keyCrc} + raw config bytes, exactly as logConfig() writes it.
+        // {version, keyCrc} + raw config bytes, as logConfig() writes it
         constexpr size_t CONFIG_BUF_SIZE = 8 + MAX_CONFIGURATION_LENGTH;
         alignas(std::max_align_t) uint8_t configBuf[CONFIG_BUF_SIZE];
         size_t configBufLen = 0;
 
-        // Bounded by m_numEntries as a backstop: log() normally leaves LOG_EMPTY space near the
-        // end, but that's enforced elsewhere - this stops a corrupted/full log scanning forever.
+        // m_numEntries bound is a backstop for a full/corrupted log with no LOG_EMPTY
         for (uint32_t i = 0; i < m_numEntries; i++) {
             m_watchdog->petInLoop(); // a full offload can run for minutes
 
             uint8_t id;
             const LogDataStruct logData = offload(i, id);
 
-            // Flush each pending multi-entry blob when we hit a entry that doesn't continue it -
-            // message and config sequences never truly interleave (ASCENT can't fire mid-offload),
-            // but each needs its own accumulator/trigger regardless, or a config continuation would
-            // flush the (unrelated) message buffer's leftover content as garbage, and vice versa.
+            // Flush a pending message/config blob once an entry doesn't continue it
             if (id != LOG_MESSAGE_CONTINUATION && msgBufLen > 0) {
                 if (msgBufLen >= MSG_BUF_SIZE) msgBufLen = MSG_BUF_SIZE - 1;
                 msgBuf[msgBufLen] = '\0';
@@ -210,8 +197,7 @@ public:
                 configBufLen = 0;
             }
 
-            // A corrupt entry (id survived a torn write, payload didn't - see computeCrc()) is
-            // skipped exactly like an empty one, so external output never sees a foreign line.
+            // Corrupt (torn-write) entries are skipped like empty ones
             if (id == LOG_EMPTY || computeCrc(m_dataStruct) != m_dataStruct.crc) {
                 if (id == LOG_EMPTY) failCount++;
                 if (failCount >= 4) break;
@@ -244,14 +230,12 @@ public:
         debugStream->message("Ending Offload");
     }
 
-    // Binary offload: dumps raw packed [id][data] flash records (crc is internal, stripped before
-    // sending) framed by a versioned preamble. Host validates magic + struct size + header CRC, so a
-    // local struct change can't be silently misparsed; writeRaw blocks on USB backpressure so saturation can't drop records.
+    // Sends a preamble (magic, struct size, header CRC) then raw [id][data] records, crc stripped
     void binaryOffloadCallback(DebugStream* debugStream) {
         debugStream->message("Starting Offload");
         printFormat(debugStream);
 
-        // Header CRC fingerprints the struct layout (header string is kept in sync with LogDataStruct), so renames/reorders are detected too.
+        // Header string mirrors LogDataStruct, so its CRC also catches field renames/reorders
         const uint16_t dataSize = sizeof(LogDataStruct);
         const uint16_t headerCrc = crc16(m_headerStr, strlen(m_headerStr));
         const uint8_t preamble[] = {
@@ -275,8 +259,7 @@ public:
                 continue;
             }
             if (computeCrc(m_dataStruct) != m_dataStruct.crc) continue;
-            // Only [id][data] goes over the wire - crc bytes would silently desync the host's
-            // fixed 1+dataSize-per-entry framing, since the preamble never describes them.
+            // Host framing is 1+dataSize per entry: never send the crc
             if (!debugStream->writeRaw(m_dataStructStart, sizeof(InternalStruct_s) - sizeof(m_dataStruct.crc))) {
                 debugStream->error("Binary offload aborted: host stopped draining (entry %d)", i);
                 return;
@@ -357,20 +340,15 @@ private:
         return crc16(&entry, sizeof(InternalStruct_s) - sizeof(entry.crc));
     }
 
-    // Computes and stores crc, writes the entry, and advances the write index - the single path
-    // log()/logMessage()/newFlight() all go through so none of them can forget the crc step.
+    // Every entry write goes through here so the crc is always set
     void writeCurrentEntry() {
         m_dataStruct.crc = computeCrc(m_dataStruct);
         m_flash->write(m_logWriteIndex * sizeof(InternalStruct_s), m_dataStructStart, sizeof(InternalStruct_s));
         m_logWriteIndex++;
     }
 
-    // Reconstructs one logConfig() record (header + raw config bytes) into a "CONFIG\t..." line,
-    // written into lineBuf then printed. Always decodes from the STORED bytes, never from
-    // m_configuration's live values - the record being offloaded may be from a previous boot,
-    // whose config could legitimately differ from today's. Only trusts the live field list/offsets
-    // to interpret those bytes when both the stored version AND key CRC match today's live ones;
-    // otherwise the layout may have changed since this was logged, and guessing would misread it.
+    // Prints a logConfig() record as a "CONFIG\t..." line, decoded from the stored bytes using the
+    // live layout only when the stored version and key CRC both match it
     void flushConfigBuffer(DebugStream* debugStream, const uint8_t* raw, size_t rawLen, char* lineBuf, size_t lineBufSize) {
         if (!m_configuration || rawLen < 8) return;
         uint32_t storedVersion, storedKeyCrc;
@@ -386,16 +364,7 @@ private:
         debugStream->data("%s", lineBuf);
     }
 
-    // Chunks arbitrary bytes across multiple LOG_<X>/LOG_<X>_CONTINUATION records - shared by
-    // logMessage() (text) and logConfig() (a version+keyCrc header followed by raw config bytes).
-    // No watchdog pet here (unlike the old per-chunk pet this replaced): write() now just buffers in
-    // RAM (see FlashMemoryCommon's PAGE_BUFFER_CAPACITY/writeBufferedIfReady()), so this whole loop -
-    // bounded to a ~508-byte config or a short human-written message, never today's arbitrarily large
-    // blob - finishes in well under a millisecond regardless of chunk count. The main loop's own pet()
-    // every ~10ms tick is already far inside the 100ms watchdog timeout without any help from here.
-    // (On SAMD21, WatchdogSAMD::reset() busy-waits on a hardware SYNCBUSY bit before it can clear the
-    // timer, so calling it here at all - let alone once per chunk - is a real, avoidable cost: back-to-
-    // back pets with no gap measured at ~3.5ms/call, turning a 3-chunk config burst into an ~11ms stall.)
+    // No watchdog pet: flash writes only buffer in RAM, and a SAMD21 pet costs ~3.5ms
     void logChunked(const uint8_t* bytes, size_t totalLen, LogEntryID firstId, LogEntryID continuationId) {
         const size_t dataSize = sizeof(LogDataStruct);
         size_t pos = 0;
@@ -435,9 +404,9 @@ private:
     HardwareAbstraction* m_hardware = nullptr;
     DebugStream* m_debug = nullptr;
     FlashMemory* m_flash = nullptr;
-    WatchdogTimer* m_watchdog = nullptr; ///< Set in setup() from HardwareAbstraction::getWatchdogTimer() - never null afterward (that getter always returns a real object, defaulting to a no-op)
+    WatchdogTimer* m_watchdog = nullptr; ///< Never null after setup()
     uint32_t m_logWriteIndex = 0;
-    uint32_t m_numEntries = 0; ///< Total flash capacity in log entries; bounds offload scans
+    uint32_t m_numEntries = 0; ///< Flash capacity in log entries
 
     InternalStruct_s m_dataStruct{};
     uint8_t* m_dataStructStart = (uint8_t*)&m_dataStruct;

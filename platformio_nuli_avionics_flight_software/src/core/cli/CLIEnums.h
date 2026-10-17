@@ -1,7 +1,3 @@
-//
-// Created by chris on 4/14/2025.
-//
-
 #ifndef DESKTOP_CLIENUMS_H
 #define DESKTOP_CLIENUMS_H
 

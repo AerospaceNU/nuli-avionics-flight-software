@@ -25,7 +25,7 @@ public:
     }
 
     void setPercent(const float percent) override {
-        if (!m_enabled) return;  // Block if disabled
+        if (!m_enabled) return;
 
         const float normalized = constrain(percent, 0.0f, 100.0f) / 100.0f;
         const float offset = (normalized - 0.5f) * float(m_bandwidth);
@@ -44,7 +44,7 @@ public:
 
     void disable() {
         m_enabled = false;
-        off();  // Ensure buzzer is off immediately
+        off();
     }
 
     void enable() {
@@ -56,7 +56,7 @@ private:
     uint32_t m_frequency;
     uint32_t m_bandwidth;
     bool m_active = false;
-    bool m_enabled = true;  // Added: tracks whether buzzer is enabled
+    bool m_enabled = true;
 };
 
 #endif // PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_INDICATORBUZZER_H

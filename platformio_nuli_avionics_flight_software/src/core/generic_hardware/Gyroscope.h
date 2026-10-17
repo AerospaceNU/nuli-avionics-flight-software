@@ -5,22 +5,13 @@
 #include "GenericSensor.h"
 #include "core/transform/Vector3DTransform.h"
 
-/**
- * @class Gyroscope
- * @brief Generic Gyroscope
- * @details Base class for all Gyroscopes. Can also be used as an "injected" class, where an external source provides the data (i.e. desktop sim)
- */
+/** @brief Gyroscope base class; also usable directly with inject() for externally supplied data (e.g. desktop sim). */
 class Gyroscope : public GenericSensor {
 public:
     explicit Gyroscope(const Vector3DTransform *transform) : m_transform(transform) {};
 
 
-    /**
-     * @brief Injects sensor data directly
-     * @details If a sensor can't be directly read from, you can inject data directly to the class
-     * @param velocitiesRadS Angular velocities in Rad/s
-     * @param temperatureK Temperature in kelvin
-     */
+    /** @brief Sets the raw sensor-frame reading directly and updates the bias-removed board-frame value. */
     void inject(Vector3D_s velocitiesRadS, const float temperatureK) {
         m_velocitiesRadS_raw = velocitiesRadS;
         m_temperatureK = temperatureK;
@@ -34,36 +25,25 @@ public:
         m_biasOffset = offset;
     }
 
-    /**
-     * @brief Gets the angular velocities
-     * @return Angular velocities in Rad/s
-     */
+    /** @brief Sensor frame, bias not removed. */
     Vector3D_s getVelocitiesRadS_raw() const {
         return m_velocitiesRadS_raw;
     }
 
-    /**
-     * @brief Gets the angular velocities
-     * @return Angular velocities in Rad/s
-     */
     Vector3D_s getVelocitiesRadS_board_biasRemoved() const {
         return m_velocitiesRadS_board_biasRemoved;
     }
 
-    /**
-     * @brief Gets the temperature
-     * @return Temperature in K
-     */
     float getTemperatureK() const {
         return m_temperatureK;
     }
 
 protected:
     const Vector3DTransform *m_transform;
-    Vector3D_s m_velocitiesRadS_raw = {};               ///< Sensor data vector
-    Vector3D_s m_velocitiesRadS_board_biasRemoved = {};               ///< Sensor data vector
-    Vector3D_s m_biasOffset = {};               ///< Sensor data vector
-    float m_temperatureK = 0;                      ///< Sensor temperature
+    Vector3D_s m_velocitiesRadS_raw = {};
+    Vector3D_s m_velocitiesRadS_board_biasRemoved = {};
+    Vector3D_s m_biasOffset = {};               ///< sensor frame
+    float m_temperatureK = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_GYROSCOPE_H

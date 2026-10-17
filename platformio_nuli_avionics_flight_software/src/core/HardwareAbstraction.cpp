@@ -55,7 +55,6 @@ Timestamp_s HardwareAbstraction::enforceLoopTime() {
 
     m_currentLoopTimestampMs = m_systemClock->currentRuntimeMs();
     m_tickCount++;
-    // Return a new timestamp
     Timestamp_s timestamp{};
     timestamp.runtime_ms = m_currentLoopTimestampMs;
     timestamp.dt_ms = m_loopDtMs;

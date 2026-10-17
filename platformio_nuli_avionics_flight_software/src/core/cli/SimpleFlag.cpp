@@ -40,13 +40,6 @@ void SimpleFlag::reset() {
 }
 
 bool SimpleFlag::verify() const {
-    /*
-     isRequired isSet               not
-     yes        no     --> yes  --> no
-     yes        yes    --> no   --> yes
-     no         no     --> no   --> yes
-     no         yes    --> no   --> yes
-    */
     return !(this->isRequired() && !this->isSet());
 }
 

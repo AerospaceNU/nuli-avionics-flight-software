@@ -12,7 +12,7 @@ void ArduinoPyro::read() {
     m_continuityValue = analogRead(m_continuityPin);
     if (m_continuityThreshold < 0) {
         m_hasContinuity = m_continuityValue <= -m_continuityThreshold;
-        // No separate armed threshold on digital/inverted boards - mirror hasContinuity(), like below.
+        // No separate armed threshold on digital/inverted boards
         m_isArmed = m_hasContinuity;
     } else {
         m_hasContinuity = m_continuityValue >= m_continuityThreshold;

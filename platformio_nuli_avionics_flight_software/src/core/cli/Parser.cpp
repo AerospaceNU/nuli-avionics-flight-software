@@ -2,7 +2,6 @@
 #include "core/generic_hardware/DebugStream.h"
 #include <algorithm>
 
-// parses inputs into appropriate flags.
 CLIReturnCode_e Parser::parse(int argc, char** argv) {
     if (m_numFlagGroups == 0) {
         return CLI_PARSER_NO_FLAG_GROUP_PROVIDED;
@@ -14,20 +13,16 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
 
     int argvPos = 1;
 
-    // retrieve flag group and set leader flag
     FlagGroup_s* flagGroup;
-    const char* flagGroupName = argv[argvPos];    // The flag group's name should always be the first argument
+    const char* flagGroupName = argv[argvPos];
     bool matchedLeader = false;
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
         if (strcmp(flagGroupName, m_flagGroups[i].flagGroupName_s) == 0) {
-            // flag group has been identified
             matchedLeader = true;
             flagGroup = &m_flagGroups[i];
 
-            // set and parse the leader flag
             BaseFlag* leaderFlag = flagGroup->getLeader();
 
-            // these branches don't represent SimpleFlag or ArgumentFlag
             if (argvPos + 1 >= argc || this->isKnownFlag(argv[(argvPos) + 1], *flagGroup)) {
                 leaderFlag->parse(nullptr);
             } else {
@@ -45,15 +40,12 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
         return CLI_PARSER_NO_LEADER_FLAG;
     }
 
-    // set latest flag group
     m_latestFlagGroup = flagGroup->uid_s;
 
-    // if any, go through rest of arguments
     for (; argvPos < argc; ++argvPos) {
         const char* currArg = argv[argvPos];
         bool matched = false;
 
-        // find the matching flag
         for (uint8_t i = 0; i < flagGroup->numFlags_s; ++i) {
             if (strcmp(currArg, flagGroup->flags_s[i]->name()) == 0) {
                 matched = true;
@@ -81,28 +73,13 @@ CLIReturnCode_e Parser::parse(int argc, char** argv) {
         }
     }
 
-    // verify all required flags are set for this FlagGroup_s
-    // **note**: conditional requirements are not checked for   //@TODO: Perhaps implement a system for this?
     return flagGroup->verifyFlags();
 }
 
 CLIReturnCode_e Parser::parse(char* input) {
-    /* Diagram represent how the parser works without dynamic memory allocation.
-     *   [--config 5 -C "hello world"]
-     *           |- null
-     *           |  |- null
-     *           |  |   |- null
-     *           |  |   |            |- null
-     *           v  v   v            v
-     *   --config\05\0-C\0hello world\0
-     *   ^         ^   ^  ^
-     *   |         |   |  |- pointer
-     *   |         |   |- pointer
-     *   |         |- pointer
-     *   |-- pointer
-     */
+    // Tokenizes in place (no allocation): separators become '\0' and argv points into input.
 
-    int argc = 1;   // compatibility with command-line argc/argv
+    int argc = 1;   // argv[0] unused, matching command-line argc/argv
     char* argv[255] = {nullptr};
 
     char* p = input;
@@ -113,21 +90,19 @@ CLIReturnCode_e Parser::parse(char* input) {
             case '\r':
             case '\n':
             case ' ':
-                *p = '\0';  // mark the end of a string
+                *p = '\0';
                 p++;
                 break;
             case '"':
-                p++;    // skip the quote
+                p++;
                 argv[argc++] = p;
 
-                // loop until end of quote or input
                 p = getString(p, '"');
 
                 break;
             default:
                 argv[argc++] = p;
 
-                // loop until end of word
                 p = getString(p, ' ');
 
                 break;
@@ -161,7 +136,6 @@ int Parser::strcmp(const char* string1, const char* string2) {  // NOLINT(*-conv
 }
 
 void Parser::printHelp(DebugStream* debugStream) const {
-    // loop through each FlagGroup_s
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
         m_flagGroups[i].printHelp(debugStream);
         debugStream->data("");
@@ -179,13 +153,10 @@ CLIReturnCode_e Parser::FlagGroup_s::verifyFlags() {
 }
 
 void Parser::resetFlags() {
-    // loop through each FlagGroup_s
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
-        // reset each flag group
         m_flagGroups[i].resetFlags();
     }
 
-    // set back to unused
     m_latestFlagGroup = -1;
 }
 
@@ -212,7 +183,6 @@ CLIReturnCode_e Parser::getFlagGroup(int8_t uid, FlagGroup_s** flagGroup) {
 }
 
 CLIReturnCode_e Parser::runFlags(DebugStream* debugStream) {
-    // retrieve the most recent flag group
     if (m_latestFlagGroup < 0) {
         return CLI_PARSER_MISSING_LATEST_FLAG_GROUP;
     }
@@ -235,12 +205,10 @@ Parser::FlagGroup_s::FlagGroup_s(BaseFlag* flags[], const char* flagGroupName, u
                                  int8_t uid)
         : flagGroupName_s(flagGroupName), numFlags_s(numFlags),
           uid_s(uid) {
-    // check flag count
     if (numFlags > MAX_FLAGS) {
         return;
     }
 
-    // copy flags into flags_s
     std::copy(flags, flags + numFlags, flags_s);
 }
 
@@ -260,10 +228,6 @@ CLIReturnCode_e Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** fl
 }
 
 void Parser::FlagGroup_s::printHelp(DebugStream* debugStream) const {
-    // loop through each set of flags within a FlagGroup_s - name()/help() are never copied,
-    // just the pointers the flag was constructed with, so this reads the original static strings.
-    // Index 0 is always the leader (the group's command); the rest are its sub-flags, indented
-    // underneath it so it's clear which flags belong to which command.
     for (uint8_t i = 0; i < numFlags_s; ++i) {
         const char* indent = (i == 0) ? "" : "    ";
         const char* required = flags_s[i]->isRequired() ? "Required" : "Optional";
@@ -284,8 +248,6 @@ void Parser::FlagGroup_s::resetFlags() {
 
 void Parser::FlagGroup_s::runFlags(DebugStream* debugStream) {
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        // A highBandwidthOnly flag is silently skipped (not an error) on a low-bandwidth stream -
-        // e.g. --offload typed over a CLI-over-radio link just does nothing, rather than flooding it.
         if (flags_s[i]->isSet() && (!flags_s[i]->isHighBandwidthOnly() || debugStream->isHighBandwidth())) {
             flags_s[i]->run(debugStream);
         }

@@ -31,9 +31,9 @@ public:
 
         if (numBeeps > 0) {
             // === Normal continuity beep sequence ===
-            constexpr uint32_t beepOnMs = 100; // short beep
-            constexpr uint32_t beepOffMs = 100; // gap between beeps
-            constexpr uint32_t cycleGapMs = 800; // gap after full sequence
+            constexpr uint32_t beepOnMs = 100;
+            constexpr uint32_t beepOffMs = 100;
+            constexpr uint32_t cycleGapMs = 800;
 
             const uint32_t sequenceDuration = numBeeps * (beepOnMs + beepOffMs) + cycleGapMs;
             const uint32_t t = timestamp.runtime_ms % sequenceDuration;
@@ -60,7 +60,6 @@ public:
             }
         }
 
-        // Apply to all indicators
         for (int i = 0; i < m_hardware->getNumIndicators(); i++) {
             if (active) {
                 m_hardware->getIndicator(i)->on();
@@ -82,13 +81,10 @@ public:
     }
 
     void siren(const Timestamp_s& timestamp) const {
-        // Adjust this to control how fast the siren oscillates
-        constexpr float period_ms = 1000.0f; // one full cycle every 2 seconds
+        constexpr float period_ms = 1000.0f;
 
-        // Convert runtime to a phase in radians [0, 2π]
         const float phase = (timestamp.runtime_ms % (uint32_t)period_ms) * (2.0f * M_PI / period_ms);
 
-        // Sinusoidal value from 0 to 100
         const float percent = (sinf(phase) * 0.5f + 0.5f) * 100.0f;
 
         for (int i = 0; i < m_hardware->getNumIndicators(); i++) {
@@ -131,7 +127,7 @@ public:
 
     void beepNums(const Timestamp_s &timestamp) {
         NumBeep &m_nbs = m_numBeepState;
-        if (m_nbs.segmentCount == 0) // Uninitialized
+        if (m_nbs.segmentCount == 0) // configureBeepNums() not called yet
             return;
 
         m_nbs.timeDelta += timestamp.runtime_ms - m_nbs.timeLast;
@@ -141,14 +137,12 @@ public:
             timeToNext = m_nbs.timeSegments[m_nbs.segmentCurrent] - m_nbs.timeDelta;
 			if (timeToNext > 0) break;
             if (++m_nbs.segmentCurrent == m_nbs.segmentCount) {
-                // Looped around: reset segment to start and wrap delta
+                // Wrap to the first segment
                 m_nbs.segmentCurrent = 0;
                 m_nbs.timeDelta = -timeToNext;
 			}
 		}
         timeToNext -= m_nbs.DIGIT_SPACING_MS + 1;
-        // NOTE: should really make it simpler to on/off every indicator
-        // (should expose etl::vector IMO)
 		if (timeToNext >= 0) {
 			switch (m_nbs.typeSegments[m_nbs.segmentCurrent]) {
             case NumBeep::SegmentType::DIGIT:
@@ -177,9 +171,9 @@ public:
 
     struct NumBeep {
         enum class SegmentType : uint8_t {
-            DIGIT, // Digit here
-            SPACING, // Spacing between numbers here
-            SIREN, // Initial siren here
+            DIGIT,
+            SPACING, // between numbers
+            SIREN, // before the first number
         };
 
         static constexpr uint32_t MAX_DIGITS = 10;

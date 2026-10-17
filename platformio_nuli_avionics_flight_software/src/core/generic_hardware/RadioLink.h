@@ -8,14 +8,14 @@ class RadioLink : public GenericAvionicsHardware {
 public:
     enum class RadioLinkStatus {
         IDLE,
-        RX_LISTENING, ///< Waiting for incoming message
+        RX_LISTENING,
         RX_ACTIVE, ///< Start of message heard, don't stop now
-        TX_ACTIVE, ///< Sending message
+        TX_ACTIVE,
     };
 
     struct RadioMessage {
         uint8_t data[255];
-        uint8_t length; // actual received length, 0-255
+        uint8_t length;
         int16_t rssi;
         float snr;
     };

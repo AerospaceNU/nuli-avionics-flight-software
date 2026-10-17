@@ -10,15 +10,7 @@
  * @brief Global definitions for the codebase
  */
 
-// Define state transition paramiters
-/**
- * Acceleration threshold design:
- *      - Rockets must have a thrust to weight ratio of at least 3 (4+ is ideal). F = thrust force, r = ratio:
- *          - F = rmg, F - mg = ma, rmg - mg = ma, a = (r - 1)g
- *      - Worst case (lowest) acceleration: a = (3-1)g = ~20 m/ss
- *      - This is not very high, and can be easily achieved by shaking the device
- */
-// Launch detection
+// Launch detection: thrust/weight >= 3 gives a = (r - 1)g ~ 20 m/s^2 (low enough that shaking can reach it)
 constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0;
 constexpr float LAUNCH_ALTITUDE_THRESHOLD_M = 100.0;
 constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
@@ -61,29 +53,20 @@ constexpr uint8_t MAX_CONFIGURATION_NUM = 30;
 constexpr uint16_t MAX_CONFIGURATION_LENGTH = 500;
 
 
-/**
- * @struct Vector3D_s
- * @brief Vector with 3 axis
- */
 struct Vector3D_s {
-    float x; ///< X axis
-    float y; ///< Y axis
-    float z; ///< Z axis
+    float x;
+    float y;
+    float z;
 };
 
 inline float vector3DMagnitude(const Vector3D_s& vector) {
     return sqrtf(vector.x * vector.x + vector.y * vector.y + vector.z * vector.z);
 }
 
-/**
- * @struct Coordinates_s
- * @brief Geographic coordinates with latitude and longitude
- * @details Intended for use with GPS
- */
 struct Coordinates_s {
-    float latitudeDeg; ///< Latitude in degrees
-    float longitudeDeg; ///< Longitude in degrees
-    float altitudeM; ///< Altitude in meters
+    float latitudeDeg;
+    float longitudeDeg;
+    float altitudeM;
 };
 
 struct Timestamp_s {
@@ -132,8 +115,7 @@ struct RocketState_s {
     State6D_s state6D;
 };
 
-// Leading byte of every RadioLink packet (both directions) - lets one physical link carry
-// telemetry downlink, remote CLI commands uplink, and remote CLI responses downlink.
+// Leading byte of every RadioLink packet, in both directions
 enum RadioMessageType_e : uint8_t {
     RADIO_MSG_TELEMETRY = 0,
     RADIO_MSG_CLI_COMMAND = 1,
@@ -158,7 +140,6 @@ struct GyroscopeBias_s {
     }
 };
 
-// This can be added in a struct definition to ensure the compiler doesn't add any padding bytes between variables
 #define remove_struct_padding __attribute__((packed))
 
 #ifndef AVIONICS_ARGUMENT_isSim

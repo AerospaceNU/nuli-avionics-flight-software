@@ -6,20 +6,10 @@
 #include "ConstantsUnits.h"
 #include <cmath>
 
-/**
- * @class Barometer
- * @brief Generic Barometer
- * @details Base class for all barometers. Can also be used as an "injected" class, where an external source provides the data (i.e. desktop sim)
- */
+/** @brief Barometer base class; also usable directly with inject() for externally supplied data (e.g. desktop sim). */
 class Barometer : public GenericSensor {
 public:
-    /**
-     * @brief Injects sensor data directly
-     * @details If a sensor can't be directly read from, you can inject data directly to the class
-     * @param temperatureK Temperature in k
-     * @param humidityPercent Humidity in percent
-     * @param pressurePa Pressure in pascals
-     */
+    /** @brief Sets the reading directly; it is valid only if the pressure is plausible. */
     void inject(const float temperatureK, const float humidityPercent, const float pressurePa) {
         m_temperatureK = temperatureK;
         m_humidityPercent = humidityPercent;
@@ -27,9 +17,7 @@ public:
         m_validReading = isPlausiblePressure(pressurePa);
     }
 
-    /**
-     * @brief Marks the current reading as not a measurement, until the next plausible inject()
-     */
+    /** @brief Marks the current reading as not a measurement, until the next plausible inject(). */
     void invalidate() {
         m_validReading = false;
     }
@@ -42,34 +30,19 @@ public:
         return std::isfinite(pressurePa) && pressurePa > 100.0f && pressurePa < 200000.0f;
     }
 
-    /**
-     * @brief Gets current temperature of the barometer
-     * @return Temperature in k
-     */
     float getTemperatureK() const {
         return m_temperatureK;
     }
 
-    /**
-     * @brief Gets the current humidity
-     * @return Humidity in percent
-     */
     float getHumidityPercent() const {
         return m_humidityPercent;
     }
 
-    /**
-     * @brief Gets the current pressure
-     * @return Pressure in atmospheres
-     */
     float getPressurePa() const {
         return m_pressurePa;
     }
 
-    /**
-    * @brief Calculates the altitude from pressure and temperature
-    * @details Standard atmosphere with temperatureK at sea level: the troposphere's lapse rate, then isothermal above the tropopause
-    */
+    /** @brief Standard-atmosphere altitude with temperatureK at sea level: lapse rate in the troposphere, isothermal above the tropopause. */
     static float calculateAltitudeM(const float pressurePa, const float temperatureK) {
         if (pressurePa >= TROPOPAUSE_PRESSURE_PA || pressurePa <= 0) return troposphereAltitudeM(pressurePa, temperatureK);
         const float tropopauseM = troposphereAltitudeM(TROPOPAUSE_PRESSURE_PA, temperatureK);
@@ -77,19 +50,11 @@ public:
         return tropopauseM + tropopauseScaleHeightM * std::log(TROPOPAUSE_PRESSURE_PA / pressurePa);
     }
 
-    /**
-     * @brief Calculates the absolute humidity in g/m^3 from relative humidity and temperature
-     * @details Used the Clausius–Clapeyron for the calculation of saturation vapour pressure. And
-     */
+    /** @brief Absolute humidity in g/m^3; saturation vapour pressure from the Clausius-Clapeyron (Magnus) approximation. */
     static float calculateAbsoluteHumidity(const float temperatureK, const float humidityPercent) {
-        // @todo use a constant for conversion to and from kelvin
-        // https://www.omnicalculator.com/physics/absolute-humidity
-        // comes from https://en.wikipedia.org/wiki/Clausius%E2%80%93Clapeyron_relation#Meteorology_and_climatology
-        // direct source https://digital.library.unt.edu/ark:/67531/metadc693874/m1/15/ (eq. 25)
-        // this is also an approximation
+        // https://digital.library.unt.edu/ark:/67531/metadc693874/m1/15/ (eq. 25)
 
         const float saturationVapourPressure = 6.1094f * exp((17.625f * (temperatureK - Units::C_TO_K)) / ((temperatureK - Units::C_TO_K) + 243.04f)); // in hPa
-        // equation can be seen from here (re-arrange RH) http://www.atmo.arizona.edu/students/courselinks/fall12/atmo336/lectures/sec1/humidity.html
         const float vapourPressure = (humidityPercent / 100) * saturationVapourPressure;
 
         return (216.7f * (vapourPressure)) / temperatureK;
@@ -103,9 +68,9 @@ protected:
             (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
     }
 
-    float m_temperatureK = 0; ///<The measured temperature
-    float m_humidityPercent = 0; ///< The measured humidity (%rh)
-    float m_pressurePa = 0; ///< The measured pressure
+    float m_temperatureK = 0;
+    float m_humidityPercent = 0; ///< relative humidity
+    float m_pressurePa = 0;
     bool m_validReading = false;
 };
 

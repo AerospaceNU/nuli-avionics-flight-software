@@ -15,13 +15,12 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
     m_kalmanFilter.setAccelerometerCovariance(1);
 
-    // Trigger both alarms immediately, required for them to initialize
+    // Fire both alarms on the first update
     m_boardOrientationReferenceTimer.startAlarm(0, 0);
     m_groundElevationReferenceTimer.startAlarm(0, 0);
 }
 
 State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
-    // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     float pressurePa = getPressurePa();
     float accelerationMSS = getAccelerationMSS(flightState);
 
@@ -45,9 +44,7 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
         m_reInitializeKalman = false;
     }
 
-    // Inflate barometer covariance near mach to trust noisy baro less.
-    // Mirrors AerospaceNU/stm32-avionics: linear ramp on velocity between 250-350 m/s,
-    // equivalent to scaling the baro Kalman gain from 1.0 down to ~0.3.
+    // Trust the baro less near mach: ramp over 250-350 m/s, ~0.3x baro gain at the top (as AerospaceNU/stm32-avionics)
     const float machRamp = std::max(0.0f, std::min(1.0f, (m_kalmanFilter.getVelocity() - 250.0f) / 100.0f));
     m_kalmanFilter.setBarometerCovariance(1.0f + machRamp * (1.0f / 0.3f - 1.0f));
 
@@ -92,7 +89,6 @@ float StateEstimator1D::getPressurePa() {
 }
 
 float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) const {
-    // @todo, full scale switching, bad reading detection
     if ((flightState == PRE_FLIGHT || flightState == ASCENT) && m_hardware->getNumAccelerometers() > 0) {
         switch (m_boardOrientation.get()) {
         case POS_X:
@@ -122,7 +118,6 @@ void StateEstimator1D::reset() {
 }
 
 void StateEstimator1D::updateGroundElevationReference(const float pressurePa, const Timestamp_s& timestamp) {
-    // Ground elevation
     m_groundTemperatureReferenceLowPass.update(m_hardware->getBarometer(0)->getTemperatureK());
     m_groundPressureReferenceLowPass.update(pressurePa);
     if (m_needNewGroundReference || m_groundElevationReferenceTimer.isAlarmFinished(timestamp.runtime_ms)) {

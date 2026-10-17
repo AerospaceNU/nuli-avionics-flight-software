@@ -15,8 +15,7 @@ public:
 
     virtual bool waitForReady(uint32_t timeout) const  = 0;
 
-    // Never waits for this write to finish - only waits for any previously-issued write to finish
-    // before starting this one. Use ready()/waitForReady() if you need to know when it's actually done.
+    // Waits only for the previous write; use ready()/waitForReady() to know when this one is done
     virtual void write(uint32_t address, const uint8_t *buffer, uint32_t length) const  = 0;
 
     virtual void read(uint32_t address, uint8_t *buffer, uint32_t length) const  = 0;

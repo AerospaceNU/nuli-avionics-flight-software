@@ -1,7 +1,6 @@
 #ifndef DESKTOP_BASEFLAG_TPP
 #define DESKTOP_BASEFLAG_TPP
 
-// int8_t
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, int8_t& result) {
     char* end;
@@ -13,7 +12,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, int8_t& result
     return CLI_SUCCESS;
 }
 
-// uint8_t
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, uint8_t& result) {
     char* end;
@@ -25,7 +23,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, uint8_t& resul
     return CLI_SUCCESS;
 }
 
-// int16_t
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, int16_t& result) {
     char* end;
@@ -37,7 +34,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, int16_t& resul
     return CLI_SUCCESS;
 }
 
-// uint16_t
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, uint16_t& result) {
     char* end;
@@ -49,7 +45,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, uint16_t& resu
     return CLI_SUCCESS;
 }
 
-// int32_t
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, int32_t& result) {
     char* end;
@@ -61,7 +56,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, int32_t& resul
     return CLI_SUCCESS;
 }
 
-// uint32_t
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, uint32_t& result) {
     char* end;
@@ -73,7 +67,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, uint32_t& resu
     return CLI_SUCCESS;
 }
 
-// float
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, float& result) {
     char* end;
@@ -85,7 +78,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, float& result)
     return CLI_SUCCESS;
 }
 
-// double
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, double& result) {
     char* end;
@@ -97,7 +89,6 @@ inline CLIReturnCode_e BaseFlag::parseArgument(const char* value, double& result
     return CLI_SUCCESS;
 }
 
-// specialization for const char*
 template<>
 inline CLIReturnCode_e BaseFlag::parseArgument<const char*>(const char* value, const char*&result) {
     result = value;
@@ -112,7 +103,7 @@ CLIReturnCode_e BaseFlag::parseArgument(const char *value, T &result) {
 template<typename T>
 T BaseFlag::getValue() {
     T value;
-    getValueRaw(&value);  // Call the virtual function
+    getValueRaw(&value);
     return value;
 }
 

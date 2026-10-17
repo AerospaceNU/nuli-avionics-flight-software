@@ -1,7 +1,6 @@
 #include "SX1262Radio.h"
 
-// RadioLib's DIO1 callback must be a plain function pointer, so completion is signalled via this
-// flag instead of a member function - safe since only one SX1262Radio is ever instantiated on a board.
+// RadioLib's DIO1 callback is a plain function pointer; only one SX1262Radio exists per board
 static volatile bool s_sx1262OperationDone = false;
 
 static void setSX1262InterruptFlag() {
@@ -18,12 +17,10 @@ void SX1262Radio::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
 
     m_radio = new Module(m_csPin, m_dio1Pin, m_resetPin, m_busyPin);
 
-    // Drive RXEN/TXEN directly rather than through the chip's internal DIO2-as-RF-switch feature -
-    // DIO2/DIO3 aren't wired to the MCU on this board, only these two dedicated GPIOs are.
+    // DIO2 isn't usable as the RF switch on this board, so RXEN/TXEN are driven as GPIOs
     m_radio.setRfSwitchPins(m_rxEnPin, m_txEnPin);
 
-    // tcxoVoltage defaults to 1.6V, which powers the E22 module's onboard TCXO via DIO3 - without
-    // it the module won't get a stable clock reference and RF won't work despite correct wiring.
+    // Default tcxoVoltage (1.6 V) powers the E22's TCXO via DIO3; RF doesn't work without it
     const int16_t state = m_radio.begin(m_frequencyMHz);
     if (state != RADIOLIB_ERR_NONE) {
         debugStream->error("SX1262Radio initialization failed. Code: %d", state);
@@ -42,11 +39,10 @@ void SX1262Radio::run() {
     s_sx1262OperationDone = false;
 
     if (m_status == RadioLinkStatus::TX_ACTIVE) {
-        startReceive(); // done sending, go back to listening
+        startReceive();
         return;
     }
 
-    // Otherwise this was a receive completing
     const size_t length = m_radio.getPacketLength();
     if (length > 0 && length <= sizeof(m_lastMessage.data)) {
         const int16_t state = m_radio.readData(m_lastMessage.data, length);
@@ -62,12 +58,11 @@ void SX1262Radio::run() {
         m_debugStream->error("SX1262Radio dropped oversized packet (%d bytes)", (int)length);
     }
 
-    startReceive(); // re-arm for the next packet
+    startReceive();
 }
 
 bool SX1262Radio::startTransmit(void* data, uint32_t length) {
-    // Don't stomp on an in-progress transmit - can happen for real if the configured transmit
-    // interval is shorter than the actual on-air time for the spreading factor (e.g. SF11/12 can take several seconds/packet).
+    // Happens when the transmit interval is shorter than the on-air time (SF11/12: seconds per packet)
     if (m_status == RadioLinkStatus::TX_ACTIVE) return false;
 
     const int16_t state = m_radio.startTransmit((uint8_t*)data, length);
@@ -90,15 +85,12 @@ bool SX1262Radio::startReceive() {
 }
 
 bool SX1262Radio::setFrequency(float frequencyMHz) {
-    // standby() would silently abort an in-progress transmit at the hardware level without ever
-    // firing the DIO1 interrupt run() waits on - m_status would be stuck at TX_ACTIVE forever, wedging
-    // both future receives and startTransmit() (see its own TX_ACTIVE guard). Reject instead, same as
-    // startTransmit() does for re-entry - caller can retry once the current transmit completes.
+    // standby() would abort the transmit without a DIO1 interrupt, leaving m_status stuck at TX_ACTIVE
     if (m_status == RadioLinkStatus::TX_ACTIVE) return false;
 
     const bool wasReceiving = m_status == RadioLinkStatus::RX_LISTENING || m_status == RadioLinkStatus::RX_ACTIVE;
 
-    m_radio.standby(); // the chip requires standby mode to accept a new frequency
+    m_radio.standby(); // required to accept a new frequency
     const int16_t state = m_radio.setFrequency(frequencyMHz);
     if (state != RADIOLIB_ERR_NONE) m_debugStream->error("SX1262Radio setFrequency failed. Code: %d", state);
     if (state == RADIOLIB_ERR_NONE) m_frequencyMHz = frequencyMHz;
@@ -108,12 +100,12 @@ bool SX1262Radio::setFrequency(float frequencyMHz) {
 }
 
 bool SX1262Radio::setSpreadingFactor(uint8_t spreadingFactor) {
-    // See setFrequency()'s comment - same TX_ACTIVE hazard, same fix.
+    // Same TX_ACTIVE hazard as setFrequency()
     if (m_status == RadioLinkStatus::TX_ACTIVE) return false;
 
     const bool wasReceiving = m_status == RadioLinkStatus::RX_LISTENING || m_status == RadioLinkStatus::RX_ACTIVE;
 
-    m_radio.standby(); // the chip requires standby mode to accept new modulation parameters
+    m_radio.standby(); // required to accept new modulation parameters
     const int16_t state = m_radio.setSpreadingFactor(spreadingFactor);
     if (state != RADIOLIB_ERR_NONE) m_debugStream->error("SX1262Radio setSpreadingFactor failed. Code: %d", state);
 

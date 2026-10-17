@@ -24,20 +24,17 @@ const char* ArgumentFlag<T>::help() const {
 }
 
 template<typename T>
-CLIReturnCode_e ArgumentFlag<T>::parse(char* arg) { //@TODO: Maybe change to return new argvPos?
-    // early exit
+CLIReturnCode_e ArgumentFlag<T>::parse(char* arg) {
     if (arg == nullptr) {
         if (m_defaultValueSet) {
-            // use default argument
             m_argument = m_defaultValue;
             m_set = true;
-            return CLI_SUCCESS;   // success
+            return CLI_SUCCESS;
         } else {
             return CLI_NO_DEFAULT_VALUE_SET;
         }
     }
 
-    // set identifiers
     CLIReturnCode_e returnCode = this->parseArgument(arg, m_argument);
     if (returnCode != CLI_SUCCESS) {
         return returnCode;
@@ -91,7 +88,7 @@ T ArgumentFlag<T>::getValueDerived() const {
 
 template<typename T>
 void ArgumentFlag<T>::getValueRaw(void* outValue) const  {
-    *static_cast<T*>(outValue) = m_argument;  // Cast and assign
+    *static_cast<T*>(outValue) = m_argument;
 }
 
 #endif // DESKTOP_ARGUMENTFLAG_TPP

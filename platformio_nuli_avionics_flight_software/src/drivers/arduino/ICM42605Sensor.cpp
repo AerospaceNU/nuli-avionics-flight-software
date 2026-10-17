@@ -9,7 +9,6 @@
 
 #define ICM42605_ADDR        0x68
 
-/* Bank select */
 #define REG_BANK_SEL         0x76
 
 /* -------- Bank 0 -------- */
@@ -20,7 +19,6 @@
 #define TEMP_DATA1           0x1D
 #define ACCEL_DATA_X1        0x1F   // Accel + Gyro + Timestamp follow
 
-/* -------- Bank 0 -------- */
 #define GYRO_CONFIG0         0x4F
 #define ACCEL_CONFIG0        0x50
 
@@ -82,7 +80,7 @@ static void initICM42605() {
 
     // Gyro ±2000 dps, ODR = 200 Hz
     writeRegister(GYRO_CONFIG0,  0b00000111);
-    // // Accel ±16g, ODR = 200 Hz
+    // Accel ±16g, ODR = 200 Hz
     writeRegister(ACCEL_CONFIG0, 0b00000111);
 }
 
@@ -110,16 +108,7 @@ void ICM42605Sensor::setup(DebugStream* debugStream) {
 }
 
 /* =========================
- * Batch read
- * =========================
- *
- * Burst layout starting at TEMP_DATA1:
- *
- *  0–1  TEMP
- *  2–7  ACCEL XYZ
- *  8–13 GYRO XYZ
- * 14–15 TIMESTAMP (ignored)
- *
+ * Batch read from TEMP_DATA1: temp 0-1, accel 2-7, gyro 8-13, timestamp 14-15 (ignored)
  * ========================= */
 
 void ICM42605Sensor::readAccelAndGyroBatch() {
@@ -129,7 +118,6 @@ void ICM42605Sensor::readAccelAndGyroBatch() {
     Wire.write(TEMP_DATA1);
     Wire.endTransmission(false);
 
-    /* Read TEMP + ACCEL + GYRO + TIMESTAMP */
     Wire.requestFrom(ICM42605_ADDR, (uint8_t)16);
 
     uint8_t buf[16];
@@ -137,20 +125,15 @@ void ICM42605Sensor::readAccelAndGyroBatch() {
         buf[i] = Wire.read();
     }
 
-    /* Temperature */
     tempRaw = (int16_t)((buf[0] << 8) | buf[1]);
 
-    /* Accel */
     accelData[0] = (int16_t)((buf[2] << 8) | buf[3]);
     accelData[1] = (int16_t)((buf[4] << 8) | buf[5]);
     accelData[2] = (int16_t)((buf[6] << 8) | buf[7]);
 
-    /* Gyro */
     gyroData[0]  = (int16_t)((buf[8]  << 8) | buf[9]);
     gyroData[1]  = (int16_t)((buf[10] << 8) | buf[11]);
     gyroData[2]  = (int16_t)((buf[12] << 8) | buf[13]);
-
-    /* buf[14–15] = TMST_FSYNCH/L → intentionally ignored */
 }
 
 /* =========================

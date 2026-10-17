@@ -3,52 +3,41 @@
 #include <algorithm>
 
 KalmanFilter1D::KalmanFilter1D() {
-    // States are [position, velocity, acceleration]
     x = {0, 0, 0};
 
-    // Continuous time state transitions are pretty straightforward
-    // DON'T CHANGE THIS WITHOUT USING THE MATRIX EXPONENTIAL, OR FIXING setDeltaTime
+    // F_d in setDeltaTime() is the hand-derived discretization of this F: change both together
     F = Eigen::Matrix<float, 3, 3>{{0, 1, 0},
                                    {0, 0, 1},
                                    {0, 0, 0},
     };
-    // As long as we measure position, (which we do), the system is observable.  Observability is so easy
 
-    // Where we're going, we don't need a B matrix
-
-    // Smush all the sensor H matrices together
     H = Eigen::Matrix<float, 3, 3>{{1, 0, 0},       // Barometer
-                                   {0, 1, 0},       // Pito tube
+                                   {0, 1, 0},       // Pitot tube
                                    {0, 0, 1},       // Accelerometer
     };
-    m_isHIdentity = H.isIdentity(); // see the comment on H and m_isHIdentity in the header
+    m_isHIdentity = H.isIdentity();
 
     P = Eigen::Matrix<float, 3, 3>::Identity() * 1000.0f;
 
-    // Take a wild guess at the process covariance (I really need to figure out what these actually mean)
-    // Larger means that there's more uncertainty in the state model, so the filter should trust the measurement more
-    // This matrix needs to stay symmetric.  The diagonals are the variances for each individual state
-    // TODO: Figure out what all these numbers really do, because I don't have an intuitive understanding yet.  Tuning this correctly matters a LOT
+    // Placeholder only: setDeltaTime() recomputes Q from processJerkStd
     Q = Eigen::Matrix<float, 3, 3>{{0.1, 0.1, 0},
                                    {0.1, 0.1, 0},
                                    {0,   0,   0.01}
     };
 
-    // Set default measurement covariances
-    setBarometerCovariance(1);          // Measurement covariance in meters
+    setBarometerCovariance(1);          // m
     setPitoCovariance(5);               // m/s
     setAccelerometerCovariance(0.1);    // m/s^2
 }
 
 void KalmanFilter1D::setDeltaTime(float delta_t) {
-    // Can't use matrix exponential on embedded systems, because that's not in ArduinoEigen
-    // Instead, we calculate this ourselves
+    // ArduinoEigen has no matrix exponential, so the discretization is written out by hand
     F_d = Eigen::Matrix<float, 3, 3>{{1, delta_t, 0.5f * std::pow(delta_t, 2.0f)},
                                      {0, 1,       delta_t},
                                      {0, 0,       1}
     };
 
-    // compute Q from jerk spectral density q = sigma^2
+    // Q from jerk spectral density q = sigma^2
     const float q = processJerkStd * processJerkStd;
     const float dt = delta_t;
     const float dt2 = dt*dt;
@@ -76,27 +65,21 @@ void KalmanFilter1D::setAccelerometerCovariance(float covariance) {
 }
 
 void KalmanFilter1D::predict(double current_time) {
-    // Calculate time since last loop
-    auto delta_t = std::min((float) (current_time - lastTime), 1.0f); // The clamping should only matter the first time through.  If you call this slower than once per second there will be a problem
+    auto delta_t = std::min((float) (current_time - lastTime), 1.0f); // clamp covers the first call; calling slower than 1 Hz breaks the filter
     lastTime = current_time;
 
-    // Discretize
     setDeltaTime(delta_t);
 
-    // Predict
     predict();
 }
 
 void KalmanFilter1D::predict() {
-    // Move state estimate forward in time
     x = F_d * x;
 
-    // Move state covariance forward in time
     P = F_d * P * F_d.transpose() + Q;
 }
 
 void KalmanFilter1D::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement, const Eigen::Matrix<float, 3, 1> &mask) {
-    // Update R matrix
     R.row(0) = R_baro;
     R.row(1) = R_pito;
     R.row(2) = R_accel;
@@ -105,27 +88,21 @@ void KalmanFilter1D::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement
     I.setIdentity();
 
     if (m_isHIdentity) {
-        // Reduces to the identity case (see m_isHIdentity) - skips recomputing values already in x/P.
         Eigen::Matrix<float, 3, 1> innovation = (measurement - x).cwiseProduct(mask);
         Eigen::Matrix<float, 3, 3> S = P + R;
         Eigen::Matrix<float, 3, 3> K = P * S.inverse();
         x = x + K * innovation;
         P = (I - K) * P;
     } else {
-        // Compute innovation
-        Eigen::Matrix<float, 3, 1> innovation = measurement - H * x;  // Innovation is [pos; vel; accel]
-        innovation = innovation.cwiseProduct(mask);             // I think this is a fine way to handle situations where we don't get all the measurements at once, but IDK really
+        Eigen::Matrix<float, 3, 1> innovation = measurement - H * x;
+        innovation = innovation.cwiseProduct(mask);             // mask drops states not measured this update
 
-        // Calculate innovation covariance
         Eigen::Matrix<float, 3, 3> S = H * P * H.transpose() + R;
 
-        // Calculate gain
         Eigen::Matrix<float, 3, 3> K = P * H.transpose() * S.inverse();
 
-        // Calculate new state estimate
         x = x + K * innovation;
 
-        // Update state covariance
         P = (I - K * H) * P;
     }
 }

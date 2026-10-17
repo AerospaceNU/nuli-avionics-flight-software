@@ -7,20 +7,17 @@
 // ------------------- CRC-8 -------------------
 static inline uint8_t crc8(const void* data, size_t len) {
     const uint8_t* data2 = (const uint8_t*)data;
-    uint8_t crc = 0x00; // common init for CRC-8
+    uint8_t crc = 0x00;
     while (len--) {
         crc ^= *data2++;
         for (uint8_t i = 0; i < 8; i++)
-            crc = (crc & 0x80) ? (crc << 1) ^ 0x07 : (crc << 1); // polynomial 0x07
+            crc = (crc & 0x80) ? (crc << 1) ^ 0x07 : (crc << 1);
     }
     return crc;
 }
 
 // ------------------- CRC-16 (CCITT) -------------------
-// Table-driven (one lookup + shift/XOR per byte instead of 8) - BasicLogger's offloadCallback()/
-// binaryOffloadCallback() call this once per logged entry, and the old bit-by-bit loop was the single
-// largest per-entry cost left after fixing the watchdog-pet cadence there. Table below is generated
-// from, and verified bit-for-bit identical to, the original bit-by-bit polynomial-0x1021 loop.
+// Polynomial 0x1021; table-driven because log offload calls this once per entry.
 static constexpr uint16_t CRC16_TABLE[256] = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
     0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
@@ -58,7 +55,7 @@ static constexpr uint16_t CRC16_TABLE[256] = {
 
 static inline uint16_t crc16(const void* data, size_t len) {
     const uint8_t* data2 = (const uint8_t*)data;
-    uint16_t crc = 0xFFFF; // initial value
+    uint16_t crc = 0xFFFF;
     while (len--) {
         crc = (uint16_t)((crc << 8) ^ CRC16_TABLE[((crc >> 8) ^ *data2++) & 0xFF]);
     }
@@ -68,7 +65,7 @@ static inline uint16_t crc16(const void* data, size_t len) {
 // ------------------- CRC-32 (IEEE 802.3) -------------------
 static inline uint32_t crc32(const void* data, size_t len) {
     const uint8_t* data2 = (const uint8_t*)data;
-    uint32_t crc = 0xFFFFFFFF; // initial value
+    uint32_t crc = 0xFFFFFFFF;
     while (len--) {
         crc ^= *data2++;
         for (uint8_t i = 0; i < 8; i++)

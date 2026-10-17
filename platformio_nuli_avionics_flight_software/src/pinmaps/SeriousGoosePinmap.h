@@ -7,11 +7,6 @@
 
 #define FRAM_CS_PIN (34)
 #define FLASH_CS_PIN (12)
-// #define FRAM_HOLD_PIN (PB06)
-// #define FLASH_HOLD_PIN (PB07)
-// #define IMU_INT_PIN (PB05)
-// #define STATUS_PIN (PB04)
-// #define BOOT_PIN (PA15)
 
 #define RADIO_CS_PIN (38)
 #define RADIO_BUSY_PIN (35)

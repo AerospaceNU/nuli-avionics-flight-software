@@ -62,14 +62,12 @@ private:
         debugStream->message("%s %s: %s", nameStr, msg, value.str);
     }
 
-    // Overload for floating point types
     template <typename T>
     typename std::enable_if<std::is_floating_point<T>::value>::type
     printValue(DebugStream* debugStream, const char* nameStr, const char* msg, const T& value) {
         debugStream->message("%s %s: %.8f", nameStr, msg, static_cast<double>(value));
     }
 
-    // Overload for unsigned integral types
     template <typename T>
     typename std::enable_if<std::is_integral<T>::value && std::is_unsigned<T>::value>::type
     printValue(DebugStream* debugStream, const char* nameStr, const char* msg, const T& value) {
@@ -77,7 +75,6 @@ private:
                          static_cast<unsigned long long>(value));
     }
 
-    // Overload for signed integral types
     template <typename T>
     typename std::enable_if<std::is_integral<T>::value && std::is_signed<T>::value>::type
     printValue(DebugStream* debugStream, const char* nameStr, const char* msg, const T& value) {
@@ -85,7 +82,6 @@ private:
                          static_cast<long long>(value));
     }
 
-    // Fallback for unsupported types
     template <typename T>
     typename std::enable_if<!std::is_integral<T>::value && !std::is_floating_point<T>::value && !is_configuration_string<T>::value>::type
     printValue(DebugStream* debugStream, const char* nameStr, const char* msg, const T&) {
@@ -93,7 +89,6 @@ private:
     }
 
     ConfigurationData<config_type_t> m_data{};
-    // ArgumentFlag<config_type_t> m_setValueFlag{};
     ArgumentFlag<typename config_flag_type<config_type_t>::type> m_setValueFlag{};
     SimpleFlag m_configurationFlag;
     BaseFlag* m_configurationGeneratorGroup[2] = {&m_configurationFlag, &m_setValueFlag};
@@ -109,7 +104,6 @@ template <std::size_t... Is>
 struct make_index_sequence<0, Is...> : index_sequence<Is...> {};
 
 
-// Variadic wrapper
 template <unsigned... Configs>
 struct ConfigurationCliBindings {
     std::tuple<ConfigurationCliBinding<Configs>...> bindings;
@@ -121,9 +115,8 @@ struct ConfigurationCliBindings {
 private:
     template <std::size_t... Is>
     void setupAllImpl(index_sequence<Is...>, Configuration* configuration, Parser* parser) {
-        // Expand parameter pack using initializer list trick
         int dummy[] = {(std::get<Is>(bindings).setup(configuration, parser), 0)...};
-        (void)dummy; // suppress unused warning
+        (void)dummy;
     }
 };
 

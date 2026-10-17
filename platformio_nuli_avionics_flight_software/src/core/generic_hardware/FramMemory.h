@@ -16,12 +16,7 @@ public:
     virtual void read(uint32_t address, uint8_t* buffer, uint32_t length) = 0;
 };
 
-/**
- * @class VolatileConfigurationMemory
- * @brief For board without non-volatile memory for configuration
- * @details Lets the configuration API stay guaranteed-available on boards with no real non-volatile memory - resets to defaults every restart though.
- * @tparam N Size of the memory
- */
+/** @brief RAM-backed stand-in for boards with no non-volatile config memory; resets to defaults every restart. */
 template <unsigned N>
 class VolatileConfigurationMemory : public FramMemory {
 public:

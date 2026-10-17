@@ -26,10 +26,7 @@ inline Type* get##Type(uint8_t index) {                                         
     return Type##Storage[index];                                                                        \
 }
 
-/**
- * @class HardwareAbstraction
- * @brief Provide an abstraction to access all hardware
- */
+/** @brief Owns references to all board hardware and runs the fixed-rate loop timing. */
 class HardwareAbstraction {
 public:
     HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz);
@@ -53,8 +50,7 @@ public:
         m_allHardware.push_back(instance);
     }
 
-    // Fixed, single-instance hardware like SystemClock/DebugStream, not a generic list entry - see
-    // WatchdogTimer's class comment. Optional to call: m_watchdog defaults to a real no-op, so it's always safe to pet.
+    // Optional: defaults to a no-op watchdog
     void setWatchdogTimer(WatchdogTimer* watchdog) {
         if (watchdog) m_watchdog = watchdog;
     }
@@ -76,18 +72,18 @@ public:
 
 private:
     uint32_t m_loopTime = 10;
-    uint32_t m_loopDtMs = 0; ///< Tracks the loop execution time
-    uint32_t m_currentLoopTimestampMs = 0; ///< Tracks the start time of each loop
+    uint32_t m_loopDtMs = 0;
+    uint32_t m_currentLoopTimestampMs = 0;
     uint32_t m_tickCount = 0;
     uint32_t m_intendedTickEndtimeUs = 0;
 
-    SystemClock* m_systemClock = nullptr; ///< System clocks
-    DebugStream* m_debug = nullptr; ///< Debug stream
-    WatchdogTimer m_defaultWatchdog; ///< Harmless no-op used until/unless setWatchdogTimer() is called
+    SystemClock* m_systemClock = nullptr;
+    DebugStream* m_debug = nullptr;
+    WatchdogTimer m_defaultWatchdog;
     WatchdogTimer* m_watchdog = &m_defaultWatchdog;
 
     etl::vector<GenericAvionicsHardware*, MAX_GENERIC_HARDWARE_NUM> m_allHardware;
 };
 
-#undef GENERATE_METHODS_MACRO   // Macro has no use beyond this file
+#undef GENERATE_METHODS_MACRO
 #endif //DESKTOP_HARDWAREMANAGER_H

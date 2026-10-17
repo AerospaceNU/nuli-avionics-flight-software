@@ -4,13 +4,13 @@
 
 #include <Wire.h>
 
-#define ICM20602_ADDR 0x69  // Default I2C address of the ICM-20602
-#define WHO_AM_I_REG 0x75   // Register to check device ID
-#define PWR_MGMT_1   0x6B   // Power management register
-#define ACCEL_CONFIG 0x1C   // Accelerometer configuration register
-#define GYRO_CONFIG  0x1B   // Gyroscope configuration register
-#define ACCEL_XOUT_H 0x3B   // Accelerometer X-axis high byte register
-#define GYRO_XOUT_H  0x43   // Gyroscope X-axis high byte register
+#define ICM20602_ADDR 0x69
+#define WHO_AM_I_REG 0x75
+#define PWR_MGMT_1   0x6B
+#define ACCEL_CONFIG 0x1C
+#define GYRO_CONFIG  0x1B
+#define ACCEL_XOUT_H 0x3B
+#define GYRO_XOUT_H  0x43
 #define CONFIG           0x1A  // Gyro DLPF config
 #define ACCEL_CONFIG2    0x1D  // Accel DLPF config
 #define SMPLRT_DIV        0x19
@@ -28,7 +28,7 @@ void writeRegister(uint8_t address, uint8_t reg, uint8_t data) {
 uint8_t readRegister(uint8_t address, uint8_t reg) {
     Wire.beginTransmission(address);
     Wire.write(reg);
-    Wire.endTransmission(false); // Restart condition
+    Wire.endTransmission(false);
     Wire.requestFrom(address, (uint8_t)1);
     return Wire.read();
 }
@@ -38,7 +38,7 @@ ICM20602Sensor::ICM20602Sensor(const Vector3DTransform* transform): m_accelerome
 
 void ICM20602Sensor::readAccelAndGyroBatch() {
     Wire.beginTransmission(ICM20602_ADDR);
-    Wire.write(ACCEL_XOUT_H); // 0x2D
+    Wire.write(ACCEL_XOUT_H);
     Wire.endTransmission(false);
     Wire.requestFrom(ICM20602_ADDR, (uint8_t)14); // 6 accel + 2 temp + 6 gyro = 14 bytes
 
@@ -47,15 +47,12 @@ void ICM20602Sensor::readAccelAndGyroBatch() {
         buf[i] = Wire.read();
     }
 
-    // Parse accel
     accelData[0] = (int16_t)((buf[0] << 8) | buf[1]);
     accelData[1] = (int16_t)((buf[2] << 8) | buf[3]);
     accelData[2] = (int16_t)((buf[4] << 8) | buf[5]);
 
-    // Parse temperature (optional)
     tempRaw = (int16_t)((buf[6] << 8) | buf[7]);
 
-    // Parse gyro
     gyroData[0] = (int16_t)((buf[8] << 8) | buf[9]);
     gyroData[1] = (int16_t)((buf[10] << 8) | buf[11]);
     gyroData[2] = (int16_t)((buf[12] << 8) | buf[13]);
@@ -66,14 +63,13 @@ void initICM20602() {
     writeRegister(ICM20602_ADDR, PWR_MGMT_1, 0x00); // Wake up
     delay(100);
 
-    // Set SMPLRT_DIV to 0 -> sample rate = internal rate / (1 + SMPLRT_DIV)
     writeRegister(ICM20602_ADDR, SMPLRT_DIV, 0x00); // Max sample rate
 
     // Enable DLPF for gyroscope (FCHOICE_B = 0), DLPF_CFG = 0 → ~250 Hz bandwidth
-    writeRegister(ICM20602_ADDR, CONFIG, 0x00); // DLPF_CFG = 0
+    writeRegister(ICM20602_ADDR, CONFIG, 0x00);
 
     // Enable DLPF for accelerometer (ACCEL_FCHOICE_B = 0), A_DLPF_CFG = 0 → ~218.1 Hz
-    writeRegister(ICM20602_ADDR, ACCEL_CONFIG2, 0x00); // A_DLPF_CFG = 0
+    writeRegister(ICM20602_ADDR, ACCEL_CONFIG2, 0x00);
 
     // Set accel range to ±16g
     uint8_t accelConfig = readRegister(ICM20602_ADDR, ACCEL_CONFIG);
@@ -94,7 +90,6 @@ void ICM20602Sensor::setup(DebugStream* debugStream) {
 
     initICM20602();
 
-    // Verify device ID
     const uint8_t whoAmI = readRegister(ICM20602_ADDR, WHO_AM_I_REG);
     if (whoAmI == 0x12) { // Expected device ID for ICM-20602
         debugStream->message("ICM20602 initialized");
@@ -108,24 +103,20 @@ void ICM20602Sensor::read() {
 
     float temperature_K = (((float)tempRaw / 326.8) + 25.0) + Units::C_TO_K;
 
-    // Convert accelerometer data to g
     const float accelX_g = (float)accelData[0] / accelScaleFactor;
     const float accelY_g = (float)accelData[1] / accelScaleFactor;
     const float accelZ_g = (float)accelData[2] / accelScaleFactor;
 
-    // Convert gyroscope data to dps
     const float gyroX_dps = (float)gyroData[0] / gyroScaleFactor;
     const float gyroY_dps = (float)gyroData[1] / gyroScaleFactor;
     const float gyroZ_dps = (float)gyroData[2] / gyroScaleFactor;
 
-    // provided in milli g --> converting to m/s^2
     const Vector3D_s accelerationsMSS = {
             float(accelX_g * Constants::G_EARTH_MSS),
             float(accelY_g * Constants::G_EARTH_MSS),
             float(accelZ_g * Constants::G_EARTH_MSS),
         };
 
-    // provided in degrees per second --> converting to radians per second (* 0.017453)
     const Vector3D_s velocitiesRadS = {
             float(gyroX_dps * Units::DEGS_TO_RAD),
             float(gyroY_dps * Units::DEGS_TO_RAD),

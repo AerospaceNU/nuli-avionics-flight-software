@@ -4,11 +4,7 @@
 #include "Avionics.h"
 #include "core/generic_hardware/GenericHardware.h"
 
-/**
- * @class ArduinoWatchdog
- * @brief Watchdog driver for SAMD21/SAMD51, backed by Adafruit_SleepyDog rather than hand-rolled registers.
- * @details The two chips clock the watchdog differently; getting that wrong could hang enable() itself on a SYNCBUSY bit that never clears.
- */
+/** @brief SAMD21/SAMD51 watchdog via Adafruit_SleepyDog, which handles the chips' different watchdog clocking */
 class ArduinoWatchdog final : public WatchdogTimer {
 public:
     void setup(DebugStream* debugStream) override;

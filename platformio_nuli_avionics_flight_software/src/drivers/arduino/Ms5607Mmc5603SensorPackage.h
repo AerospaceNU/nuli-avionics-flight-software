@@ -6,10 +6,10 @@
 #include "core/transform/Vector3DTransform.h"
 
 /**
- * @class Ms5607Mmc5603SensorPackage
- * @brief Barometer (MS5607) + selectable IMU (ICM20602/ICM42605) + optional magnetometer (MMC5603NJ), one I2C bus.
- * @details Covers every board: SillyGoose V1 (ICM20602, no mag), SillyGoose V2/SeriousGoose (ICM42605, mag on SeriousGoose only).
- * @note Pressure conversion (OSR 2048, ~4.54ms) is too long to block a 100Hz loop, so it's started at the end of one read() and normally already done by the next - read() waits out any remainder rather than skipping the barometer, then resolves temperature (shares the ADC) before restarting pressure - every sensor resolves every tick. OSR 4096 was tried first but left only ~0.96ms margin against the ~10ms tick, which the ~1.3ms temperature cycle didn't fit - pressure only resolved every other tick as a result.
+ * @brief MS5607 barometer + ICM20602/ICM42605 IMU + optional MMC5603NJ magnetometer on one I2C bus
+ * @details SillyGoose V1: ICM20602, no mag. SillyGoose V2: ICM42605, no mag. SeriousGoose: ICM42605 + mag.
+ * @note Pressure conversion (OSR 2048, ~4.54 ms) starts at the end of one read() and is normally done by the next;
+ * read() waits out any remainder, then runs temperature (shared ADC) before restarting pressure.
  */
 class Ms5607Mmc5603SensorPackage final : public GenericSensor {
 public:
@@ -20,30 +20,24 @@ public:
     };
 
     /**
-     * @brief Creates the sensor package.
-     * @param transform Orientation transform for the accelerometer and gyroscope.
-     * @param imuType Which IMU chip is populated on this board.
-     * @param hasMagnetometer Whether an MMC5603NJ magnetometer is populated - if false, it's never talked to over I2C, and getMagnetometer() returns nullptr.
-     * @param magTransform Orientation transform for the magnetometer; defaults to `transform` if the magnetometer isn't mounted at a different rotation than the IMU.
+     * @param hasMagnetometer If false, the MMC5603NJ is never accessed and getMagnetometer() returns nullptr
+     * @param magTransform Defaults to transform
      */
     explicit Ms5607Mmc5603SensorPackage(const Vector3DTransform* transform, ImuType imuType, bool hasMagnetometer, const Vector3DTransform* magTransform = nullptr);
 
-    /** @brief Clears the I2C bus (see recoverI2cBus()), then initializes the IMU, barometer, and (if present) magnetometer, and starts the first barometer conversion. */
+    /** @brief Clears the I2C bus, initializes the sensors, and starts the first pressure conversion */
     void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override;
 
-    /** @brief Reads the IMU, magnetometer (if present), and barometer every call - waits out any remaining pressure conversion time rather than skipping it, then resolves pressure+temperature and restarts the conversion (see class comment). Normally instant; bounded to ~4.54ms + ~600us worst case. A sensor whose transfer fails keeps its last reading, and the bus is cleared. */
+    /** @brief Reads every sensor; blocks at most ~4.54 ms + ~600 us. On a failed transfer the sensor keeps its last reading and the bus is cleared. */
     void read() override;
 
-    /** @return the accelerometer injector class, for registering with HardwareAbstraction */
     Accelerometer* getAccelerometer();
 
-    /** @return the gyroscope injector class, for registering with HardwareAbstraction */
     Gyroscope* getGyroscope();
 
-    /** @return the barometer injector class, for registering with HardwareAbstraction */
     Barometer* getBarometer();
 
-    /** @return the magnetometer injector class, for registering with HardwareAbstraction, or nullptr if constructed with hasMagnetometer = false. */
+    /** @return nullptr if constructed with hasMagnetometer = false */
     Magnetometer* getMagnetometer();
 
 private:
@@ -93,8 +87,7 @@ private:
     bool m_baroCalibrated = false;
     bool m_busFaulted = false;
     uint32_t m_busRecoveries = 0;
-    // Start time of whichever conversion is in flight. Always the pressure conversion at the top of
-    // read() - triggerTemperatureConversion() repurposes it mid-call, but triggerPressureConversion() overwrites it again before read() returns.
+    // Start time of whichever conversion is in flight (pressure, except briefly inside read())
     uint32_t m_baroConversionStartUs = 0;
 };
 

@@ -4,69 +4,32 @@
 #include "core/generic_hardware/GenericHardware.h"
 #include <RadioLib.h>
 
-/**
- * @class SX1262Radio
- * @brief Radio driver for SX1262-based modules (SeriousGoose uses an EBYTE E22-900MM22S)
- * @details Uses RadioLib. DIO2/DIO3 aren't wired to the MCU, so RXEN/TXEN are driven directly via RadioLib's setRfSwitchPins() instead of the chip's internal RF-switch feature; the onboard TCXO is powered via begin()'s tcxoVoltage argument.
- */
+/** @brief RadioLib SX1262 driver (SeriousGoose: EBYTE E22-900MM22S) */
 class SX1262Radio : public RadioLink {
 public:
-    /**
-     * @brief Creates an SX1262 radio driver
-     * @param csPin SPI chip select (NSS)
-     * @param dio1Pin DIO1 interrupt pin - fires on TX done / RX done
-     * @param resetPin Chip reset pin (NRST)
-     * @param busyPin BUSY status pin
-     * @param rxEnPin RF switch receive-enable pin
-     * @param txEnPin RF switch transmit-enable pin
-     * @param frequencyMHz Center frequency in MHz
-     */
+    /** @param dio1Pin DIO1 interrupt pin - fires on TX done / RX done */
     SX1262Radio(uint8_t csPin, uint8_t dio1Pin, uint8_t resetPin, uint8_t busyPin,
                 uint8_t rxEnPin, uint8_t txEnPin, float frequencyMHz);
 
-    /**
-     * @brief Initialize the radio and start listening for incoming packets
-     */
     void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override;
 
-    /**
-     * @brief Service the last TX/RX operation flagged by the DIO1 interrupt
-     * @details If a receive just completed, buffers the message and re-arms receive; if a transmit just completed, re-arms receive. Must be called regularly.
-     */
+    /** @brief Services the TX/RX completion flagged by DIO1, then re-arms receive */
     void run() override;
 
-    /**
-     * @brief Start sending data over the radio
-     * @details Non-blocking - completion is picked up by run() via the DIO1 interrupt.
-     * @param data Data to send
-     * @param length Amount of data to send, in bytes
-     */
+    /** @brief Non-blocking; completion is picked up by run() */
     bool startTransmit(void* data, uint32_t length) override;
 
-    /**
-     * @brief Put the radio into continuous receive mode
-     */
     bool startReceive() override;
 
-    /**
-     * @brief Change the radio's center frequency
-     * @details Puts the radio into standby first (required to accept a new frequency), then resumes listening afterward if it was previously receiving.
-     * @param frequencyMHz Center frequency in MHz
-     */
+    /** @brief Rejected while transmitting; resumes receive afterward if it was receiving */
     bool setFrequency(float frequencyMHz) override;
 
-    /**
-     * @brief Change the LoRa spreading factor
-     * @details Puts the radio into standby first (required to accept new modulation parameters), then resumes listening afterward if it was previously receiving.
-     * @param spreadingFactor LoRa spreading factor, 5-12
-     */
+    /** @brief Spreading factor 5-12; same TX/RX handling as setFrequency() */
     bool setSpreadingFactor(uint8_t spreadingFactor) override;
 
     bool isMessageAvailable() const override;
 
-    /**
-     * @brief Retrieve the last received message. Clears the isMessageAvailable flag.
-     */
+    /** @brief Clears isMessageAvailable() */
     RadioMessage readMessage() const override;
 
     RadioLinkStatus status() const override;

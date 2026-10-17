@@ -1,7 +1,3 @@
-/*
- * @TODO: Naming
- */
-
 #include "RFM9xRadio.h"
 
 volatile bool operationDone = false;
@@ -13,7 +9,6 @@ void setFlagGlobal(void) {
 void RFM9xRadio::setup() {
     m_radio = new Module(8, 3, 4); // (CS, INT, RST)
 
-    /* just copied from PayloadBoard */
     int state = m_radio.begin(m_frequency, 125.0, 12);  // (freq, bw, sf)
     m_radio.setOutputPower(20);
 
@@ -26,7 +21,7 @@ void RFM9xRadio::setup() {
     }
 
     m_radio.setDio0Action(setFlagGlobal, RISING);
-    m_radio.startReceive(); // puts the radio into receive mode
+    m_radio.startReceive();
 }
 
 void RFM9xRadio::loopOnce() {
@@ -37,12 +32,10 @@ void RFM9xRadio::loopOnce() {
     operationDone = false;
 
     uint16_t length = m_radio.getPacketLength();
-    // check data is within limits
     if (length > 0 && m_dataLength + length <= RADIO_BUFFER_SIZE) {
         uint8_t tempBuffer[RADIO_BUFFER_SIZE];
         int state = m_radio.readData(tempBuffer, length);
 
-        // check state
         if (state == RADIOLIB_ERR_NONE) {
             memcpy(m_inBuffer + m_dataLength, tempBuffer, length);
             m_dataLength += length;
@@ -62,16 +55,13 @@ bool RFM9xRadio::hasNewData() {
 uint32_t RFM9xRadio::getData(uint8_t* data, uint32_t maxLength) {
     uint32_t length = (maxLength < m_dataLength) ? maxLength : m_dataLength;
 
-    // get only the requested length
     memcpy(data, m_inBuffer, length);
 
-    // shift remaining data to the front
     uint32_t remaining = m_dataLength - length;
     if (remaining > 0) {
         memmove(m_inBuffer, m_inBuffer + length, remaining);
     }
 
-    // update length
     m_dataLength = remaining;
 
     return length;
@@ -80,7 +70,7 @@ uint32_t RFM9xRadio::getData(uint8_t* data, uint32_t maxLength) {
 void RFM9xRadio::transmit(uint8_t* data, uint32_t length) {
     int state = m_radio.startTransmit(data, length);
 
-    while (!operationDone);  // @TODO: Interesting?
+    while (!operationDone);
     operationDone = false;
 
     if (state == RADIOLIB_ERR_NONE) {
@@ -90,7 +80,7 @@ void RFM9xRadio::transmit(uint8_t* data, uint32_t length) {
         Serial.println(state);
     }
 
-    m_radio.startReceive(); // back to receiving
+    m_radio.startReceive();
 }
 
 RFM9xRadio::RFM9xRadio(float frequency) {

@@ -51,30 +51,25 @@ static int float_to_str(float f, char* buf, int precision = 2) {
 
     char* start = buf;
 
-    // Handle negative numbers
     if (f < 0.0f) {
         *buf++ = '-';
         f = -f;
     }
 
-    // Compute rounding factor
     float rounding = 0.5f;
     for (int i = 0; i < precision; ++i)
         rounding /= 10.0f;
 
-    f += rounding; // round to the desired precision
+    f += rounding;
 
     int int_part = (int)f;
     float frac_part = f - (float)int_part;
 
-    // Convert integer part
     int len = int_to_str(int_part, buf, 10, false);
     buf += len;
 
-    // Add decimal point
     if (precision > 0) {
         *buf++ = '.';
-        // Convert fractional part
         for (int i = 0; i < precision; ++i) {
             frac_part *= 10.0f;
             int digit = (int)frac_part;
@@ -96,11 +91,10 @@ static int mini_snprintf(char* out, int out_size, const char* fmt, ...) {
     while (*fmt && out < end) {
         if (*fmt == '%') {
             fmt++;
-            int precision = 6; // default float precision
+            int precision = 6;
 
             if (*fmt == 'l') { fmt++; }
 
-            // parse optional precision for float
             if (*fmt == '.') {
                 fmt++;
                 precision = 0;

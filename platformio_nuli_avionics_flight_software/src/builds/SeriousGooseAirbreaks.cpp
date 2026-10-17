@@ -51,7 +51,7 @@ LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
         float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
         float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
         uint32_t gpsUnixTimeS;
-        uint16_t gpsHdop, gpsVdop; // raw, scaled by 100 - matches the GPS module's native representation
+        uint16_t gpsHdop, gpsVdop; // x100
         uint8_t gpsFixQuality, gpsSatellitesTracked;
     } remove_struct_padding;
 )
@@ -63,8 +63,8 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) {
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-ArduinoWatchdog watchdog; // must precede serialDebug - petted during its dev-mode wait below
-SerialDebug<500> serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog, !AVIONICS_ARGUMENT_isSim); // Only wait for serial connection if in dev mode
+ArduinoWatchdog watchdog; // must precede serialDebug, which pets it during its dev-mode wait
+SerialDebug<500> serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog, !AVIONICS_ARGUMENT_isSim); // waits for a serial connection only in dev mode
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local().rotateZ90local().rotateX90local();
 const DiscreteRotation magRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, Ms5607Mmc5603SensorPackage::ImuType::ICM42605, true, &magRotation);
@@ -92,7 +92,7 @@ IndicatorManager indicatorManager;
 IntegratedParser cliParser;
 SimulationParser<8> simulationParser;
 GroundStationRelay groundStationRelay;
-DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see loop()'s radio TX/RX handling
+DebugStreamQueue<128, 1024> radioCli; // CLI over the radio link
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
@@ -110,7 +110,7 @@ Configuration configuration({
 ConfigurationData<uint32_t> pyroFireDuration;
 ConfigurationData<uint32_t> radioTransmitDelay;
 ConfigurationData<uint32_t> groundStationMode;
-// CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
+// CLI get/set command for each configuration value
 ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          RADIO_FREQUENCY_c,
                          LORA_SPREADING_FACTOR_c,
@@ -156,13 +156,12 @@ BaseFlag* servoGroup[] = {&servoToggle};
 BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
-    // Initialize
     watchdog.disable(); // SAMD's WDT survives NVIC_SystemReset()
     watchdog.enable(4000);
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN, RADIO_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
-    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN, RADIO_CS_PIN}); // before any SPI setup, so no device holds the shared bus
+    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // defaults only apply if set before configuration.setup()
     configuration.setDefault<BOARD_NAME_c>(SERIOUS_GOOSE_NAME);
-    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
+    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f);
 
     // Setup Hardware
     int16_t framID = hardware.appendFramMemory(&fram);
@@ -187,7 +186,7 @@ void setup() {
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
-    configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
+    configuration.setup(&hardware, framID); // must be first: everything below uses the configuration
     configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
     groundStationRelay.setup(&cliParser, &radio, &gps);
@@ -203,7 +202,6 @@ void setup() {
     dualDeploy.setup(&configuration, &droguePyro, &mainPyro);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, HEADER_OUTPUT, printLog, &configuration);
-    // Locally used configuration variables
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     radioTransmitDelay = configuration.getConfigurable<RADIO_TRANSMIT_INTERVAL_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
@@ -211,8 +209,7 @@ void setup() {
     // Radio
     radio.setFrequency(configuration.getConfigurable<RADIO_FREQUENCY_c>().get());
     radio.setSpreadingFactor(configuration.getConfigurable<LORA_SPREADING_FACTOR_c>().get());
-    radioTransmitTimer.startAlarm(0, 0); // Trigger right away
-    // All done
+    radioTransmitTimer.startAlarm(0, 0);
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
     if (watchdog.causedLastReset()) logger.logMessage("Previous run was ended by the watchdog (main loop stalled past its timeout)");
     watchdog.enable(100);
@@ -223,9 +220,9 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.runAndReadAllHardware(); // Reads sensors, runs any background code for every hardware device
+    hardware.runAndReadAllHardware();
 
-    // Read in sim data. This should be optimized out by the compiler in the final deployment
+    // Sim data in place of sensors; compiled out of flight builds
     if (AVIONICS_ARGUMENT_isSim) {
         simulationParser.waitForEntry();
         sensorPackage.getBarometer()->inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
@@ -241,18 +238,16 @@ void loop() {
         state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
         state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
-        // Turn on/off the buzzer
-        buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
+            buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
 
-        // State machine to determine when to do what
-        if (state.flightState == PRE_FLIGHT) {
-            // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
+            if (state.flightState == PRE_FLIGHT) {
+            // Only on the transition, so continuous logging can still be enabled from the CLI
             if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
-            logger.setLogDelay(5000); // Set default log rate
+            logger.setLogDelay(5000);
             cliParser.runCli();
             indicatorManager.beepContinuity(state.timestamp);
         } else if (state.flightState == ASCENT) {
-            if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
+            if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);
             logger.enableContinuousLogging();
             indicatorManager.keepAliveBeep(state.timestamp);
         } else if (state.flightState == DESCENT) {
@@ -281,10 +276,8 @@ void loop() {
             airbrakeServo.moveToPosition2();
         }
 
-        // Update any changes to the configuration
-        configuration.pushUpdatesToMemory();
-        // Run logging
-        SillyGooseLogData logData = {
+            configuration.pushUpdatesToMemory();
+            SillyGooseLogData logData = {
                 state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
                 sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,
                 sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().z,
@@ -303,11 +296,10 @@ void loop() {
         logger.log(logData);
 
         if (radioTransmitTimer.isAlarmFinished(state.timestamp.runtime_ms)) {
-            // A pending CLI response (from a command received over radioCli below) takes this
-            // transmit slot instead of telemetry - it'll resume telemetry once drained.
+            // A pending CLI response takes the slot ahead of telemetry
             bool sent;
             if (radioCli.hasOutgoing()) {
-                uint8_t txBuffer[129]; // 1 type byte + up to 128 payload bytes
+                uint8_t txBuffer[129]; // type byte + 128 payload
                 txBuffer[0] = RADIO_MSG_CLI_RESPONSE;
                 uint8_t n = radioCli.popOutgoing(txBuffer + 1, sizeof(txBuffer) - 1);
                 sent = radio.startTransmit(txBuffer, n + 1);

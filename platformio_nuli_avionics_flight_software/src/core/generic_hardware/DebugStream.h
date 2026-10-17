@@ -12,27 +12,22 @@ class DebugStream {
 public:
     virtual ~DebugStream() = default;
 
-    // Can be called multiple times, implementations must handle safely
+    // May be called more than once
     virtual void setup() {
 
     }
 
-    // Reads characters until a full line is received; returns true once one is ready via getLine()
+    // Returns true once a full line is ready in getLine()
     virtual bool readLine() {
         return false;
     }
 
-    // Returns the most recently read line, null-terminated. Overwritten by the next readLine().
+    // Overwritten by the next readLine()
     virtual char* getLine() {
         return nullptr;
     }
 
-    // Whether this stream can afford a highBandwidthOnly-flagged CLI command (see BaseFlag) -
-    // e.g. --offload, --streamLog. Defaults to false (fail safe: an unclassified future stream
-    // silently drops a few commands rather than risking flooding a slow link) - concrete
-    // subclasses that are actually a fast local transport (SerialDebug, DesktopDebug) set this
-    // true in their own constructor. Not virtual: this is a fixed per-instance value, not
-    // behavior, so a plain overwritable member is enough.
+    // Gates highBandwidthOnly CLI commands (see BaseFlag); false unless a fast local transport sets it
     bool isHighBandwidth() const { return m_isHighBandwidth; }
 
     void message(const char* fmt, ...) {
@@ -80,8 +75,7 @@ public:
         write("\n");
     }
 
-    // Retries on a zero-byte write (brief USB backpressure) instead of dropping data, up to
-    // MAX_CONSECUTIVE_STALLS stalls - past that the host is presumed gone, and it returns false.
+    // Retries zero-byte writes (USB backpressure); past this many in a row the host is presumed gone
     static constexpr uint16_t MAX_CONSECUTIVE_STALLS = 10000;
 
     bool writeRaw(const void* buffer, size_t size) {
@@ -89,9 +83,7 @@ public:
         uint16_t consecutiveStalls = 0;
         while (size > 0) {
             size_t n = write(p, size);
-            // Arduino SAMD's USB CDC returns (uint32_t)-1 on a TX timeout, which a bare
-            // "> 0" check would pass through as billions of bytes written - clamp to 0
-            // so that hits the stall counter instead of corrupting p/size.
+            // SAMD USB CDC returns (uint32_t)-1 on TX timeout: count it as a stall
             if (n > size) n = 0;
             if (n == 0) {
                 if (++consecutiveStalls >= MAX_CONSECUTIVE_STALLS) return false;
@@ -105,11 +97,9 @@ public:
     }
 
 protected:
-    // See isHighBandwidth() above. Assigned directly (not via a constructor param) by whichever
-    // concrete stream needs to override the default - e.g. `m_isHighBandwidth = true;` in the body.
     bool m_isHighBandwidth = false;
 
-    // Override to actually output bytes; returns bytes written. Default is a no-op.
+    // Returns bytes written
     virtual size_t write(const void* buffer, size_t size) {
         (void)buffer;
         (void)size;
@@ -122,7 +112,7 @@ private:
     }
 
     void vformat(const char* fmt, va_list args) {
-        char buf[1024]; // bigger buffer for long lines
+        char buf[1024];
         size_t bi = 0;
 
         auto putch = [&](char c) {
@@ -293,8 +283,8 @@ private:
 
             case 'f': {
                 double fv = va_arg(args, double);
-                if (precision < 0) precision = 6; // default
-                if (precision > 9) precision = 9; // cap
+                if (precision < 0) precision = 6;
+                if (precision > 9) precision = 9;
                 format_float(fv, precision);
                 break;
             }

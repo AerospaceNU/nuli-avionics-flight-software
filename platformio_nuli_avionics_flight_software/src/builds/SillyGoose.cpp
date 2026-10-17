@@ -31,22 +31,6 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
-// @todo Have barometer re-init in code/figure out I2C bus lock
-// @todo Disable write in flash driver
-// @todo Fix low pass implementation with dt included
-// @todo Drogue deployment failure detection
-// @todo Update firmware from website
-// @todo Intelligent log memory usage
-// @todo Make sure alignment code in configuration works on 64 bit systems
-// @todo Tune the Q thing in kalman filter
-// @todo Mach lockout in the configurationGPS
-// @todo GUI waits for DIP switch
-// @todo Bootprot checking
-// @todo Burnout detection
-// @todo Watchdog in setup
-// @todo Set PIDs so the web gui can detect V1 vs V2, allow updating to sim firmware
-
-
 // clang-format off
 LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
     struct SillyGooseLogData {
@@ -67,8 +51,8 @@ void printLog(const SillyGooseLogData &d, DebugStream *debug) {
 
 // Hardware
 ArduinoSystemClock arduinoClock;
-ArduinoWatchdog watchdog; // must precede serialDebug - petted during its dev-mode wait below
-SerialDebug<500> serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog, !AVIONICS_ARGUMENT_isSim); // Only wait for serial connection if in dev mode
+ArduinoWatchdog watchdog; // must precede serialDebug, which pets it during its dev-mode wait
+SerialDebug<500> serialDebug(AVIONICS_ARGUMENT_isDev, &watchdog, !AVIONICS_ARGUMENT_isSim); // waits for a serial connection only in dev mode
 const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 #if IS_BOARD_VERSION(1)
 S25FL512 flash(FLASH_CS_PIN);
@@ -108,7 +92,7 @@ Configuration configuration({
     });
 // Locally used configuration data
 ConfigurationData<uint32_t> pyroFireDuration;
-// CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
+// CLI get/set command for each configuration value
 ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          DROGUE_DELAY_c,
                          MAIN_ELEVATION_c,
@@ -136,13 +120,12 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
-    // Initialize
     watchdog.disable(); // SAMD's WDT survives NVIC_SystemReset()
     watchdog.enable(4000);
-    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // All CS pins must disable prior to SPI device setup on multi-device buses to prevent one device from locking the bus
-    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // Configuration defaults MUST be called prior to configuration.setup() for it to have effect
+    disableChipSelectPins({FRAM_CS_PIN, FLASH_CS_PIN}); // before any SPI setup, so no device holds the shared bus
+    configuration.setDefault<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>(VOLTAGE_SENSE_SCALE); // defaults only apply if set before configuration.setup()
     configuration.setDefault<BOARD_NAME_c>(SILLY_GOOSE_NAME);
-    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
+    if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f);
 
     // Setup Hardware
     int16_t framID = hardware.appendFramMemory(&fram);
@@ -162,7 +145,7 @@ void setup() {
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
-    configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
+    configuration.setup(&hardware, framID); // must be first: everything below uses the configuration
     configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
     cliParser.addFlagGroup(resetBoardGroup);
@@ -175,23 +158,21 @@ void setup() {
     dualDeploy.setup(&configuration, &droguePyro, &mainPyro);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, HEADER_OUTPUT, printLog, &configuration);
-    // Locally used configuration variables
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
-    // Watchdog checks and startup
     if (watchdog.causedLastReset()) logger.logMessage("Last reset was caused by the watchdog");
-    watchdog.enable(100); // What seems to get most cases. Still disconnected when doing USB stuff sometimes
-    watchdog.pet(); // IDK if this actually helps or if it's redundant with enable
+    watchdog.enable(100); // covers most cases; USB work still sometimes disconnects
+    watchdog.pet();
 }
 
 void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
-    hardware.runAndReadAllHardware(); // Reads sensors, runs any background code for every hardware device
+    hardware.runAndReadAllHardware();
 
-    // Read in sim data. This should be optimized out by the compiler in the final deployment
+    // Sim data in place of sensors; compiled out of flight builds
     if (AVIONICS_ARGUMENT_isSim) {
         simulationParser.waitForEntry();
         sensorPackage.getBarometer()->inject(simulationParser.getValue(1), 0, simulationParser.getValue(0));
@@ -205,18 +186,16 @@ void loop() {
     state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
     state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
 
-    // Turn on/off the buzzer
     buzzer.setEnabled(configuration.getConfigurable<BUZZER_ENABLED_c>().get() && !USBDevice.configured());
 
-    // State machine to determine when to do what
     if (state.flightState == PRE_FLIGHT) {
-        // Disable logging when transition into PRE_FLIGHT, but allow for continues logging to manually be enabled through the cli
+        // Only on the transition, so continuous logging can still be enabled from the CLI
         if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
-        logger.setLogDelay(5000); // Set default log rate
+        logger.setLogDelay(5000);
         cliParser.runCli();
         indicatorManager.beepContinuity(state.timestamp);
     } else if (state.flightState == ASCENT) {
-        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration); // Log config again
+        if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);
         logger.enableContinuousLogging();
         indicatorManager.keepAliveBeep(state.timestamp);
     } else if (state.flightState == DESCENT) {
@@ -240,9 +219,7 @@ void loop() {
         indicatorManager.siren(state.timestamp);
     }
 
-    // Update any changes to the configuration
     configuration.pushUpdatesToMemory();
-    // Run logging
     logger.log({
             state.timestamp.runtime_ms, sensorPackage.getBarometer()->getPressurePa(), sensorPackage.getBarometer()->getTemperatureK(),
             sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().x, sensorPackage.getAccelerometer()->getAccelerationsMSS_sensor().y,

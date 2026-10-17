@@ -5,7 +5,6 @@
 constexpr ConfigurationID_t Configuration::REQUIRED_CONFIGS[];
 
 void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint16_t allConfigsLength) {
-    // Add all requested configs to the list, ignoring duplicates
     for (int i = 0; i < allConfigsLength; i++) {
         for (int j = 0; j < allConfigs[i].length; j++) {
             if (m_numConfigurations >= MAX_CONFIGURATION_NUM) {
@@ -20,11 +19,9 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
             }
         }
     }
-    // Sort the list to ensure a consistent order, then set them up with their respective memory
     sortConfigs();
     assignMemory();
 
-    // Write all default values to the data structure
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         getConfigurationDefault(m_configurations[i].id, m_configurations[i].data);
     }
@@ -32,9 +29,7 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 
 void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     if (!hardware || hardware->getNumFramMemorys() <= id) {
-        // m_hardware is still null here; use the parameter directly.
-        // If hardware itself is null we have no way to report — spin so a watchdog
-        // or a debugger catches it rather than executing the rest with a null ref.
+        // With no hardware there is no way to report; spin so the watchdog or a debugger catches it.
         if (hardware) hardware->avionicsSystemError("Either no hardware or no fram");
         while (true) {}
     }
@@ -56,33 +51,22 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     m_configurationAllIdCRC = getConfigurable<CONFIGURATION_ALL_ID_CRC_c>();
     m_configurationVersion = getConfigurable<CONFIGURATION_VERSION_c>();
 
-    // Copy all the default values, in case they need to be restored.
-    // This uses dynamic stack memory (i.e. alloca) (I think; could be wrong)
-    // This is not ideal @todo fix. But also there isn't a way to fix it
+    // Defaults snapshot for restore; a variable-length array on the stack.
     uint8_t bufferDefaultValues[m_dataBufferMaxLength] = {};
     memcpy(bufferDefaultValues, m_dataBuffer, m_dataBufferMaxLength);
 
-    // Read in from memory
     readConfigFromMemory();
 
-    // Handle restoring to default
-    // Check version number
     if (hasError()) {
-        // Restore default values
         memcpy(m_dataBuffer, bufferDefaultValues, m_dataBufferMaxLength);
-        // Overwrite the all ID crc
         m_configurationAllIdCRC.set(calculateAllIdCrc());
-        // Flag all values to be updated
         for (uint32_t i = 0; i < m_numConfigurations; i++) {
             m_configurations[i].m_isUpdated = true;
         }
     } else {
-        // As we have just read in everything, nothing should be updated (unless it's invalid)
-        // This is a hack that just overwrites setDefault()'s behavior of raising this flag
-        // Lastly, we need to check that all values are valid, and reset invalid values to default
+        // Clears the m_isUpdated raised by setDefault(); invalid stored values revert to their default.
         for (uint32_t i = 0; i < m_numConfigurations; i++) {
             if (!getConfigurationValid(m_configurations[i].id, m_configurations[i].data)) {
-                // This retrieves a specific default value from the buffer
                 memcpy(m_configurations[i].data, (m_configurations[i].data - m_dataBuffer) + bufferDefaultValues, m_configurations[i].size);
                 m_configurations[i].m_isUpdated = true;
                 m_debug->warn("%s invalid value, resetting to default", getConfigurationName(m_configurations[i].id));
@@ -93,12 +77,11 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
     }
 
 
-    // Write default values
     pushUpdatesToMemory();
 }
 
 bool Configuration::configExists(const ConfigurationID_t id) const {
-    // Can't use binary search, because it's called in the constructor prior to sorting
+    // Linear: called from the constructor before sorting
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].id == id) {
             return true;
@@ -111,7 +94,6 @@ void Configuration::sortConfigs() {
     for (uint32_t i = 0; i < m_numConfigurations; ++i) {
         for (uint32_t j = 0; j < m_numConfigurations - 1 - i; ++j) {
             if (m_configurations[j].id > m_configurations[j + 1].id) {
-                // Swap
                 const ConfigurationID_t temp = m_configurations[j].id;
                 m_configurations[j].id = m_configurations[j + 1].id;
                 m_configurations[j + 1].id = temp;
@@ -123,17 +105,12 @@ void Configuration::sortConfigs() {
 void Configuration::assignMemory() {
     m_dataBufferIndex = 0;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
-        // Round up to this entry's natural alignment (alignof its registered type).
-        // Required on Cortex-M0/M0+ which traps on unaligned word/half-word access,
-        // and on any platform where the type's strict-aliased read/write needs alignment.
-        // alignof always returns a power of two in C++, so the mask trick is safe.
+        // Cortex-M0/M0+ traps on unaligned access; alignof is a power of two, so masking is safe.
         const uint32_t alignment = getConfigurationAlignment(m_configurations[i].id);
         const uint32_t alignMask = alignment - 1u;
         m_dataBufferIndex = (m_dataBufferIndex + alignMask) & ~alignMask;
         const uint16_t configurationLength = getConfigurationLength(m_configurations[i].id);
         if (m_dataBufferIndex + configurationLength >= m_dataBufferMaxLength) {
-            // Can't call avionicsSystemError here — assignMemory runs from the constructor,
-            // before m_hardware is set. Defer the report to setup().
             assignMemoryFailed = true;
             m_numConfigurations = i;
             return;
@@ -149,7 +126,6 @@ void Configuration::readConfigFromMemory() const {
 }
 
 void Configuration::pushUpdatesToMemory() {
-    // Update the CRC if any config has been updated
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].m_isUpdated) {
             m_configurationCRC.set(calculateCrc());
@@ -157,10 +133,7 @@ void Configuration::pushUpdatesToMemory() {
         }
     }
 
-    // Coalesce consecutive updated entries into a single write. Track the run by
-    // start/end pointers (not a size sum) so any alignment padding between
-    // entries is included in the write extent — otherwise the tail of a run
-    // would be left unwritten in FRAM.
+    // Runs tracked by pointers, not a size sum, so alignment padding is included in each write.
     const uint8_t* runStart = nullptr;
     const uint8_t* runEnd = nullptr;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
@@ -203,17 +176,14 @@ bool Configuration::hasError() const {
         m_hardware->avionicsSystemError("Required configurations for Configuration class not included");
         return true;
     }
-    // Ensure the memory has not been corrupted
     if (m_configurationCRC.get() != calculateCrc()) {
         m_debug->warn("Configuration invalid CRC, resetting to defaults");
         return true;
     }
-    // Ensure the list of IDs is the same
     if (m_configurationAllIdCRC.get() != calculateAllIdCrc()) {
         m_debug->warn("Configuration invalid ID list, resetting to defaults %d", int(m_configurationAllIdCRC.get()));
         return true;
     }
-    // Ensure the version is the correct one
     GetConfigurationType_s<CONFIGURATION_VERSION_c>::type defaultVersion;
     getConfigurationDefault(CONFIGURATION_VERSION_c, &defaultVersion);
     if (m_configurationVersion.get() != defaultVersion) {
@@ -246,14 +216,12 @@ void Configuration::formatBufferAsText(const uint32_t version, const uint8_t* ra
     append("CONFIG");
     for (uint32_t i = 3; i < m_numConfigurations; i++) {
         const uint32_t offset = static_cast<uint32_t>(m_configurations[i].data - m_configurations[3].data);
-        if (offset + m_configurations[i].size > rawConfigBytesLen) break; // defensive: stored buffer shorter than the live layout expects
+        if (offset + m_configurations[i].size > rawConfigBytesLen) break;
         append("\t");
         append(getConfigurationName(m_configurations[i].id));
         append("=");
         if (pos < bufSize) pos += (size_t)getConfigurationPrint(m_configurations[i].id, rawConfigBytes + offset, buf + pos, bufSize - pos);
     }
-    // CONFIGURATION_VERSION isn't part of rawConfigBytes (it's the record's own header field, not
-    // a registered "real" config), but the old hand-written text format always showed it - restore it.
     append("\tCONFIGURATION_VERSION=");
     if (pos < bufSize) pos += (size_t)mini_snprintf(buf + pos, (int)(bufSize - pos), "%u", (unsigned)version);
     if (pos < bufSize) buf[pos] = '\0';
@@ -261,8 +229,7 @@ void Configuration::formatBufferAsText(const uint32_t version, const uint8_t* ra
 }
 
 const uint8_t* Configuration::getConfigDataBuffer(uint32_t& outLength) const {
-    // Indices 0/1/2 are always CONFIGURATION_CRC/CONFIGURATION_ALL_ID_CRC/CONFIGURATION_VERSION
-    // (enforced by hasError()'s ordering check) - real fields start at index 3.
+    // Indices 0-2 are the CRC/ID-CRC/version fields (ordering checked by hasError()).
     if (m_numConfigurations <= 3) {
         outLength = 0;
         return nullptr;

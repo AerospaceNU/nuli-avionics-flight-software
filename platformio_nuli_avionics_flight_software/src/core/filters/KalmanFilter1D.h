@@ -25,7 +25,7 @@ public:
 
     void genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement, const Eigen::Matrix<float, 3, 1> &mask);
 
-    // This won't work if you haven't called predict this time step
+    /** @brief Call predict() first each time step. */
     void positionDataUpdate(float position);
 
     void accelerationDataUpdate(float acceleration);
@@ -47,32 +47,30 @@ public:
     void restState(float position, float velocity, float acceleration);
 
 protected:
-    // I use the naming convention from the wikipedia page on kalman filters
-    // If you're familiar with state space controllers, F=A, H=C
-    Eigen::Matrix<float, 3, 1> x;               // State
-    Eigen::Matrix<float, 3, 3> F;               // The state transition matrix
-    Eigen::Matrix<float, 3, 3> H;               // The observation matrix - if ever made settable, update m_isHIdentity wherever it's set
+    // Wikipedia Kalman filter naming (F=A, H=C in state-space terms)
+    Eigen::Matrix<float, 3, 1> x;               // [position, velocity, acceleration]
+    Eigen::Matrix<float, 3, 3> F;               // continuous-time state transition
+    Eigen::Matrix<float, 3, 3> H;               // if ever made settable, also update m_isHIdentity
 
-    Eigen::Matrix<float, 1, 3> R_baro;          // Measurement covariance for each sensor
+    Eigen::Matrix<float, 1, 3> R_baro;          // per-sensor rows of R
     Eigen::Matrix<float, 1, 3> R_pito;
     Eigen::Matrix<float, 1, 3> R_accel;
 
-    Eigen::Matrix<float, 3, 3> F_d; // The discrete time version of the state transition matrix
+    Eigen::Matrix<float, 3, 3> F_d; // discrete-time F
 
-    Eigen::Matrix<float, 3, 3> R;           // The sensor covariance matrix
-    Eigen::Matrix<float, 3, 3> P;           // The current state covariance
-    Eigen::Matrix<float, 3, 3> Q;           // The process covariance
+    Eigen::Matrix<float, 3, 3> R;           // measurement covariance
+    Eigen::Matrix<float, 3, 3> P;           // state covariance
+    Eigen::Matrix<float, 3, 3> Q;           // process covariance
 
     double lastTime = 0;
 
 private:
-    float processJerkStd = 1.0f;   // @todo tune this more
+    float processJerkStd = 1.0f;
 
-    // Set once from H in the constructor (see H's comment above) - when H is identity, H*x,
-    // H*P*H.transpose(), P*H.transpose(), and K*H all reduce to their non-H operand, so genericUpdate() skips recomputing values already sitting in x/P.
+    // Lets genericUpdate() skip the H multiplies when H is identity
     bool m_isHIdentity = false;
 };
 
 
 
-#endif //position_KF_H
+#endif //ALTITUDE_KF_H

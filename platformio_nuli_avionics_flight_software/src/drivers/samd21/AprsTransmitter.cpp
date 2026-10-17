@@ -37,7 +37,7 @@ const uint8_t SIN_TRANSFORM_2200_TO_1200[] PROGMEM = {
         125, 127, 128, 130, 132, 134, 136, 137, 140, 141, 144, 145, 147, 147, 147, 153, 155, 156, 158, 159, 162, 163, 165,
 };
 
-static volatile bool m_transmitActive = false;                          ///< Tracks if the IRS is active
+static volatile bool m_transmitActive = false;
 static uint8_t m_nextSinIndex = 0;
 static uint8_t m_sinBitsLeft = 200;
 static bool m_currently1200 = true;
@@ -49,87 +49,79 @@ static const uint8_t* m_transmitData = nullptr;
 // License: GNU General Public License v3.0 (same as project)
 
 void AprsTransmitter::setup() {
-    uint32_t top = 47972352 / SAMPLE_FREQUENCY;             // Calculate the TOP value
+    uint32_t top = 47972352 / SAMPLE_FREQUENCY;
     REG_GCLK_GENDIV = GCLK_GENDIV_DIV(1) |                  // Divide the 48MHz clock source by 1 for 48MHz
-                      GCLK_GENDIV_ID(3);                    // Select GCLK3
-    while (GCLK->STATUS.bit.SYNCBUSY);                      // Wait for synchronization
+                      GCLK_GENDIV_ID(3);
+    while (GCLK->STATUS.bit.SYNCBUSY);
 
     REG_GCLK_GENCTRL = GCLK_GENCTRL_IDC |                   // Set the duty cycle to 50/50
-                       GCLK_GENCTRL_GENEN |                 // Enable GCLK3
-                       GCLK_GENCTRL_SRC_DFLL48M |           // Set the 48MHz clock source
-                       GCLK_GENCTRL_ID(3);                  // Select GCLK3
-    while (GCLK->STATUS.bit.SYNCBUSY);                      // Wait for synchronization
+                       GCLK_GENCTRL_GENEN |
+                       GCLK_GENCTRL_SRC_DFLL48M |
+                       GCLK_GENCTRL_ID(3);
+    while (GCLK->STATUS.bit.SYNCBUSY);
 
-    REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN |                 // Enable clock
-                       GCLK_CLKCTRL_GEN_GCLK3 |             // Select GCLK3
-                       GCLK_CLKCTRL_ID_TC4_TC5;             // Feed the GCLK3 to TC4 and TC5
-    while (GCLK->STATUS.bit.SYNCBUSY);                      // Wait for synchronization
+    REG_GCLK_CLKCTRL = GCLK_CLKCTRL_CLKEN |
+                       GCLK_CLKCTRL_GEN_GCLK3 |
+                       GCLK_CLKCTRL_ID_TC4_TC5;
+    while (GCLK->STATUS.bit.SYNCBUSY);
 
-    REG_TC4_COUNT16_CC0 = top;                              // Set the TC4 CC0 register to top
-    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);               // Wait for synchronization
+    REG_TC4_COUNT16_CC0 = top;
+    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);
 
-    NVIC_SetPriority(TC4_IRQn, 0);                          // Set the interrupt priority for TC4 to 0 (highest)
-    NVIC_EnableIRQ(TC4_IRQn);                               // Connect TC4 to Nested Vector Interrupt Controller
+    NVIC_SetPriority(TC4_IRQn, 0);                          // 0 = highest
+    NVIC_EnableIRQ(TC4_IRQn);
 
-    REG_TC4_INTFLAG |= TC_INTFLAG_OVF;                      // Clear the interrupt flags
+    REG_TC4_INTFLAG |= TC_INTFLAG_OVF;
     REG_TC4_INTENSET = TC_INTENCLR_OVF;                     // Enable TC4 interrupts
 
-    REG_TC4_CTRLA |= TC_CTRLA_PRESCALER_DIV1 |              // Set prescaler to 1 for 48MHz
+    REG_TC4_CTRLA |= TC_CTRLA_PRESCALER_DIV1 |
                      TC_CTRLA_WAVEGEN_MFRQ;                 // Put the timer TC4 into Match Frequency Mode
-    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);               // Wait for synchronization
+    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);
 }
 
 inline void DACWrite(uint16_t sample) {
     sample *= 257;
-//    Serial.println(int(sample));
-    DAC->DATA.reg = sample;                               // Shortened version
-    while (ADC->STATUS.bit.SYNCBUSY);                     // of the code used
-    DAC->CTRLA.bit.ENABLE = 0x01;                         // in analogWrite()
-    while (ADC->STATUS.bit.SYNCBUSY);                     // in wiring_analog.c
+    // Trimmed analogWrite() from wiring_analog.c
+    DAC->DATA.reg = sample;
+    while (ADC->STATUS.bit.SYNCBUSY);
+    DAC->CTRLA.bit.ENABLE = 0x01;
+    while (ADC->STATUS.bit.SYNCBUSY);
 }
 
 void AprsTransmitter::endTransmission() {
-    REG_TC4_CTRLA &= ~TC_CTRLA_ENABLE;                  // Disable timer TC4
-    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);           // Wait for synchronization
+    REG_TC4_CTRLA &= ~TC_CTRLA_ENABLE;
+    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);
     REG_TC4_INTFLAG = TC_INTFLAG_OVF;
     DACWrite(0);
     m_transmitActive = false;
 }
 
-// Interrupt Service Routine for timer TC4
 void TC4_Handler() {
-    // Check if we have completed the sin wave for the current bit
     if (m_sinBitsLeft <= 0) {
         m_sinBitsLeft = 200;
-        // Move to the next bit
         m_bitIndex++;
-        // Check if we have finished the entire transmission
         if (m_bitIndex >= m_totalBitNum) {
             AprsTransmitter::endTransmission();
             return;
         }
 
-        // Check if we need to switch frequency's/sin tables. Note that a 1 is 1200hz
+        // Bit 1 = 1200 Hz
         if (((m_transmitData[m_bitIndex / 8] >> (7 - (m_bitIndex % 8))) & 0x01) != m_currently1200) {
-            // Get the index in the new tone's sin table
             if (m_currently1200) {
                 m_nextSinIndex = pgm_read_byte(&SIN_TRANSFORM_1200_TO_2200[m_nextSinIndex]);
             } else {
                 m_nextSinIndex = pgm_read_byte(&SIN_TRANSFORM_2200_TO_1200[m_nextSinIndex]);
             }
-            // Switch the current frequency/sin table
             m_currently1200 = !m_currently1200;
         }
     }
 
-    // Write the current DAC value
     if (m_currently1200) {
         DACWrite(pgm_read_byte(&SIN_1200_HZ[m_nextSinIndex]));
     } else {
         DACWrite(pgm_read_byte(&SIN_2200_HZ[m_nextSinIndex]));
     }
 
-    // Increment the index in the sin table
     m_nextSinIndex++;
     m_sinBitsLeft--;
     if (m_nextSinIndex >= sizeof(SIN_1200_HZ)) {
@@ -140,13 +132,10 @@ void TC4_Handler() {
         }
 
     }
-    // Clear the OVF interrupt flag
     REG_TC4_INTFLAG = TC_INTFLAG_OVF;
 }
 
 void AprsTransmitter::send(const uint8_t* data, int32_t bitNum) {
-//    m_tr2ansmitData;
-    // Prevent transmissions when one is already active
     if (m_transmitActive) return;
     m_transmitActive = true;
 
@@ -163,19 +152,15 @@ void AprsTransmitter::send(const uint8_t* data, int32_t bitNum) {
     DACWrite(uint16_t(0));
     delay(10);
 
-    // Save the data for sending
     m_transmitData = data;
     m_bitIndex = -1;
     m_totalBitNum = bitNum;
-    // Reset indices
     m_nextSinIndex = 0;
     m_sinBitsLeft = 0;
 
-    // Enable to interrupt to allow for modulation
-    REG_TC4_CTRLA |= TC_CTRLA_ENABLE;                       // Enable timer TC4
-    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);               // Wait for synchronization
+    REG_TC4_CTRLA |= TC_CTRLA_ENABLE;
+    while (TC4->COUNT16.STATUS.bit.SYNCBUSY);
 
-    // Wait for the transmission to complete (can eventually remove) @TODO remove
     while (isCurrentlyTransmitting());
 }
 

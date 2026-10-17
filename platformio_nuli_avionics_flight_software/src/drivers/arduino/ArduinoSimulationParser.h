@@ -18,7 +18,7 @@ public:
             if (Serial.available()) {
                 const char c = Serial.read();
                 if (c == '\n' || index >= sizeof(m_buff) - 1) {
-                    m_buff[index] = '\0'; // null terminate
+                    m_buff[index] = '\0';
                     break;
                 }
                 m_buff[index++] = c;
@@ -52,10 +52,8 @@ private:
     char* getNextToken() {
         char* token = nullptr;
         if (m_fieldNumber == 0) {
-            // first call: start at beginning of buff
             token = strtok(m_buff, ",");
         } else {
-            // subsequent calls: continue
             token = strtok(nullptr, ",");
         }
         m_fieldNumber++;

@@ -5,8 +5,8 @@
 // Much of this code was taken from here: https://github.com/UravuLabs/MS5607/blob/master/LICENSE
 
 #define R_ADC  0X00         // adc read command
-#define PROM_READ  0xA0     // prom read command
-#define RESET 0x1E          // soft reset command
+#define PROM_READ  0xA0
+#define RESET 0x1E
 
 void MS5607Sensor::setup(DebugStream* debugStream) {
     Wire.begin();
@@ -27,10 +27,8 @@ void MS5607Sensor::read() {
     m_temperatureK = getTemperature() + Units::C_TO_K;
 }
 
-// read raw digital values of temp & pressure from MS5607
 
 bool MS5607Sensor::readDigitalValue() {
-    // @todo make this start the pressure reading at the highest OSR
     if (startConversion(CONV_D1)) {
         if (startMeasurement()) {
             getDigitalValue(DP);
@@ -49,7 +47,6 @@ bool MS5607Sensor::readDigitalValue() {
     return true;
 }
 
-// send command to start measurement
 bool MS5607Sensor::startMeasurement() const {
     Wire.beginTransmission(MS5607_ADDR);
     Wire.write(R_ADC);
@@ -61,7 +58,6 @@ bool MS5607Sensor::startMeasurement() const {
     }
 }
 
-// send command to start conversion of temp/pressure
 bool MS5607Sensor::startConversion(char CMD) const {
     Wire.beginTransmission(MS5607_ADDR);
     Wire.write(CMD);
@@ -87,7 +83,6 @@ bool MS5607Sensor::resetDevice() const {
     }
 }
 
-// read calibration data from PROM
 bool MS5607Sensor::readCalibration() {
     if (resetDevice() &&
         readUInt_16(PROM_READ + 2, C1) &&
@@ -103,9 +98,8 @@ bool MS5607Sensor::readCalibration() {
     }
 }
 
-// convert raw data into unsigned int
 bool MS5607Sensor::readUInt_16(char address, unsigned int &value) {
-    unsigned char data[2];    //4bit
+    unsigned char data[2];
     data[0] = address;
     if (readBytes(data, 2)) {
         value = (((unsigned int) data[0] * (1 << 8)) | (unsigned int) data[1]);
@@ -115,7 +109,6 @@ bool MS5607Sensor::readUInt_16(char address, unsigned int &value) {
     return false;
 }
 
-// read number of bytes over i2c
 bool MS5607Sensor::readBytes(unsigned char* values, uint8_t length) const {
     uint8_t x;
 
@@ -125,7 +118,6 @@ bool MS5607Sensor::readBytes(unsigned char* values, uint8_t length) const {
     uint8_t error = Wire.endTransmission();
     if (error == 0) {
         Wire.requestFrom(MS5607_ADDR, length);
-//        while (!Wire.available()); // wait until bytes are ready
         waitForI2C();
         for (x = 0; x < length; x++) {
             values[x] = Wire.read();
@@ -167,7 +159,6 @@ float MS5607Sensor::getPressure() {
     return P / 100;
 }
 
-// set OSR and select corresponding values for conversion commands & delay
 void MS5607Sensor::setOSR(uint16_t OSR_U) {
     this->OSR = OSR_U;
     switch (OSR) {

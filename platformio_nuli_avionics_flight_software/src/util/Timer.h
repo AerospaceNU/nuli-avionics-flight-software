@@ -4,48 +4,20 @@
 #include <cstdint>
 
 /**
- * @class Debounce
- * @brief Utility class to debounce boolean signals.
- * @details
- * This class provides a mechanism to debounce signals, typically used to prevent
- * spurious transitions in digital inputs due to noise or mechanical switch bounce.
- * It ensures that a condition must remain true for a specified amount of time
- * before it is considered valid.
+ * @brief True only once a condition has held continuously for the debounce time.
  */
 class Debounce {
 public:
-    /**
-     * @brief Construct a new Debounce object with a specified debounce time.
-     * @param debounceTimeMs The debounce time in milliseconds. The condition must
-     *                       remain true for at least this duration before being
-     *                       considered valid.
-     */
     explicit Debounce(const uint32_t debounceTimeMs) : m_debounceTimeMs(debounceTimeMs) {}
 
-    /**
-     * @brief Copy constructor.
-     * @param other The Debounce object to copy.
-     */
     Debounce(const Debounce& other) = default;
 
-    /**
-     * @brief Set the debounce time.
-     * @param debounceTimeMs The new debounce time in milliseconds.
-     */
     void setDebounceTime(const uint32_t debounceTimeMs) {
         m_debounceTimeMs = debounceTimeMs;
     }
 
     /**
-     * @brief Check if a condition has been stable for the debounce time.
-     * @details When called with a boolean condition and the current timestamp, this
-     * function returns true only if the condition has been continuously true
-     * for at least the debounce time specified during construction or via
-     * setDebounceTime(). If the condition is false, the internal reference
-     * time is reset.
-     * @param condition The boolean condition to debounce.
-     * @param runtime_ms The current timestamp, where runtime_ms represents the system elapsed time in milliseconds
-     * @return true if the condition has been true for the debounce duration, false otherwise.
+     * @brief True if condition has been true continuously for the debounce time; false restarts the timer.
      */
     bool check(const bool condition, const uint32_t runtime_ms) {
         if (!m_isInitialized) {
@@ -63,19 +35,16 @@ public:
     }
 
     /**
-     * @brief Reset the debounce state.
-     * @details This function clears the internal state, including the reference time and
-     * initialization flag. After calling reset(), the next call to check() will
-     * treat the condition as if it were the first time being checked.
+     * @brief The next check() starts timing from scratch.
      */
     void reset() {
         m_isInitialized = false;
     }
 
 private:
-    uint32_t m_debounceTimeMs = 0; ///< Time in milliseconds for which the condition must remain true to be considered valid.
-    uint32_t m_referenceTime = 0; ///< Reference timestamp used for debouncing.
-    bool m_isInitialized = false; ///< Flag indicating whether the debounce object has been initialized.
+    uint32_t m_debounceTimeMs = 0;
+    uint32_t m_referenceTime = 0;
+    bool m_isInitialized = false;
 };
 
 
@@ -114,7 +83,7 @@ public:
 private:
     uint32_t m_startTime = 0;
     uint32_t m_durationTime = 0;
-    bool m_isInitialized = false; ///< Flag indicating whether the debounce object has been initialized.
+    bool m_isInitialized = false;
 };
 
 
@@ -122,7 +91,7 @@ class StopWatch {
 public:
     void startWatch(const uint32_t startTime) {
         m_startTime = startTime;
-        m_stoppedTimeElapsed = 0; // Reset if restarted
+        m_stoppedTimeElapsed = 0;
     }
 
     uint32_t getTimeElapsed(const uint32_t currentTime) const {

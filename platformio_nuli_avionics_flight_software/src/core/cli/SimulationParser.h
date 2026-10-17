@@ -13,32 +13,27 @@ class SimulationParser {
 public:
     static constexpr unsigned BUFFER_CAPACITY = 100;
 
-    // Continuous, high-rate sensor injection (fed from a host script) - same "no streaming"
-    // category as BasicLogger's --streamLog, so restricted to high-bandwidth streams too.
+    // Continuous high-rate injection, so high-bandwidth only (like --streamLog).
     SimulationParser() : m_simFlag("--sim", "Injects sim sensor values", true, [this](DebugStream*) { this->simCallback(); }, true) {}
 
     void setup(IntegratedParser* parser, DebugStream* debug, HardwareAbstraction* hardware) {
         m_parser = parser;
         m_debug = debug;
-        // Single instance, owned by HardwareAbstraction - not injected separately.
         m_watchdog = &hardware->getWatchdogTimer();
         m_parser->addFlagGroup(m_simGroup);
     }
 
     void waitForEntry() const {
-        // Waits as long as the host harness takes, so pets every spin - *Sim envs extend the real
-        // board envs (run on real hardware), so an un-pet wait here would reset-loop the board.
+        // *Sim envs run on real hardware, so an un-pet wait here would reset-loop the board.
         while (m_simDataBuffer.empty()) {
             m_watchdog->petInLoop();
             m_parser->runCli();
         }
-        // Absorb python's per-report burst. Should be >= python's BURST so the
-        // post-drain report reflects every line python sent since the last one.
+        // Iteration count must be >= python's BURST to absorb its per-report burst.
         for (int i = 0; i < 2; i++) {
             m_parser->runCli();
         }
-        // Report buffer depth AFTER draining so python's flow control sees the
-        // authoritative queue level — no in-flight accounting needed on its side.
+        // Reported after draining so python's flow control sees the true queue level.
         m_debug->data("--simSize %u", static_cast<unsigned>(m_simDataBuffer.size()));
     }
 
