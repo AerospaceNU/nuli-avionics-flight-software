@@ -9,7 +9,7 @@
 
 class FlightStateDeterminer {
 public:
-    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {FLIGHT_STATE_c, GROUND_ELEVATION_c};
+    constexpr static ConfigurationID_t REQUIRED_CONFIGS[] = {FLIGHT_STATE_c, GROUND_ELEVATION_c, FIRST_STAGE_BURNOUT_c};
 
     void setup(Configuration* configuration);
 
@@ -19,7 +19,11 @@ public:
 
     void setFlightState(const Timestamp_s& timestamp, const FlightState_e& flightState);
 
+    bool getFirstStageBurnout() const;
+
     const StopWatch* getStateTimer() const;
+
+    const StopWatch* getBurnoutTimer() const;
 
     bool isStateTransitionTick() const;
 
@@ -39,6 +43,7 @@ private:
     bool m_stateTransitionTick = false;
 
     ConfigurationData<int32_t> m_flightState;
+    ConfigurationData<uint32_t> m_firstStageBurnout;
     Configuration* m_configuration = nullptr;
 
     float m_landingDetectionReferenceAltitude = 0;
@@ -47,8 +52,10 @@ private:
     float m_maxAcceleration = -999999999.0f;
 
     StopWatch m_stateStopWatch;
+    StopWatch m_burnoutStopWatch;
 
     Debounce m_launchDebounce = Debounce(LAUNCH_DEBOUNCE_TIMER_MS);
+    Debounce m_burnoutDebounce = Debounce(BURNOUT_DEBOUNCE_TIMER_MS);
     Debounce m_machLockDebounce = Debounce(MACH_LOCKOUT_TIMER_MS);
     Debounce m_apogeeDebounce = Debounce(APOGEE_DEBOUNCE_TIMER_MS);
     Debounce m_landingDebounce = Debounce(LANDING_DEBOUNCE_TIMER_MS);

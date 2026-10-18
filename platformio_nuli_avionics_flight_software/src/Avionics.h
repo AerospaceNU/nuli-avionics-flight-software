@@ -22,6 +22,8 @@
 constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0; ///, FCB used 20 m/s^2. This
 constexpr float LAUNCH_ALTITUDE_THRESHOLD_M = 100.0;
 constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
+// Burnout
+constexpr uint32_t BURNOUT_DEBOUNCE_TIMER_MS = 150;
 // Apogee detection
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
