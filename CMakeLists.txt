@@ -154,3 +154,19 @@ endif()
 include(GoogleTest)
 gtest_discover_tests(FlagTest)
 gtest_discover_tests(ParserTest)
+
+
+# ----Desktop sim flights----
+find_package(Python3 COMPONENTS Interpreter)
+if (Python3_FOUND)
+    set(SIM_CASES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim/cases.json)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SIM_CASES_FILE})
+    file(READ ${SIM_CASES_FILE} SIM_CASES)
+    string(JSON SIM_CASE_COUNT LENGTH "${SIM_CASES}")
+    math(EXPR SIM_CASE_LAST "${SIM_CASE_COUNT} - 1")
+    foreach (SIM_CASE_INDEX RANGE ${SIM_CASE_LAST})
+        string(JSON SIM_CASE_NAME GET "${SIM_CASES}" ${SIM_CASE_INDEX} name)
+        add_test(NAME sim_${SIM_CASE_NAME}
+                COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim/check_sim.py $<TARGET_FILE:desktop> ${SIM_CASES_FILE} ${SIM_CASE_NAME})
+    endforeach ()
+endif ()
