@@ -2,6 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DEBUGSTREAM_H
 
 #include "Avionics.h"
+#include <cfloat>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdint>
@@ -158,9 +159,17 @@ private:
         };
 
         auto format_float = [&](double val, int precision) {
+            if (val != val) {
+                puts_lit("nan");
+                return;
+            }
             if (val < 0) {
                 putch('-');
                 val = -val;
+            }
+            if (val > DBL_MAX) {
+                puts_lit("inf");
+                return;
             }
             unsigned long long int_part = (unsigned long long)val;
             double frac = val - (double)int_part;

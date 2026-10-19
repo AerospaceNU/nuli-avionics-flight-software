@@ -29,10 +29,8 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 }
 
 void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
-    if (!hardware || hardware->getNumFramMemorys() < id) {
-        // m_hardware is still null here; use the parameter directly.
-        // If hardware itself is null we have no way to report — spin so a watchdog
-        // or a debugger catches it rather than executing the rest with a null ref.
+    if (!hardware || hardware->getNumFramMemorys() <= id) {
+        // With no hardware there is no way to report; spin so the watchdog or a debugger catches it.
         if (hardware) hardware->avionicsSystemError("Either no hardware or no fram");
         while (true) {}
     }

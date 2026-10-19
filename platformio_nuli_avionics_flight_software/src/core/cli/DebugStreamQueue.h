@@ -4,22 +4,16 @@
 #include "core/generic_hardware/DebugStream.h"
 #include "etl/queue.h"
 
-// A DebugStream backed by byte queues instead of a real transport - lets a caller feed it
-// received bytes (pushIncoming) and drain bytes it has written (popOutgoing) on its own
-// schedule, e.g. a radio link that only gets to send/receive on a periodic packet cadence
-// instead of a continuous serial stream. Handing this to Parser::addStream() is what makes
-// CLI commands/responses flow over that transport with no Parser/IntegratedParser changes.
-// Leaves m_isHighBandwidth at DebugStream's default (false) - this is exactly the kind of slow,
-// relayed link highBandwidthOnly-flagged commands (--offload, --streamLog, ...) need to skip.
+// DebugStream over byte queues for packet-cadence transports (e.g. radio); stays low-bandwidth.
 template<size_t InputSize, size_t OutputSize>
 class DebugStreamQueue : public DebugStream {
 public:
-    // Called by the owner when a received message carrying a CLI command comes in. Drops
-    // bytes past capacity rather than blocking/asserting - a too-long command just fails to
-    // parse, same as it would if truncated over a flaky serial link.
+    // Called by the owner when a received message carrying a CLI command comes in. Drops the whole
+    // command if it doesn't fit.
     void pushIncoming(const uint8_t* data, uint8_t length) {
-        for (uint8_t i = 0; i < length && m_input.size() + 1 < InputSize; i++) m_input.push(data[i]);
-        if (!m_input.full()) m_input.push('\0');
+        if (m_input.size() + length + 1 > InputSize) return;
+        for (uint8_t i = 0; i < length; i++) m_input.push(data[i]);
+        m_input.push('\0');
     }
 
     // Called by the owner right before it's about to send, to claim up to maxLength bytes
@@ -35,6 +29,14 @@ public:
 
     bool hasOutgoing() const { return !m_output.empty(); }
 
+    /** @brief Drops every received command that hasn't run yet. */
+    void clearIncoming() {
+        m_input.clear();
+        m_lineLen = 0;
+        m_lineReady = false;
+        m_lineTooLong = false;
+    }
+
     bool readLine() override {
         if (m_lineReady) return true;
         while (!m_input.empty()) {
@@ -43,10 +45,18 @@ public:
             if (c == '\0') {
                 m_lineBuffer[m_lineLen] = '\0';
                 m_lineLen = 0;
+                if (m_lineTooLong) {
+                    m_lineTooLong = false;
+                    continue;
+                }
                 m_lineReady = true;
                 return true;
             }
-            if (m_lineLen < sizeof(m_lineBuffer) - 1) m_lineBuffer[m_lineLen++] = c;
+            if (m_lineLen < sizeof(m_lineBuffer) - 1) {
+                m_lineBuffer[m_lineLen++] = c;
+            } else {
+                m_lineTooLong = true;
+            }
         }
         return false;
     }
@@ -70,6 +80,7 @@ private:
     etl::queue<uint8_t, InputSize> m_input;
     etl::queue<uint8_t, OutputSize> m_output;
     char m_lineBuffer[128] = {};
+    bool m_lineTooLong = false;
     uint8_t m_lineLen = 0;
     bool m_lineReady = false;
 };

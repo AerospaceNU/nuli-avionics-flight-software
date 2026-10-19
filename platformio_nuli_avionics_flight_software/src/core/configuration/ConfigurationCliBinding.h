@@ -25,8 +25,18 @@ struct config_flag_type<ConfigurationString<N>> {
     using type = const char*;
 };
 
-template <unsigned ConfigurationID>
+static constexpr unsigned CLI_READ_ONLY_BIT = 1u << 16;
+
+/** @brief Marks a config in a ConfigurationCliBindings list as read-only: the CLI can print it but not set it. */
+constexpr unsigned cliReadOnly(unsigned configurationId) {
+    return configurationId | CLI_READ_ONLY_BIT;
+}
+
+template <unsigned BindingID>
 class ConfigurationCliBinding {
+    static constexpr unsigned ConfigurationID = BindingID & ~CLI_READ_ONLY_BIT;
+    static constexpr bool READ_ONLY = (BindingID & CLI_READ_ONLY_BIT) != 0;
+
 public:
     ConfigurationCliBinding() : m_setValueFlag("-set", "New value", false, [](DebugStream*) {}),
                                 m_configurationFlag(command(), "Gets/sets this config", true, [this](DebugStream* debugStream) { this->callback(debugStream); }) {}
@@ -37,9 +47,11 @@ public:
     }
 
     void callback(DebugStream* debugStream) {
-        if (m_setValueFlag.isSet()) {
-            m_data.set(m_setValueFlag.getValueDerived());
-            printValue(debugStream, name(), "has been set to", m_data.get());
+        if (m_setValueFlag.isSet() && READ_ONLY) {
+            printValue(debugStream, name(), "is read-only, still set to", m_data.get());
+        } else if (m_setValueFlag.isSet()) {
+            const bool accepted = m_data.set(m_setValueFlag.getValueDerived());
+            printValue(debugStream, name(), accepted ? "has been set to" : "rejected, still set to", m_data.get());
         } else {
             printValue(debugStream, name(), "is set to", m_data.get());
         }

@@ -30,21 +30,23 @@ public:
     }
 
     bool readLine() override {
-        while (Serial.available() > 0) {
+        char echo[MAX_CHARS_PER_READ];
+        uint32_t echoLength = 0;
+        bool lineReady = false;
+        for (uint32_t i = 0; i < MAX_CHARS_PER_READ && !lineReady && Serial.available() > 0; i++) {
             const char c = Serial.read();
             if (m_serialReadIndex < N - 1) {
                 m_serialRead[m_serialReadIndex++] = c;
-                if (m_echo) {
-                    Serial.print(c);
-                }
+                echo[echoLength++] = c;
             }
             if (c == '\n') {
                 m_serialRead[m_serialReadIndex] = '\0';
                 m_serialReadIndex = 0;
-                return true;
+                lineReady = true;
             }
         }
-        return false;
+        if (m_echo && echoLength > 0) Serial.write(echo, echoLength);
+        return lineReady;
     }
 
     char* getLine() override {
@@ -52,6 +54,8 @@ public:
     }
 
 private:
+    static constexpr uint32_t MAX_CHARS_PER_READ = 256;
+
     bool m_wait;
     WatchdogTimer* m_watchdog;
     bool m_echo;

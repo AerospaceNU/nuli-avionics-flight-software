@@ -22,6 +22,7 @@
 #include "core/DualDeploy.h"
 #include "core/IndicatorManager.h"
 #include "core/BasicLogger.h"
+#include "core/BasicLoggerHelper.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/IntegratedParser.h"
 #include "core/cli/SimulationParser.h"
@@ -47,18 +48,22 @@
 
 
 // clang-format off
-struct SillyGooseLogData {
-    uint32_t timestampMs;
-    float pressurePa, barometerTemperatureK;
-    float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
-    float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
-    int32_t flightState;
-    bool drogueContinuity, drogueFired, mainContinuity, mainFired;
-    float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
-} remove_struct_padding;
-#define LOG_HEADER "timestampMs\tpressurePa\tbarometerTemperatureK\taccelerationMSS_x\taccelerationMSS_y\taccelerationMSS_z\tvelocityRadS_x\tvelocityRadS_y\tvelocityRadS_z\timuTemperatureK\tbatteryVoltageV\taltitudeM\tvelocityMS\taccelerationMSS\tunfilteredAltitudeM\tflightState\tdrogueContinuity\tdrogueFired\tmainContinuity\tmainFired\ttiltMagnitudeDeg\tangularVelRadS_x\tangularVelRadS_y\tangularVelRadS_z\tquaternion_a\tquaternion_b\tquaternion_c\tquaternion_d"
-void printLog(const SillyGooseLogData &d, DebugStream *debug) { debug->data("%lu\t%.6f\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.6f\t%d\t%d\t%d\t%d\t%d\t%.2f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f\t%.6f",d.timestampMs,d.pressurePa,d.barometerTemperatureK,d.accelerationMSS_x,d.accelerationMSS_y,d.accelerationMSS_z,d.velocityRadS_x,d.velocityRadS_y,d.velocityRadS_z,d.imuTemperatureK,d.batteryVoltageV,d.altitudeM,d.velocityMS,d.accelerationMSS,d.unfilteredAltitudeM,d.flightState,d.drogueContinuity?1:0,d.drogueFired?1:0,d.mainContinuity?1:0,d.mainFired?1:0,d.tiltMagnitudeDeg,d.angularVelRadS_x,d.angularVelRadS_y,d.angularVelRadS_z,d.quaternion_a,d.quaternion_b,d.quaternion_c,d.quaternion_d); };
+LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
+    struct SillyGooseLogData {
+        uint32_t timestampMs;
+        float pressurePa, barometerTemperatureK;
+        float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
+        float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
+        int32_t flightState;
+        bool drogueContinuity, drogueFired, mainContinuity, mainFired;
+        float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
+    } remove_struct_padding;
+)
 // clang-format on
+static constexpr const char* LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
+void printLog(const SillyGooseLogData &d, DebugStream *debug) {
+    BasicLoggerHelper::genericBasicLogDataPrinter<HEADER_OUTPUT>(d, debug);
+}
 
 // Hardware
 ArduinoSystemClock arduinoClock;
@@ -108,8 +113,8 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          DROGUE_DELAY_c,
                          MAIN_ELEVATION_c,
                          BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-                         GROUND_ELEVATION_c,
-                         GROUND_TEMPERATURE_c,
+                         cliReadOnly(GROUND_ELEVATION_c),
+                         cliReadOnly(GROUND_TEMPERATURE_c),
                          PYRO_FIRE_DURATION_c,
                          BOARD_NAME_c,
                          BUZZER_ENABLED_c,
@@ -169,7 +174,7 @@ void setup() {
     flightStateDeterminer.setup(&configuration);
     dualDeploy.setup(&configuration, &droguePyro, &mainPyro);
     indicatorManager.setup(&hardware, drogueID, mainID);
-    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration);
+    logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, HEADER_OUTPUT, printLog, &configuration);
     // Locally used configuration variables
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
