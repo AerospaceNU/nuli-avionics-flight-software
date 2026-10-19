@@ -24,6 +24,16 @@ public:
         m_accelerationsMSS_sensor = accelerationsMSS;
         m_temperatureK = temperatureK;
         m_accelerationsMSS_board = m_transform->transform(m_accelerationsMSS_sensor);
+        m_validReading = true;
+    }
+
+    /** @brief Marks the current reading as not a measurement (the last one stays readable), until the next inject(). */
+    void invalidate() {
+        m_validReading = false;
+    }
+
+    bool validReading() override {
+        return m_validReading;
     }
 
     /**
@@ -65,6 +75,7 @@ protected:
 
     float m_temperatureK = 0; ///< Sensor temperature
     float m_fullScaleMSS = 0; ///< Sensor full scale reading
+    bool m_validReading = false;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ACCELEROMETER_H

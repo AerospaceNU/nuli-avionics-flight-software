@@ -115,11 +115,7 @@ public:
      */
     template <unsigned N, unsigned M>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
-        // The external buffer must be over-aligned to std::max_align_t so any registered
-        // type can land at a valid offset within it. The caller is responsible for
-        // declaring it as: alignas(std::max_align_t) uint8_t buffer[M];
-        // If they didn't, skip construct() — typed access from the registry would
-        // unaligned-access on Cortex-M0/M0+ — and defer the error to setup().
+        // Misaligned buffer would fault on Cortex-M0/M0+; skip construct() and report in setup().
         constexpr uintptr_t requiredAlignMask = alignof(std::max_align_t) - 1u;
         if ((reinterpret_cast<uintptr_t>(buffer) & requiredAlignMask) != 0u) {
             externalBufferMisaligned = true;

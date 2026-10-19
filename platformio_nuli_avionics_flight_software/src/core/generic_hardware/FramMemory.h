@@ -26,13 +26,13 @@ template <unsigned N>
 class VolatileConfigurationMemory : public FramMemory {
 public:
     void write(uint32_t address, const uint8_t* buffer, uint32_t length) override {
-        if (length > N) return;
-        memcpy(m_buffer, buffer, length);
+        if (address + length > N) return;
+        memcpy(m_buffer + address, buffer, length);
     }
 
     void read(uint32_t address, uint8_t* buffer, uint32_t length) override {
-        if (length > N) return;
-        memcpy(buffer, m_buffer, length);
+        if (address + length > N) return;
+        memcpy(buffer, m_buffer + address, length);
     }
 
 private:

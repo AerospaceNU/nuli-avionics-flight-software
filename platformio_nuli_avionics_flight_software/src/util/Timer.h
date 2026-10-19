@@ -53,22 +53,40 @@ public:
             m_isInitialized = true;
         }
         if (condition) {
-            if (runtime_ms - m_referenceTime >= m_debounceTimeMs) {
+            if (m_alreadyMet || runtime_ms - m_referenceTime >= m_debounceTimeMs) {
                 return true;
             }
         } else {
+            m_alreadyMet = false;
             m_referenceTime = runtime_ms;
         }
         return false;
     }
 
     /**
+     * @brief Treats the condition as already debounced: check() passes until it first sees false, then debounces as usual.
+     */
+    void setAlreadyMet() {
+        m_alreadyMet = true;
+    }
+
+    /**
+     * @brief Restarts the debounce timing from runtime_ms, with the condition true: check() passes once the debounce time has elapsed from then.
+     */
+    void restartTimingFrom(const uint32_t runtime_ms) {
+        m_alreadyMet = false;
+        m_referenceTime = runtime_ms;
+        m_isInitialized = true;
+    }
+
+    /**
      * @brief Reset the debounce state.
-     * @details This function clears the internal state, including the reference time and
-     * initialization flag. After calling reset(), the next call to check() will
+     * @details This function clears the internal state, including the reference time, already-met and
+     * initialization flags. After calling reset(), the next call to check() will
      * treat the condition as if it were the first time being checked.
      */
     void reset() {
+        m_alreadyMet = false;
         m_isInitialized = false;
     }
 
@@ -76,6 +94,7 @@ private:
     uint32_t m_debounceTimeMs = 0; ///< Time in milliseconds for which the condition must remain true to be considered valid.
     uint32_t m_referenceTime = 0; ///< Reference timestamp used for debouncing.
     bool m_isInitialized = false; ///< Flag indicating whether the debounce object has been initialized.
+    bool m_alreadyMet = false;
 };
 
 
@@ -85,6 +104,11 @@ public:
         m_startTime = startTime;
         m_durationTime = durationTime;
         m_isInitialized = true;
+    }
+
+    /** @brief The alarm reads finished from now on, until it is started again. */
+    void triggerImmediately() {
+        startAlarm(0, 0);
     }
 
     bool isAlarmFinished(const uint32_t currentTime) const {

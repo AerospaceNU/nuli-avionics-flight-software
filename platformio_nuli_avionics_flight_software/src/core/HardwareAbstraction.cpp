@@ -67,6 +67,10 @@ uint32_t HardwareAbstraction::getTargetLoopTimeMs() const {
     return m_loopTime;
 }
 
+float HardwareAbstraction::getTargetLoopTimeS() const {
+    return float(m_loopTime) / 1000.0f;
+}
+
 DebugStream* HardwareAbstraction::getDebugStream() const { return m_debug; }
 
 void HardwareAbstraction::avionicsSystemError(const char* message) const {

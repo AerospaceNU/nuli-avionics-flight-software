@@ -9,10 +9,7 @@
 #include "util/Timer.h"
 #include <cstring>
 
-// Lets a board relay another board's radio telemetry to USB and report its own GPS fix, instead
-// of acting as a flight computer - formerly the standalone SeriousGooseGround.cpp firmware, now
-// just a mode a shared board can be switched into (see GROUND_STATION_MODE_c). Assumes the caller
-// already owns/configures the actual radio and GPS hardware (same board, same Configuration).
+/** @brief Ground-station mode (GROUND_STATION_MODE_c): relays radio telemetry to USB, reports own GPS, uplinks --send. Caller sets up the radio and GPS. */
 class GroundStationRelay {
 public:
     GroundStationRelay() : m_sendFlag("--send", "Queues a radio uplink payload", true, [this](DebugStream* debugStream) { this->sendCallback(debugStream); }) {}
@@ -26,12 +23,7 @@ public:
 
     // Call once per loop iteration in place of the normal flight-computer radio TX/RX handling.
     void tick(const Timestamp_s& timestamp, DebugStream* debugStream) {
-        // Periodically report this board's own GPS position over USB - suppressed while a CLI
-        // response looks to be actively draining (a chunk seen recently), since GPS reporting
-        // runs on its own timer independent of the radio's packet cadence and would otherwise
-        // inject a "GPS\t..." line into the middle of a still-unterminated response fragment
-        // from a prior tick. Time-based (not a sticky flag cleared on the next telemetry packet)
-        // so it self-heals even if the flying board goes silent mid-response.
+        // GPS lines are held off while a CLI response is arriving so they don't split one of its lines
         const bool receivingCliResponse = m_lastCliResponseRxTimeMs != 0 &&
             (timestamp.runtime_ms - m_lastCliResponseRxTimeMs) < CLI_RESPONSE_QUIET_MS;
         if (!receivingCliResponse && m_gpsReportTimer.isAlarmFinished(timestamp.runtime_ms)) {
@@ -65,9 +57,7 @@ public:
 
             if (message.length >= 1 && message.data[0] == RADIO_MSG_CLI_RESPONSE) {
                 m_lastCliResponseRxTimeMs = timestamp.runtime_ms;
-                // Raw pass-through onto this board's own USB stream - reconstructs the flying
-                // board's original CLI text output byte-for-byte (it already contains its own
-                // "\n"s), so neither this firmware nor the host tool need to parse/reformat it.
+                // Raw pass-through: already the flying board's CLI text, newlines included
                 debugStream->writeRaw(message.data + 1, message.length - 1);
             } else {
                 char hexBuffer[sizeof(message.data) * 2 + 1];
@@ -85,10 +75,7 @@ public:
 private:
     void sendCallback(DebugStream* debugStream) {
         const char* payload = m_sendFlag.getValueDerived();
-        // No null terminator here - the receiving DebugStreamQueue::pushIncoming() appends its
-        // own line delimiter, so one embedded here too would double up (an extra '\0' hits
-        // readLine() as a phantom empty command next tick). Truncated safely if payload ever
-        // exceeded the buffer (CLI input never will).
+        // No null terminator: the receiver's pushIncoming() adds its own, and a second one is a phantom empty command
         uint32_t len = (uint32_t)strlen(payload);
         if (len > sizeof(m_pendingSendBuffer) - 1) len = sizeof(m_pendingSendBuffer) - 1;
         m_pendingSendBuffer[0] = RADIO_MSG_CLI_COMMAND;
@@ -138,14 +125,13 @@ private:
     GPS* m_gps = nullptr;
     Alarm m_gpsReportTimer;
 
-    // Half-duplex, shared channel with the flight computer's downlink - --send queues its payload and
-    // fires at a predicted safe window (learned cadence), not immediately/reactively, so bad downlink rx can't block uplink.
-    char m_pendingSendBuffer[255] = {}; // matches RadioLink::RadioMessage::data / RADIOLIB_SX126X_MAX_PACKET_LENGTH
-    uint32_t m_pendingSendLength = 0; // 0 = nothing queued
-    // Anchor (last confirmed downlink) + cadence predict future downlink times - resynced each rx, but sends don't wait on one.
-    uint32_t m_lastDownlinkRxTimeMs = 0; // 0 = no downlink received yet this session
-    uint32_t m_downlinkCadenceMs = 0; // 0 = not yet learned (need at least one interval)
-    uint32_t m_lastCliResponseRxTimeMs = 0; // 0 = no CLI response chunk received yet this session
+    // Half-duplex channel shared with the downlink: --send waits for a predicted safe window
+    char m_pendingSendBuffer[255] = {}; // RADIOLIB_SX126X_MAX_PACKET_LENGTH
+    uint32_t m_pendingSendLength = 0;
+    // 0 in the next three = none yet
+    uint32_t m_lastDownlinkRxTimeMs = 0;
+    uint32_t m_downlinkCadenceMs = 0;
+    uint32_t m_lastCliResponseRxTimeMs = 0;
 };
 
 #endif //GROUNDSTATIONRELAY_H

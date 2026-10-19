@@ -44,6 +44,8 @@ public:
 
     uint32_t getTargetLoopTimeMs() const;
 
+    float getTargetLoopTimeS() const;
+
     DebugStream* getDebugStream() const;
 
     void avionicsSystemError(const char *message) const;

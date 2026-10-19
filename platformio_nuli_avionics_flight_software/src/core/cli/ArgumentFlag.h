@@ -112,8 +112,8 @@ protected:
 
 private:
     bool m_defaultValueSet = false; ///< if a default value has been set
-    T m_defaultValue;   ///< default value when not provided by the user
-    T m_argument;       ///< value of the flag
+    T m_defaultValue{}; ///< default value when not provided by the user
+    T m_argument{};     ///< value of the flag
 };
 
 #include "ArgumentFlag.tpp"

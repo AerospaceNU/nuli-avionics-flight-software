@@ -19,22 +19,38 @@
  *      - This is not very high, and can be easily achieved by shaking the device
  */
 // Launch detection
-constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0; ///, FCB used 20 m/s^2. This
+constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0;
 constexpr float LAUNCH_ALTITUDE_THRESHOLD_M = 100.0;
 constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
+// Burnout
+constexpr uint32_t BURNOUT_DEBOUNCE_TIMER_MS = 150;
 // Apogee detection
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
 constexpr uint32_t MACH_LOCKOUT_TIMER_MS = 5000;
 constexpr float MACH_LOCKOUT_THRESHOLD_MS = 150.0;
+// Barometer de-weighting near Mach (tuned on 11 real transonic flights, 2026-10-18)
+constexpr float MACH_RAMP_START_MS = 200.0;
+constexpr float MACH_RAMP_END_MS = 300.0;
+constexpr float MACH_BAROMETER_COVARIANCE_SCALE = 10.0;
 // Landing detection
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
+// Main deployment
+constexpr uint32_t MAIN_DEPLOY_DEBOUNCE_TIMER_MS = 200;
 // On boot state detection
 constexpr uint32_t UNKNOWN_STATE_TIMER_MS = 1000;
 constexpr float UNKNOWN_STATE_ALTITUDE_CHANGE_THRESHOLD_M = 5.0;
 constexpr float UNKNOWN_STATE_VELOCITY_THRESHOLD_MS = 3.0;
+constexpr uint32_t UNKNOWN_STATE_HIGH_TIMER_MS = 10000;
+constexpr float UNKNOWN_STATE_SUBSONIC_ACCELERATION_MSS = 3.0;
+constexpr float UNKNOWN_STATE_SUBSONIC_VELOCITY_MS = 75.0;
+constexpr float UNKNOWN_STATE_SUBSONIC_RESIDUAL_M = 5.0;
+constexpr float UNKNOWN_STATE_SUBSONIC_MAX_ALTITUDE_M = 9000.0;
+constexpr float UNKNOWN_STATE_SUBSONIC_MIN_VALID_FRACTION = 0.8;
 constexpr uint32_t GROUND_REFERENCE_UPDATE_DELAY = 2000;
+constexpr float GROUND_REFERENCE_FREEZE_SPEED_MS = 15.0; ///< no ground re-take faster than this: a slow boost would drag the ground up
+constexpr uint32_t BAROMETER_OUTAGE_MS = 1000; ///< outage after which the Kalman filter restarts from the next valid reading
 
 // Hardware Abstraction max size parameters
 constexpr uint8_t MAX_PYRO_NUM = 10;
@@ -100,6 +116,8 @@ struct State1D_s {
     float velocityMS;
     float accelerationMSS;
     float unfilteredNoOffsetAltitudeM;
+    bool barometerValid; ///< False while altitude comes from a held pressure rather than a measurement
+    float accelerometerMagnitudeMSS;
 };
 
 struct Orientation_s {
@@ -144,6 +162,18 @@ enum AxisDirection : int32_t {
     NEG_Z,
 };
 
+inline const char* axisDirectionName(const AxisDirection direction) {
+    switch (direction) {
+    case POS_X: return "POS_X";
+    case NEG_X: return "NEG_X";
+    case POS_Y: return "POS_Y";
+    case NEG_Y: return "NEG_Y";
+    case POS_Z: return "POS_Z";
+    case NEG_Z: return "NEG_Z";
+    default: return "ERROR_AXIS_DIRECTION";
+    }
+}
+
 struct GyroscopeBias_s {
     Vector3D_s bias[MAX_GYROSCOPE_NUM] = {};
 
@@ -177,10 +207,6 @@ struct GyroscopeBias_s {
 #include "Arduino.h"
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
-#else
-void setup();
-void loop();
-#define AVIONICS_DESKTOP_MAIN  int main() { setup(); while (true) loop(); }
 #endif
 #include <string.h>
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H

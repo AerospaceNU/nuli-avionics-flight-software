@@ -2,8 +2,6 @@
 #include "core/HardwareAbstraction.h"
 #include "util/CRC.h"
 
-constexpr ConfigurationID_t Configuration::REQUIRED_CONFIGS[];
-
 void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint16_t allConfigsLength) {
     // Add all requested configs to the list, ignoring duplicates
     for (int i = 0; i < allConfigsLength; i++) {
@@ -31,10 +29,8 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 }
 
 void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
-    if (!hardware || hardware->getNumFramMemorys() < id) {
-        // m_hardware is still null here; use the parameter directly.
-        // If hardware itself is null we have no way to report — spin so a watchdog
-        // or a debugger catches it rather than executing the rest with a null ref.
+    if (!hardware || hardware->getNumFramMemorys() <= id) {
+        // With no hardware there is no way to report; spin so the watchdog or a debugger catches it.
         if (hardware) hardware->avionicsSystemError("Either no hardware or no fram");
         while (true) {}
     }
@@ -85,7 +81,7 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
                 // This retrieves a specific default value from the buffer
                 memcpy(m_configurations[i].data, (m_configurations[i].data - m_dataBuffer) + bufferDefaultValues, m_configurations[i].size);
                 m_configurations[i].m_isUpdated = true;
-                m_debug->warn("%s invalid value, resting to default", getConfigurationName(m_configurations[i].id));
+                m_debug->warn("%s invalid value, resetting to default", getConfigurationName(m_configurations[i].id));
             } else {
                 m_configurations[i].m_isUpdated = false;
             }
@@ -157,10 +153,7 @@ void Configuration::pushUpdatesToMemory() {
         }
     }
 
-    // Coalesce consecutive updated entries into a single write. Track the run by
-    // start/end pointers (not a size sum) so any alignment padding between
-    // entries is included in the write extent — otherwise the tail of a run
-    // would be left unwritten in FRAM.
+    // Runs tracked by pointers, not a size sum, so alignment padding is included in each write.
     const uint8_t* runStart = nullptr;
     const uint8_t* runEnd = nullptr;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {

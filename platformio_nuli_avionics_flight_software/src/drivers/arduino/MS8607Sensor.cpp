@@ -22,6 +22,7 @@ void MS8607Sensor::read() {
 //    return;
     // it sounds like the barometric sensor reports pressure in terms of millibars, but we want to convert to Pascals
     m_pressurePa = m_barometricSensor.getPressure() * Units::MBAR_TO_PA;  // reported in mbar, converting to pascals
+    m_validReading = isPlausiblePressure(m_pressurePa);
     m_temperatureK = m_barometricSensor.getTemperature() + Units::C_TO_K;    // reported in C
     m_humidityPercent = m_barometricSensor.getHumidity();     // reported in terms of relative humidity (%rh)
 

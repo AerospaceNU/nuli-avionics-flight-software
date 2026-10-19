@@ -2,6 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DEBUGSTREAM_H
 
 #include "Avionics.h"
+#include <cfloat>
 #include <cstdarg>
 #include <cstddef>
 #include <cstdint>
@@ -26,12 +27,7 @@ public:
         return nullptr;
     }
 
-    // Whether this stream can afford a highBandwidthOnly-flagged CLI command (see BaseFlag) -
-    // e.g. --offload, --streamLog. Defaults to false (fail safe: an unclassified future stream
-    // silently drops a few commands rather than risking flooding a slow link) - concrete
-    // subclasses that are actually a fast local transport (SerialDebug, DesktopDebug) set this
-    // true in their own constructor. Not virtual: this is a fixed per-instance value, not
-    // behavior, so a plain overwritable member is enough.
+    // Gates highBandwidthOnly CLI commands (see BaseFlag); false unless a fast local transport sets it
     bool isHighBandwidth() const { return m_isHighBandwidth; }
 
     void message(const char* fmt, ...) {
@@ -88,9 +84,7 @@ public:
         uint16_t consecutiveStalls = 0;
         while (size > 0) {
             size_t n = write(p, size);
-            // Arduino SAMD's USB CDC returns (uint32_t)-1 on a TX timeout, which a bare
-            // "> 0" check would pass through as billions of bytes written - clamp to 0
-            // so that hits the stall counter instead of corrupting p/size.
+            // SAMD USB CDC returns (uint32_t)-1 on TX timeout: count it as a stall
             if (n > size) n = 0;
             if (n == 0) {
                 if (++consecutiveStalls >= MAX_CONSECUTIVE_STALLS) return false;
@@ -158,9 +152,17 @@ private:
         };
 
         auto format_float = [&](double val, int precision) {
+            if (val != val) {
+                puts_lit("nan");
+                return;
+            }
             if (val < 0) {
                 putch('-');
                 val = -val;
+            }
+            if (val > DBL_MAX) {
+                puts_lit("inf");
+                return;
             }
             unsigned long long int_part = (unsigned long long)val;
             double frac = val - (double)int_part;
