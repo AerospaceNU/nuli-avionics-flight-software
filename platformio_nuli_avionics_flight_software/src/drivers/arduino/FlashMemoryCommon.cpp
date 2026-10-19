@@ -65,6 +65,8 @@ uint32_t FlashMemoryCommon::getPageSize() const {
 }
 
 
+static constexpr uint32_t BUSY_WAIT_MS = 10; ///< A page program takes <= 3 ms (datasheets); a chip still busy after this is stuck (dead, or an S25FL program error)
+
 bool FlashMemoryCommon::ready() const {
     // Was isWriteInProgress() directly (true while busy) despite the name, so every "if (!ready())"
     // call site was backwards. Fixed - no external callers depended on the old meaning.
@@ -97,17 +99,16 @@ void FlashMemoryCommon::write(uint32_t address, const uint8_t* buffer, uint32_t 
     m_bufferedLength += length;
 }
 
-void FlashMemoryCommon::programAndShiftBuffer(uint32_t pageBytes) const {
-    // Waits for the *previous* flush to finish, not this one - same non-blocking contract as before.
-    if (!ready()) {
-        waitForReady(1000);
-    }
+bool FlashMemoryCommon::programAndShiftBuffer(uint32_t pageBytes) const {
+    // Waits for the previous program to finish, not this one
+    if (!ready() && !waitForReady(BUSY_WAIT_MS)) return false;
     pageProgram(m_bufferedAddress, m_pageBuffer, pageBytes);
     m_bufferedAddress += pageBytes;
     m_bufferedLength -= pageBytes;
     if (m_bufferedLength > 0) {
         memmove(m_pageBuffer, m_pageBuffer + pageBytes, m_bufferedLength);
     }
+    return true;
 }
 
 void FlashMemoryCommon::writeBufferedIfReady() const {
@@ -125,7 +126,10 @@ void FlashMemoryCommon::flushBuffer() const {
     // reintroduces is acceptable there.
     while (m_bufferedLength > 0) {
         const uint32_t pageEnd = (m_bufferedAddress - (m_bufferedAddress % getPageSize())) + getPageSize();
-        programAndShiftBuffer(min(m_bufferedLength, pageEnd - m_bufferedAddress));
+        if (!programAndShiftBuffer(min(m_bufferedLength, pageEnd - m_bufferedAddress))) {
+            m_bufferedLength = 0;
+            return;
+        }
     }
 }
 
@@ -156,7 +160,7 @@ void FlashMemoryCommon::read(uint32_t address, uint8_t* buffer, uint32_t length)
     // Wait for any in-flight write to finish first - this chip can't service a normal read while a
     // page program is still in progress (write() itself never waits for its own completion).
     if (!ready()) {
-        waitForReady(1000);
+        waitForReady(BUSY_WAIT_MS);
     }
 
     uint8_t readCommandHeader[5] = {

@@ -43,6 +43,9 @@ protected:
     uint32_t m_baudRate;
     SFE_UBLOX_GNSS m_gps;
     DebugStream* m_debugStream = nullptr; ///< Stashed from setup() so other methods can log too
+    bool m_connected = false;     ///< answered at setup; otherwise read() does nothing (each getter would wait out its timeout)
+    bool m_autoReporting = false; ///< both auto-reports on; otherwise read() polls one value per tick
+    uint8_t m_pollIndex = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_UBLOXV2_H

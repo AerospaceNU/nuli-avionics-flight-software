@@ -24,6 +24,22 @@ public:
         m_temperatureK = temperatureK;
         m_humidityPercent = humidityPercent;
         m_pressurePa = pressurePa;
+        m_validReading = isPlausiblePressure(pressurePa);
+    }
+
+    /**
+     * @brief Marks the current reading as not a measurement, until the next plausible inject()
+     */
+    void invalidate() {
+        m_validReading = false;
+    }
+
+    bool validReading() override {
+        return m_validReading;
+    }
+
+    static bool isPlausiblePressure(const float pressurePa) {
+        return std::isfinite(pressurePa) && pressurePa > 100.0f && pressurePa < 200000.0f;
     }
 
     /**
@@ -90,6 +106,7 @@ protected:
     float m_temperatureK = 0; ///<The measured temperature
     float m_humidityPercent = 0; ///< The measured humidity (%rh)
     float m_pressurePa = 0; ///< The measured pressure
+    bool m_validReading = false;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BAROMETER_H

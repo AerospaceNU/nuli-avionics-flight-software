@@ -5,11 +5,7 @@
 // path every tick, which GPS_GETTER_MAX_WAIT_MS below bounds but shouldn't have to rely on.
 static constexpr uint8_t AUTO_REPORT_ENABLE_RETRIES = 3;
 
-// Passed to every getter in read(): a no-op when auto-reporting is actually flowing (the library only
-// enters its blocking poll-and-wait path when auto-reporting isn't active), but bounds that fallback
-// path to well under the flight computer's watchdog timeout if auto-reporting ever silently drops out
-// after setup - 8 getters * 5ms is still comfortably inside a 100ms watchdog window.
-static constexpr uint16_t GPS_GETTER_MAX_WAIT_MS = 5;
+static constexpr uint16_t GPS_GETTER_MAX_WAIT_MS = 5; ///< bounds each blocking poll (only used if auto-reporting could not be enabled)
 
 UBloxV2::UBloxV2(HardwareSerial* serial, uint8_t navigationRateHz, uint32_t baudRate) :
     m_serial(serial), m_navigationRateHz(navigationRateHz), m_baudRate(baudRate) {}
@@ -44,6 +40,7 @@ void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
         }
     }
 
+    m_connected = true;
     m_gps.setUART1Output(COM_TYPE_UBX, GPS_CONFIG_MAX_WAIT_MS); // Only speak UBX binary, no need for the module to also spend time on NMEA
     m_gps.setDynamicModel(DYN_MODEL_AIRBORNE4g, GPS_CONFIG_MAX_WAIT_MS); // Best suited for the high acceleration/altitude profile of a rocket flight
     if (!m_gps.setNavigationFrequency(m_navigationRateHz, GPS_CONFIG_MAX_WAIT_MS)) {
@@ -71,20 +68,26 @@ void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
         debugStream->error("UBloxV2 GPS failed to enable auto-DOP reporting after %u attempts - reads will fall back to a bounded blocking poll", (unsigned)AUTO_REPORT_ENABLE_RETRIES);
     }
 
+    m_autoReporting = autoPvtEnabled && autoDopEnabled;
     debugStream->message("UBloxV2 GPS initialized");
 }
 
 void UBloxV2::read() {
+    if (!m_connected) return;
     m_gps.checkUblox();
 
-    m_fixQuality = m_gps.getFixType(GPS_GETTER_MAX_WAIT_MS);
-    m_satellitesTracked = m_gps.getSIV(GPS_GETTER_MAX_WAIT_MS);
-    m_hdop = m_gps.getHorizontalDOP(GPS_GETTER_MAX_WAIT_MS); // raw, scaled by 100 - matches the module's native representation
-    m_vdop = m_gps.getVerticalDOP(GPS_GETTER_MAX_WAIT_MS);
-
-    m_coordinates.latitudeDeg = (float)(m_gps.getLatitude(GPS_GETTER_MAX_WAIT_MS) / 10000000.0);
-    m_coordinates.longitudeDeg = (float)(m_gps.getLongitude(GPS_GETTER_MAX_WAIT_MS) / 10000000.0);
-    m_coordinates.altitudeM = (float)(m_gps.getAltitudeMSL(GPS_GETTER_MAX_WAIT_MS) / 1000.0);
-
-    m_unixTimeS = m_gps.getUnixEpoch(GPS_GETTER_MAX_WAIT_MS);
+    for (uint8_t i = 0; i < 8; i++) {
+        switch (m_pollIndex) {
+        case 0: m_fixQuality = m_gps.getFixType(GPS_GETTER_MAX_WAIT_MS); break;
+        case 1: m_satellitesTracked = m_gps.getSIV(GPS_GETTER_MAX_WAIT_MS); break;
+        case 2: m_hdop = m_gps.getHorizontalDOP(GPS_GETTER_MAX_WAIT_MS); break; // raw, scaled by 100 - matches the module's native representation
+        case 3: m_vdop = m_gps.getVerticalDOP(GPS_GETTER_MAX_WAIT_MS); break;
+        case 4: m_coordinates.latitudeDeg = (float)(m_gps.getLatitude(GPS_GETTER_MAX_WAIT_MS) / 10000000.0); break;
+        case 5: m_coordinates.longitudeDeg = (float)(m_gps.getLongitude(GPS_GETTER_MAX_WAIT_MS) / 10000000.0); break;
+        case 6: m_coordinates.altitudeM = (float)(m_gps.getAltitudeMSL(GPS_GETTER_MAX_WAIT_MS) / 1000.0); break;
+        default: m_unixTimeS = m_gps.getUnixEpoch(GPS_GETTER_MAX_WAIT_MS); break;
+        }
+        m_pollIndex = (uint8_t)((m_pollIndex + 1) % 8);
+        if (!m_autoReporting) break;
+    }
 }

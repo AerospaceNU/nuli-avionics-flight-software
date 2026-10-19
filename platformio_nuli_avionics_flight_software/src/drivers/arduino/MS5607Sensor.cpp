@@ -23,6 +23,7 @@ void MS5607Sensor::setup(DebugStream* debugStream) {
 void MS5607Sensor::read() {
     readDigitalValue();
     m_pressurePa = getPressure() * Units::MBAR_TO_PA;
+    m_validReading = isPlausiblePressure(m_pressurePa);
     m_temperatureK = getTemperature() + Units::C_TO_K;
 }
 

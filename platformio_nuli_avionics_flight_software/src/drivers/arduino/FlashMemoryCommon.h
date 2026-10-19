@@ -87,10 +87,7 @@ protected:
     // tick of being written, at any logging rate, without a separate idle-timeout mechanism.
     void writeBufferedIfReady() const;
 
-    // Programs exactly pageBytes buffered bytes (never more than one physical page's worth, starting
-    // at m_bufferedAddress) and shifts any bytes left in m_pageBuffer down to the front - the shared
-    // step both flushBuffer() (loops this until empty) and writeBufferedIfReady() (calls it once) use.
-    void programAndShiftBuffer(uint32_t pageBytes) const;
+    bool programAndShiftBuffer(uint32_t pageBytes) const;
 
     const uint8_t m_chipSelectPin;
     const FlashMemoryData_s& m_deviceData;

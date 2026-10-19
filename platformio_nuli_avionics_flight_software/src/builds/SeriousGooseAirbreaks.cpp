@@ -210,7 +210,7 @@ void setup() {
     // All done
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
     if (watchdog.causedLastReset()) logger.logMessage("Previous run was ended by the watchdog (main loop stalled past its timeout)");
-    watchdog.enable(100);
+    watchdog.enable(125);
     watchdog.pet();
 }
 

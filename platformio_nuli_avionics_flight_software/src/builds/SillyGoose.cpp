@@ -176,7 +176,7 @@ void setup() {
     serialDebug.message("COMPONENTS SET UP COMPLETE\r\n");
     // Watchdog checks and startup
     if (watchdog.causedLastReset()) logger.logMessage("Last reset was caused by the watchdog");
-    watchdog.enable(100); // What seems to get most cases. Still disconnected when doing USB stuff sometimes
+    watchdog.enable(125); // What seems to get most cases. Still disconnected when doing USB stuff sometimes
     watchdog.pet(); // IDK if this actually helps or if it's redundant with enable
 }
 
