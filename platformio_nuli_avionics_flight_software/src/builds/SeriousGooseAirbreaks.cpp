@@ -21,6 +21,7 @@
 #include "core/configuration/Configuration.h"
 #include "core/configuration/ConfigurationCliBinding.h"
 #include "core/state_estimation/FlightStateDeterminer.h"
+#include "core/DualDeploy.h"
 #include "core/IndicatorManager.h"
 #include "core/BasicLogger.h"
 #include "core/GroundStationRelay.h"
@@ -78,6 +79,7 @@ ArduinoServo airbrakeServo(AUX_2_PIN, 0, 190);
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
 FlightStateDeterminer flightStateDeterminer;
+DualDeploy dualDeploy;
 StateEstimator1D stateEstimator1D;
 OrientationEstimator orientationEstimator;
 BasicLogger<SillyGooseLogData> logger;
@@ -95,12 +97,11 @@ Configuration configuration({
         sillyGooseRequiredConfigs,
         Configuration::REQUIRED_CONFIGS,
         FlightStateDeterminer::REQUIRED_CONFIGS,
+        DualDeploy::REQUIRED_CONFIGS,
         StateEstimator1D::REQUIRED_CONFIGS,
         OrientationEstimator::REQUIRED_CONFIGS
     });
 // Locally used configuration data
-ConfigurationData<float> mainElevation;
-ConfigurationData<uint32_t> drogueDelay;
 ConfigurationData<uint32_t> pyroFireDuration;
 ConfigurationData<uint32_t> radioTransmitDelay;
 ConfigurationData<uint32_t> groundStationMode;
@@ -194,11 +195,10 @@ void setup() {
     stateEstimator1D.setup(&hardware, &configuration);
     orientationEstimator.setup(&hardware, &configuration);
     flightStateDeterminer.setup(&configuration);
+    dualDeploy.setup(&configuration, &droguePyro, &mainPyro);
     indicatorManager.setup(&hardware, drogueID, mainID);
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, printLog, &configuration);
     // Locally used configuration variables
-    drogueDelay = configuration.getConfigurable<DROGUE_DELAY_c>();
-    mainElevation = configuration.getConfigurable<MAIN_ELEVATION_c>();
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
     radioTransmitDelay = configuration.getConfigurable<RADIO_TRANSMIT_INTERVAL_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
@@ -253,17 +253,7 @@ void loop() {
         } else if (state.flightState == DESCENT) {
             logger.enableContinuousLogging();
             indicatorManager.keepAliveBeep(state.timestamp);
-            // Fire both pyros at the appropriate conditions
-            static uint8_t deployState = 0; // Ensure each is only fired once
-            if (flightStateDeterminer.getStateTimer()->getTimeElapsed(state.timestamp.runtime_ms) > drogueDelay.get() && deployState == 0) {
-                droguePyro.fireFor(pyroFireDuration.get());
-                deployState = 1;
-            }
-            static Debounce mainDeployDebounce(200);
-            if (mainDeployDebounce.check(state.state1D.altitudeM <= mainElevation.get(), state.timestamp.runtime_ms) && deployState == 1) {
-                mainPyro.fireFor(pyroFireDuration.get());
-                deployState = 2;
-            }
+            dualDeploy.update(state, flightStateDeterminer);
         } else if (state.flightState == POST_FLIGHT) {
             if (flightStateDeterminer.isStateTransitionTick()) {
                 uint32_t maxAltitude = max(flightStateDeterminer.getMaxAltitude(), 0);

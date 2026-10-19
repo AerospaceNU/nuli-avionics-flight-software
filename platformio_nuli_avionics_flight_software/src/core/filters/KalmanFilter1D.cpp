@@ -23,8 +23,7 @@ KalmanFilter1D::KalmanFilter1D() {
     };
     m_isHIdentity = H.isIdentity(); // see the comment on H and m_isHIdentity in the header
 
-    // IDK if we actually want to start with zero covariance, but I think it should be numerically stable
-    P.setZero();
+    P = Eigen::Matrix<float, 3, 3>::Identity() * 1000.0f;
 
     // Take a wild guess at the process covariance (I really need to figure out what these actually mean)
     // Larger means that there's more uncertainty in the state model, so the filter should trust the measurement more

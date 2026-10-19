@@ -4,6 +4,7 @@
 #include <Avionics.h>
 #include "GenericSensor.h"
 #include "ConstantsUnits.h"
+#include <cmath>
 
 /**
  * @class Barometer
@@ -51,11 +52,13 @@ public:
 
     /**
     * @brief Calculates the altitude from pressure and temperature
-    * @details Specific algorithm used??????
+    * @details Standard atmosphere with temperatureK at sea level: the troposphere's lapse rate, then isothermal above the tropopause
     */
     static float calculateAltitudeM(const float pressurePa, const float temperatureK) {
-        return (temperatureK / Constants::LAPSE_RATE_K_M) *
-            (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+        if (pressurePa >= TROPOPAUSE_PRESSURE_PA || pressurePa <= 0) return troposphereAltitudeM(pressurePa, temperatureK);
+        const float tropopauseM = troposphereAltitudeM(TROPOPAUSE_PRESSURE_PA, temperatureK);
+        const float tropopauseScaleHeightM = (float)(Constants::GAS_CONSTANT_J_KG_K / Constants::G_EARTH_MSS) * (temperatureK + (float)Constants::LAPSE_RATE_K_M * tropopauseM);
+        return tropopauseM + tropopauseScaleHeightM * std::log(TROPOPAUSE_PRESSURE_PA / pressurePa);
     }
 
     /**
@@ -77,6 +80,13 @@ public:
     }
 
 protected:
+    static constexpr float TROPOPAUSE_PRESSURE_PA = 22632.1f;
+
+    static float troposphereAltitudeM(const float pressurePa, const float temperatureK) {
+        return (temperatureK / Constants::LAPSE_RATE_K_M) *
+            (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+    }
+
     float m_temperatureK = 0; ///<The measured temperature
     float m_humidityPercent = 0; ///< The measured humidity (%rh)
     float m_pressurePa = 0; ///< The measured pressure
