@@ -19,7 +19,7 @@
  *      - This is not very high, and can be easily achieved by shaking the device
  */
 // Launch detection
-constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0; ///, FCB used 20 m/s^2. This
+constexpr float LAUNCH_ACCELERATION_THRESHOLD_MSS = 20.0;
 constexpr float LAUNCH_ALTITUDE_THRESHOLD_M = 100.0;
 constexpr uint32_t LAUNCH_DEBOUNCE_TIMER_MS = 150;
 // Burnout

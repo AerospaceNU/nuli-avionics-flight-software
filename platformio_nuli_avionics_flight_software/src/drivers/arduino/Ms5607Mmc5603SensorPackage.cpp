@@ -222,9 +222,7 @@ bool Ms5607Mmc5603SensorPackage::readAndInjectImu() {
 #define MS5607_PROM_READ  0xA0
 #define MS5607_ADC_READ   0x00
 
-// OSR 2048, not the max 4096: OSR 4096 (~9.04ms) left only ~0.96ms margin against the ~10ms tick,
-// which the ~1.3ms temp cycle didn't fit (pressure resolved every other tick). OSR 2048 (~4.54ms)
-// leaves ~5.46ms margin, covering it every tick - still far better than the old code's OSR 256.
+// Not OSR 4096 (~9.04 ms): the temperature cycle then doesn't fit in the 10 ms tick
 static constexpr uint8_t PRESSURE_CONV_CMD = 0x46;     // D1 conversion at OSR 2048
 static constexpr uint32_t PRESSURE_CONV_DELAY_US = 4540;
 static constexpr uint8_t TEMP_CONV_CMD = 0x50;         // D2 conversion at OSR 256
@@ -337,12 +335,7 @@ void Ms5607Mmc5603SensorPackage::computeAndInjectBarometerReading(const uint32_t
 }
 
 /* =========================
- * MMC5603NJ magnetometer (optional; register map from MEMSIC datasheet Rev.B). Runs in Continuous
- * Measurement Mode (CMM) at 200Hz (2x the 100Hz tick, same margin the IMU uses, so clock-domain jitter
- * between the mag's own oscillator and the host's tick timing can't cause a stale re-read) - once
- * enabled in setupMagnetometer(), the chip free-runs in the background and refreshes its output
- * registers on its own, so (unlike the barometer, which has no hardware continuous mode) read() can
- * just read whatever's latest every tick with no trigger/poll/wait.
+ * MMC5603NJ magnetometer (MEMSIC datasheet Rev.B), free-running Continuous Measurement Mode (CMM) at 200 Hz
  * ========================= */
 
 #define MMC5603_ADDR          0x30
@@ -379,11 +372,7 @@ void Ms5607Mmc5603SensorPackage::setupMagnetometer() {
         m_debugStream->error("MMC5603NJ init failed, product ID = %d", productId);
     }
 
-    // CMM sequence per datasheet "EXAMPLE OF CONTINUOUS MODE": write the target ODR, then Cmm_freq_en
-    // (derives the internal period counter from it), then Cmm_en (starts the counter and free-running
-    // measurements) - each step depends on the previous one having already landed. Periodic set (Auto_SR_en
-    // + En_prd_set, chosen over plain Auto_SR_en) pays the SET/RESET time once every 100 samples instead
-    // of every sample, which is what lets BW01 reach 200Hz (datasheet ODR table) without giving up much noise floor.
+    // Order per datasheet "EXAMPLE OF CONTINUOUS MODE": ODR, then Cmm_freq_en, then Cmm_en
     writeRegister(MMC5603_ADDR, MMC5603_ODR, MMC5603_ODR_200HZ);
     writeRegister(MMC5603_ADDR, MMC5603_INT_CTRL_0, MMC5603_INT_CTRL_0_CMM_START);
     writeRegister(MMC5603_ADDR, MMC5603_INT_CTRL_2, MMC5603_INT_CTRL_2_CMM_EN);

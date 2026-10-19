@@ -46,12 +46,7 @@ void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     if (!m_gps.setNavigationFrequency(m_navigationRateHz, GPS_CONFIG_MAX_WAIT_MS)) {
         debugStream->warn("UBloxV2 GPS rejected %u Hz navigation rate", m_navigationRateHz);
     }
-    // Have the module push fixes automatically instead of polling, so read() doesn't block on a
-    // request/response round trip every loop. NAV-PVT (fix/lat/lon/alt/time) and NAV-DOP (HDOP) need
-    // auto-reporting enabled independently - without setAutoDOP, getHorizontalDOP() falls back to a
-    // blocking poll. Retried a few times since a lost ACK here would otherwise silently persist for
-    // the rest of the flight; read()'s getters are still bounded by GPS_GETTER_MAX_WAIT_MS even if
-    // every retry fails, so this logs rather than aborting the rest of setup().
+    // Auto-reporting keeps read() from polling; NAV-PVT and NAV-DOP must be enabled separately
     bool autoPvtEnabled = false;
     for (uint8_t attempt = 0; attempt < AUTO_REPORT_ENABLE_RETRIES && !autoPvtEnabled; attempt++) {
         autoPvtEnabled = m_gps.setAutoPVT(true, GPS_CONFIG_MAX_WAIT_MS);

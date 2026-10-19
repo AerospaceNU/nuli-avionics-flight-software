@@ -34,9 +34,7 @@ public:
                     m_endFlag("-e", "End", false, [](DebugStream*) {}),
                     m_offloadBinaryFlag("-b", "Binary format", false, [](DebugStream*) {}),
                     m_eraseFlag("--erase", "Erases the flight log", true, [this](DebugStream* debugStream) { this->eraseCallback(debugStream); }),
-                    // Dumps the whole flash log / streams continuously - both restricted to
-                    // high-bandwidth streams (see BaseFlag::isHighBandwidthOnly), so they're
-                    // silently no-ops over a low-bandwidth link like CLI-over-radio.
+                    // High-bandwidth only (see BaseFlag): silently ignored over CLI-over-radio
                     m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }, true),
                     m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true),
                     m_formatFlag("--logFormat", "Prints the log data struct definition", true, [this](DebugStream* debugStream) { this->printFormat(debugStream); }, true) {}
@@ -173,9 +171,7 @@ public:
         printFormat(debugStream);
         debugStream->data(m_headerStr);
 
-        // Bumped from 512: a reconstructed CONFIG line now includes every registered field
-        // (previously a hand-picked subset), including LAUNCH_ANGLE/GYROSCOPE_BIAS printed
-        // component-wise - comfortably exceeds the old size on its own.
+        // Also holds a reconstructed CONFIG line (every field), which exceeds 512
         constexpr size_t MSG_BUF_SIZE = 1024;
         char msgBuf[MSG_BUF_SIZE];
         size_t msgBufLen = 0;
@@ -363,12 +359,8 @@ private:
         m_logWriteIndex++;
     }
 
-    // Reconstructs one logConfig() record (header + raw config bytes) into a "CONFIG\t..." line,
-    // written into lineBuf then printed. Always decodes from the STORED bytes, never from
-    // m_configuration's live values - the record being offloaded may be from a previous boot,
-    // whose config could legitimately differ from today's. Only trusts the live field list/offsets
-    // to interpret those bytes when both the stored version AND key CRC match today's live ones;
-    // otherwise the layout may have changed since this was logged, and guessing would misread it.
+    // Prints a logConfig() record as a "CONFIG\t..." line, decoded from the stored bytes using the
+    // live layout only when the stored version and key CRC both match it
     void flushConfigBuffer(DebugStream* debugStream, const uint8_t* raw, size_t rawLen, char* lineBuf, size_t lineBufSize) {
         if (!m_configuration || rawLen < 8) return;
         uint32_t storedVersion, storedKeyCrc;
@@ -384,16 +376,7 @@ private:
         debugStream->data("%s", lineBuf);
     }
 
-    // Chunks arbitrary bytes across multiple LOG_<X>/LOG_<X>_CONTINUATION records - shared by
-    // logMessage() (text) and logConfig() (a version+keyCrc header followed by raw config bytes).
-    // No watchdog pet here (unlike the old per-chunk pet this replaced): write() now just buffers in
-    // RAM (see FlashMemoryCommon's PAGE_BUFFER_CAPACITY/writeBufferedIfReady()), so this whole loop -
-    // bounded to a ~508-byte config or a short human-written message, never today's arbitrarily large
-    // blob - finishes in well under a millisecond regardless of chunk count. The main loop's own pet()
-    // every ~10ms tick is already far inside the 100ms watchdog timeout without any help from here.
-    // (On SAMD21, WatchdogSAMD::reset() busy-waits on a hardware SYNCBUSY bit before it can clear the
-    // timer, so calling it here at all - let alone once per chunk - is a real, avoidable cost: back-to-
-    // back pets with no gap measured at ~3.5ms/call, turning a 3-chunk config burst into an ~11ms stall.)
+    // No watchdog pet: flash writes only buffer in RAM, and a SAMD21 pet costs ~3.5ms
     void logChunked(const uint8_t* bytes, size_t totalLen, LogEntryID firstId, LogEntryID continuationId) {
         const size_t dataSize = sizeof(LogDataStruct);
         size_t pos = 0;

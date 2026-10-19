@@ -18,7 +18,6 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
 }
 
 State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {
-    // Start by getting all sensor measurements in their local frames, and combining redundant sensors
     float pressurePa = getPressurePa();
     if (!m_barometerEverValid) return m_currentState1D;
     float accelerationMSS = getAccelerationMSS(flightState);

@@ -46,9 +46,7 @@ State6D_s StateEstimatorBasic6D::update(const Timestamp_s& timestamp, const Stat
     }
 
     if (flightState == ASCENT) {
-        // Determine X/Y axis state. Only valid during powered/coasting ascent — the projection assumes
-        // axial motion (velocity along the rocket's lengthwise axis), which breaks under chute.
-        // Project Z velocity determined by the kalman filter or fixed gain observer, Xiaofu work on the complementary filter
+        // ASCENT only: the projection assumes velocity along the rocket's axis, which breaks under chute
         // Low-frequency velocity from Z-axis projection
         Vector3D_s projectedVelocityMS = projectVelocities(orientation, m_currentState6D.velocity.z);
         // Implement complementary filter here. This is a function of projectedVelocityMS and accelerationMSS_worldFrame

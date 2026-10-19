@@ -10,9 +10,7 @@
 template <unsigned N>
 class SerialDebug final : public DebugStream {
 public:
-    // watchdog is optional (null where there's none, e.g. ground station) - pet while waiting so an
-    // unattended dev build (no terminal open yet) doesn't get reset-looped by a stale armed watchdog.
-    // echo, if set, immediately sends each received character back out over Serial as it's read.
+    // watchdog (optional) is petted while waiting to connect; echo sends received characters back
     explicit SerialDebug(const bool waitToConnect = false, WatchdogTimer* watchdog = nullptr, const bool echo = false) :
         m_wait(waitToConnect), m_watchdog(watchdog), m_echo(echo) {
         m_isHighBandwidth = true; // a real USB/UART link, not a slow relayed one

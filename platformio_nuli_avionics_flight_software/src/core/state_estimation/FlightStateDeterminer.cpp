@@ -5,6 +5,8 @@ void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
     m_flightState = m_configuration->getConfigurable<FLIGHT_STATE_c>();
     m_firstStageBurnout = m_configuration->getConfigurable<FIRST_STAGE_BURNOUT_c>();
+    // @todo First-stage burnout is cleared every boot: a reboot after burnout re-detects it and restarts the burnout timer.
+    //       Persist it (and the timer start) if the feature has to survive reboots.
     m_firstStageBurnout.set(false);
     m_machLockDebounce.setAlreadyMet();
 

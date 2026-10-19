@@ -5,11 +5,7 @@
 #include "DebugStream.h"
 #include "GenericAvionicsHardware.h"
 
-/**
- * @class GenericSensor
- * @brief Underlying interface to all sensors
- * @details Provides virtual methods for common sensor functions - unused today, but here for future code that may need a BaseSensor class.
- */
+/** @brief Base for all sensors. */
 class GenericSensor : public GenericAvionicsHardware {
 public:
     virtual ~GenericSensor() = default;

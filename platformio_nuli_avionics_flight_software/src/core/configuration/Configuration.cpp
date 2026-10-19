@@ -153,10 +153,7 @@ void Configuration::pushUpdatesToMemory() {
         }
     }
 
-    // Coalesce consecutive updated entries into a single write. Track the run by
-    // start/end pointers (not a size sum) so any alignment padding between
-    // entries is included in the write extent — otherwise the tail of a run
-    // would be left unwritten in FRAM.
+    // Runs tracked by pointers, not a size sum, so alignment padding is included in each write.
     const uint8_t* runStart = nullptr;
     const uint8_t* runEnd = nullptr;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {

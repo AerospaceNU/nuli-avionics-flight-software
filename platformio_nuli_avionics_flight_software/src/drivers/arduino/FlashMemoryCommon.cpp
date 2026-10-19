@@ -92,9 +92,6 @@ void FlashMemoryCommon::write(uint32_t address, const uint8_t* buffer, uint32_t 
         m_bufferedAddress = address;
     }
 
-    // No page-boundary chunking or flushing here anymore - just accumulate. writeBufferedIfReady()
-    // (every tick, via run()) and flushBuffer() are what turn this into paced, page-boundary-respecting
-    // pageProgram() calls; see PAGE_BUFFER_CAPACITY's comment for why this can't overflow in practice.
     memcpy(m_pageBuffer + m_bufferedLength, buffer, length);
     m_bufferedLength += length;
 }

@@ -6,10 +6,10 @@
 #include "core/transform/Vector3DTransform.h"
 
 /**
- * @class Ms5607Mmc5603SensorPackage
- * @brief Barometer (MS5607) + selectable IMU (ICM20602/ICM42605) + optional magnetometer (MMC5603NJ), one I2C bus.
- * @details Covers every board: SillyGoose V1 (ICM20602, no mag), SillyGoose V2/SeriousGoose (ICM42605, mag on SeriousGoose only).
- * @note Pressure conversion (OSR 2048, ~4.54ms) is too long to block a 100Hz loop, so it's started at the end of one read() and normally already done by the next - read() waits out any remainder rather than skipping the barometer, then resolves temperature (shares the ADC) before restarting pressure - every sensor resolves every tick. OSR 4096 was tried first but left only ~0.96ms margin against the ~10ms tick, which the ~1.3ms temperature cycle didn't fit - pressure only resolved every other tick as a result.
+ * @brief MS5607 barometer + ICM20602/ICM42605 IMU + optional MMC5603NJ magnetometer on one I2C bus
+ * @details SillyGoose V1: ICM20602, no mag. SillyGoose V2: ICM42605, no mag. SeriousGoose: ICM42605 + mag.
+ * @note Pressure conversion (OSR 2048, ~4.54 ms) starts at the end of one read() and is normally done by the next;
+ * read() waits out any remainder, then runs temperature (shared ADC) before restarting pressure.
  */
 class Ms5607Mmc5603SensorPackage final : public GenericSensor {
 public:
