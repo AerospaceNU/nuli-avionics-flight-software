@@ -142,6 +142,7 @@ target_link_libraries(
         PRIVATE
         GTest::gtest_main
         quaternion
+        etl::etl
 )
 
 if (ENABLE_COVERAGE)

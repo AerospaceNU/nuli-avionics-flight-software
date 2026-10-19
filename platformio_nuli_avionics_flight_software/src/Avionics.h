@@ -207,10 +207,6 @@ struct GyroscopeBias_s {
 #include "Arduino.h"
 #define US_TIMER_START(id) uint32_t startTime##id = micros();
 #define US_TIMER_END(id) uint32_t endTime##id = micros(); Serial.println(endTime##id - startTime##id);
-#else
-void setup();
-void loop();
-#define AVIONICS_DESKTOP_MAIN  int main() { setup(); while (true) loop(); }
 #endif
 #include <string.h>
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_AVIONICS_H
