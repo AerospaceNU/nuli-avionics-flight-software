@@ -6,7 +6,7 @@
 
 // ------------------- CRC-8 -------------------
 static inline uint8_t crc8(const void* data, size_t len) {
-    const uint8_t* data2 = (uint8_t*)data;
+    const uint8_t* data2 = (const uint8_t*)data;
     uint8_t crc = 0x00; // common init for CRC-8
     while (len--) {
         crc ^= *data2++;
@@ -67,7 +67,7 @@ static inline uint16_t crc16(const void* data, size_t len) {
 
 // ------------------- CRC-32 (IEEE 802.3) -------------------
 static inline uint32_t crc32(const void* data, size_t len) {
-    const uint8_t* data2 = (uint8_t*)data;
+    const uint8_t* data2 = (const uint8_t*)data;
     uint32_t crc = 0xFFFFFFFF; // initial value
     while (len--) {
         crc ^= *data2++;

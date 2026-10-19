@@ -18,7 +18,7 @@ void StateEstimatorBasic6D::setup(HardwareAbstraction* hardware, Configuration* 
     m_currentState6D.position.y = 0;
     m_currentState6D.position.z = 0;
 
-    m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
+    m_kalmanFilter.setDeltaTime(m_hardware->getTargetLoopTimeS());
     m_kalmanFilter.setAccelerometerCovariance(0.0046437);
     m_kalmanFilter.setBarometerCovariance(4.7828);
 }

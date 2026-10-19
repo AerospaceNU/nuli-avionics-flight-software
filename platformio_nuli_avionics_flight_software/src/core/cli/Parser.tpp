@@ -5,6 +5,7 @@
 
 template<uint8_t n>
 CLIReturnCode_e Parser::addFlagGroup(BaseFlag* (&flagGroup)[n]) {
+    static_assert(n <= MAX_FLAGS, "flag group has more than MAX_FLAGS flags");
     // bounds checks
     if (n == 0) {
         return CLI_PARSER_ZERO_FLAG_GROUPS_ADDED;

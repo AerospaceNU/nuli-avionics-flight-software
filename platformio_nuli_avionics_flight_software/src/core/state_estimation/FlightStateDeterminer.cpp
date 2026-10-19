@@ -1,6 +1,5 @@
 #include "FlightStateDeterminer.h"
-
-constexpr ConfigurationID_t FlightStateDeterminer::REQUIRED_CONFIGS[];
+#include <algorithm>
 
 void FlightStateDeterminer::setup(Configuration* configuration) {
     m_configuration = configuration;
@@ -35,7 +34,7 @@ FlightState_e FlightStateDeterminer::update(const Timestamp_s& timestamp, const 
         }
     } else if (getFlightState() == ASCENT) {
         // Check for burnout
-        if (m_burnoutDebounce.check(state1D.accelerationMSS < 0, timestamp.runtime_ms) && !m_firstStageBurnout.get()) {
+        if (hasBurnedOut(timestamp, state1D) && !m_firstStageBurnout.get()) {
             m_firstStageBurnout.set(true);
             m_burnoutStopWatch.startWatch(timestamp.runtime_ms);
         }
@@ -93,19 +92,18 @@ bool FlightStateDeterminer::hasLaunched(const Timestamp_s& timestamp, const Stat
     // A low pass filter with a low constant is used in StateEstimator1D to allow the race condition to work out.
     const bool aboveLaunchAltitude = state1D.altitudeM >= LAUNCH_ALTITUDE_THRESHOLD_M;
     // Run the debounce check
-    if (m_launchDebounce.check(aboveLaunchAcceleration || aboveLaunchAltitude, timestamp.runtime_ms)) {
-        return true;
-    }
-    return false;
+    return m_launchDebounce.check(aboveLaunchAcceleration || aboveLaunchAltitude, timestamp.runtime_ms);
+}
+
+bool FlightStateDeterminer::hasBurnedOut(const Timestamp_s& timestamp, const State1D_s& state1D) {
+    return m_burnoutDebounce.check(state1D.accelerationMSS < 0, timestamp.runtime_ms);
 }
 
 bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D) {
     // Mach lockout
     if (m_machLockDebounce.check(state1D.velocityMS < MACH_LOCKOUT_THRESHOLD_MS, timestamp.runtime_ms)) {
         // Track maximum altitude
-        if (state1D.altitudeM > m_maxAltitude) {
-            m_maxAltitude = state1D.altitudeM;
-        }
+        m_maxAltitude = std::max(m_maxAltitude, state1D.altitudeM);
         // Run debounce checks
         const bool goingDown = state1D.velocityMS < 0;
         const bool belowApogeeChangeThreshold = state1D.altitudeM < m_maxAltitude - APOGEE_ALTITUDE_CHANGE_THRESHOLD_M;

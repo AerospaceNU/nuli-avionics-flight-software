@@ -36,6 +36,8 @@ public:
 private:
     bool hasLaunched(const Timestamp_s& timestamp, const State1D_s& state1D);
 
+    bool hasBurnedOut(const Timestamp_s& timestamp, const State1D_s& state1D);
+
     bool apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D);
 
     bool hasLanded(const Timestamp_s& timestamp, const State1D_s& state1D);

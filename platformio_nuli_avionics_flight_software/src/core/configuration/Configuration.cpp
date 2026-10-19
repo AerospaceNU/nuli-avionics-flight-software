@@ -2,8 +2,6 @@
 #include "core/HardwareAbstraction.h"
 #include "util/CRC.h"
 
-constexpr ConfigurationID_t Configuration::REQUIRED_CONFIGS[];
-
 void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint16_t allConfigsLength) {
     // Add all requested configs to the list, ignoring duplicates
     for (int i = 0; i < allConfigsLength; i++) {
@@ -85,7 +83,7 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
                 // This retrieves a specific default value from the buffer
                 memcpy(m_configurations[i].data, (m_configurations[i].data - m_dataBuffer) + bufferDefaultValues, m_configurations[i].size);
                 m_configurations[i].m_isUpdated = true;
-                m_debug->warn("%s invalid value, resting to default", getConfigurationName(m_configurations[i].id));
+                m_debug->warn("%s invalid value, resetting to default", getConfigurationName(m_configurations[i].id));
             } else {
                 m_configurations[i].m_isUpdated = false;
             }

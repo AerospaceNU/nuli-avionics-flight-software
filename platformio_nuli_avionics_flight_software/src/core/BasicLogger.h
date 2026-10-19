@@ -156,13 +156,11 @@ public:
     }
 
     uint32_t getMaxLogLengthSeconds() const {
-        const float loopTimeSec = m_hardware->getTargetLoopTimeMs() / 1000.0f;
-        return static_cast<uint32_t>(m_numEntries * loopTimeSec);
+        return static_cast<uint32_t>(m_numEntries * m_hardware->getTargetLoopTimeS());
     }
 
     uint32_t getRemainingLogLengthSeconds() const {
-        const float loopTimeSec = m_hardware->getTargetLoopTimeMs() / 1000.0f;
-        return static_cast<uint32_t>((m_numEntries - m_logWriteIndex) * loopTimeSec);
+        return static_cast<uint32_t>((m_numEntries - m_logWriteIndex) * m_hardware->getTargetLoopTimeS());
     }
 
     void offloadCallback(DebugStream* debugStream) {

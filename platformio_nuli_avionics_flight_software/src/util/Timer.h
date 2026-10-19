@@ -87,6 +87,11 @@ public:
         m_isInitialized = true;
     }
 
+    /** @brief The alarm reads finished from now on, until it is started again. */
+    void triggerImmediately() {
+        startAlarm(0, 0);
+    }
+
     bool isAlarmFinished(const uint32_t currentTime) const {
         if (!m_isInitialized) return false;
         return currentTime >= m_startTime + m_durationTime;

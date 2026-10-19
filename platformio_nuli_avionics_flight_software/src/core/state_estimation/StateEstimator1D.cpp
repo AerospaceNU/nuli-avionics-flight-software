@@ -3,8 +3,6 @@
 #include "core/generic_hardware/GenericHardware.h"
 #include <algorithm>
 
-constexpr ConfigurationID_t StateEstimator1D::REQUIRED_CONFIGS[];
-
 void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
     m_configuration = configuration;
@@ -12,12 +10,11 @@ void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* confi
     m_groundTemperature = m_configuration->getConfigurable<GROUND_TEMPERATURE_c>();
     m_boardOrientation = m_configuration->getConfigurable<BOARD_ORIENTATION_c>();
 
-    m_kalmanFilter.setDeltaTime(float(m_hardware->getTargetLoopTimeMs()) / 1000.0f);
+    m_kalmanFilter.setDeltaTime(m_hardware->getTargetLoopTimeS());
     m_kalmanFilter.setAccelerometerCovariance(1);
 
-    // Trigger both alarms immediately, required for them to initialize
-    m_boardOrientationReferenceTimer.startAlarm(0, 0);
-    m_groundElevationReferenceTimer.startAlarm(0, 0);
+    m_boardOrientationReferenceTimer.triggerImmediately();
+    m_groundElevationReferenceTimer.triggerImmediately();
 }
 
 State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightState_e& flightState) {

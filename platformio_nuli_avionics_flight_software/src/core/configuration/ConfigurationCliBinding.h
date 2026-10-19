@@ -1,3 +1,6 @@
+#ifndef CONFIGURATIONCLIBINDING_H
+#define CONFIGURATIONCLIBINDING_H
+
 #include <type_traits>
 #include <cstdint>
 #include <tuple>
@@ -123,3 +126,5 @@ private:
         (void)dummy; // suppress unused warning
     }
 };
+
+#endif //CONFIGURATIONCLIBINDING_H

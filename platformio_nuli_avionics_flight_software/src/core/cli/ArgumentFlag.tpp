@@ -7,7 +7,7 @@
 
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, T defaultValue, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly)
-        : BaseFlag(name, helpText, required, callback, highBandwidthOnly), m_defaultValue(defaultValue), m_defaultValueSet(true) {}
+        : BaseFlag(name, helpText, required, callback, highBandwidthOnly), m_defaultValueSet(true), m_defaultValue(defaultValue) {}
 
 template<typename T>
 ArgumentFlag<T>::ArgumentFlag(const char* name, const char* helpText, bool required, const std::function<void(DebugStream*)> &callback, bool highBandwidthOnly)
