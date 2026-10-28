@@ -204,10 +204,10 @@ public:
                 configBufLen = 0;
             }
 
+            failCount = id == LOG_EMPTY ? failCount + 1 : 0;
             // A corrupt entry (id survived a torn write, payload didn't - see computeCrc()) is
             // skipped exactly like an empty one, so external output never sees a foreign line.
             if (id == LOG_EMPTY || computeCrc(m_dataStruct) != m_dataStruct.crc) {
-                if (id == LOG_EMPTY) failCount++;
                 if (failCount >= 4) break;
             } else if (id == LOG_DATA) {
                 m_printFunction(logData, debugStream);
@@ -268,6 +268,7 @@ public:
                 if (++failCount >= 4) break;
                 continue;
             }
+            failCount = 0;
             if (computeCrc(m_dataStruct) != m_dataStruct.crc) continue;
             // Only [id][data] goes over the wire - crc bytes would silently desync the host's
             // fixed 1+dataSize-per-entry framing, since the preamble never describes them.
