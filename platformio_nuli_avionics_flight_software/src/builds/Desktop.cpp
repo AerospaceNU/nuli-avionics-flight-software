@@ -1,119 +1,215 @@
 #include "Avionics.h"
-AVIONICS_DESKTOP_MAIN
-#include "drivers/desktop/FlightDataReader.h"
 #include "drivers/desktop/DesktopDebug.h"
-#include "drivers/desktop/DummySystemClock.h"
+#include "drivers/desktop/DesktopFlash.h"
+#include "drivers/desktop/DesktopPyro.h"
+#include "drivers/desktop/DesktopSystemClock.h"
+#include "drivers/desktop/SimulationLogFile.h"
 #include "core/HardwareAbstraction.h"
+#include "core/BasicLogger.h"
+#include "core/BasicLoggerHelper.h"
+#include "core/DualDeploy.h"
 #include "core/cli/IntegratedParser.h"
-#include "core/transform/DiscreteRotation.h"
 #include "core/configuration/Configuration.h"
-#include "core/configuration/ConfigurationCliBinding.h"
 #include "core/state_estimation/FlightStateDeterminer.h"
 #include "core/state_estimation/OrientationEstimator.h"
-#include "core/state_estimation/StateEstimatorBasic6D.h"
 #include "core/state_estimation/StateEstimator1D.h"
+#include "core/transform/DiscreteRotation.h"
+#include <cmath>
+#include <cstring>
+#include <memory>
+#include <string>
 
-// Desktop sim specific stuff
-constexpr float FCB_V0_ACCEL_SCALE_FACTOR = 0.0071784678f;
-constexpr float FCB_V0_GYRO_SCALE_FACTOR = 0.0012217305f;
-FlightDataReader flightDataReader;
-
-// Hardware
-DummySystemClock desktopClock(100);
-DesktopDebug<1000> debug;
-Barometer barometer;
-const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local().rotateZ90local().rotateX90local().inverse();
-Accelerometer accelerometer(&imuRotation);
-Gyroscope gyroscope(&imuRotation);
-VolatileConfigurationMemory<1000> fram;
-
-// Core components
-HardwareAbstraction hardware(debug, desktopClock, 100);
-FlightStateDeterminer flightStateDeterminer;
-StateEstimator1D stateEstimator1D;
-OrientationEstimator orientationEstimator;
-StateEstimatorBasic6D stateEstimator6D(true);
-IntegratedParser cliParser;
-ConfigurationID_t desktopRequiredConfigs[] = {BOARD_NAME_c};
-Configuration configuration({desktopRequiredConfigs, Configuration::REQUIRED_CONFIGS, FlightStateDeterminer::REQUIRED_CONFIGS, StateEstimator1D::REQUIRED_CONFIGS, OrientationEstimator::REQUIRED_CONFIGS});
-ConfigurationCliBindings<GROUND_ELEVATION_c, GROUND_TEMPERATURE_c, BOARD_NAME_c, CONFIGURATION_VERSION_c> configurationCliBindings;
-// CLI
-SimpleFlag helpFlag("--help", "Prints all available CLI commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* helpGroup[] = {&helpFlag};
-
-void setup() {
-    // Setup sim input/output. Start at ts=10145116 to match the prior clipped MBTA_FLIGHT_DATA.txt
-    // (skips ~10s of pre-launchpad handling at the start of board1's recording).
-    flightDataReader.setup("../../rocket-flight-data/data/2025-11-15 MBTA/2025-11-15 V1 MBTA ridealong board1.txt", '\t', 10145116);
-    debug.outputToFile("../simulation/output.txt");
-
-    // Initialize
-    configuration.setDefault<BOARD_NAME_c>("Desktop");
-    configuration.setDefault<FLIGHT_STATE_c>(PRE_FLIGHT);
-
-    // Setup Hardware
-    const int16_t framID = hardware.appendFramMemory(&fram);
-    hardware.appendBarometer(&barometer);
-    hardware.appendAccelerometer(&accelerometer);
-    hardware.appendGyroscope(&gyroscope);
-    hardware.setup();
-
-    // Setup components
-    debug.message("SETTING UP COMPONENTS");
-    configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
-    configurationCliBindings.setupAll(&configuration, &cliParser);
-    cliParser.addFlagGroup(helpGroup);
-    cliParser.addStream(&debug);
-    stateEstimator1D.setup(&hardware, &configuration);
-    orientationEstimator.setup(&hardware, &configuration);
-    stateEstimator6D.setup(&hardware, &configuration);
-    flightStateDeterminer.setup(&configuration);
-    debug.message("COMPONENTS SET UP COMPLETE\r\n");
+// clang-format off
+LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
+    struct DesktopLogData {
+        uint32_t timestampMs;
+        float pressurePa, barometerTemperatureK;
+        float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z;
+        float altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
+        int32_t flightState;
+        bool barometerValid, drogueFired, mainFired;
+        float tiltMagnitudeDeg;
+    } remove_struct_padding;
+)
+// clang-format on
+static constexpr const char* LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
+void printLog(const DesktopLogData& d, DebugStream* debug) {
+    BasicLoggerHelper::genericBasicLogDataPrinter<HEADER_OUTPUT>(d, debug);
 }
 
-void loop() {
-    // Run core hardware
-    RocketState_s state{};
-    state.timestamp = hardware.enforceLoopTime();
-    hardware.runAndReadAllHardware();
+constexpr uint32_t FLASH_SIZE_BYTES = 32 * 1024 * 1024;
+const DiscreteRotation imuRotation = DiscreteRotation::identity();
+ConfigurationID_t desktopRequiredConfigs[] = {FIRMWARE_VERSION_c, BOARD_NAME_c};
 
-    // Read in the flight data
-    flightDataReader.interpolateNext(state.timestamp.runtime_ms); // The FCB recorded at ~50 hz, and our code will run at 100hz
-    barometer.inject(flightDataReader.getKey<float>("tempK"), 0, flightDataReader.getKey<float>("pressurePa"));
-    accelerometer.inject({flightDataReader.getKey<float>("accelX"), flightDataReader.getKey<float>("accelY"), flightDataReader.getKey<float>("accelZ")}, 0);
-    gyroscope.inject({flightDataReader.getKey<float>("gyroX"), flightDataReader.getKey<float>("gyroY"), flightDataReader.getKey<float>("gyroZ")}, 0);
+/**
+ * @brief One boot of a dual deploy flight computer, fed from a log file instead of sensors
+ * @details Rebuilt on a simulated reboot - the FRAM and flash it's given persist across boots, like on a board.
+ */
+class DesktopAvionics {
+public:
+    DesktopAvionics(DebugStream& debug, DesktopSystemClock& clock, FramMemory& fram, FlashMemory& flash) :
+        droguePyro(clock), mainPyro(clock), hardware(debug, clock, 100) {
+        configuration.setDefault<BOARD_NAME_c>("Desktop");
 
+        const int16_t framID = hardware.appendFramMemory(&fram);
+        const int16_t flashID = hardware.appendFlashMemory(&flash);
+        hardware.appendPyro(&droguePyro);
+        hardware.appendPyro(&mainPyro);
+        hardware.appendBarometer(&barometer);
+        hardware.appendAccelerometer(&accelerometer);
+        hardware.appendGyroscope(&gyroscope);
+        hardware.setup();
 
-    // Determine state
-    state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
-    state.state6D = stateEstimator6D.update(state.timestamp, state.state1D, state.orientation, flightStateDeterminer.getFlightState());
-    state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
-
-    // Run CLI
-    cliParser.runCli();
-
-    // Update any changes to the configuration
-    configuration.pushUpdatesToMemory();
-
-    // Print out current values
-    // debug.message("%d\t%.4f\t%.1f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.4f\t%.2f\t%.2f\t%.4f\t%.2f\t%d",
-    //               state.timestamp.runtime_ms,
-    //               barometer.getPressurePa(), barometer.getTemperatureK(),
-    //               accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
-    //               gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
-    //               state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState
-    // );
-    // debug.message("%.2f\t%.2f\t%.2f\t%d", state.orientation.tiltMagnitudeDeg, state.state1D.altitudeM,state.state1D.unfilteredNoOffsetAltitudeM, state.flightState);
-
-    if (state.orientation.tiltMagnitudeDeg > 88 && state.timestamp.tick > 100) {
-       exit(0);
+        configuration.setup(&hardware, framID);
+        stateEstimator1D.setup(&hardware, &configuration);
+        orientationEstimator.setup(&hardware, &configuration);
+        flightStateDeterminer.setup(&configuration);
+        dualDeploy.setup(&configuration, &droguePyro, &mainPyro);
+        logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, HEADER_OUTPUT, printLog, &configuration);
     }
 
-    debug.message("%d\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%.2f\t%d",
-        state.timestamp.runtime_ms,
-        state.state6D.position.x, state.state6D.position.y, state.state6D.position.z,
-        state.state6D.velocity.x, state.state6D.velocity.y, state.state6D.velocity.z,
-        state.state6D.acceleration.x, state.state6D.acceleration.y, state.state6D.acceleration.z,
-        state.orientation.tiltMagnitudeDeg, state.flightState);
+    void loop(const SimulationLogFile::Sample& sample) {
+        RocketState_s state{};
+        state.timestamp = hardware.enforceLoopTime();
+        hardware.runAndReadAllHardware();
+        barometer.inject(sample[1], 0, sample[0]);
+        if (std::isfinite(sample[2]) && std::isfinite(sample[3]) && std::isfinite(sample[4])) {
+            accelerometer.inject({sample[2], sample[3], sample[4]}, 0);
+        } else {
+            accelerometer.invalidate();
+        }
+        gyroscope.inject({sample[5], sample[6], sample[7]}, 0);
+
+        state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
+        state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
+        state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
+        dualDeploy.update(state, flightStateDeterminer);
+
+        if (state.flightState == PRE_FLIGHT) {
+            if (flightStateDeterminer.isStateTransitionTick()) logger.disableContinuousLogging();
+            logger.setLogDelay(5000);
+        } else if (state.flightState == ASCENT) {
+            if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);
+            logger.enableContinuousLogging();
+        } else if (state.flightState == POST_FLIGHT) {
+            logger.disableContinuousLogging();
+            logger.setLogDelay(5000);
+        } else {
+            logger.enableContinuousLogging();
+        }
+
+        configuration.pushUpdatesToMemory();
+        logger.log({
+                state.timestamp.runtime_ms, barometer.getPressurePa(), barometer.getTemperatureK(),
+                accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
+                gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
+                state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
+                state.state1D.barometerValid, droguePyro.isFired(), mainPyro.isFired(),
+                state.orientation.tiltMagnitudeDeg
+            });
+    }
+
+    void offload(DebugStream* output) {
+        logger.offloadCallback(output);
+    }
+
+    /** @brief Sets a stored config value as a board's CLI would; takes effect from the next boot. False if unknown. */
+    bool setConfig(const char* name, double value) {
+        if (strcmp(name, "DROGUE_DELAY") == 0) configuration.getConfigurable<DROGUE_DELAY_c>().set((uint32_t)value);
+        else if (strcmp(name, "MAIN_ELEVATION") == 0) configuration.getConfigurable<MAIN_ELEVATION_c>().set((float)value);
+        else if (strcmp(name, "FLIGHT_STATE") == 0) configuration.getConfigurable<FLIGHT_STATE_c>().set((int32_t)value);
+        else if (strcmp(name, "GROUND_ELEVATION") == 0) configuration.getConfigurable<GROUND_ELEVATION_c>().set((float)value);
+        else if (strcmp(name, "GROUND_TEMPERATURE") == 0) configuration.getConfigurable<GROUND_TEMPERATURE_c>().set((float)value);
+        else if (strcmp(name, "BOARD_ORIENTATION") == 0) configuration.getConfigurable<BOARD_ORIENTATION_c>().set((uint8_t)value);
+        else return false;
+        configuration.pushUpdatesToMemory();
+        return true;
+    }
+
+private:
+    Barometer barometer;
+    Accelerometer accelerometer{&imuRotation};
+    Gyroscope gyroscope{&imuRotation};
+    DesktopPyro droguePyro;
+    DesktopPyro mainPyro;
+    HardwareAbstraction hardware;
+    Configuration configuration{{
+        desktopRequiredConfigs,
+        Configuration::REQUIRED_CONFIGS,
+        FlightStateDeterminer::REQUIRED_CONFIGS,
+        DualDeploy::REQUIRED_CONFIGS,
+        StateEstimator1D::REQUIRED_CONFIGS,
+        OrientationEstimator::REQUIRED_CONFIGS
+    }};
+    FlightStateDeterminer flightStateDeterminer;
+    DualDeploy dualDeploy;
+    StateEstimator1D stateEstimator1D;
+    OrientationEstimator orientationEstimator;
+    BasicLogger<DesktopLogData> logger;
+    IntegratedParser cliParser;
+};
+
+int main(int argc, char** argv) {
+    if (argc < 3) {
+        printf("usage: desktop <input log> <output log> [--reboot-at <sim ms>]... [--reboot-gap <ms>] [--set NAME=VALUE]...\n");
+        return 1;
+    }
+    SimulationLogFile input;
+    if (!input.load(argv[1])) {
+        printf("No data rows in %s, or they span more than 12 hours\n", argv[1]);
+        return 1;
+    }
+    std::vector<uint32_t> rebootTimesMs;
+    std::vector<const char*> settings;
+    uint32_t rebootGapMs = 0;
+    for (int i = 3; i + 1 < argc; i += 2) {
+        if (strcmp(argv[i], "--reboot-at") == 0) rebootTimesMs.push_back((uint32_t)strtoul(argv[i + 1], nullptr, 10));
+        if (strcmp(argv[i], "--reboot-gap") == 0) rebootGapMs = (uint32_t)strtoul(argv[i + 1], nullptr, 10);
+        if (strcmp(argv[i], "--set") == 0) settings.push_back(argv[i + 1]);
+    }
+    std::sort(rebootTimesMs.begin(), rebootTimesMs.end());
+    FILE* output = fopen(argv[2], "w");
+    if (!output) {
+        printf("Can't write %s\n", argv[2]);
+        return 1;
+    }
+
+    DesktopDebug debug;
+    DesktopSystemClock clock;
+    VolatileConfigurationMemory<MAX_CONFIGURATION_LENGTH * 2> fram;
+    DesktopFlash flash(FLASH_SIZE_BYTES);
+    if (!settings.empty()) {
+        DesktopFlash setupFlash(FLASH_SIZE_BYTES);
+        DesktopAvionics configurer(debug, clock, fram, setupFlash);
+        for (const char* setting: settings) {
+            const char* equals = strchr(setting, '=');
+            const std::string name = equals ? std::string(setting, equals - setting) : std::string(setting);
+            if (!equals || !configurer.setConfig(name.c_str(), strtod(equals + 1, nullptr))) {
+                printf("Unknown setting %s\n", setting);
+                return 1;
+            }
+        }
+    }
+    std::unique_ptr<DesktopAvionics> avionics(new DesktopAvionics(debug, clock, fram, flash));
+    uint32_t bootTimeMs = 0;
+    size_t nextReboot = 0;
+    for (size_t i = 0; i < input.getSamples().size(); i++) {
+        const uint32_t simTimeMs = (uint32_t)i * 10;
+        if (nextReboot < rebootTimesMs.size() && simTimeMs >= rebootTimesMs[nextReboot]) {
+            debug.message("Rebooting at %u ms", simTimeMs);
+            bootTimeMs = simTimeMs;
+            clock.setRuntimeMs(0);
+            avionics.reset();
+            avionics.reset(new DesktopAvionics(debug, clock, fram, flash));
+            nextReboot++;
+        }
+        if (bootTimeMs > 0 && simTimeMs - bootTimeMs < rebootGapMs) continue;
+        clock.setRuntimeMs(simTimeMs - bootTimeMs);
+        avionics->loop(input.getSamples()[i]);
+    }
+
+    DesktopDebug outputStream(output);
+    avionics->offload(&outputStream);
+    fclose(output);
+    return 0;
 }

@@ -17,10 +17,10 @@ public:
                 const int errorCode = parse(stream->getLine());
                 if (errorCode == 0) {
                     runFlags(stream);
-                    resetFlags();
                 } else {
                     stream->error("Invalid message: %d, %s", errorCode, stream->getLine());
                 }
+                resetFlags();
             }
         }
     }

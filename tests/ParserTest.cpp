@@ -4,6 +4,10 @@
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
 #include "core/cli/ReturnCodes.h"
+#include "core/cli/IntegratedParser.h"
+#include "core/cli/DebugStreamQueue.h"
+#include <string>
+#include <vector>
 
 void callback(DebugStream*) {}
 
@@ -246,4 +250,71 @@ TEST(ParserTest, TestRunFlagsSkipsUnsetFlags) {
     ASSERT_EQ(testParserA.runFlags(&stream), CLI_SUCCESS);
     EXPECT_TRUE(aRan);
     EXPECT_FALSE(bRan);
+}
+
+class ScriptedDebugStream : public DebugStream {
+public:
+    std::vector<std::string> lines;
+
+    bool readLine() override {
+        if (lines.empty()) return false;
+        m_line = lines.front();
+        lines.erase(lines.begin());
+        return true;
+    }
+
+    char* getLine() override { return &m_line[0]; }
+
+protected:
+    size_t write(const void* buffer, size_t size) override { return size; }
+
+private:
+    std::string m_line;
+};
+
+TEST(ParserTest, TestFailedParseLeavesNoFlagSet) {
+    IntegratedParser parser;
+    ScriptedDebugStream stream;
+    bool drogueFired = false, mainFired = false;
+    SimpleFlag fire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
+    SimpleFlag drogue("-d", "Fires drogue", false, [&drogueFired](DebugStream*) { drogueFired = true; });
+    SimpleFlag mainPyro("-m", "Fires main", false, [&mainFired](DebugStream*) { mainFired = true; });
+    BaseFlag* fireGroup[] = {&fire, &drogue, &mainPyro};
+    parser.addFlagGroup(fireGroup);
+    parser.addStream(&stream);
+
+    stream.lines = {"--fire -d -x -y", "--fire -m"};
+    parser.runCli();
+    parser.runCli();
+    EXPECT_FALSE(drogueFired);
+    EXPECT_TRUE(mainFired);
+}
+
+static std::vector<std::string> drainLines(DebugStream& stream) {
+    std::vector<std::string> lines;
+    while (stream.readLine()) lines.emplace_back(stream.getLine());
+    return lines;
+}
+
+TEST(DebugStreamQueueTest, CommandThatDoesNotFitIsDroppedWhole) {
+    // A truncated "-set 1000" could parse as "-set 10": a packet that doesn't fit must be dropped, not cut
+    DebugStreamQueue<32, 16> queue;
+    const std::string first = "--PYRO_FIRE_DURATION -set 1";
+    const std::string second = "--PYRO_FIRE_DURATION -set 1000";
+    queue.pushIncoming((const uint8_t*)first.c_str(), (uint8_t)first.size());
+    queue.pushIncoming((const uint8_t*)second.c_str(), (uint8_t)second.size());
+    const std::vector<std::string> lines = drainLines(queue);
+    ASSERT_EQ(lines.size(), 1u);
+    EXPECT_EQ(lines[0], first);
+}
+
+TEST(DebugStreamQueueTest, OverLongLineIsDroppedAndTheNextOneSurvives) {
+    DebugStreamQueue<512, 16> queue;
+    const std::string tooLong = "--PYRO_FIRE_DURATION -set " + std::string(200, '1');
+    const std::string next = "--help";
+    queue.pushIncoming((const uint8_t*)tooLong.c_str(), (uint8_t)tooLong.size());
+    queue.pushIncoming((const uint8_t*)next.c_str(), (uint8_t)next.size());
+    const std::vector<std::string> lines = drainLines(queue);
+    ASSERT_EQ(lines.size(), 1u);
+    EXPECT_EQ(lines[0], next);
 }

@@ -10,9 +10,7 @@
 template <unsigned N>
 class SerialDebug final : public DebugStream {
 public:
-    // watchdog is optional (null where there's none, e.g. ground station) - pet while waiting so an
-    // unattended dev build (no terminal open yet) doesn't get reset-looped by a stale armed watchdog.
-    // echo, if set, immediately sends each received character back out over Serial as it's read.
+    // watchdog (optional) is petted while waiting to connect; echo sends received characters back
     explicit SerialDebug(const bool waitToConnect = false, WatchdogTimer* watchdog = nullptr, const bool echo = false) :
         m_wait(waitToConnect), m_watchdog(watchdog), m_echo(echo) {
         m_isHighBandwidth = true; // a real USB/UART link, not a slow relayed one
@@ -30,21 +28,23 @@ public:
     }
 
     bool readLine() override {
-        while (Serial.available() > 0) {
+        char echo[MAX_CHARS_PER_READ];
+        uint32_t echoLength = 0;
+        bool lineReady = false;
+        for (uint32_t i = 0; i < MAX_CHARS_PER_READ && !lineReady && Serial.available() > 0; i++) {
             const char c = Serial.read();
             if (m_serialReadIndex < N - 1) {
                 m_serialRead[m_serialReadIndex++] = c;
-                if (m_echo) {
-                    Serial.print(c);
-                }
+                echo[echoLength++] = c;
             }
             if (c == '\n') {
                 m_serialRead[m_serialReadIndex] = '\0';
                 m_serialReadIndex = 0;
-                return true;
+                lineReady = true;
             }
         }
-        return false;
+        if (m_echo && echoLength > 0) Serial.write(echo, echoLength);
+        return lineReady;
     }
 
     char* getLine() override {
@@ -52,6 +52,8 @@ public:
     }
 
 private:
+    static constexpr uint32_t MAX_CHARS_PER_READ = 256;
+
     bool m_wait;
     WatchdogTimer* m_watchdog;
     bool m_echo;

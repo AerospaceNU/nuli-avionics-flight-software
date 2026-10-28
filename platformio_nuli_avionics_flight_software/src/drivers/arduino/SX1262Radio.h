@@ -84,6 +84,8 @@ protected:
     DebugStream* m_debugStream = nullptr;
 
     RadioLinkStatus m_status = RadioLinkStatus::IDLE;
+    bool m_ok = false;           ///< begin() succeeded; otherwise every call is a no-op (a hung module would trip the watchdog)
+    uint32_t m_txDeadlineMs = 0; ///< a transmit not done by then lost its TX-done interrupt (module reset)
     mutable RadioMessage m_lastMessage{};
     mutable bool m_messageAvailable = false;
 };

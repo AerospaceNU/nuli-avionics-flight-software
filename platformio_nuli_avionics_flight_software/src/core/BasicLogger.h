@@ -34,13 +34,12 @@ public:
                     m_endFlag("-e", "End", false, [](DebugStream*) {}),
                     m_offloadBinaryFlag("-b", "Binary format", false, [](DebugStream*) {}),
                     m_eraseFlag("--erase", "Erases the flight log", true, [this](DebugStream* debugStream) { this->eraseCallback(debugStream); }),
-                    // Dumps the whole flash log / streams continuously - both restricted to
-                    // high-bandwidth streams (see BaseFlag::isHighBandwidthOnly), so they're
-                    // silently no-ops over a low-bandwidth link like CLI-over-radio.
+                    // High-bandwidth only (see BaseFlag): silently ignored over CLI-over-radio
                     m_offloadFlag("--offload", "Downloads the flight log", true, [this](DebugStream* debugStream) { this->offloadCallback(debugStream); }, true),
-                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true) {}
+                    m_streamFlag("--streamLog", "Streaming status", true, [this](DebugStream* debugStream) { this->streamCallback(debugStream); }, true),
+                    m_formatFlag("--logFormat", "Prints the log data struct definition", true, [this](DebugStream* debugStream) { this->printFormat(debugStream); }, true) {}
 
-    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header,
+    void setup(HardwareAbstraction* hardware, Parser* parser, const uint8_t flashID, const char* header, const char* format,
                void (*printFunction)(const LogDataStruct&, DebugStream*),
                Configuration* configuration = nullptr) {
         m_hardware = hardware;
@@ -48,6 +47,7 @@ public:
         m_flash = m_hardware->getFlashMemory(flashID);
         m_logWriteIndex = 0;
         m_headerStr = header;
+        m_formatStr = format;
         m_printFunction = printFunction;
         m_configuration = configuration;
         m_watchdog = &m_hardware->getWatchdogTimer(); // single instance, owned by HardwareAbstraction - not injected separately
@@ -59,6 +59,7 @@ public:
         parser->addFlagGroup(m_offloadGroup);
         parser->addFlagGroup(m_logGroup);
         parser->addFlagGroup(m_streamGroup);
+        parser->addFlagGroup(m_formatGroup);
 
         m_numEntries = m_flash->getMemorySizeBytes() / sizeof(InternalStruct_s);
 
@@ -156,24 +157,21 @@ public:
     }
 
     uint32_t getMaxLogLengthSeconds() const {
-        const float loopTimeSec = m_hardware->getTargetLoopTimeMs() / 1000.0f;
-        return static_cast<uint32_t>(m_numEntries * loopTimeSec);
+        return static_cast<uint32_t>(m_numEntries * m_hardware->getTargetLoopTimeS());
     }
 
     uint32_t getRemainingLogLengthSeconds() const {
-        const float loopTimeSec = m_hardware->getTargetLoopTimeMs() / 1000.0f;
-        return static_cast<uint32_t>((m_numEntries - m_logWriteIndex) * loopTimeSec);
+        return static_cast<uint32_t>((m_numEntries - m_logWriteIndex) * m_hardware->getTargetLoopTimeS());
     }
 
     void offloadCallback(DebugStream* debugStream) {
         if (m_offloadBinaryFlag.isSet()) { binaryOffloadCallback(debugStream); return; }
         uint32_t failCount = 0;
         debugStream->message("Starting Offload");
+        printFormat(debugStream);
         debugStream->data(m_headerStr);
 
-        // Bumped from 512: a reconstructed CONFIG line now includes every registered field
-        // (previously a hand-picked subset), including LAUNCH_ANGLE/GYROSCOPE_BIAS printed
-        // component-wise - comfortably exceeds the old size on its own.
+        // Also holds a reconstructed CONFIG line (every field), which exceeds 512
         constexpr size_t MSG_BUF_SIZE = 1024;
         char msgBuf[MSG_BUF_SIZE];
         size_t msgBufLen = 0;
@@ -206,10 +204,10 @@ public:
                 configBufLen = 0;
             }
 
+            failCount = id == LOG_EMPTY ? failCount + 1 : 0;
             // A corrupt entry (id survived a torn write, payload didn't - see computeCrc()) is
             // skipped exactly like an empty one, so external output never sees a foreign line.
             if (id == LOG_EMPTY || computeCrc(m_dataStruct) != m_dataStruct.crc) {
-                if (id == LOG_EMPTY) failCount++;
                 if (failCount >= 4) break;
             } else if (id == LOG_DATA) {
                 m_printFunction(logData, debugStream);
@@ -245,6 +243,7 @@ public:
     // local struct change can't be silently misparsed; writeRaw blocks on USB backpressure so saturation can't drop records.
     void binaryOffloadCallback(DebugStream* debugStream) {
         debugStream->message("Starting Offload");
+        printFormat(debugStream);
 
         // Header CRC fingerprints the struct layout (header string is kept in sync with LogDataStruct), so renames/reorders are detected too.
         const uint16_t dataSize = sizeof(LogDataStruct);
@@ -265,11 +264,12 @@ public:
 
             uint8_t id;
             offload(i, id); // loads m_dataStruct = {id, data, crc}
-            if (id == LOG_EMPTY || computeCrc(m_dataStruct) != m_dataStruct.crc) {
+            if (id == LOG_EMPTY) {
                 if (++failCount >= 4) break;
                 continue;
             }
             failCount = 0;
+            if (computeCrc(m_dataStruct) != m_dataStruct.crc) continue;
             // Only [id][data] goes over the wire - crc bytes would silently desync the host's
             // fixed 1+dataSize-per-entry framing, since the preamble never describes them.
             if (!debugStream->writeRaw(m_dataStructStart, sizeof(InternalStruct_s) - sizeof(m_dataStruct.crc))) {
@@ -313,6 +313,7 @@ public:
     void streamCallback(DebugStream* debugStream) {
         if (m_startFlag.isSet() && !m_endFlag.isSet()) {
             m_enableStreaming = true;
+            printFormat(debugStream);
             debugStream->message("Streaming enabled");
         } else if (m_endFlag.isSet() && !m_startFlag.isSet()) {
             m_enableStreaming = false;
@@ -339,6 +340,14 @@ public:
     }
 
 private:
+    void printFormat(DebugStream* debugStream) {
+        if (!m_formatStr) return;
+        static const char prefix[] = "LOG_FORMAT\t";
+        debugStream->writeRaw(prefix, sizeof(prefix) - 1);
+        debugStream->writeRaw(m_formatStr, strlen(m_formatStr));
+        debugStream->writeRaw("\n", 1);
+    }
+
     static uint16_t computeCrc(const InternalStruct_s& entry) {
         return crc16(&entry, sizeof(InternalStruct_s) - sizeof(entry.crc));
     }
@@ -351,12 +360,8 @@ private:
         m_logWriteIndex++;
     }
 
-    // Reconstructs one logConfig() record (header + raw config bytes) into a "CONFIG\t..." line,
-    // written into lineBuf then printed. Always decodes from the STORED bytes, never from
-    // m_configuration's live values - the record being offloaded may be from a previous boot,
-    // whose config could legitimately differ from today's. Only trusts the live field list/offsets
-    // to interpret those bytes when both the stored version AND key CRC match today's live ones;
-    // otherwise the layout may have changed since this was logged, and guessing would misread it.
+    // Prints a logConfig() record as a "CONFIG\t..." line, decoded from the stored bytes using the
+    // live layout only when the stored version and key CRC both match it
     void flushConfigBuffer(DebugStream* debugStream, const uint8_t* raw, size_t rawLen, char* lineBuf, size_t lineBufSize) {
         if (!m_configuration || rawLen < 8) return;
         uint32_t storedVersion, storedKeyCrc;
@@ -372,16 +377,7 @@ private:
         debugStream->data("%s", lineBuf);
     }
 
-    // Chunks arbitrary bytes across multiple LOG_<X>/LOG_<X>_CONTINUATION records - shared by
-    // logMessage() (text) and logConfig() (a version+keyCrc header followed by raw config bytes).
-    // No watchdog pet here (unlike the old per-chunk pet this replaced): write() now just buffers in
-    // RAM (see FlashMemoryCommon's PAGE_BUFFER_CAPACITY/writeBufferedIfReady()), so this whole loop -
-    // bounded to a ~508-byte config or a short human-written message, never today's arbitrarily large
-    // blob - finishes in well under a millisecond regardless of chunk count. The main loop's own pet()
-    // every ~10ms tick is already far inside the 100ms watchdog timeout without any help from here.
-    // (On SAMD21, WatchdogSAMD::reset() busy-waits on a hardware SYNCBUSY bit before it can clear the
-    // timer, so calling it here at all - let alone once per chunk - is a real, avoidable cost: back-to-
-    // back pets with no gap measured at ~3.5ms/call, turning a 3-chunk config burst into an ~11ms stall.)
+    // No watchdog pet: flash writes only buffer in RAM, and a SAMD21 pet costs ~3.5ms
     void logChunked(const uint8_t* bytes, size_t totalLen, LogEntryID firstId, LogEntryID continuationId) {
         const size_t dataSize = sizeof(LogDataStruct);
         size_t pos = 0;
@@ -410,11 +406,13 @@ private:
     SimpleFlag m_eraseFlag;
     SimpleFlag m_offloadFlag;
     SimpleFlag m_streamFlag;
+    SimpleFlag m_formatFlag;
 
     BaseFlag* m_logGroup[3] = {&m_logFlag, &m_startFlag, &m_endFlag};
     BaseFlag* m_eraseGroup[1] = {&m_eraseFlag};
     BaseFlag* m_offloadGroup[2] = {&m_offloadFlag, &m_offloadBinaryFlag};
     BaseFlag* m_streamGroup[3] = {&m_streamFlag, &m_startFlag, &m_endFlag};
+    BaseFlag* m_formatGroup[1] = {&m_formatFlag};
 
     HardwareAbstraction* m_hardware = nullptr;
     DebugStream* m_debug = nullptr;
@@ -431,6 +429,7 @@ private:
     uint32_t m_currentTick = 0;
 
     const char* m_headerStr = nullptr;
+    const char* m_formatStr = nullptr;
     void (*m_printFunction)(const LogDataStruct&, DebugStream*) = nullptr;
 
     Configuration* m_configuration = nullptr;
