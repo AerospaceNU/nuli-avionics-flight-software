@@ -17,12 +17,12 @@ public:
     }
 
     void moveToPosition1() {
-        m_servo.write(m_position1Deg);
+        m_servo.writeMicroseconds(1100);
         m_atPosition2 = false;
     }
 
     void moveToPosition2() {
-        m_servo.write(m_position2Deg);
+        m_servo.writeMicroseconds(1900);
         m_atPosition2 = true;
     }
 
