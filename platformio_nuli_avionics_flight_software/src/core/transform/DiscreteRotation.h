@@ -7,24 +7,16 @@
 /**
  * @class DiscreteRotation
  * @brief Represents a 3D rotation composed only of 90° increments around the X, Y, or Z axes.
- * @details
- * This class allows for efficient manipulation of axis-aligned rotations by storing
- * the mapping of input axes to output axes and their corresponding signs. It supports
- * composing rotations, inverting them, and applying the transformation to 3D vectors.
+ * @details Stores the mapping of input axes to output axes and their signs, to efficiently compose, invert, and apply axis-aligned rotations.
  */
 class DiscreteRotation final : public Vector3DTransform {
 public:
-    /**
-     * @brief Constructs an identity rotation.
-     * @details
-     * Initializes the rotation such that X→X, Y→Y, and Z→Z, with all positive directions.
-     */
+    /** @brief Constructs an identity rotation: X->X, Y->Y, Z->Z, all positive directions. */
     DiscreteRotation() : axis{0, 1, 2}, sign{1, 1, 1} {}
 
     /**
      * @brief Returns an identity rotation.
-     * @details
-     * Equivalent to the default constructor. The rotation does not alter any input vector.
+     * @details Equivalent to the default constructor - does not alter any input vector.
      * @return A DiscreteRotation representing no rotation.
      */
     static DiscreteRotation identity() {
@@ -33,24 +25,23 @@ public:
 
     /**
      * @brief Applies this rotation to a 3D vector.
-     * @details
-     * The input vector's components are permuted and sign-flipped according to the rotation definition.
+     * @details Permutes and sign-flips the input vector's components per the rotation definition.
      * @param v Input vector to transform.
      * @return The transformed vector after applying the rotation.
      */
     Vector3D_s transform(const Vector3D_s& v) const override {
+        // sign[i] is always +-1, so a conditional negate is exact and avoids a soft-float multiply
+        // (plus the int->float conversion it required) per axis on FPU-less parts.
         const float in[3] = {v.x, v.y, v.z};
         return {
-                float(sign[0]) * in[axis[0]],
-                float(sign[1]) * in[axis[1]],
-                float(sign[2]) * in[axis[2]]
+                sign[0] < 0 ? -in[axis[0]] : in[axis[0]],
+                sign[1] < 0 ? -in[axis[1]] : in[axis[1]],
+                sign[2] < 0 ? -in[axis[2]] : in[axis[2]]
             };
     }
 
     /**
      * @brief Returns a new rotation rotated +90° about the local X-axis.
-     * @details
-     * This is equivalent to performing a 90° rotation around the X-axis in the local frame.
      * @return A new DiscreteRotation representing this local rotation.
      */
     DiscreteRotation rotateX90local() const {
@@ -60,8 +51,6 @@ public:
 
     /**
      * @brief Returns a new rotation rotated -90° about the local X-axis.
-     * @details
-     * This is equivalent to performing a -90° rotation around the X-axis in the local frame.
      * @return A new DiscreteRotation representing this local rotation.
      */
     DiscreteRotation rotateXNeg90local() const {
@@ -71,8 +60,6 @@ public:
 
     /**
      * @brief Returns a new rotation rotated +90° about the local Y-axis.
-     * @details
-     * This is equivalent to performing a 90° rotation around the Y-axis in the local frame.
      * @return A new DiscreteRotation representing this local rotation.
      */
     DiscreteRotation rotateY90local() const {
@@ -82,8 +69,6 @@ public:
 
     /**
      * @brief Returns a new rotation rotated -90° about the local Y-axis.
-     * @details
-     * This is equivalent to performing a -90° rotation around the Y-axis in the local frame.
      * @return A new DiscreteRotation representing this local rotation.
      */
     DiscreteRotation rotateYNeg90local() const {
@@ -93,8 +78,6 @@ public:
 
     /**
      * @brief Returns a new rotation rotated +90° about the local Z-axis.
-     * @details
-     * This is equivalent to performing a 90° rotation around the Z-axis in the local frame.
      * @return A new DiscreteRotation representing this local rotation.
      */
     DiscreteRotation rotateZ90local() const {
@@ -104,8 +87,6 @@ public:
 
     /**
      * @brief Returns a new rotation rotated -90° about the local Z-axis.
-     * @details
-     * This is equivalent to performing a -90° rotation around the Z-axis in the local frame.
      * @return A new DiscreteRotation representing this local rotation.
      */
     DiscreteRotation rotateZNeg90local() const {
@@ -115,9 +96,7 @@ public:
 
     /**
      * @brief Returns the inverse of this rotation.
-     * @details
-     * The inverse rotation reverses the effect of the current rotation, such that
-     * applying both consecutively yields the identity rotation.
+     * @details Applying this rotation and its inverse consecutively yields the identity rotation.
      * @return A DiscreteRotation representing the inverse rotation.
      */
     DiscreteRotation inverse() const {
@@ -140,8 +119,7 @@ private:
 
     /**
      * @brief Constructs a rotation from explicit axis mappings and signs.
-     * @details
-     * Used internally to define specific 90° rotations around axes.
+     * @details Used internally to define specific 90° rotations around axes.
      * @param ax0 Output axis index for input X.
      * @param ax1 Output axis index for input Y.
      * @param ax2 Output axis index for input Z.
@@ -155,9 +133,7 @@ private:
 
     /**
      * @brief Composes this rotation with another.
-     * @details
-     * Returns the result of applying the given rotation `other` after this one,
-     * effectively combining the two transformations in sequence.
+     * @details Returns the result of applying `other` after this rotation, combining the two transformations in sequence.
      * @param other The rotation to apply after this rotation.
      * @return A new DiscreteRotation representing the composed rotation.
      */

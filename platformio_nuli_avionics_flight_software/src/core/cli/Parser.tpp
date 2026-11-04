@@ -5,34 +5,17 @@
 
 template<uint8_t n>
 CLIReturnCode_e Parser::addFlagGroup(BaseFlag* (&flagGroup)[n]) {
+    static_assert(n <= MAX_FLAGS, "flag group has more than MAX_FLAGS flags");
     // bounds checks
     if (n == 0) {
         return CLI_PARSER_ZERO_FLAG_GROUPS_ADDED;
     }
 
-    if (m_numFlagGroups > MAX_FLAG_GROUPS) {
+    if (m_numFlagGroups >= MAX_FLAG_GROUPS) {
         return CLI_PARSER_MAXIMUM_FLAG_GROUPS_EXCEEDED;
     }
 
     FlagGroup_s newFlagGroup(flagGroup, flagGroup[0]->name(), n, m_uid++);
-
-    m_flagGroups[m_numFlagGroups++] = newFlagGroup;
-
-    return CLI_SUCCESS;
-}
-
-template<uint8_t n>
-CLIReturnCode_e Parser::addFlagGroup(BaseFlag* (&flagGroup)[n], int8_t uid) {
-    // bounds checks
-    if (n == 0) {
-        return CLI_PARSER_ZERO_FLAG_GROUPS_ADDED;
-    }
-
-    if (m_numFlagGroups > MAX_FLAG_GROUPS) {
-        return CLI_PARSER_MAXIMUM_FLAG_GROUPS_EXCEEDED;
-    }
-
-    FlagGroup_s newFlagGroup(flagGroup, flagGroup[0]->name(), n, uid);
 
     m_flagGroups[m_numFlagGroups++] = newFlagGroup;
 

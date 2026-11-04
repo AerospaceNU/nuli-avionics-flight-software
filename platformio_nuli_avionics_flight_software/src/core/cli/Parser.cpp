@@ -1,5 +1,6 @@
 #include "Parser.h"
-#include <stdexcept>
+#include "core/generic_hardware/DebugStream.h"
+#include <algorithm>
 
 // parses inputs into appropriate flags.
 CLIReturnCode_e Parser::parse(int argc, char** argv) {
@@ -159,11 +160,11 @@ int Parser::strcmp(const char* string1, const char* string2) {  // NOLINT(*-conv
     return *(const unsigned char*)string1 - *(const unsigned char*)string2;
 }
 
-void Parser::printHelp() const {
+void Parser::printHelp(DebugStream* debugStream) const {
     // loop through each FlagGroup_s
     for (uint8_t i = 0; i < m_numFlagGroups; ++i) {
-        m_flagGroups[i].printHelp();
-        printf("\n");
+        m_flagGroups[i].printHelp(debugStream);
+        debugStream->data("");
     }
 }
 
@@ -210,7 +211,7 @@ CLIReturnCode_e Parser::getFlagGroup(int8_t uid, FlagGroup_s** flagGroup) {
     return CLI_PARSER_UNKNOWN_FLAG_GROUP;
 }
 
-CLIReturnCode_e Parser::runFlags() {
+CLIReturnCode_e Parser::runFlags(DebugStream* debugStream) {
     // retrieve the most recent flag group
     if (m_latestFlagGroup < 0) {
         return CLI_PARSER_MISSING_LATEST_FLAG_GROUP;
@@ -222,7 +223,7 @@ CLIReturnCode_e Parser::runFlags() {
         return returnCode;
     }
 
-    flagGroup->runFlags();
+    flagGroup->runFlags(debugStream);
     return CLI_SUCCESS;
 }
 
@@ -258,10 +259,20 @@ CLIReturnCode_e Parser::FlagGroup_s::getFlag(const char* flagName, BaseFlag** fl
     return CLI_PARSER_UNKNOWN_FLAG;
 }
 
-void Parser::FlagGroup_s::printHelp() const {
-    // loop through each set of flags within a FlagGroup_s
+void Parser::FlagGroup_s::printHelp(DebugStream* debugStream) const {
+    // loop through each set of flags within a FlagGroup_s - name()/help() are never copied,
+    // just the pointers the flag was constructed with, so this reads the original static strings.
+    // Index 0 is always the leader (the group's command); the rest are its sub-flags, indented
+    // underneath it so it's clear which flags belong to which command.
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        printf("%s [%s]: %s\n", flags_s[i]->name(), flags_s[i]->isRequired() ? "Required" : "Optional", flags_s[i]->help());
+        const char* indent = (i == 0) ? "" : "    ";
+        const char* required = flags_s[i]->isRequired() ? "Required" : "Optional";
+        const char* helpText = flags_s[i]->help();
+        if (helpText && helpText[0] != '\0') {
+            debugStream->data("%s%s [%s]: %s", indent, flags_s[i]->name(), required, helpText);
+        } else {
+            debugStream->data("%s%s [%s]", indent, flags_s[i]->name(), required);
+        }
     }
 }
 
@@ -271,9 +282,13 @@ void Parser::FlagGroup_s::resetFlags() {
     }
 }
 
-void Parser::FlagGroup_s::runFlags() {
+void Parser::FlagGroup_s::runFlags(DebugStream* debugStream) {
     for (uint8_t i = 0; i < numFlags_s; ++i) {
-        if (flags_s[i]->isSet()) flags_s[i]->run(uid_s);
+        // A highBandwidthOnly flag is silently skipped (not an error) on a low-bandwidth stream -
+        // e.g. --offload typed over a CLI-over-radio link just does nothing, rather than flooding it.
+        if (flags_s[i]->isSet() && (!flags_s[i]->isHighBandwidthOnly() || debugStream->isHighBandwidth())) {
+            flags_s[i]->run(debugStream);
+        }
     }
 }
 

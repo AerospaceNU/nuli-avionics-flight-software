@@ -3,7 +3,6 @@
  */
 
 #include "RFM9xRadio.h"
-#include "RadioPacketDefinitions.h"
 
 volatile bool operationDone = false;
 

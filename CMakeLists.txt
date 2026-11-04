@@ -58,7 +58,7 @@ file(GLOB_RECURSE core_sources
 )
 
 set(desktopSimFiles
-        platformio_nuli_avionics_flight_software/src/builds/desktop.cpp
+        platformio_nuli_avionics_flight_software/src/builds/Desktop.cpp
         ${QUATERNION_SOURCES}
         ${desktop_driver_sources}
         ${core_sources}
@@ -117,12 +117,13 @@ option(ENABLE_COVERAGE "Enable coverage reporting" ON)
 
 # ----FlagTest----
 add_executable(FlagTest ${cliSimFiles}
-        platformio_nuli_avionics_flight_software/include/tests/FlagTest.cpp)
+        tests/FlagTest.cpp)
 
 target_link_libraries(
         FlagTest
         PRIVATE
         GTest::gtest_main
+        quaternion
 )
 
 # Apply Coverage Flags to FlagTest1
@@ -134,12 +135,14 @@ endif()
 
 # ----ParserTest----
 add_executable(ParserTest ${cliSimFiles}
-        platformio_nuli_avionics_flight_software/include/tests/ParserTest.cpp)
+        tests/ParserTest.cpp)
 
 target_link_libraries(
         ParserTest
         PRIVATE
         GTest::gtest_main
+        quaternion
+        etl::etl
 )
 
 if (ENABLE_COVERAGE)
@@ -152,6 +155,18 @@ include(GoogleTest)
 gtest_discover_tests(FlagTest)
 gtest_discover_tests(ParserTest)
 
-# ========cli example configuration========
-add_executable(cli_example ${cliSimFiles}
-        platformio_nuli_avionics_flight_software/include/CLIExample.cpp)
+
+# ----Desktop sim flights----
+find_package(Python3 COMPONENTS Interpreter)
+if (Python3_FOUND)
+    set(SIM_CASES_FILE ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim/cases.json)
+    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS ${SIM_CASES_FILE})
+    file(READ ${SIM_CASES_FILE} SIM_CASES)
+    string(JSON SIM_CASE_COUNT LENGTH "${SIM_CASES}")
+    math(EXPR SIM_CASE_LAST "${SIM_CASE_COUNT} - 1")
+    foreach (SIM_CASE_INDEX RANGE ${SIM_CASE_LAST})
+        string(JSON SIM_CASE_NAME GET "${SIM_CASES}" ${SIM_CASE_INDEX} name)
+        add_test(NAME sim_${SIM_CASE_NAME}
+                COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tests/sim/check_sim.py $<TARGET_FILE:desktop> ${SIM_CASES_FILE} ${SIM_CASE_NAME})
+    endforeach ()
+endif ()

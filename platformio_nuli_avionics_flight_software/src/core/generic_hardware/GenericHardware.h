@@ -14,7 +14,6 @@
 #include "FlashMemory.h"
 #include "FramMemory.h"
 
-#include "LineReader.h"
 #include "RadioLink.h"
 #include "Indicator.h"
 #include "Pyro.h"
@@ -22,5 +21,6 @@
 #include "GPS.h"
 
 #include "DigitalInput.h"
+#include "WatchdogTimer.h"
 
 #endif //GENERICHARDWARE_H

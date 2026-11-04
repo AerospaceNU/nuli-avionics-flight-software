@@ -1,5 +1,5 @@
-#ifndef SIMULATIONPARSER_H
-#define SIMULATIONPARSER_H
+#ifndef SIMULATIONPARSER2_H
+#define SIMULATIONPARSER2_H
 
 #include <Arduino.h>
 
@@ -63,4 +63,4 @@ private:
     }
 };
 
-#endif //SIMULATIONPARSER_H
+#endif //SIMULATIONPARSER2_H

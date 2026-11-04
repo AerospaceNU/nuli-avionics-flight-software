@@ -1,46 +1,55 @@
+Project-private libraries
+=========================
 
-This directory is intended for project specific (private) libraries.
-PlatformIO will compile them to static libraries and link into executable file.
+This directory holds third-party libraries that are compiled into the
+firmware/simulator. PlatformIO's Library Dependency Finder auto-discovers any
+sub-directory here whose headers are #included from src/, so no entry in
+`platformio.ini` `lib_deps` is required for these.
 
-The source code of each library should be placed in an own separate directory
-("lib/your_library_name/[here are source files]").
+See https://docs.platformio.org/page/librarymanager/ldf.html for LDF rules.
 
-For example, see a structure of the following two libraries `Foo` and `Bar`:
 
-|--lib
-|  |
-|  |--Bar
-|  |  |--docs
-|  |  |--examples
-|  |  |--src
-|  |     |- Bar.c
-|  |     |- Bar.h
-|  |  |- library.json (optional, custom build options, etc) https://docs.platformio.org/page/librarymanager/config.html
-|  |
-|  |--Foo
-|  |  |- Foo.c
-|  |  |- Foo.h
-|  |
-|  |- README --> THIS FILE
-|
-|- platformio.ini
-|--src
-   |- main.c
+Submodules
+----------
 
-and a contents of `src/main.c`:
-```
-#include <Foo.h>
-#include <Bar.h>
+Each library below is a git submodule pinned to a specific upstream commit
+(see `.gitmodules` at the repo root). After cloning the parent repo, run:
 
-int main (void)
-{
-  ...
-}
+    git submodule update --init --recursive
 
-```
+To bump a library, `cd` into its folder, check out the new ref, then commit
+the updated gitlink from the parent repo.
 
-PlatformIO Library Dependency Finder will find automatically dependent
-libraries scanning project source files.
+The parent project is licensed GPLv3 (see ../../LICENSE). All licenses below
+were checked to be compatible with GPLv3.
 
-More information about PlatformIO Library Dependency Finder
-- https://docs.platformio.org/page/librarymanager/ldf.html
+1. Embedded Template Library (ETL)
+   - Upstream:    https://github.com/ETLCPP/etl
+   - Pinned at:   tag 20.47.1
+   - License:     MIT (LICENSE)
+   - Used by:     PlatformIO Arduino builds and the desktop CMake build
+   - Notes:       Replaces the previous `etlcpp/Embedded Template Library`
+                  PlatformIO managed dependency. PIO's LDF auto-discovers it
+                  via the library.json `includeDir = include` directive.
+
+2. Eigen
+   - Upstream:    https://gitlab.com/libeigen/eigen
+   - Pinned at:   tag 3.4.0
+   - License:     MPL2 primary, with some files under BSD-3-Clause and
+                  LGPL-2.1-or-later (see COPYING.README inside Eigen/).
+                  Define EIGEN_MPL2_ONLY at compile time to exclude any
+                  non-MPL2 / non-permissive code.
+   - Used by:     The desktop CMake build only (../../CMakeLists.txt adds
+                  `lib/` to its include path). The Arduino PlatformIO builds
+                  use the `hideakitai/ArduinoEigen` wrapper managed via
+                  `platformio.ini` instead, and the `[arduino_common]`
+                  section sets `lib_ignore = Eigen` so PIO's LDF does not
+                  pick this folder up.
+
+3. Quaternion
+   - Upstream:    https://github.com/carrino/Quaternion
+   - Pinned at:   master HEAD (upstream has no tagged releases)
+   - License:     MIT (LICENSE)
+   - Used by:     Desktop CMake build (Quaternion.cpp is added directly to
+                  the desktop sources). Available to PIO builds too via LDF
+                  if any source #includes it.

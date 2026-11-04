@@ -1,0 +1,38 @@
+name: Desktop Sim
+
+on:
+  push:
+    branches:
+      - main
+      - not-flight-tested
+  pull_request:
+    branches:
+      - main
+      - not-flight-tested
+
+permissions:
+  contents: read
+
+concurrency:
+  group: desktop-sim-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  sim:
+    name: Fly tests/sim/cases.json through the desktop build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout (with submodules)
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build desktop
+        run: cmake --build build --target desktop --parallel
+
+      - name: Run sim flights
+        working-directory: build
+        run: ctest -R "^sim_" --no-tests=error --output-on-failure --parallel 4

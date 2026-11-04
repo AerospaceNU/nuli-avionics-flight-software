@@ -44,6 +44,8 @@ public:
 
     uint32_t getTargetLoopTimeMs() const;
 
+    float getTargetLoopTimeS() const;
+
     DebugStream* getDebugStream() const;
 
     void avionicsSystemError(const char *message) const;
@@ -52,6 +54,14 @@ public:
         if (m_allHardware.full()) return;
         m_allHardware.push_back(instance);
     }
+
+    // Fixed, single-instance hardware like SystemClock/DebugStream, not a generic list entry - see
+    // WatchdogTimer's class comment. Optional to call: m_watchdog defaults to a real no-op, so it's always safe to pet.
+    void setWatchdogTimer(WatchdogTimer* watchdog) {
+        if (watchdog) m_watchdog = watchdog;
+    }
+
+    WatchdogTimer& getWatchdogTimer() const { return *m_watchdog; }
 
     GENERATE_METHODS_MACRO(FramMemory, MAX_FRAM_MEMORY_NUM)
     GENERATE_METHODS_MACRO(Pyro, MAX_PYRO_NUM)
@@ -64,6 +74,7 @@ public:
     GENERATE_METHODS_MACRO(RadioLink, MAX_RADIO_TRANSMITTER_LINK_NUM)
     GENERATE_METHODS_MACRO(Indicator, MAX_INDICATOR_NUM)
     GENERATE_METHODS_MACRO(DigitalInput, MAX_DIGITAL_INPUT_NUM)
+    GENERATE_METHODS_MACRO(GPS, MAX_GPS_NUM)
 
 private:
     uint32_t m_loopTime = 10;
@@ -74,6 +85,8 @@ private:
 
     SystemClock* m_systemClock = nullptr; ///< System clocks
     DebugStream* m_debug = nullptr; ///< Debug stream
+    WatchdogTimer m_defaultWatchdog; ///< Harmless no-op used until/unless setWatchdogTimer() is called
+    WatchdogTimer* m_watchdog = &m_defaultWatchdog;
 
     etl::vector<GenericAvionicsHardware*, MAX_GENERIC_HARDWARE_NUM> m_allHardware;
 };

@@ -1,47 +1,26 @@
-#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
-#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DESKTOPDEBUG_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DESKTOPDEBUG_H
 
 #include "Avionics.h"
-#include "ConstantsUnits.h"
-#include "core/generic_hardware/DebugStream.h"
-#include <iostream>
-#include <fstream>
-#include <string>
+#include "core/generic_hardware/GenericHardware.h"
+#include <cstdio>
 
 class DesktopDebug final : public DebugStream {
 public:
-    DesktopDebug() = default;
-
-    ~DesktopDebug() override {
-        if (fileStream.is_open()) {
-            fileStream.close();
-        }
+    explicit DesktopDebug(FILE* file = stdout) : m_file(file) {
+        m_isHighBandwidth = true;
     }
 
-    // Optional setup to enable logging to file
-    bool outputToFile(const std::string& path) {
-        fileStream.open(path, std::ios::out);
-        return fileStream.is_open();
+    void setFile(FILE* file) {
+        m_file = file;
     }
 
     size_t write(const void* buffer, const size_t size) override {
-        const char* data = static_cast<const char*>(buffer);
-
-        // Write to console
-        std::cout.write(data, size);
-        std::cout.flush();
-
-        // Write to file if setup was called
-        if (fileStream.is_open()) {
-            fileStream.write(data, size);
-            fileStream.flush();
-        }
-
-        return size;
+        return m_file ? fwrite(buffer, 1, size, m_file) : size;
     }
 
 private:
-    std::ofstream fileStream;
+    FILE* m_file;
 };
 
-#endif // PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H
+#endif // PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_DESKTOPDEBUG_H

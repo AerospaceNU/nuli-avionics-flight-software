@@ -1,0 +1,41 @@
+#ifndef PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOSERVO_H
+#define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOSERVO_H
+
+#include "Avionics.h"
+#include <Arduino.h>
+#include <Servo.h>
+#include "core/generic_hardware/GenericHardware.h"
+
+class ArduinoServo final : public GenericAvionicsHardware {
+public:
+    ArduinoServo(const int8_t pin, const uint8_t position1Deg, const uint8_t position2Deg)
+        : m_pin(pin), m_position1Deg(position1Deg), m_position2Deg(position2Deg) {}
+
+    void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override {
+        m_servo.attach(m_pin);
+        moveToPosition1();
+    }
+
+    void moveToPosition1() {
+        m_servo.writeMicroseconds(1100);
+        m_atPosition2 = false;
+    }
+
+    void moveToPosition2() {
+        m_servo.writeMicroseconds(1900);
+        m_atPosition2 = true;
+    }
+
+    bool isAtPosition2() const {
+        return m_atPosition2;
+    }
+
+private:
+    Servo m_servo;
+    int8_t m_pin;
+    uint8_t m_position1Deg;
+    uint8_t m_position2Deg;
+    bool m_atPosition2 = false;
+};
+
+#endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOSERVO_H

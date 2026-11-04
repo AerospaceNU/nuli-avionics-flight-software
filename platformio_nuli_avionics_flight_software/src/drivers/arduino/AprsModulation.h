@@ -2,7 +2,7 @@
 #define PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_APRSMODULATION_H
 
 #include <Avionics.h>
-#include "../../core/generic_hardware/RadioLink.h"
+#include "core/generic_hardware/GenericHardware.h"
 
 class AprsModulation : public RadioLink {
 public:

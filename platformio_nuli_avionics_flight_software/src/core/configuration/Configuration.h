@@ -3,9 +3,10 @@
 
 #include "Avionics.h"
 #include "ConfigurationRegistryWraper.h"
-#include "../HardwareAbstraction.h"
-#include "../generic_hardware/FramMemory.h"
-#include "../generic_hardware/DebugStream.h"
+#include "core/HardwareAbstraction.h"
+#include "core/generic_hardware/GenericHardware.h"
+#include <cstddef>  // std::max_align_t
+#include <cstdint>  // uintptr_t
 
 /**
  * @struct BaseConfigurationData_s
@@ -114,6 +115,12 @@ public:
      */
     template <unsigned N, unsigned M>
     explicit Configuration(const ConfigurationIDSet_s (&allConfigs)[N], uint8_t (&buffer)[M]): m_dataBuffer(buffer), m_dataBufferMaxLength(M) {
+        // Misaligned buffer would fault on Cortex-M0/M0+; skip construct() and report in setup().
+        constexpr uintptr_t requiredAlignMask = alignof(std::max_align_t) - 1u;
+        if ((reinterpret_cast<uintptr_t>(buffer) & requiredAlignMask) != 0u) {
+            externalBufferMisaligned = true;
+            return;
+        }
         construct(allConfigs, N);
     }
 
@@ -178,6 +185,37 @@ public:
      */
     void pushUpdatesToMemory();
 
+    /**
+     * @brief Raw bytes of every registered "real" config value (excludes the 3 internal CRC/version
+     * fields), in sorted-ID order
+     * @details Lets a caller (BasicLogger::logConfig()) snapshot the whole configuration generically,
+     * with no per-board struct to keep in sync as fields are added.
+     * @param outLength Set to the number of valid bytes in the returned buffer (0 if none)
+     * @return Pointer into the internal data buffer; nullptr if fewer than 4 configs are registered
+     */
+    const uint8_t* getConfigDataBuffer(uint32_t& outLength) const;
+
+    /// @brief Schema-compatibility version (CONFIGURATION_VERSION_c) - tags a logged config snapshot
+    uint32_t getConfigVersion() const { return m_configurationVersion.get(); }
+
+    /// @brief CRC over the registered config ID set (CONFIGURATION_ALL_ID_CRC_c) - tags a logged config snapshot
+    uint32_t getConfigKeyCrc() const { return m_configurationAllIdCRC.get(); }
+
+    /**
+     * @brief Formats an arbitrary config-value buffer as "CONFIG\tNAME=value\t..." text
+     * @details rawConfigBytes must be laid out exactly like getConfigDataBuffer()'s own return (same
+     * registered field set/order/size) - lets a caller decode a snapshot that ISN'T necessarily this
+     * object's own live values (e.g. one read back from flash, logged during an earlier boot),
+     * using today's live field list/offsets to interpret it. Never touches this object's own values.
+     * @param version Schema-compatibility version to report alongside the fields (CONFIGURATION_VERSION_c
+     * isn't part of rawConfigBytes - it's tracked separately by whatever logged the snapshot)
+     * @param rawConfigBytes Buffer of config values in the same layout as getConfigDataBuffer()
+     * @param rawConfigBytesLen Length of rawConfigBytes
+     * @param buf Output text buffer
+     * @param bufSize Size of buf
+     */
+    void formatBufferAsText(uint32_t version, const uint8_t* rawConfigBytes, uint32_t rawConfigBytesLen, char* buf, size_t bufSize) const;
+
 private:
     BaseConfigurationData_s* getBaseConfigurationData(ConfigurationID_t id);
 
@@ -198,12 +236,24 @@ private:
     uint32_t calculateAllIdCrc() const;
 
     bool constructorFailed = false;
+    // Set by assignMemory() if it OOMs. assignMemory() runs from the constructor where
+    // m_hardware is still null, so it can't call avionicsSystemError directly; setup()
+    // checks this flag once m_hardware is assigned and reports there.
+    bool assignMemoryFailed = false;
+    // Set by the external-buffer constructor if the caller-supplied buffer isn't
+    // aligned to std::max_align_t. Same deferred-report pattern as above.
+    bool externalBufferMisaligned = false;
 
     uint8_t* m_dataBuffer;
     uint32_t m_dataBufferIndex = 0;
     const uint32_t m_dataBufferMaxLength = 0;
 
-    uint8_t m_bufferDO_NOT_USE[MAX_CONFIGURATION_LENGTH] = {};
+    // Overalign to std::max_align_t so the buffer's base satisfies any scalar's
+    // alignof. Per-entry padding is then handled by assignMemory() using each
+    // registered type's alignof. This lets the registry hold types of any
+    // standard alignment (int64_t, double, etc.) without HardFaulting on
+    // Cortex-M0/M0+ unaligned access.
+    alignas(std::max_align_t) uint8_t m_bufferDO_NOT_USE[MAX_CONFIGURATION_LENGTH] = {};
     BaseConfigurationData_s m_configurations[MAX_CONFIGURATION_NUM] = {};
     uint32_t m_numConfigurations = 0;
 

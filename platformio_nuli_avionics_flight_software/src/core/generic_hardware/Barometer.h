@@ -4,6 +4,7 @@
 #include <Avionics.h>
 #include "GenericSensor.h"
 #include "ConstantsUnits.h"
+#include <cmath>
 
 /**
  * @class Barometer
@@ -23,6 +24,22 @@ public:
         m_temperatureK = temperatureK;
         m_humidityPercent = humidityPercent;
         m_pressurePa = pressurePa;
+        m_validReading = isPlausiblePressure(pressurePa);
+    }
+
+    /**
+     * @brief Marks the current reading as not a measurement, until the next plausible inject()
+     */
+    void invalidate() {
+        m_validReading = false;
+    }
+
+    bool validReading() override {
+        return m_validReading;
+    }
+
+    static bool isPlausiblePressure(const float pressurePa) {
+        return std::isfinite(pressurePa) && pressurePa > 100.0f && pressurePa < 200000.0f;
     }
 
     /**
@@ -51,11 +68,13 @@ public:
 
     /**
     * @brief Calculates the altitude from pressure and temperature
-    * @details Specific algorithm used??????
+    * @details Standard atmosphere with temperatureK at sea level: the troposphere's lapse rate, then isothermal above the tropopause
     */
     static float calculateAltitudeM(const float pressurePa, const float temperatureK) {
-        return (temperatureK / Constants::LAPSE_RATE_K_M) *
-            (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+        if (pressurePa >= TROPOPAUSE_PRESSURE_PA || pressurePa <= 0) return troposphereAltitudeM(pressurePa, temperatureK);
+        const float tropopauseM = troposphereAltitudeM(TROPOPAUSE_PRESSURE_PA, temperatureK);
+        const float tropopauseScaleHeightM = (float)(Constants::GAS_CONSTANT_J_KG_K / Constants::G_EARTH_MSS) * (temperatureK + (float)Constants::LAPSE_RATE_K_M * tropopauseM);
+        return tropopauseM + tropopauseScaleHeightM * std::log(TROPOPAUSE_PRESSURE_PA / pressurePa);
     }
 
     /**
@@ -77,9 +96,17 @@ public:
     }
 
 protected:
+    static constexpr float TROPOPAUSE_PRESSURE_PA = 22632.1f;
+
+    static float troposphereAltitudeM(const float pressurePa, const float temperatureK) {
+        return (temperatureK / Constants::LAPSE_RATE_K_M) *
+            (pow(pressurePa / Constants::ATMOSPHERIC_PRESSURE_PA, -Constants::GAS_CONSTANT_J_KG_K * Constants::LAPSE_RATE_K_M / Constants::G_EARTH_MSS) - 1);
+    }
+
     float m_temperatureK = 0; ///<The measured temperature
     float m_humidityPercent = 0; ///< The measured humidity (%rh)
     float m_pressurePa = 0; ///< The measured pressure
+    bool m_validReading = false;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_BAROMETER_H

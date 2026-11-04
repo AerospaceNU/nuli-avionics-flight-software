@@ -3,23 +3,62 @@
 
 #include "Avionics.h"
 #include "Arduino.h"
-#include "core/generic_hardware/DebugStream.h"
+#include "core/generic_hardware/GenericHardware.h"
+#include "core/generic_hardware/WatchdogTimer.h"
 
+// N is the line buffer capacity (including the null terminator) for readLine()/getLine().
+template <unsigned N>
 class SerialDebug final : public DebugStream {
 public:
-    explicit SerialDebug(const bool waitToConnect = false) : m_wait(waitToConnect) {}
+    // watchdog (optional) is petted while waiting to connect; echo sends received characters back
+    explicit SerialDebug(const bool waitToConnect = false, WatchdogTimer* watchdog = nullptr, const bool echo = false) :
+        m_wait(waitToConnect), m_watchdog(watchdog), m_echo(echo) {
+        m_isHighBandwidth = true; // a real USB/UART link, not a slow relayed one
+    }
 
     void setup() override {
         Serial.begin(115200);
-        while (m_wait && !Serial);
+        while (m_wait && !Serial) {
+            if (m_watchdog) m_watchdog->petInLoop();
+        }
     }
 
     size_t write(const void* buffer, const size_t size) override {
         return Serial.write((char*)buffer, size);
     }
 
+    bool readLine() override {
+        char echo[MAX_CHARS_PER_READ];
+        uint32_t echoLength = 0;
+        bool lineReady = false;
+        for (uint32_t i = 0; i < MAX_CHARS_PER_READ && !lineReady && Serial.available() > 0; i++) {
+            const char c = Serial.read();
+            if (m_serialReadIndex < N - 1) {
+                m_serialRead[m_serialReadIndex++] = c;
+                echo[echoLength++] = c;
+            }
+            if (c == '\n') {
+                m_serialRead[m_serialReadIndex] = '\0';
+                m_serialReadIndex = 0;
+                lineReady = true;
+            }
+        }
+        if (m_echo && echoLength > 0) Serial.write(echo, echoLength);
+        return lineReady;
+    }
+
+    char* getLine() override {
+        return m_serialRead;
+    }
+
 private:
+    static constexpr uint32_t MAX_CHARS_PER_READ = 256;
+
     bool m_wait;
+    WatchdogTimer* m_watchdog;
+    bool m_echo;
+    char m_serialRead[N] = "";
+    uint32_t m_serialReadIndex = 0;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_SERIALDEBUG_H

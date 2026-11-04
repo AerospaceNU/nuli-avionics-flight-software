@@ -17,12 +17,11 @@ Parser myParser = Parser();
 ```
 
 ### 2. Callbacks
-Callbacks must have the return type of `void` and must take in the flag's name,
-data, group uid, flag uid, and an optional dependency for the flag. 
+Callbacks must have the return type of `void` and take the `DebugStream*` that
+`runFlags()` was called with.
 
 ```c++
-void callback(const char *name, uint8_t *data, uint32_t length, uint8_t group_uid, uint8_t flag_uid,
-                   BaseFlag *dependency) {}
+void callback(DebugStream *debugStream) {}
 ```
 
 ### 2. Declare Flags
@@ -52,17 +51,8 @@ BaseFlag* configGroup[]{&config, &config_trigger, &config_pulseWidth, &config_el
 ```
 
 ### 4. Add flag list to Parser
-> Note: The UID allows the parser to identify which flag group was last inputted.
-
-There are two options:
-
-One, default and use auto-incremented uid from 0
 ```c++
 myParser.addFlagGroup(configGroup);
-```
-Two, self set uid
-```c++
-myParser.addFlagGroup(configGroup, 10);
 ```
 
 ### 5. Repeat
@@ -74,9 +64,10 @@ myParser.parse(<input>);
 ```
 
 ### 7. Run callbacks
-Run the callbacks for the flag group that was most recently added
+Run the callbacks for the flag group that was most recently added, passing the
+`DebugStream*` each callback should use.
 ```c++
-myParser.runFlags();
+myParser.runFlags(debugStream);
 ```
 
 ### 8. Reset flags for next run

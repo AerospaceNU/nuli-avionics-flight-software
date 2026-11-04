@@ -1,6 +1,9 @@
 #ifndef STRINGHELPER_H
 #define STRINGHELPER_H
 
+#include <cstdint>
+#include <cstdarg>
+
 static void reverse_str(char* str, int len) {
     int i = 0, j = len - 1;
     while (i < j) {
@@ -118,9 +121,7 @@ static int mini_snprintf(char* out, int out_size, const char* fmt, ...) {
                 case 'c': buf[0] = (char)va_arg(args, int); buf[1] = '\0'; len = 1; break;
                 case 's': {
                     const char* s = va_arg(args, const char*);
-                    for (len = 0; s[len] && out + len < end; ++len)
-                        buf[len] = s[len];
-                    buf[len] = '\0';
+                    while (*s && out < end) *out++ = *s++;
                     break;
                 }
                 case '%': buf[0] = '%'; buf[1] = '\0'; len = 1; break;

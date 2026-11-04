@@ -2,7 +2,7 @@
 #define DIGITALPIN_H
 
 #include "Avionics.h"
-#include "core/generic_hardware/GenericHardware.h"
+#include "core/generic_hardware/GenericSensor.h"
 
 class DigitalInput : public GenericSensor {
 public:

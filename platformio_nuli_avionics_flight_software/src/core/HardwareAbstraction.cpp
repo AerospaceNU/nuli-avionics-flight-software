@@ -1,7 +1,6 @@
 #include "HardwareAbstraction.h"
+#include "ConstantsUnits.h"
 #include <cmath>
-
-#include "drivers/arduino/ArduinoSerialReader.h"
 
 HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz) {
     m_debug = &debugStream;
@@ -13,7 +12,8 @@ void HardwareAbstraction::setup() {
     m_debug->setup();
     m_debug->message("SETTING UP HARDWARE");
     m_systemClock->setup(m_debug);
-    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) hardwareDevice->setup(m_debug);
+    m_watchdog->setup(m_debug);
+    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) hardwareDevice->setup(m_debug, m_watchdog);
     m_debug->message("HARDWARE SET UP COMPLETE\r\n");
 }
 
@@ -22,6 +22,7 @@ void HardwareAbstraction::runAndReadAllHardware() const {
         hardwareDevice->run();
         hardwareDevice->read();
     }
+    m_watchdog->pet(); // last, so a hang anywhere above prevents this tick's pet
 }
 
 void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
@@ -64,6 +65,10 @@ Timestamp_s HardwareAbstraction::enforceLoopTime() {
 
 uint32_t HardwareAbstraction::getTargetLoopTimeMs() const {
     return m_loopTime;
+}
+
+float HardwareAbstraction::getTargetLoopTimeS() const {
+    return float(m_loopTime) / 1000.0f;
 }
 
 DebugStream* HardwareAbstraction::getDebugStream() const { return m_debug; }

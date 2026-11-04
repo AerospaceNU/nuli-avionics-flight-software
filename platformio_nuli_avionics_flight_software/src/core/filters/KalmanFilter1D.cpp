@@ -1,4 +1,6 @@
 #include "KalmanFilter1D.h"
+#include <cmath>
+#include <algorithm>
 
 KalmanFilter1D::KalmanFilter1D() {
     // States are [position, velocity, acceleration]
@@ -19,9 +21,9 @@ KalmanFilter1D::KalmanFilter1D() {
                                    {0, 1, 0},       // Pito tube
                                    {0, 0, 1},       // Accelerometer
     };
+    m_isHIdentity = H.isIdentity(); // see the comment on H and m_isHIdentity in the header
 
-    // IDK if we actually want to start with zero covariance, but I think it should be numerically stable
-    P.setZero();
+    P = Eigen::Matrix<float, 3, 3>::Identity() * 1000.0f;
 
     // Take a wild guess at the process covariance (I really need to figure out what these actually mean)
     // Larger means that there's more uncertainty in the state model, so the filter should trust the measurement more
@@ -44,6 +46,20 @@ void KalmanFilter1D::setDeltaTime(float delta_t) {
     F_d = Eigen::Matrix<float, 3, 3>{{1, delta_t, 0.5f * std::pow(delta_t, 2.0f)},
                                      {0, 1,       delta_t},
                                      {0, 0,       1}
+    };
+
+    // compute Q from jerk spectral density q = sigma^2
+    const float q = processJerkStd * processJerkStd;
+    const float dt = delta_t;
+    const float dt2 = dt*dt;
+    const float dt3 = dt2*dt;
+    const float dt4 = dt3*dt;
+    const float dt5 = dt4*dt;
+
+    Q = Eigen::Matrix<float, 3, 3>{
+            {q * dt5 / 20.0f, q * dt4 / 8.0f, q * dt3 / 6.0f},
+            {q * dt4 / 8.0f,  q * dt3 / 3.0f, q * dt2 / 2.0f},
+            {q * dt3 / 6.0f,  q * dt2 / 2.0f, q * dt}
     };
 }
 
@@ -85,23 +101,33 @@ void KalmanFilter1D::genericUpdate(const Eigen::Matrix<float, 3, 1> &measurement
     R.row(1) = R_pito;
     R.row(2) = R_accel;
 
-    // Compute innovation
-    Eigen::Matrix<float, 3, 1> innovation = measurement - H * x;  // Innovation is [pos; vel; accel]
-    innovation = innovation.cwiseProduct(mask);             // I think this is a fine way to handle situations where we don't get all the measurements at once, but IDK really
-
-    // Calculate innovation covariance
-    Eigen::Matrix<float, 3, 3> S = H * P * H.transpose() + R;
-
-    // Calculate gain
-    Eigen::Matrix<float, 3, 3> K = P * H.transpose() * S.inverse();
-
-    // Calculate new state estimate
-    x = x + K * innovation;
-
-    // Update state covariance
     Eigen::Matrix<float, 3, 3> I;
     I.setIdentity();
-    P = (I - K * H) * P;
+
+    if (m_isHIdentity) {
+        // Reduces to the identity case (see m_isHIdentity) - skips recomputing values already in x/P.
+        Eigen::Matrix<float, 3, 1> innovation = (measurement - x).cwiseProduct(mask);
+        Eigen::Matrix<float, 3, 3> S = P + R;
+        Eigen::Matrix<float, 3, 3> K = P * S.inverse();
+        x = x + K * innovation;
+        P = (I - K) * P;
+    } else {
+        // Compute innovation
+        Eigen::Matrix<float, 3, 1> innovation = measurement - H * x;  // Innovation is [pos; vel; accel]
+        innovation = innovation.cwiseProduct(mask);             // I think this is a fine way to handle situations where we don't get all the measurements at once, but IDK really
+
+        // Calculate innovation covariance
+        Eigen::Matrix<float, 3, 3> S = H * P * H.transpose() + R;
+
+        // Calculate gain
+        Eigen::Matrix<float, 3, 3> K = P * H.transpose() * S.inverse();
+
+        // Calculate new state estimate
+        x = x + K * innovation;
+
+        // Update state covariance
+        P = (I - K * H) * P;
+    }
 }
 
 void KalmanFilter1D::positionDataUpdate(float position) {

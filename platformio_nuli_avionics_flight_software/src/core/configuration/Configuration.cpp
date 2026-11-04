@@ -1,8 +1,6 @@
 #include "Configuration.h"
-#include "../HardwareAbstraction.h"
+#include "core/HardwareAbstraction.h"
 #include "util/CRC.h"
-
-constexpr ConfigurationID_t Configuration::REQUIRED_CONFIGS[];
 
 void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint16_t allConfigsLength) {
     // Add all requested configs to the list, ignoring duplicates
@@ -31,8 +29,10 @@ void Configuration::construct(const ConfigurationIDSet_s* allConfigs, const uint
 }
 
 void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
-    if (!hardware || hardware->getNumFramMemorys() < id) {
-        m_hardware->avionicsSystemError("Either no hardware or no fram");
+    if (!hardware || hardware->getNumFramMemorys() <= id) {
+        // With no hardware there is no way to report; spin so the watchdog or a debugger catches it.
+        if (hardware) hardware->avionicsSystemError("Either no hardware or no fram");
+        while (true) {}
     }
     m_hardware = hardware;
     m_memory = hardware->getFramMemory(id);
@@ -40,6 +40,12 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
 
     if (constructorFailed) {
         m_hardware->avionicsSystemError("Too many configurations");
+    }
+    if (assignMemoryFailed) {
+        m_hardware->avionicsSystemError("Configuration out of memory: total tracked size exceeds MAX_CONFIGURATION_LENGTH");
+    }
+    if (externalBufferMisaligned) {
+        m_hardware->avionicsSystemError("Configuration external buffer not aligned to std::max_align_t — declare with alignas(std::max_align_t)");
     }
 
     m_configurationCRC = getConfigurable<CONFIGURATION_CRC_c>();
@@ -75,7 +81,7 @@ void Configuration::setup(HardwareAbstraction* hardware, const uint8_t id) {
                 // This retrieves a specific default value from the buffer
                 memcpy(m_configurations[i].data, (m_configurations[i].data - m_dataBuffer) + bufferDefaultValues, m_configurations[i].size);
                 m_configurations[i].m_isUpdated = true;
-                m_debug->warn("%s invalid value, resting to default", getConfigurationName(m_configurations[i].id));
+                m_debug->warn("%s invalid value, resetting to default", getConfigurationName(m_configurations[i].id));
             } else {
                 m_configurations[i].m_isUpdated = false;
             }
@@ -113,9 +119,18 @@ void Configuration::sortConfigs() {
 void Configuration::assignMemory() {
     m_dataBufferIndex = 0;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
+        // Round up to this entry's natural alignment (alignof its registered type).
+        // Required on Cortex-M0/M0+ which traps on unaligned word/half-word access,
+        // and on any platform where the type's strict-aliased read/write needs alignment.
+        // alignof always returns a power of two in C++, so the mask trick is safe.
+        const uint32_t alignment = getConfigurationAlignment(m_configurations[i].id);
+        const uint32_t alignMask = alignment - 1u;
+        m_dataBufferIndex = (m_dataBufferIndex + alignMask) & ~alignMask;
         const uint16_t configurationLength = getConfigurationLength(m_configurations[i].id);
         if (m_dataBufferIndex + configurationLength >= m_dataBufferMaxLength) {
-            m_hardware->avionicsSystemError("Out of memory error");
+            // Can't call avionicsSystemError here — assignMemory runs from the constructor,
+            // before m_hardware is set. Defer the report to setup().
+            assignMemoryFailed = true;
             m_numConfigurations = i;
             return;
         }
@@ -130,9 +145,6 @@ void Configuration::readConfigFromMemory() const {
 }
 
 void Configuration::pushUpdatesToMemory() {
-    const uint8_t* writeStartLocation = m_dataBuffer;
-    uint32_t bytesToWrite = 0;
-
     // Update the CRC if any config has been updated
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].m_isUpdated) {
@@ -141,22 +153,22 @@ void Configuration::pushUpdatesToMemory() {
         }
     }
 
+    // Runs tracked by pointers, not a size sum, so alignment padding is included in each write.
+    const uint8_t* runStart = nullptr;
+    const uint8_t* runEnd = nullptr;
     for (uint32_t i = 0; i < m_numConfigurations; i++) {
         if (m_configurations[i].m_isUpdated) {
             m_configurations[i].m_isUpdated = false;
-            if (bytesToWrite == 0) writeStartLocation = m_configurations[i].data;
-            bytesToWrite += m_configurations[i].size;
-        } else if (bytesToWrite > 0) {
-            const uint32_t address = writeStartLocation - m_dataBuffer;
-            m_memory->write(address, writeStartLocation, bytesToWrite);
-            writeStartLocation = m_dataBuffer;
-            bytesToWrite = 0;
+            if (runStart == nullptr) runStart = m_configurations[i].data;
+            runEnd = m_configurations[i].data + m_configurations[i].size;
+        } else if (runStart != nullptr) {
+            m_memory->write(runStart - m_dataBuffer, runStart, runEnd - runStart);
+            runStart = nullptr;
         }
     }
 
-    if (bytesToWrite > 0) {
-        const uint32_t address = writeStartLocation - m_dataBuffer;
-        m_memory->write(address, writeStartLocation, bytesToWrite);
+    if (runStart != nullptr) {
+        m_memory->write(runStart - m_dataBuffer, runStart, runEnd - runStart);
     }
 }
 
@@ -217,4 +229,39 @@ uint32_t Configuration::calculateAllIdCrc() const {
         allIDs[i] = m_configurations[i].id;
     }
     return crc32(&allIDs, m_numConfigurations * sizeof(ConfigurationID_t));
+}
+
+void Configuration::formatBufferAsText(const uint32_t version, const uint8_t* rawConfigBytes, const uint32_t rawConfigBytesLen, char* buf, size_t bufSize) const {
+    size_t pos = 0;
+    auto append = [&](const char* s) {
+        while (*s && pos + 1 < bufSize) buf[pos++] = *s++;
+    };
+    append("CONFIG");
+    for (uint32_t i = 3; i < m_numConfigurations; i++) {
+        const uint32_t offset = static_cast<uint32_t>(m_configurations[i].data - m_configurations[3].data);
+        if (offset + m_configurations[i].size > rawConfigBytesLen) break; // defensive: stored buffer shorter than the live layout expects
+        append("\t");
+        append(getConfigurationName(m_configurations[i].id));
+        append("=");
+        if (pos < bufSize) pos += (size_t)getConfigurationPrint(m_configurations[i].id, rawConfigBytes + offset, buf + pos, bufSize - pos);
+    }
+    // CONFIGURATION_VERSION isn't part of rawConfigBytes (it's the record's own header field, not
+    // a registered "real" config), but the old hand-written text format always showed it - restore it.
+    append("\tCONFIGURATION_VERSION=");
+    if (pos < bufSize) pos += (size_t)mini_snprintf(buf + pos, (int)(bufSize - pos), "%u", (unsigned)version);
+    if (pos < bufSize) buf[pos] = '\0';
+    else if (bufSize > 0) buf[bufSize - 1] = '\0';
+}
+
+const uint8_t* Configuration::getConfigDataBuffer(uint32_t& outLength) const {
+    // Indices 0/1/2 are always CONFIGURATION_CRC/CONFIGURATION_ALL_ID_CRC/CONFIGURATION_VERSION
+    // (enforced by hasError()'s ordering check) - real fields start at index 3.
+    if (m_numConfigurations <= 3) {
+        outLength = 0;
+        return nullptr;
+    }
+    const uint8_t* start = m_configurations[3].data;
+    const uint8_t* end = m_configurations[m_numConfigurations - 1].data + m_configurations[m_numConfigurations - 1].size;
+    outLength = static_cast<uint32_t>(end - start);
+    return start;
 }
