@@ -24,6 +24,8 @@ Inputs for `tests/sim/check_sim.py` (see `tests/sim/cases.json` for what each on
   8.3 km), converted the same way, its high-rate IMU log held past its end. The low-rate log stored two stretches of
   repeated/replayed rows (T+140-321 s, T+544-558 s, found by the wall clock disagreeing with the flight time):
   bridged at a constant descent rate in `transonic_blueraven_sn0129`, kept as recorded in `blueraven_sn0129_stuck_baro`.
+  In both, a phantom 0.33 s, 34 g liftoff-like IMU burst at T-1.08 s (baro flat, the Blue Raven never reacted to it)
+  is replaced with the pad values.
 - `syn_*`: synthetic flights with known truth, from a 1-D flight physics model with injected sensor faults.
 
 RocketPy data is used under its MIT License:
