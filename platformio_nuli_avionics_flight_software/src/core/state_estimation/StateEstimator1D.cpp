@@ -48,6 +48,7 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
     m_currentState1D.accelerationMSS = m_kalmanFilter.getAcceleration();
     m_currentState1D.unfilteredNoOffsetAltitudeM = altitudeRawM;
     m_currentState1D.barometerValid = m_barometerValid;
+    m_currentState1D.accelerometerClipped = m_accelerometerClipped;
     return m_currentState1D;
 }
 
@@ -79,6 +80,7 @@ float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) {
     // @todo, full scale switching, bad reading detection
     // @todo Handle multiple accelerometers: only accelerometer 0 is read
     m_currentState1D.accelerometerMagnitudeMSS = -1.0f;
+    m_accelerometerClipped = false;
     if (m_hardware->getNumAccelerometers() > 0 && m_hardware->getAccelerometer(0)->validReading()) {
         const Vector3D_s a = m_hardware->getAccelerometer(0)->getAccelerationsMSS_board();
         m_currentState1D.accelerometerMagnitudeMSS = std::sqrt(a.x * a.x + a.y * a.y + a.z * a.z);
@@ -86,6 +88,7 @@ float StateEstimator1D::getAccelerationMSS(const FlightState_e& flightState) {
     m_accelerationValid = true;
     if ((flightState == PRE_FLIGHT || flightState == ASCENT) && m_hardware->getNumAccelerometers() > 0) {
         m_accelerationValid = m_hardware->getAccelerometer(0)->validReading();
+        m_accelerometerClipped = m_accelerationValid && m_hardware->getAccelerometer(0)->isClipped();
         switch (m_boardOrientation.get()) {
         case POS_X:
             return m_hardware->getAccelerometer(0)->getAccelerationsMSS_board().x - float(Constants::G_EARTH_MSS);

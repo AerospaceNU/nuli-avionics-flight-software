@@ -57,6 +57,7 @@ private:
     bool m_barometerEverValid = false;
     uint32_t m_barometerInvalidTicks = 0;
     bool m_accelerationValid = false; ///< outside PRE_FLIGHT/ASCENT the acceleration is a 0 measurement, not the accelerometer
+    bool m_accelerometerClipped = false;
 
     bool m_needNewGroundReference = true;
     Alarm m_groundElevationReferenceTimer;

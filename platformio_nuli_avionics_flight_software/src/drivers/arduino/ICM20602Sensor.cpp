@@ -33,7 +33,7 @@ uint8_t readRegister(uint8_t address, uint8_t reg) {
     return Wire.read();
 }
 
-ICM20602Sensor::ICM20602Sensor(const Vector3DTransform* transform): m_accelerometer(transform), m_gyroscope(transform) {}
+ICM20602Sensor::ICM20602Sensor(const Vector3DTransform* transform): m_accelerometer(transform, 16.0f * (float)Constants::G_EARTH_MSS), m_gyroscope(transform) {}
 
 
 void ICM20602Sensor::readAccelAndGyroBatch() {

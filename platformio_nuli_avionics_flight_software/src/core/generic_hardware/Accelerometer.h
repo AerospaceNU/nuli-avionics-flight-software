@@ -12,7 +12,7 @@
  */
 class Accelerometer : public GenericSensor {
 public:
-    explicit Accelerometer(const Vector3DTransform *transform) : m_transform(transform) {};
+    Accelerometer(const Vector3DTransform *transform, const float fullScaleMSS) : m_transform(transform), m_fullScaleMSS(fullScaleMSS) {};
 
     /**
      * @brief Injects sensor data directly
@@ -66,6 +66,11 @@ public:
      */
     float getFullScaleMSS() const {
         return m_fullScaleMSS;
+    }
+
+    bool isClipped() const {
+        const float clippedMSS = ACCELEROMETER_CLIPPED_FULL_SCALE_FRACTION * m_fullScaleMSS;
+        return std::fabs(m_accelerationsMSS_sensor.x) >= clippedMSS || std::fabs(m_accelerationsMSS_sensor.y) >= clippedMSS || std::fabs(m_accelerationsMSS_sensor.z) >= clippedMSS;
     }
 
 protected:

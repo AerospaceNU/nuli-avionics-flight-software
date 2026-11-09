@@ -439,7 +439,7 @@ void Ms5607Mmc5603SensorPackage::recoverBus() {
  * ========================= */
 
 Ms5607Mmc5603SensorPackage::Ms5607Mmc5603SensorPackage(const Vector3DTransform* transform, const ImuType imuType, const bool hasMagnetometer, const Vector3DTransform* magTransform) :
-    m_accelerometer(transform), m_gyroscope(transform), m_magnetometer(magTransform ? magTransform : transform),
+    m_accelerometer(transform, 16.0f * (float)Constants::G_EARTH_MSS), m_gyroscope(transform), m_magnetometer(magTransform ? magTransform : transform),
     m_imuType(imuType), m_hasMagnetometer(hasMagnetometer) {}
 
 void Ms5607Mmc5603SensorPackage::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {

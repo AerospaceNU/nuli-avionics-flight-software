@@ -29,10 +29,12 @@ constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
 constexpr uint32_t MACH_LOCKOUT_TIMER_MS = 5000;
 constexpr float MACH_LOCKOUT_THRESHOLD_MS = 150.0;
-// Barometer de-weighting near Mach (tuned on 11 real transonic flights, 2026-10-18)
-constexpr float MACH_RAMP_START_MS = 200.0;
-constexpr float MACH_RAMP_END_MS = 300.0;
-constexpr float MACH_BAROMETER_COVARIANCE_SCALE = 10.0;
+// Barometer de-weighting near Mach (tuned on 11 real transonic flights 2026-10-18; ramp moved down and up to x100 on
+// 2026-11-07 for the Mach 2.3 Blue Raven SN0129 flight)
+constexpr float MACH_RAMP_START_MS = 100.0;
+constexpr float MACH_RAMP_END_MS = 200.0;
+constexpr float MACH_BAROMETER_COVARIANCE_SCALE = 100.0;
+constexpr float ACCELEROMETER_CLIPPED_FULL_SCALE_FRACTION = 0.99;
 // Landing detection
 constexpr float LANDING_ALTITUDE_CHANGE_THRESHOLD_M = 3.0;
 constexpr uint32_t LANDING_DEBOUNCE_TIMER_MS = 3000;
@@ -118,6 +120,7 @@ struct State1D_s {
     float unfilteredNoOffsetAltitudeM;
     bool barometerValid; ///< False while altitude comes from a held pressure rather than a measurement
     float accelerometerMagnitudeMSS;
+    bool accelerometerClipped;
 };
 
 struct Orientation_s {
