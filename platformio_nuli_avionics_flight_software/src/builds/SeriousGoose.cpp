@@ -126,20 +126,20 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
-SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) {
-    debugStream->message("Firing drogue");
-    droguePyro.fireFor(pyroFireDuration.get());
-});
-SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) {
-    debugStream->message("Firing main");
-    mainPyro.fireFor(pyroFireDuration.get());
-});
-SimpleFlag testAux("-a", "Fires aux", false, [](DebugStream* debugStream) {
-    debugStream->message("Firing aux");
-    auxPyro.fireFor(pyroFireDuration.get());
-});
+SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    debugStream->message(testOn.isSet() ? "Turning on %s" : "Firing %s", name);
+    if (testOn.isSet()) {
+        pyro.turnOn();
+    } else {
+        pyro.fireFor(pyroFireDuration.get());
+    }
+}
+SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) { testFirePyro(droguePyro, "drogue", debugStream); });
+SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { testFirePyro(mainPyro, "main", debugStream); });
+SimpleFlag testAux("-a", "Fires aux", false, [](DebugStream* debugStream) { testFirePyro(auxPyro, "aux", debugStream); });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testDrogue, &testMain, &testAux};
+BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain, &testAux};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* helpGroup[] = {&helpFlag};
 

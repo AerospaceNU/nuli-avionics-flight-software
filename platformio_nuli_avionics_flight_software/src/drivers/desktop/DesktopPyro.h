@@ -19,13 +19,13 @@ public:
 
     bool isFired() const override { return m_isFired; }
 
-    void fire() override {
+    void turnOn() override {
         m_isFired = true;
         m_timedFireAlarm.reset();
     }
 
     void fireFor(const uint32_t timeMs) override {
-        fire();
+        turnOn();
         m_timedFireAlarm.startAlarm(m_clock.currentRuntimeMs(), timeMs);
     }
 

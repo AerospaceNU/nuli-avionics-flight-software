@@ -54,10 +54,10 @@ public:
     bool isArmed() const override;
 
     /**
-     * @brief Fires the pyro channel
-     * @details Writes the fireDrogue pin high
+     * @brief Turns the pyro channel on until disable()
+     * @details Writes the fire pin high
      */
-    void fire() override;
+    void turnOn() override;
 
     void fireFor(uint32_t timeMs) override;
 

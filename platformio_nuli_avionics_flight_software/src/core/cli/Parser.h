@@ -22,7 +22,7 @@
  */
 
 const uint8_t MAX_FLAG_GROUPS = 30;    ///< Maximum number of FlagGroups - SeriousGoose.cpp alone registers ~22, so keep real headroom above the busiest board
-const uint8_t MAX_FLAGS = 8;            ///< Maximum number of flags per FlagGroup - the biggest real one (SeriousGoose's testfireGroup) uses 4
+const uint8_t MAX_FLAGS = 8;            ///< Maximum number of flags per FlagGroup - the biggest real one (SeriousGoose's testfireGroup) uses 5
 
 /**
  * @class Parser

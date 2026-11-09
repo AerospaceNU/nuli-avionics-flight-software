@@ -57,10 +57,10 @@ public:
 
 
     /**
-     * @brief Fires the pyro channel
-     * @details Writes the fireDrogue pin high
+     * @brief Turns the pyro channel on until disable()
+     * @details Writes the fire pin high
      */
-    virtual void fire() {}
+    virtual void turnOn() {}
 
     virtual void fireFor(uint32_t timeMs) {}
 
