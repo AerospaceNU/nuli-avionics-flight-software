@@ -53,14 +53,6 @@ public:
      */
     bool isArmed() const override;
 
-    /**
-     * @brief Turns the pyro channel on until disable()
-     * @details Writes the fire pin high
-     */
-    void turnOn() override;
-
-    void fireFor(uint32_t timeMs) override;
-
 
     /**
      * @brief Disables they pyro channel
@@ -76,6 +68,11 @@ public:
 
     static constexpr int32_t USE_DIGITAL_CONTINUITY = -1;           ///< Flag value for the analog threshold to allow for continuity to be read digitally
     static constexpr int32_t NO_SEPARATE_ARMED_THRESHOLD = INT32_MIN; ///< Sentinel default for armedThreshold - see constructor doc
+
+protected:
+    void turnOnOutput() override;
+
+    void fireOutputFor(uint32_t timeMs) override;
 
 private:
     bool m_isFired = false;

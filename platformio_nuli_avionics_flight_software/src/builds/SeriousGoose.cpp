@@ -94,7 +94,7 @@ DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see l
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c
     };
 Configuration configuration({
         sillyGooseRequiredConfigs,
@@ -106,6 +106,7 @@ Configuration configuration({
     });
 // Locally used configuration data
 ConfigurationData<uint32_t> pyroFireDuration;
+ConfigurationData<uint32_t> armed;
 ConfigurationData<uint32_t> radioTransmitDelay;
 ConfigurationData<uint32_t> groundStationMode;
 // CLI -> configuration bindings. Generates a CLI command to get/set configuration value.
@@ -128,6 +129,10 @@ SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { N
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
 SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
 void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    if (pyro.isLocked()) {
+        debugStream->error("Disarmed: not firing %s", name);
+        return;
+    }
     debugStream->message(testOn.isSet() ? "Turning on %s" : "Firing %s", name);
     if (testOn.isSet()) {
         pyro.turnOn();
@@ -140,7 +145,21 @@ SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { te
 SimpleFlag testAux("-a", "Fires aux", false, [](DebugStream* debugStream) { testFirePyro(auxPyro, "aux", debugStream); });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
 BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain, &testAux};
+SimpleFlag armFlag("--arm", "Arms the board: pyros can fire", true, [](DebugStream* debugStream) {
+    armed.set(true);
+    debugStream->message("ARMED has been set to: %d", (int)armed.get());
+});
+SimpleFlag disarmFlag("--disarm", "Disarms the board: pyros are locked off, the flight is still tracked and logged", true, [](DebugStream* debugStream) {
+    armed.set(false);
+    debugStream->message("ARMED has been set to: %d", (int)armed.get());
+});
+SimpleFlag armedFlag("--armed", "Reports whether the board is armed", true, [](DebugStream* debugStream) {
+    debugStream->message("ARMED is set to: %d", (int)armed.get());
+});
 BaseFlag* resetBoardGroup[] = {&resetBoard};
+BaseFlag* armGroup[] = {&armFlag};
+BaseFlag* disarmGroup[] = {&disarmFlag};
+BaseFlag* armedGroup[] = {&armedFlag};
 BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
@@ -178,6 +197,9 @@ void setup() {
     cliParser.addFlagGroup(testfireGroup);
     groundStationRelay.setup(&cliParser, &radio, &gps);
     cliParser.addFlagGroup(resetBoardGroup);
+    cliParser.addFlagGroup(armGroup);
+    cliParser.addFlagGroup(disarmGroup);
+    cliParser.addFlagGroup(armedGroup);
     cliParser.addFlagGroup(helpGroup);
     cliParser.addStream(&serialDebug);
     cliParser.addStream(&radioCli);
@@ -190,6 +212,7 @@ void setup() {
     logger.setup(&hardware, &cliParser, flashID, LOG_HEADER, HEADER_OUTPUT, printLog, &configuration);
     // Locally used configuration variables
     pyroFireDuration = configuration.getConfigurable<PYRO_FIRE_DURATION_c>();
+    armed = configuration.getConfigurable<ARMED_c>();
     radioTransmitDelay = configuration.getConfigurable<RADIO_TRANSMIT_INTERVAL_c>();
     batteryVoltageSensor.setScaleFactor(configuration.getConfigurable<BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c>().get());
     groundStationMode = configuration.getConfigurable<GROUND_STATION_MODE_c>();
@@ -208,6 +231,7 @@ void loop() {
     // Run core hardware
     RocketState_s state{};
     state.timestamp = hardware.enforceLoopTime();
+    hardware.setArmed(armed.get());
     hardware.runAndReadAllHardware(); // Reads sensors, runs any background code for every hardware device
 
     // Read in sim data. This should be optimized out by the compiler in the final deployment

@@ -30,6 +30,12 @@ void HardwareAbstraction::setLoopRateHz(const uint32_t loopRate) {
     m_loopTime = std::lround(delay);
 }
 
+void HardwareAbstraction::setArmed(const bool armed) {
+    for (int32_t i = 0; i < getNumPyros(); i++) {
+        if (getPyro(i)->isLocked() == armed) getPyro(i)->setLocked(!armed);
+    }
+}
+
 Timestamp_s HardwareAbstraction::enforceLoopTime() {
     uint32_t actualLoopEndtimeUs = m_systemClock->currentRuntimeUs();
 

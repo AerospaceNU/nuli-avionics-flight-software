@@ -19,17 +19,18 @@ public:
 
     bool isFired() const override { return m_isFired; }
 
-    void turnOn() override {
+    void disable() override { m_isFired = false; }
+
+protected:
+    void turnOnOutput() override {
         m_isFired = true;
         m_timedFireAlarm.reset();
     }
 
-    void fireFor(const uint32_t timeMs) override {
-        turnOn();
+    void fireOutputFor(const uint32_t timeMs) override {
+        turnOnOutput();
         m_timedFireAlarm.startAlarm(m_clock.currentRuntimeMs(), timeMs);
     }
-
-    void disable() override { m_isFired = false; }
 
 private:
     SystemClock& m_clock;

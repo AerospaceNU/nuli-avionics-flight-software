@@ -58,11 +58,22 @@ public:
 
     /**
      * @brief Turns the pyro channel on until disable()
-     * @details Writes the fire pin high
+     * @details Writes the fire pin high. Does nothing while the channel is locked (setLocked()).
      */
-    virtual void turnOn() {}
+    void turnOn() {
+        if (!m_locked) turnOnOutput();
+    }
 
-    virtual void fireFor(uint32_t timeMs) {}
+    void fireFor(const uint32_t timeMs) {
+        if (!m_locked) fireOutputFor(timeMs);
+    }
+
+    void setLocked(const bool locked) {
+        m_locked = locked;
+        if (locked) disable();
+    }
+
+    bool isLocked() const { return m_locked; }
 
     /**
      * @brief Disables they pyro channel
@@ -73,6 +84,11 @@ public:
     virtual int rawAdcValue() const { return 0; };
 
 protected:
+    virtual void turnOnOutput() {}
+
+    virtual void fireOutputFor(uint32_t timeMs) {}
+
+    bool m_locked = false;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_PYRO_H
