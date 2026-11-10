@@ -16,6 +16,8 @@ public:
     void beepContinuity(const Timestamp_s& timestamp) const {
         const bool drogueContinuity = m_drogue->hasContinuity();
         const bool mainContinuity = m_main->hasContinuity();
+        const bool softwareDisarmed = m_drogue->isLocked() || m_main->isLocked();
+        const bool hardwareDisarmed = (drogueContinuity && !m_drogue->isArmed()) || (mainContinuity && !m_main->isArmed());
         int numBeeps = 0;
         if (drogueContinuity && mainContinuity) {
             numBeeps = 3;
@@ -23,44 +25,29 @@ public:
             numBeeps = 2;
         } else if (drogueContinuity) {
             numBeeps = 1;
-        } else {
-            numBeeps = 0;
         }
 
-        bool active = false;
+        constexpr uint32_t beepOnMs = 100;
+        constexpr uint32_t beepOffMs = 100;
+        constexpr uint32_t cycleGapMs = 800;
+        constexpr uint32_t noContinuityBeepMs = 1000;
+        constexpr uint32_t noContinuityPauseMs = 2000;
+        constexpr uint32_t disarmedBeepMs = 2000;
+        constexpr uint32_t disarmedGapMs = 500;
+        const uint32_t disarmedMs = (softwareDisarmed || hardwareDisarmed) ? disarmedBeepMs + disarmedGapMs : 0;
+        const uint32_t continuityMs = numBeeps > 0 ? numBeeps * (beepOnMs + beepOffMs) + cycleGapMs : noContinuityBeepMs + noContinuityPauseMs;
+        const uint32_t t = timestamp.runtime_ms % (disarmedMs + continuityMs);
 
-        if (numBeeps > 0) {
-            // === Normal continuity beep sequence ===
-            constexpr uint32_t beepOnMs = 100; // short beep
-            constexpr uint32_t beepOffMs = 100; // gap between beeps
-            constexpr uint32_t cycleGapMs = 800; // gap after full sequence
-
-            const uint32_t sequenceDuration = numBeeps * (beepOnMs + beepOffMs) + cycleGapMs;
-            const uint32_t t = timestamp.runtime_ms % sequenceDuration;
-
-            for (int b = 0; b < numBeeps; b++) {
-                const uint32_t start = b * (beepOnMs + beepOffMs);
-                const uint32_t end = start + beepOnMs;
-                if (t >= start && t < end) {
-                    active = true;
-                    break;
-                }
-            }
+        bool active;
+        if (t < disarmedMs) {
+            active = t < disarmedBeepMs;
+        } else if (numBeeps > 0) {
+            const uint32_t continuityT = t - disarmedMs;
+            active = continuityT < numBeeps * (beepOnMs + beepOffMs) && continuityT % (beepOnMs + beepOffMs) < beepOnMs;
         } else {
-            // === No continuity: long beep, short pause ===
-            constexpr uint32_t longBeepMs = 1000;
-            constexpr uint32_t shortPauseMs = 2000;
-            constexpr uint32_t sequenceDuration = longBeepMs + shortPauseMs;
-            const uint32_t t = timestamp.runtime_ms % sequenceDuration;
-
-            if (t < longBeepMs) {
-                active = true;
-            } else {
-                active = false;
-            }
+            active = t - disarmedMs < noContinuityBeepMs;
         }
 
-        // Apply to all indicators
         for (int i = 0; i < m_hardware->getNumIndicators(); i++) {
             if (active) {
                 m_hardware->getIndicator(i)->on();
@@ -69,7 +56,6 @@ public:
             }
         }
     }
-
 
     void keepAliveBeep(const Timestamp_s& timestamp) const {
         for (int i = 0; i < m_hardware->getNumIndicators(); i++) {
