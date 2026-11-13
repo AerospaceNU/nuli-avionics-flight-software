@@ -116,6 +116,7 @@ bool FlightStateDeterminer::hasBurnedOut(const Timestamp_s& timestamp, const Sta
 }
 
 bool FlightStateDeterminer::apogeeReached(const Timestamp_s& timestamp, const State1D_s& state1D) {
+    if (state1D.accelerometerClipped && !m_firstStageBurnout.get()) m_machLockDebounce.restartTimingFrom(timestamp.runtime_ms);
     // Mach lockout
     if (m_machLockDebounce.check(state1D.velocityMS < MACH_LOCKOUT_THRESHOLD_MS, timestamp.runtime_ms)) {
         // Track maximum altitude

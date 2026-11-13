@@ -62,7 +62,7 @@ static uint8_t readRegister(uint8_t reg) {
  * ========================= */
 
 ICM42605Sensor::ICM42605Sensor(const Vector3DTransform* transform)
-    : m_accelerometer(transform),
+    : m_accelerometer(transform, 16.0f * (float)Constants::G_EARTH_MSS),
       m_gyroscope(transform) {}
 
 /* =========================

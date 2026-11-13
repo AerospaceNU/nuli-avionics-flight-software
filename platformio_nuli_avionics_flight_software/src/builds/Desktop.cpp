@@ -128,7 +128,7 @@ public:
 
 private:
     Barometer barometer;
-    Accelerometer accelerometer{&imuRotation};
+    Accelerometer accelerometer{&imuRotation, 16.0f * (float)Constants::G_EARTH_MSS};
     Gyroscope gyroscope{&imuRotation};
     DesktopPyro droguePyro;
     DesktopPyro mainPyro;

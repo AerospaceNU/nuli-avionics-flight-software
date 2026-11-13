@@ -62,6 +62,7 @@ DEFINE_CONFIGURATION_VARIABLE(RADIO_TRANSMIT_INTERVAL, uint32_t, 1000, value < 6
 DEFINE_CONFIGURATION_VARIABLE(BUZZER_ENABLED, uint32_t, true, value == false || value == true)
 DEFINE_CONFIGURATION_VARIABLE(GROUND_STATION_MODE, uint32_t, false, value == false || value == true)
 DEFINE_CONFIGURATION_VARIABLE(FIRST_STAGE_BURNOUT, uint32_t, false, value == false || value == true)
+DEFINE_CONFIGURATION_VARIABLE(ARMED, uint32_t, true, value == false || value == true)
 // clang-format on
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H

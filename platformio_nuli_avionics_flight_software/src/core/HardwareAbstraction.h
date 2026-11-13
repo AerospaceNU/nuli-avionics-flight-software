@@ -40,6 +40,8 @@ public:
 
     void runAndReadAllHardware() const;
 
+    void setArmed(bool armed);
+
     Timestamp_s enforceLoopTime();
 
     uint32_t getTargetLoopTimeMs() const;

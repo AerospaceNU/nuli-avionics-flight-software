@@ -36,7 +36,7 @@ bool ArduinoPyro::isArmed() const {
     return m_isArmed;
 }
 
-void ArduinoPyro::fire() {
+void ArduinoPyro::turnOnOutput() {
     m_isFired = true;
     m_timedFireAlarm.reset();
     digitalWrite(m_firePin, HIGH);
@@ -55,7 +55,7 @@ bool ArduinoPyro::isFired() const {
     return m_isFired;
 }
 
-void ArduinoPyro::fireFor(const uint32_t timeMs) {
-    fire();
+void ArduinoPyro::fireOutputFor(const uint32_t timeMs) {
+    turnOnOutput();
     m_timedFireAlarm.startAlarm(millis(), timeMs);
 }
