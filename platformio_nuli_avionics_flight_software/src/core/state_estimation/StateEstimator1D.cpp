@@ -3,6 +3,8 @@
 #include "core/generic_hardware/GenericHardware.h"
 #include <algorithm>
 
+static constexpr float TROPOPAUSE_TEMPERATURE_RATIO = 0.75187f;
+
 void StateEstimator1D::setup(HardwareAbstraction* hardware, Configuration* configuration) {
     m_hardware = hardware;
     m_configuration = configuration;
@@ -31,10 +33,12 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
     if (m_reInitializeKalman) {
         m_kalmanFilter.restState(altitudeRawM - m_groundElevation.get(), m_kalmanFilter.getVelocity(), m_kalmanFilter.getAcceleration());
         m_reInitializeKalman = false;
+        m_barometerInnovationSqAvgPa2 = 0;
     }
 
     m_kalmanFilter.setBarometerCovariance(machBarometerCovarianceScale());
     m_kalmanFilter.predict();
+    if (m_barometerValid) updateBarometerInnovation(pressurePa, altitudeRawM);
     if (m_barometerValid && m_accelerationValid) {
         m_kalmanFilter.positionAndAccelerationDataUpdate(altitudeRawM - m_groundElevation.get(), accelerationMSS);
     } else if (m_barometerValid) {
@@ -47,13 +51,21 @@ State1D_s StateEstimator1D::update(const Timestamp_s& timestamp, const FlightSta
     m_currentState1D.velocityMS = m_kalmanFilter.getVelocity();
     m_currentState1D.accelerationMSS = m_kalmanFilter.getAcceleration();
     m_currentState1D.unfilteredNoOffsetAltitudeM = altitudeRawM;
-    m_currentState1D.barometerValid = m_barometerValid;
-    m_currentState1D.accelerometerClipped = m_accelerometerClipped;
+    m_currentState1D.status.barometerValid = m_barometerValid;
+    m_currentState1D.status.accelerometerClipped = m_accelerometerClipped;
+    m_currentState1D.status.barometerSettled = !m_barometerValid || m_barometerInnovationSqAvgPa2 < APOGEE_INNOVATION_BOUND_PA2;
     return m_currentState1D;
 }
 
 State1D_s StateEstimator1D::getState1D() const {
     return m_currentState1D;
+}
+
+void StateEstimator1D::updateBarometerInnovation(const float pressurePa, const float altitudeRawM) {
+    const float modelTemperatureK = std::max(m_groundTemperature.get() + (float)Constants::LAPSE_RATE_K_M * altitudeRawM, TROPOPAUSE_TEMPERATURE_RATIO * m_groundTemperature.get());
+    const float pascalsPerMeter = pressurePa * (float)(Constants::G_EARTH_MSS / Constants::GAS_CONSTANT_J_KG_K) / modelTemperatureK;
+    const float innovationPa = std::min(std::fabs(altitudeRawM - m_groundElevation.get() - m_kalmanFilter.getPosition()) * pascalsPerMeter, APOGEE_INNOVATION_CLIP_PA);
+    m_barometerInnovationSqAvgPa2 += APOGEE_INNOVATION_FILTER * (innovationPa * innovationPa - m_barometerInnovationSqAvgPa2);
 }
 
 float StateEstimator1D::getPressurePa() {

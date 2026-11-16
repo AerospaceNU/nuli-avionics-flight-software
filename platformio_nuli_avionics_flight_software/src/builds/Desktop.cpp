@@ -104,7 +104,7 @@ public:
                 accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
                 gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
                 state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-                state.state1D.barometerValid, droguePyro.isFired(), mainPyro.isFired(),
+                state.state1D.status.barometerValid, droguePyro.isFired(), mainPyro.isFired(),
                 state.orientation.tiltMagnitudeDeg
             });
     }

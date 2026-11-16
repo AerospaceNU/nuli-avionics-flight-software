@@ -33,6 +33,8 @@ private:
      *         MACH_RAMP_START_MS and MACH_RAMP_END_MS of filter velocity; only while the accelerometer can carry the filter. */
     float machBarometerCovarianceScale();
 
+    void updateBarometerInnovation(float pressurePa, float altitudeRawM);
+
     void updateGroundTemperatureReference(float unfilteredAltitudeM, const Timestamp_s& timestamp);
 
 
@@ -58,6 +60,7 @@ private:
     uint32_t m_barometerInvalidTicks = 0;
     bool m_accelerationValid = false; ///< outside PRE_FLIGHT/ASCENT the acceleration is a 0 measurement, not the accelerometer
     bool m_accelerometerClipped = false;
+    float m_barometerInnovationSqAvgPa2 = 0;
 
     bool m_needNewGroundReference = true;
     Alarm m_groundElevationReferenceTimer;
