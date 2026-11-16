@@ -6,6 +6,8 @@
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
 #include "drivers/arduino/UBloxV2.h"
+#include "drivers/arduino/UBloxM10.h"
+#include "drivers/samd/SercomUart.h"
 #include "drivers/arduino/SX1262Radio.h"
 #include "drivers/arduino/Ms5607Mmc5603SensorPackage.h"
 #include "drivers/arduino/MX25L256.h"
@@ -68,7 +70,10 @@ const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local
 const DiscreteRotation magRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, Ms5607Mmc5603SensorPackage::ImuType::ICM42605, true, &magRotation);
 MX25L256 flash(FLASH_CS_PIN);
-UBloxV2 gps(&Serial1);
+SercomUart auxSerial(&sercom0, AUX_1_PIN, AUX_2_PIN, SERCOM_RX_PAD_1, UART_TX_PAD_0);
+SERCOM_UART_HANDLERS(0, auxSerial)
+UBloxV2 onboardGps(&Serial1);
+UBloxM10 auxGps(&auxSerial);
 SX1262Radio radio(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RESET_PIN, RADIO_BUSY_PIN, RADIO_RX_EN_PIN, RADIO_TX_EN_PIN, 915.0f);
 Alarm radioTransmitTimer;
 ArduinoPyro mainPyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
@@ -94,7 +99,7 @@ DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see l
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c, GPS_SOURCE_c
     };
 Configuration configuration({
         sillyGooseRequiredConfigs,
@@ -135,6 +140,7 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          BOARD_NAME_c,
                          BUZZER_ENABLED_c,
                          GROUND_STATION_MODE_c,
+                         GPS_SOURCE_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
@@ -199,14 +205,18 @@ void setup() {
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
     hardware.appendRadioLink(&radio);
-    hardware.appendGPS(&gps);
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
+    if (configuration.getConfigurable<GPS_SOURCE_c>().get() == 1) {
+        hardware.appendGPS(&auxGps);
+    } else {
+        hardware.appendGPS(&onboardGps);
+    }
     configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
-    groundStationRelay.setup(&cliParser, &radio, &gps);
+    groundStationRelay.setup(&cliParser, &radio, hardware.getGPS(0));
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.addFlagGroup(armGroup);
     cliParser.addFlagGroup(disarmGroup);
@@ -256,7 +266,7 @@ void loop() {
 
     if (!groundStationMode.get()) {
         // Determine state
-        state.rawGps = gps.getCoordinates();
+        state.rawGps = hardware.getGPS(0)->getCoordinates();
         state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
         state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
         state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
@@ -321,7 +331,7 @@ void loop() {
                 state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
                 state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
                 state.rawGps.latitudeDeg, state.rawGps.longitudeDeg, state.rawGps.altitudeM,
-                gps.getUnixTimeS(), gps.getHDOP(), gps.getVDOP(), gps.getFixQuality(), gps.getSatellitesTracked()
+                hardware.getGPS(0)->getUnixTimeS(), hardware.getGPS(0)->getHDOP(), hardware.getGPS(0)->getVDOP(), hardware.getGPS(0)->getFixQuality(), hardware.getGPS(0)->getSatellitesTracked()
             };
         logger.log(logData);
 

@@ -96,7 +96,7 @@ DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see l
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c, GPS_SOURCE_c
     };
 Configuration configuration({
         sillyGooseRequiredConfigs,
