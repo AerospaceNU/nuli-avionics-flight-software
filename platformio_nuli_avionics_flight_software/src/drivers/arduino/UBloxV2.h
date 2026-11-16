@@ -37,14 +37,33 @@ protected:
      */
     bool connectAtBaud(uint32_t baud);
 
+    /**
+     * @brief Advances the non-blocking reconnect by at most one action
+     * @details Tries the factory-default 9600 baud switch, then m_baudRate, re-sends the configuration fire-and-forget, and waits for a NAV-PVT; restarts every GPS_RECOVER_AFTER_MS until one arrives.
+     */
+    void stepRecovery(uint32_t now);
+
+    /**
+     * @brief Sends a UBX-CFG message without waiting for its ACK
+     */
+    void sendConfig(uint8_t id, uint8_t* payload, uint16_t length);
+
+    /**
+     * @brief Sends UBX-CFG-PRT for UART1: m_baudRate, 8N1, UBX-only output
+     */
+    void sendPortConfig();
+
     HardwareSerial* m_serial;
     uint8_t m_navigationRateHz;
     uint32_t m_baudRate;
     SFE_UBLOX_GNSS m_gps;
     DebugStream* m_debugStream = nullptr; ///< Stashed from setup() so other methods can log too
-    bool m_connected = false;     ///< answered at setup; otherwise read() does nothing (each getter would wait out its timeout)
+    bool m_connected = false;     ///< answered and reporting; otherwise read() steps the recovery instead of the getters (each getter would wait out its timeout)
     bool m_autoReporting = false; ///< both auto-reports on; otherwise read() polls one value per tick
     uint8_t m_pollIndex = 0;
+    uint32_t m_lastPvtMs = 0;       ///< last time a fresh NAV-PVT was seen
+    uint32_t m_recoveryStartMs = 0; ///< start of the current recovery attempt
+    uint8_t m_recoveryStep = 0;     ///< next recovery action, 0 starts a new attempt
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_UBLOXV2_H

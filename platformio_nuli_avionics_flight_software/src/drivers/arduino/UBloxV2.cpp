@@ -6,6 +6,8 @@
 static constexpr uint8_t AUTO_REPORT_ENABLE_RETRIES = 3;
 
 static constexpr uint16_t GPS_GETTER_MAX_WAIT_MS = 5; ///< bounds each blocking poll (only used if auto-reporting could not be enabled)
+static constexpr uint32_t GPS_RECOVER_AFTER_MS = 3000; ///< NAV-PVT silence before reconnecting, and the length of each reconnect attempt
+static constexpr uint32_t GPS_PORT_SWITCH_MS = 100; ///< lets a CFG-PRT drain out of the TX buffer and the module's port settle
 
 UBloxV2::UBloxV2(HardwareSerial* serial, uint8_t navigationRateHz, uint32_t baudRate) :
     m_serial(serial), m_navigationRateHz(navigationRateHz), m_baudRate(baudRate) {}
@@ -20,6 +22,18 @@ bool UBloxV2::connectAtBaud(uint32_t baud) {
     m_serial->end();
     m_serial->begin(baud);
     return m_gps.begin(*m_serial, GPS_CONFIG_MAX_WAIT_MS);
+}
+
+void UBloxV2::sendConfig(uint8_t id, uint8_t* payload, uint16_t length) {
+    ubxPacket packet = {UBX_CLASS_CFG, id, length, 0, 0, payload, 0, 0, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED, SFE_UBLOX_PACKET_VALIDITY_NOT_DEFINED};
+    m_gps.sendCommand(&packet, 0);
+}
+
+void UBloxV2::sendPortConfig() {
+    uint8_t payload[20] = {COM_PORT_UART1, 0, 0, 0, 0xD0, 0x08, 0, 0,
+                           (uint8_t)m_baudRate, (uint8_t)(m_baudRate >> 8), (uint8_t)(m_baudRate >> 16), (uint8_t)(m_baudRate >> 24),
+                           COM_TYPE_UBX | COM_TYPE_NMEA, 0, COM_TYPE_UBX, 0, 0, 0, 0, 0};
+    sendConfig(UBX_CFG_PRT, payload, sizeof(payload));
 }
 
 void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
@@ -64,12 +78,87 @@ void UBloxV2::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     }
 
     m_autoReporting = autoPvtEnabled && autoDopEnabled;
+    m_lastPvtMs = millis();
     debugStream->message("UBloxV2 GPS initialized");
 }
 
+void UBloxV2::stepRecovery(uint32_t now) {
+    if (m_recoveryStep == 0) {
+        m_recoveryStartMs = now;
+        m_serial->end();
+        m_serial->begin(9600);
+        sendPortConfig();
+        m_recoveryStep = 1;
+        return;
+    }
+
+    uint32_t elapsed = now - m_recoveryStartMs;
+    if (elapsed > GPS_RECOVER_AFTER_MS) {
+        m_recoveryStep = 0;
+        return;
+    }
+
+    switch (m_recoveryStep) {
+    case 1:
+        if (elapsed < GPS_PORT_SWITCH_MS) return;
+        m_serial->end();
+        m_serial->begin(m_baudRate);
+        break;
+    case 2:
+        sendPortConfig();
+        break;
+    case 3: {
+        if (elapsed < 2 * GPS_PORT_SWITCH_MS) return;
+        uint8_t payload[36] = {0x01, 0x00, DYN_MODEL_AIRBORNE4g};
+        sendConfig(UBX_CFG_NAV5, payload, sizeof(payload));
+        break;
+    }
+    case 4: {
+        uint16_t measurementRateMs = (uint16_t)(1000 / m_navigationRateHz);
+        uint8_t payload[6] = {(uint8_t)measurementRateMs, (uint8_t)(measurementRateMs >> 8), 1, 0, 1, 0};
+        sendConfig(UBX_CFG_RATE, payload, sizeof(payload));
+        break;
+    }
+    case 5: {
+        uint8_t payload[3] = {UBX_CLASS_NAV, UBX_NAV_PVT, 1};
+        sendConfig(UBX_CFG_MSG, payload, sizeof(payload));
+        break;
+    }
+    case 6: {
+        uint8_t payload[3] = {UBX_CLASS_NAV, UBX_NAV_DOP, 1};
+        sendConfig(UBX_CFG_MSG, payload, sizeof(payload));
+        m_gps.assumeAutoPVT(true);
+        m_gps.assumeAutoDOP(true);
+        m_autoReporting = true;
+        break;
+    }
+    default:
+        if (m_gps.getPVT(0)) {
+            m_connected = true;
+            m_lastPvtMs = now;
+            m_debugStream->message("UBloxV2 GPS reconnected");
+        }
+        return;
+    }
+    m_recoveryStep++;
+}
+
 void UBloxV2::read() {
-    if (!m_connected) return;
+    uint32_t now = millis();
+    if (!m_connected) {
+        stepRecovery(now);
+        return;
+    }
     m_gps.checkUblox();
+    if (m_autoReporting && m_gps.getPVT(0)) {
+        m_lastPvtMs = now;
+    }
+    if (now - m_lastPvtMs > GPS_RECOVER_AFTER_MS) {
+        m_connected = false;
+        m_recoveryStep = 0;
+        m_debugStream->warn("UBloxV2 GPS silent for %lu ms, reconnecting", (unsigned long)GPS_RECOVER_AFTER_MS);
+        return;
+    }
 
     for (uint8_t i = 0; i < 8; i++) {
         switch (m_pollIndex) {
