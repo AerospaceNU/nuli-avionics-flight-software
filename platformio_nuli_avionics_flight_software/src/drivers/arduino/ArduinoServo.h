@@ -4,38 +4,35 @@
 #include "Avionics.h"
 #include <Arduino.h>
 #include <Servo.h>
+#include <algorithm>
+#include <cmath>
 #include "core/generic_hardware/GenericHardware.h"
 
 class ArduinoServo final : public GenericAvionicsHardware {
 public:
-    ArduinoServo(const int8_t pin, const uint8_t position1Deg, const uint8_t position2Deg)
-        : m_pin(pin), m_position1Deg(position1Deg), m_position2Deg(position2Deg) {}
+    ArduinoServo(const int8_t pin, const uint16_t position0Us, const uint16_t position1Us)
+        : m_pin(pin), m_position0Us(position0Us), m_position1Us(position1Us) {}
 
     void setup(DebugStream* debugStream, WatchdogTimer* watchdog) override {
-        m_servo.attach(m_pin);
-        moveToPosition1();
+        m_servo.attach(m_pin, std::min(m_position0Us, m_position1Us), std::max(m_position0Us, m_position1Us));
+        setPosition(0.0f);
     }
 
-    void moveToPosition1() {
-        m_servo.writeMicroseconds(1100);
-        m_atPosition2 = false;
+    void setPosition(const float fraction) {
+        m_position = std::max(0.0f, std::min(1.0f, fraction));
+        m_servo.writeMicroseconds((int)std::lround((float)m_position0Us + m_position * ((float)m_position1Us - (float)m_position0Us)));
     }
 
-    void moveToPosition2() {
-        m_servo.writeMicroseconds(1900);
-        m_atPosition2 = true;
-    }
-
-    bool isAtPosition2() const {
-        return m_atPosition2;
+    float getPosition() const {
+        return m_position;
     }
 
 private:
     Servo m_servo;
     int8_t m_pin;
-    uint8_t m_position1Deg;
-    uint8_t m_position2Deg;
-    bool m_atPosition2 = false;
+    uint16_t m_position0Us;
+    uint16_t m_position1Us;
+    float m_position = 0.0f;
 };
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_ARDUINOSERVO_H

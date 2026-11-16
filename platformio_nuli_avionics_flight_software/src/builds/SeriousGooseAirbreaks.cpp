@@ -79,7 +79,16 @@ ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoServo airbrakeServo(AUX_2_PIN, 0, 190);
+ArduinoServo airbrakeServo(AUX_2_PIN, 1000, 2050);
+constexpr uint32_t AIRBRAKE_STEP_MS = 3000;
+enum AirbrakeStep_e {
+    AIRBRAKE_STOWED,
+    AIRBRAKE_FULL,
+    AIRBRAKE_ONE_THIRD,
+    AIRBRAKE_TWO_THIRDS,
+    AIRBRAKE_FULL_FINAL,
+};
+AirbrakeStep_e airbrakeStep = AIRBRAKE_STOWED;
 
 // Core components
 HardwareAbstraction hardware(serialDebug, arduinoClock, watchdog, 100);
@@ -144,18 +153,18 @@ void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
 }
 SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) { testFirePyro(droguePyro, "drogue", debugStream); });
 SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { testFirePyro(mainPyro, "main", debugStream); });
-SimpleFlag servoToggle("--servo", "Toggles the airbrake servo between its two positions, PRE_FLIGHT only", true, [](DebugStream* debugStream) {
+ArgumentFlag<float> servoSet("--servo", "Moves the airbrake servo to a fraction from 0 (retracted) to 1 (fully extended), PRE_FLIGHT only", true, [](DebugStream* debugStream) {
     if (flightStateDeterminer.getFlightState() != PRE_FLIGHT) {
-        debugStream->error("Servo toggle is PRE_FLIGHT only");
+        debugStream->error("Servo control is PRE_FLIGHT only");
         return;
     }
-    if (airbrakeServo.isAtPosition2()) {
-        airbrakeServo.moveToPosition1();
-        debugStream->message("Airbrake servo stowed (position 1)");
-    } else {
-        airbrakeServo.moveToPosition2();
-        debugStream->message("Airbrake servo deployed (position 2)");
+    const float fraction = servoSet.getValueDerived();
+    if (!(fraction >= 0.0f && fraction <= 1.0f)) {
+        debugStream->error("Servo position must be between 0 and 1");
+        return;
     }
+    airbrakeServo.setPosition(fraction);
+    debugStream->message("Airbrake servo set to %.3f", airbrakeServo.getPosition());
 });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
 BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain};
@@ -174,7 +183,7 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* armGroup[] = {&armFlag};
 BaseFlag* disarmGroup[] = {&disarmFlag};
 BaseFlag* armedGroup[] = {&armedFlag};
-BaseFlag* servoGroup[] = {&servoToggle};
+BaseFlag* servoGroup[] = {&servoSet};
 BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
@@ -282,6 +291,22 @@ void loop() {
             if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
             logger.enableContinuousLogging();
             indicatorManager.keepAliveBeep(state.timestamp);
+            if (flightStateDeterminer.getFirstStageBurnout()) {
+                const uint32_t sinceBurnoutMs = flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms);
+                if (airbrakeStep == AIRBRAKE_STOWED && sinceBurnoutMs >= AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(1.0f);
+                    airbrakeStep = AIRBRAKE_FULL;
+                } else if (airbrakeStep == AIRBRAKE_FULL && sinceBurnoutMs >= 2 * AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(1.0f / 3.0f);
+                    airbrakeStep = AIRBRAKE_ONE_THIRD;
+                } else if (airbrakeStep == AIRBRAKE_ONE_THIRD && sinceBurnoutMs >= 3 * AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(2.0f / 3.0f);
+                    airbrakeStep = AIRBRAKE_TWO_THIRDS;
+                } else if (airbrakeStep == AIRBRAKE_TWO_THIRDS && sinceBurnoutMs >= 4 * AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(1.0f);
+                    airbrakeStep = AIRBRAKE_FULL_FINAL;
+                }
+            }
         } else if (state.flightState == DESCENT) {
             if (flightStateDeterminer.isStateTransitionTick()) radioCli.clearIncoming();
             logger.enableContinuousLogging();
@@ -304,11 +329,6 @@ void loop() {
             indicatorManager.siren(state.timestamp);
         }
 
-        if (flightStateDeterminer.getFirstStageBurnout() && !airbrakeServo.isAtPosition2() &&
-            flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms) >= 3000) {
-            airbrakeServo.moveToPosition2();
-        }
-
         // Update any changes to the configuration
         configuration.pushUpdatesToMemory();
         // Run logging
@@ -321,7 +341,7 @@ void loop() {
                 sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
                 sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
                 batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), uint8_t(airbrakeServo.isAtPosition2() ? 2 : 1), auxPyro.isFired(),
+                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), uint8_t(airbrakeServo.getPosition() > 0.0f ? 2 : 1), auxPyro.isFired(),
                 state.orientation.tiltMagnitudeDeg,
                 state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
                 state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
