@@ -8,13 +8,16 @@ HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& 
     setLoopRateHz(loopRateHz);
 }
 
+HardwareAbstraction::HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, WatchdogTimer& watchdog, uint32_t loopRateHz)
+    : HardwareAbstraction(debugStream, systemClock, loopRateHz) {
+    m_watchdog = &watchdog;
+}
+
 void HardwareAbstraction::setup() {
     m_debug->setup();
     m_debug->message("SETTING UP HARDWARE");
     m_systemClock->setup(m_debug);
     m_watchdog->setup(m_debug);
-    for (GenericAvionicsHardware* hardwareDevice : m_allHardware) hardwareDevice->setup(m_debug, m_watchdog);
-    m_debug->message("HARDWARE SET UP COMPLETE\r\n");
 }
 
 void HardwareAbstraction::runAndReadAllHardware() const {

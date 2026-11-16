@@ -82,7 +82,7 @@ IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 ArduinoServo airbrakeServo(AUX_2_PIN, 0, 190);
 
 // Core components
-HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
+HardwareAbstraction hardware(serialDebug, arduinoClock, watchdog, 100);
 FlightStateDeterminer flightStateDeterminer;
 DualDeploy dualDeploy;
 StateEstimator1D stateEstimator1D;
@@ -187,6 +187,7 @@ void setup() {
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
 
     // Setup Hardware
+    hardware.setup();
     int16_t framID = hardware.appendFramMemory(&fram);
     int16_t flashID = hardware.appendFlashMemory(&flash);
     int16_t drogueID = hardware.appendPyro(&droguePyro);
@@ -202,8 +203,6 @@ void setup() {
     hardware.appendRadioLink(&radio);
     hardware.appendGPS(&gps);
     hardware.appendGenericHardware(&airbrakeServo);
-    hardware.setWatchdogTimer(&watchdog);
-    hardware.setup();
     auxPyro.setup(&serialDebug, &watchdog);
     auxPyro.turnOn();
 

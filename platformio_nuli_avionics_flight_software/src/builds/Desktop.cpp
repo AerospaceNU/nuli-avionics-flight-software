@@ -51,6 +51,7 @@ public:
         droguePyro(clock), mainPyro(clock), hardware(debug, clock, 100) {
         configuration.setDefault<BOARD_NAME_c>("Desktop");
 
+        hardware.setup();
         const int16_t framID = hardware.appendFramMemory(&fram);
         const int16_t flashID = hardware.appendFlashMemory(&flash);
         hardware.appendPyro(&droguePyro);
@@ -58,7 +59,6 @@ public:
         hardware.appendBarometer(&barometer);
         hardware.appendAccelerometer(&accelerometer);
         hardware.appendGyroscope(&gyroscope);
-        hardware.setup();
 
         configuration.setup(&hardware, framID);
         stateEstimator1D.setup(&hardware, &configuration);
