@@ -11,6 +11,8 @@
  */
 class SX1262Radio : public RadioLink {
 public:
+    static constexpr uint8_t NO_PIN = 0xFF; ///< Pass as rxEnPin and txEnPin when DIO2 drives the RF switch
+
     /**
      * @brief Creates an SX1262 radio driver
      * @param csPin SPI chip select (NSS)
@@ -20,9 +22,10 @@ public:
      * @param rxEnPin RF switch receive-enable pin
      * @param txEnPin RF switch transmit-enable pin
      * @param frequencyMHz Center frequency in MHz
+     * @param tcxoVoltage Voltage DIO3 supplies to the TCXO; 0 for a TCXO powered from the supply rail
      */
     SX1262Radio(uint8_t csPin, uint8_t dio1Pin, uint8_t resetPin, uint8_t busyPin,
-                uint8_t rxEnPin, uint8_t txEnPin, float frequencyMHz);
+                uint8_t rxEnPin, uint8_t txEnPin, float frequencyMHz, float tcxoVoltage = 1.6f);
 
     /**
      * @brief Initialize the radio and start listening for incoming packets
@@ -79,6 +82,7 @@ protected:
     uint8_t m_rxEnPin;
     uint8_t m_txEnPin;
     float m_frequencyMHz;
+    float m_tcxoVoltage;
 
     SX1262 m_radio = nullptr;
     DebugStream* m_debugStream = nullptr;
