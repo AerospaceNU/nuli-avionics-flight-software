@@ -27,6 +27,9 @@ constexpr uint32_t BURNOUT_DEBOUNCE_TIMER_MS = 150;
 // Apogee detection
 constexpr uint32_t APOGEE_DEBOUNCE_TIMER_MS = 150;
 constexpr float APOGEE_ALTITUDE_CHANGE_THRESHOLD_M = 2.0;
+constexpr float APOGEE_INNOVATION_CLIP_PA = 1500.0;
+constexpr float APOGEE_INNOVATION_FILTER = 1.0 / 16.0;
+constexpr float APOGEE_INNOVATION_BOUND_PA2 = 360000.0;
 constexpr uint32_t MACH_LOCKOUT_TIMER_MS = 5000;
 constexpr float MACH_LOCKOUT_THRESHOLD_MS = 150.0;
 // Barometer de-weighting near Mach (tuned on 11 real transonic flights 2026-10-18; ramp moved down and up to x100 on
@@ -118,9 +121,13 @@ struct State1D_s {
     float velocityMS;
     float accelerationMSS;
     float unfilteredNoOffsetAltitudeM;
-    bool barometerValid; ///< False while altitude comes from a held pressure rather than a measurement
     float accelerometerMagnitudeMSS;
-    bool accelerometerClipped;
+
+    struct {
+        bool barometerValid; ///< False while altitude comes from a held pressure rather than a measurement
+        bool accelerometerClipped;
+        bool barometerSettled;
+    } status;
 };
 
 struct Orientation_s {

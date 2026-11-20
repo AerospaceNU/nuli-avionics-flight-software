@@ -51,6 +51,7 @@ public:
         droguePyro(clock), mainPyro(clock), hardware(debug, clock, 100) {
         configuration.setDefault<BOARD_NAME_c>("Desktop");
 
+        hardware.setup();
         const int16_t framID = hardware.appendFramMemory(&fram);
         const int16_t flashID = hardware.appendFlashMemory(&flash);
         hardware.appendPyro(&droguePyro);
@@ -58,7 +59,6 @@ public:
         hardware.appendBarometer(&barometer);
         hardware.appendAccelerometer(&accelerometer);
         hardware.appendGyroscope(&gyroscope);
-        hardware.setup();
 
         configuration.setup(&hardware, framID);
         stateEstimator1D.setup(&hardware, &configuration);
@@ -104,7 +104,7 @@ public:
                 accelerometer.getAccelerationsMSS_sensor().x, accelerometer.getAccelerationsMSS_sensor().y, accelerometer.getAccelerationsMSS_sensor().z,
                 gyroscope.getVelocitiesRadS_raw().x, gyroscope.getVelocitiesRadS_raw().y, gyroscope.getVelocitiesRadS_raw().z,
                 state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-                state.state1D.barometerValid, droguePyro.isFired(), mainPyro.isFired(),
+                state.state1D.status.barometerValid, droguePyro.isFired(), mainPyro.isFired(),
                 state.orientation.tiltMagnitudeDeg
             });
     }

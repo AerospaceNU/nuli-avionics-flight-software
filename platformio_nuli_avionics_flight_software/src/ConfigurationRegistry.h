@@ -63,6 +63,7 @@ DEFINE_CONFIGURATION_VARIABLE(BUZZER_ENABLED, uint32_t, true, value == false || 
 DEFINE_CONFIGURATION_VARIABLE(GROUND_STATION_MODE, uint32_t, false, value == false || value == true)
 DEFINE_CONFIGURATION_VARIABLE(FIRST_STAGE_BURNOUT, uint32_t, false, value == false || value == true)
 DEFINE_CONFIGURATION_VARIABLE(ARMED, uint32_t, true, value == false || value == true)
+DEFINE_CONFIGURATION_VARIABLE(GPS_SOURCE, uint32_t, 0, value <= 1)
 // clang-format on
 
 #endif //PLATFORMIO_NULI_AVIONICS_FLIGHT_SOFTWARE_CONFIGURATIONREGISTRY_H

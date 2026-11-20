@@ -27,6 +27,7 @@ public:
         const bool receivingCliResponse = m_lastCliResponseRxTimeMs != 0 &&
             (timestamp.runtime_ms - m_lastCliResponseRxTimeMs) < CLI_RESPONSE_QUIET_MS;
         if (!receivingCliResponse && m_gpsReportTimer.isAlarmFinished(timestamp.runtime_ms)) {
+            endOpenCliLine(debugStream);
             const Coordinates_s coords = m_gps->getCoordinates();
             debugStream->data("GPS\t%.6f\t%.6f\t%.2f\t%lu\t%u\t%u\t%d\t%d",
                 coords.latitudeDeg, coords.longitudeDeg, coords.altitudeM,
@@ -59,7 +60,9 @@ public:
                 m_lastCliResponseRxTimeMs = timestamp.runtime_ms;
                 // Raw pass-through: already the flying board's CLI text, newlines included
                 debugStream->writeRaw(message.data + 1, message.length - 1);
+                m_cliLineOpen = message.length > 1 && message.data[message.length - 1] != '\n';
             } else {
+                endOpenCliLine(debugStream);
                 char hexBuffer[sizeof(message.data) * 2 + 1];
                 bytesToHex(message.data, message.length, hexBuffer);
                 debugStream->data("RADIO_RX\t%d\t%.2f\t%s", message.rssi, message.snr, hexBuffer);
@@ -112,6 +115,12 @@ private:
         outHex[length * 2] = '\0';
     }
 
+    void endOpenCliLine(DebugStream* debugStream) {
+        if (!m_cliLineOpen) return;
+        debugStream->writeRaw("\n", 1);
+        m_cliLineOpen = false;
+    }
+
     static constexpr uint32_t GPS_REPORT_INTERVAL_MS = 1000;
     static constexpr uint32_t SAFE_WINDOW_FRACTION_PERCENT = 35;
     // Comfortably more than one radioTransmitDelay cycle, so GPS reporting only resumes once a
@@ -132,6 +141,7 @@ private:
     uint32_t m_lastDownlinkRxTimeMs = 0;
     uint32_t m_downlinkCadenceMs = 0;
     uint32_t m_lastCliResponseRxTimeMs = 0;
+    bool m_cliLineOpen = false;
 };
 
 #endif //GROUNDSTATIONRELAY_H

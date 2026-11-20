@@ -9,9 +9,9 @@ static void setSX1262InterruptFlag() {
 }
 
 SX1262Radio::SX1262Radio(uint8_t csPin, uint8_t dio1Pin, uint8_t resetPin, uint8_t busyPin,
-                         uint8_t rxEnPin, uint8_t txEnPin, float frequencyMHz) :
+                         uint8_t rxEnPin, uint8_t txEnPin, float frequencyMHz, float tcxoVoltage) :
     m_csPin(csPin), m_dio1Pin(dio1Pin), m_resetPin(resetPin), m_busyPin(busyPin),
-    m_rxEnPin(rxEnPin), m_txEnPin(txEnPin), m_frequencyMHz(frequencyMHz) {}
+    m_rxEnPin(rxEnPin), m_txEnPin(txEnPin), m_frequencyMHz(frequencyMHz), m_tcxoVoltage(tcxoVoltage) {}
 
 void SX1262Radio::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     m_debugStream = debugStream;
@@ -19,19 +19,19 @@ void SX1262Radio::setup(DebugStream* debugStream, WatchdogTimer* watchdog) {
     Module* module = new Module(m_csPin, m_dio1Pin, m_resetPin, m_busyPin);
     m_radio = module;
 
-    // Drive RXEN/TXEN directly rather than through the chip's internal DIO2-as-RF-switch feature -
-    // DIO2/DIO3 aren't wired to the MCU on this board, only these two dedicated GPIOs are.
-    m_radio.setRfSwitchPins(m_rxEnPin, m_txEnPin);
+    // The E22 can't use DIO2 as the RF switch, so its RXEN/TXEN are driven as GPIOs; NO_PIN for both lets DIO2 drive it.
+    const bool dio2RfSwitch = m_rxEnPin == NO_PIN && m_txEnPin == NO_PIN;
+    if (!dio2RfSwitch) m_radio.setRfSwitchPins(m_rxEnPin, m_txEnPin);
 
-    // tcxoVoltage defaults to 1.6V, which powers the E22 module's onboard TCXO via DIO3 - without
-    // it the module won't get a stable clock reference and RF won't work despite correct wiring.
-    const int16_t state = m_radio.begin(m_frequencyMHz);
+    // The E22 needs 1.6 V on DIO3 for its TCXO or RF won't work; the other parameters are RadioLib's defaults.
+    const int16_t state = m_radio.begin(m_frequencyMHz, 125.0, 9, 7, RADIOLIB_SX126X_SYNC_WORD_PRIVATE, 10, 8, m_tcxoVoltage);
     if (state != RADIOLIB_ERR_NONE) {
         debugStream->error("SX1262Radio initialization failed. Code: %d", state);
         return;
     }
     m_ok = true;
     module->spiConfig.timeout = 10;
+    if (dio2RfSwitch) m_radio.setDio2AsRfSwitch(true);
     m_radio.setOutputPower(22); // module's rated max
 
     m_radio.setDio1Action(setSX1262InterruptFlag);

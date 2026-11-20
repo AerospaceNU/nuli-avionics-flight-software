@@ -6,6 +6,8 @@
 #include "drivers/arduino/SerialDebug.h"
 #include "drivers/arduino/ArduinoSystemClock.h"
 #include "drivers/arduino/UBloxV2.h"
+#include "drivers/arduino/UBloxM10.h"
+#include "drivers/samd/SercomUart.h"
 #include "drivers/arduino/SX1262Radio.h"
 #include "drivers/arduino/Ms5607Mmc5603SensorPackage.h"
 #include "drivers/arduino/MX25L256.h"
@@ -24,6 +26,7 @@
 #include "core/IndicatorManager.h"
 #include "core/BasicLogger.h"
 #include "core/BasicLoggerHelper.h"
+#include "builds/SeriousGooseLogData.h"
 #include "core/GroundStationRelay.h"
 #include "core/cli/SimpleFlag.h"
 #include "core/cli/ArgumentFlag.h"
@@ -35,26 +38,6 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 
-// clang-format off
-LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
-    struct SillyGooseLogData {
-        uint32_t timestampMs;
-        float pressurePa, barometerTemperatureK;
-        float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
-        float magFieldTeslaRaw_x, magFieldTeslaRaw_y, magFieldTeslaRaw_z;
-        float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
-        int32_t flightState;
-        uint8_t drogueState; bool drogueFired;
-        uint8_t mainState; bool mainFired;
-        uint8_t auxState; bool auxFired;
-        float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
-        float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
-        uint32_t gpsUnixTimeS;
-        uint16_t gpsHdop, gpsVdop; // raw, scaled by 100 - matches the GPS module's native representation
-        uint8_t gpsFixQuality, gpsSatellitesTracked;
-    } remove_struct_padding;
-)
-// clang-format on
 static constexpr const char* LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
 void printLog(const SillyGooseLogData &d, DebugStream *debug) {
     BasicLoggerHelper::genericBasicLogDataPrinter<HEADER_OUTPUT>(d, debug);
@@ -68,7 +51,10 @@ const DiscreteRotation imuRotation = DiscreteRotation::identity().rotateZ90local
 const DiscreteRotation magRotation = DiscreteRotation::identity().rotateZNeg90local().rotateX90local().inverse();
 Ms5607Mmc5603SensorPackage sensorPackage(&imuRotation, Ms5607Mmc5603SensorPackage::ImuType::ICM42605, true, &magRotation);
 MX25L256 flash(FLASH_CS_PIN);
-UBloxV2 gps(&Serial1);
+SercomUart auxSerial(&sercom0, AUX_1_PIN, AUX_2_PIN, SERCOM_RX_PAD_1, UART_TX_PAD_0);
+SERCOM_UART_HANDLERS(0, auxSerial)
+UBloxV2 onboardGps(&Serial1);
+UBloxM10 auxGps(&auxSerial);
 SX1262Radio radio(RADIO_CS_PIN, RADIO_DIO1_PIN, RADIO_RESET_PIN, RADIO_BUSY_PIN, RADIO_RX_EN_PIN, RADIO_TX_EN_PIN, 915.0f);
 Alarm radioTransmitTimer;
 ArduinoPyro mainPyro(PYRO1_GATE_PIN, PYRO1_SENSE_PIN, PYRO_CONTINUITY_THRESHOLD, PYRO_ARMED_THRESHOLD);
@@ -80,7 +66,7 @@ IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 
 // Core components
-HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
+HardwareAbstraction hardware(serialDebug, arduinoClock, watchdog, 100);
 FlightStateDeterminer flightStateDeterminer;
 DualDeploy dualDeploy;
 StateEstimator1D stateEstimator1D;
@@ -94,7 +80,7 @@ DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see l
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c, GPS_SOURCE_c
     };
 Configuration configuration({
         sillyGooseRequiredConfigs,
@@ -123,12 +109,23 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
                          BOARD_NAME_c,
                          BUZZER_ENABLED_c,
                          GROUND_STATION_MODE_c,
+                         GPS_SOURCE_c,
                          CONFIGURATION_VERSION_c> configurationCliBindings;
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
-SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOn("-on", "Holds the pyro on until -off, a reboot or --disarm instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOff("-off", "Turns the pyro off", false, [](DebugStream*) {});
 void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    if (testOn.isSet() && testOff.isSet()) {
+        debugStream->error("Use -on or -off, not both");
+        return;
+    }
+    if (testOff.isSet()) {
+        debugStream->message("Turning off %s", name);
+        pyro.disable();
+        return;
+    }
     if (pyro.isLocked()) {
         debugStream->error("Disarmed: not firing %s", name);
         return;
@@ -144,7 +141,7 @@ SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) 
 SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { testFirePyro(mainPyro, "main", debugStream); });
 SimpleFlag testAux("-a", "Fires aux", false, [](DebugStream* debugStream) { testFirePyro(auxPyro, "aux", debugStream); });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain, &testAux};
+BaseFlag* testfireGroup[] = {&testfire, &testOn, &testOff, &testDrogue, &testMain, &testAux};
 SimpleFlag armFlag("--arm", "Arms the board: pyros can fire", true, [](DebugStream* debugStream) {
     armed.set(true);
     debugStream->message("ARMED has been set to: %d", (int)armed.get());
@@ -172,6 +169,7 @@ void setup() {
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
 
     // Setup Hardware
+    hardware.setup();
     int16_t framID = hardware.appendFramMemory(&fram);
     int16_t flashID = hardware.appendFlashMemory(&flash);
     int16_t drogueID = hardware.appendPyro(&droguePyro);
@@ -186,16 +184,18 @@ void setup() {
     hardware.appendIndicator(&led);
     hardware.appendIndicator(&buzzer);
     hardware.appendRadioLink(&radio);
-    hardware.appendGPS(&gps);
-    hardware.setWatchdogTimer(&watchdog);
-    hardware.setup();
 
     // Setup components
     serialDebug.message("SETTING UP COMPONENTS");
     configuration.setup(&hardware, framID); // Must be called first, for everything else to be able to use the configuration
+    if (configuration.getConfigurable<GPS_SOURCE_c>().get() == 1) {
+        hardware.appendGPS(&auxGps);
+    } else {
+        hardware.appendGPS(&onboardGps);
+    }
     configurationCliBindings.setupAll(&configuration, &cliParser);
     cliParser.addFlagGroup(testfireGroup);
-    groundStationRelay.setup(&cliParser, &radio, &gps);
+    groundStationRelay.setup(&cliParser, &radio, hardware.getGPS(0));
     cliParser.addFlagGroup(resetBoardGroup);
     cliParser.addFlagGroup(armGroup);
     cliParser.addFlagGroup(disarmGroup);
@@ -245,7 +245,7 @@ void loop() {
 
     if (!groundStationMode.get()) {
         // Determine state
-        state.rawGps = gps.getCoordinates();
+        state.rawGps = hardware.getGPS(0)->getCoordinates();
         state.orientation = orientationEstimator.update(state.timestamp, flightStateDeterminer.getFlightState());
         state.state1D = stateEstimator1D.update(state.timestamp, flightStateDeterminer.getFlightState());
         state.flightState = flightStateDeterminer.update(state.timestamp, state.state1D);
@@ -304,7 +304,7 @@ void loop() {
                 state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
                 state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
                 state.rawGps.latitudeDeg, state.rawGps.longitudeDeg, state.rawGps.altitudeM,
-                gps.getUnixTimeS(), gps.getHDOP(), gps.getVDOP(), gps.getFixQuality(), gps.getSatellitesTracked()
+                hardware.getGPS(0)->getUnixTimeS(), hardware.getGPS(0)->getHDOP(), hardware.getGPS(0)->getVDOP(), hardware.getGPS(0)->getFixQuality(), hardware.getGPS(0)->getSatellitesTracked()
             };
         logger.log(logData);
 

@@ -17,6 +17,7 @@ int16_t append##Type(Type* instance) {                                          
     }                                                                                                   \
     Type##Storage.push_back(instance);                                                                  \
     m_allHardware.push_back(instance);                                                                  \
+    instance->setup(m_debug, m_watchdog);                                                               \
     return Type##Storage.size() - 1;                                                                    \
 }                                                                                                       \
 inline uint8_t getNum##Type##s() const {                                                                \
@@ -33,6 +34,8 @@ inline Type* get##Type(uint8_t index) {                                         
 class HardwareAbstraction {
 public:
     HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, uint32_t loopRateHz);
+
+    HardwareAbstraction(DebugStream& debugStream, SystemClock& systemClock, WatchdogTimer& watchdog, uint32_t loopRateHz);
 
     void setup();
 
@@ -55,12 +58,7 @@ public:
     void appendGenericHardware(GenericAvionicsHardware* instance) {
         if (m_allHardware.full()) return;
         m_allHardware.push_back(instance);
-    }
-
-    // Fixed, single-instance hardware like SystemClock/DebugStream, not a generic list entry - see
-    // WatchdogTimer's class comment. Optional to call: m_watchdog defaults to a real no-op, so it's always safe to pet.
-    void setWatchdogTimer(WatchdogTimer* watchdog) {
-        if (watchdog) m_watchdog = watchdog;
+        instance->setup(m_debug, m_watchdog);
     }
 
     WatchdogTimer& getWatchdogTimer() const { return *m_watchdog; }
@@ -87,7 +85,7 @@ private:
 
     SystemClock* m_systemClock = nullptr; ///< System clocks
     DebugStream* m_debug = nullptr; ///< Debug stream
-    WatchdogTimer m_defaultWatchdog; ///< Harmless no-op used until/unless setWatchdogTimer() is called
+    WatchdogTimer m_defaultWatchdog; ///< Harmless no-op used when no watchdog is passed to the constructor
     WatchdogTimer* m_watchdog = &m_defaultWatchdog;
 
     etl::vector<GenericAvionicsHardware*, MAX_GENERIC_HARDWARE_NUM> m_allHardware;

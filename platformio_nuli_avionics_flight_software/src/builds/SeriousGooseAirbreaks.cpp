@@ -35,26 +35,8 @@
 #include "core/state_estimation/StateEstimator1D.h"
 #include "core/transform/DiscreteRotation.h"
 #include "core/BasicLoggerHelper.h"
+#include "builds/SeriousGooseLogData.h"
 
-// clang-format off
-LOG_DATA_AUTO_DEFINE(HEADER_OUTPUT,
-    struct SillyGooseLogData {
-        uint32_t timestampMs;
-        float pressurePa, barometerTemperatureK;
-        float accelerationMSS_x, accelerationMSS_y, accelerationMSS_z, velocityRadS_x, velocityRadS_y, velocityRadS_z, imuTemperatureK;
-        float magFieldTeslaRaw_x, magFieldTeslaRaw_y, magFieldTeslaRaw_z;
-        float batteryVoltageV, altitudeM, velocityMS, accelerationMSS, unfilteredAltitudeM;
-        int32_t flightState;
-        uint8_t drogueState; bool drogueFired;
-        uint8_t mainState; bool mainFired;
-        uint8_t auxState; bool auxFired;
-        float tiltMagnitudeDeg, angularVelRadS_x, angularVelRadS_y, angularVelRadS_z, quaternion_a, quaternion_b, quaternion_c, quaternion_d;
-        float gpsLatitudeDeg, gpsLongitudeDeg, gpsAltitudeM;
-        uint32_t gpsUnixTimeS;
-        uint16_t gpsHdop, gpsVdop; // raw, scaled by 100 - matches the GPS module's native representation
-        uint8_t gpsFixQuality, gpsSatellitesTracked;
-    } remove_struct_padding;
-)
 static constexpr const char* LOG_HEADER = BasicLoggerHelper::generateBasicLogHeader<HEADER_OUTPUT>();
 void printLog(const SillyGooseLogData &d, DebugStream *debug) {
     BasicLoggerHelper::genericBasicLogDataPrinter<HEADER_OUTPUT>(d, debug);
@@ -79,10 +61,18 @@ ArduinoVoltageSensor batteryVoltageSensor(VOLTAGE_SENSE_PIN, VOLTAGE_SENSE_SCALE
 ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
-ArduinoServo airbrakeServo(AUX_2_PIN, 0, 190);
+ArduinoServo airbrakeServo(AUX_2_PIN, 1000, 2050);
+constexpr uint32_t AIRBRAKE_STEP_MS = 2000;
+enum AirbrakeStep_e {
+    AIRBRAKE_STOWED,
+    AIRBRAKE_FULL,
+    AIRBRAKE_HALF,
+    AIRBRAKE_FULL_FINAL,
+};
+AirbrakeStep_e airbrakeStep = AIRBRAKE_STOWED;
 
 // Core components
-HardwareAbstraction hardware(serialDebug, arduinoClock, 100);
+HardwareAbstraction hardware(serialDebug, arduinoClock, watchdog, 100);
 FlightStateDeterminer flightStateDeterminer;
 DualDeploy dualDeploy;
 StateEstimator1D stateEstimator1D;
@@ -96,7 +86,7 @@ DebugStreamQueue<128, 1024> radioCli; // CLI channel over the radio link - see l
 // Configuration
 ConfigurationID_t sillyGooseRequiredConfigs[] = {
         FIRMWARE_VERSION_c, RADIO_FREQUENCY_c, LORA_SPREADING_FACTOR_c, RADIO_TRANSMIT_INTERVAL_c, BOARD_NAME_c, DROGUE_DELAY_c, MAIN_ELEVATION_c, BATTERY_VOLTAGE_SENSOR_SCALE_FACTOR_c,
-        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c
+        PYRO_FIRE_DURATION_c, BUZZER_ENABLED_c, GROUND_STATION_MODE_c, ARMED_c, GPS_SOURCE_c
     };
 Configuration configuration({
         sillyGooseRequiredConfigs,
@@ -129,8 +119,18 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
-SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOn("-on", "Holds the pyro on until -off, a reboot or --disarm instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOff("-off", "Turns the pyro off", false, [](DebugStream*) {});
 void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    if (testOn.isSet() && testOff.isSet()) {
+        debugStream->error("Use -on or -off, not both");
+        return;
+    }
+    if (testOff.isSet()) {
+        debugStream->message("Turning off %s", name);
+        pyro.disable();
+        return;
+    }
     if (pyro.isLocked()) {
         debugStream->error("Disarmed: not firing %s", name);
         return;
@@ -144,21 +144,21 @@ void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
 }
 SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) { testFirePyro(droguePyro, "drogue", debugStream); });
 SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { testFirePyro(mainPyro, "main", debugStream); });
-SimpleFlag servoToggle("--servo", "Toggles the airbrake servo between its two positions, PRE_FLIGHT only", true, [](DebugStream* debugStream) {
+ArgumentFlag<float> servoSet("--servo", "Moves the airbrake servo to a fraction from 0 (retracted) to 1 (fully extended), PRE_FLIGHT only", true, [](DebugStream* debugStream) {
     if (flightStateDeterminer.getFlightState() != PRE_FLIGHT) {
-        debugStream->error("Servo toggle is PRE_FLIGHT only");
+        debugStream->error("Servo control is PRE_FLIGHT only");
         return;
     }
-    if (airbrakeServo.isAtPosition2()) {
-        airbrakeServo.moveToPosition1();
-        debugStream->message("Airbrake servo stowed (position 1)");
-    } else {
-        airbrakeServo.moveToPosition2();
-        debugStream->message("Airbrake servo deployed (position 2)");
+    const float fraction = servoSet.getValueDerived();
+    if (!(fraction >= 0.0f && fraction <= 1.0f)) {
+        debugStream->error("Servo position must be between 0 and 1");
+        return;
     }
+    airbrakeServo.setPosition(fraction);
+    debugStream->message("Airbrake servo set to %.3f", airbrakeServo.getPosition());
 });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain};
+BaseFlag* testfireGroup[] = {&testfire, &testOn, &testOff, &testDrogue, &testMain};
 SimpleFlag armFlag("--arm", "Arms the board: pyros can fire", true, [](DebugStream* debugStream) {
     armed.set(true);
     debugStream->message("ARMED has been set to: %d", (int)armed.get());
@@ -174,7 +174,7 @@ BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* armGroup[] = {&armFlag};
 BaseFlag* disarmGroup[] = {&disarmFlag};
 BaseFlag* armedGroup[] = {&armedFlag};
-BaseFlag* servoGroup[] = {&servoToggle};
+BaseFlag* servoGroup[] = {&servoSet};
 BaseFlag* helpGroup[] = {&helpFlag};
 
 void setup() {
@@ -187,6 +187,7 @@ void setup() {
     if (AVIONICS_ARGUMENT_isDev) led.setOutputPercent(6.0f); // Lower the LED Power
 
     // Setup Hardware
+    hardware.setup();
     int16_t framID = hardware.appendFramMemory(&fram);
     int16_t flashID = hardware.appendFlashMemory(&flash);
     int16_t drogueID = hardware.appendPyro(&droguePyro);
@@ -202,8 +203,6 @@ void setup() {
     hardware.appendRadioLink(&radio);
     hardware.appendGPS(&gps);
     hardware.appendGenericHardware(&airbrakeServo);
-    hardware.setWatchdogTimer(&watchdog);
-    hardware.setup();
     auxPyro.setup(&serialDebug, &watchdog);
     auxPyro.turnOn();
 
@@ -283,6 +282,19 @@ void loop() {
             if (flightStateDeterminer.isStateTransitionTick()) logger.logConfig(&configuration);     // Log config again
             logger.enableContinuousLogging();
             indicatorManager.keepAliveBeep(state.timestamp);
+            if (flightStateDeterminer.getFirstStageBurnout()) {
+                const uint32_t sinceBurnoutMs = flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms);
+                if (airbrakeStep == AIRBRAKE_STOWED && sinceBurnoutMs >= AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(1.0f);
+                    airbrakeStep = AIRBRAKE_FULL;
+                } else if (airbrakeStep == AIRBRAKE_FULL && sinceBurnoutMs >= 2 * AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(0.5f);
+                    airbrakeStep = AIRBRAKE_HALF;
+                } else if (airbrakeStep == AIRBRAKE_HALF && sinceBurnoutMs >= 3 * AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(1.0f);
+                    airbrakeStep = AIRBRAKE_FULL_FINAL;
+                }
+            }
         } else if (state.flightState == DESCENT) {
             if (flightStateDeterminer.isStateTransitionTick()) radioCli.clearIncoming();
             logger.enableContinuousLogging();
@@ -305,11 +317,6 @@ void loop() {
             indicatorManager.siren(state.timestamp);
         }
 
-        if (flightStateDeterminer.getFirstStageBurnout() && !airbrakeServo.isAtPosition2() &&
-            flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms) >= 3000) {
-            airbrakeServo.moveToPosition2();
-        }
-
         // Update any changes to the configuration
         configuration.pushUpdatesToMemory();
         // Run logging
@@ -322,7 +329,7 @@ void loop() {
                 sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().x, sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().y,
                 sensorPackage.getMagnetometer()->getMagneticFieldTesla_sensor().z,
                 batteryVoltageSensor.getVoltage(), state.state1D.altitudeM, state.state1D.velocityMS, state.state1D.accelerationMSS, state.state1D.unfilteredNoOffsetAltitudeM, state.flightState,
-                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), uint8_t(airbrakeServo.isAtPosition2() ? 2 : 1), auxPyro.isFired(),
+                droguePyro.stateByte(), droguePyro.isFired(), mainPyro.stateByte(), mainPyro.isFired(), uint8_t(airbrakeServo.getPosition() > 0.0f ? 2 : 1), auxPyro.isFired(),
                 state.orientation.tiltMagnitudeDeg,
                 state.orientation.angularVelocity.x, state.orientation.angularVelocity.y, state.orientation.angularVelocity.z,
                 state.orientation.angleQuaternion.a, state.orientation.angleQuaternion.b, state.orientation.angleQuaternion.c, state.orientation.angleQuaternion.d,
