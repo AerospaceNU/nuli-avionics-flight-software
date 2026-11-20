@@ -56,6 +56,7 @@ bool ArduinoPyro::isFired() const {
 }
 
 void ArduinoPyro::fireOutputFor(const uint32_t timeMs) {
+    if (m_isFired && !m_timedFireAlarm.isInitialized()) return;
     turnOnOutput();
     m_timedFireAlarm.startAlarm(millis(), timeMs);
 }

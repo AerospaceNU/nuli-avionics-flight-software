@@ -119,8 +119,18 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
-SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOn("-on", "Holds the pyro on until -off, a reboot or --disarm instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOff("-off", "Turns the pyro off", false, [](DebugStream*) {});
 void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    if (testOn.isSet() && testOff.isSet()) {
+        debugStream->error("Use -on or -off, not both");
+        return;
+    }
+    if (testOff.isSet()) {
+        debugStream->message("Turning off %s", name);
+        pyro.disable();
+        return;
+    }
     if (pyro.isLocked()) {
         debugStream->error("Disarmed: not firing %s", name);
         return;
@@ -148,7 +158,7 @@ ArgumentFlag<float> servoSet("--servo", "Moves the airbrake servo to a fraction 
     debugStream->message("Airbrake servo set to %.3f", airbrakeServo.getPosition());
 });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain};
+BaseFlag* testfireGroup[] = {&testfire, &testOn, &testOff, &testDrogue, &testMain};
 SimpleFlag armFlag("--arm", "Arms the board: pyros can fire", true, [](DebugStream* debugStream) {
     armed.set(true);
     debugStream->message("ARMED has been set to: %d", (int)armed.get());

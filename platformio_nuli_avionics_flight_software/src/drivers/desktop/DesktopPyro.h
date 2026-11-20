@@ -28,6 +28,7 @@ protected:
     }
 
     void fireOutputFor(const uint32_t timeMs) override {
+        if (m_isFired && !m_timedFireAlarm.isInitialized()) return;
         turnOnOutput();
         m_timedFireAlarm.startAlarm(m_clock.currentRuntimeMs(), timeMs);
     }

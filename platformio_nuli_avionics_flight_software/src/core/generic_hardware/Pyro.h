@@ -64,6 +64,10 @@ public:
         if (!m_locked) turnOnOutput();
     }
 
+    /**
+     * @brief Fires the pyro channel for timeMs, then turns it off
+     * @details Does nothing while the channel is locked, or while it is held on by turnOn(): a held channel stays on until disable().
+     */
     void fireFor(const uint32_t timeMs) {
         if (!m_locked) fireOutputFor(timeMs);
     }

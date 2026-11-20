@@ -99,6 +99,7 @@ bool stagingFired = false;
 constexpr uint32_t STAGING_DELAY_AFTER_BURNOUT_MS = 500;
 constexpr float STAGING_MIN_ALTITUDE_M = 150.0f;
 constexpr float STAGING_MIN_VELOCITY_MS = 7.5f;
+constexpr uint32_t STAGING_FIRE_DURATION_MS = 9000;
 
 bool stagingConditionsMet(const RocketState_s& state) {
     return flightStateDeterminer.getFirstStageBurnout() &&
@@ -126,8 +127,18 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
-SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOn("-on", "Holds the pyro on until -off, a reboot or --disarm instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOff("-off", "Turns the pyro off", false, [](DebugStream*) {});
 void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    if (testOn.isSet() && testOff.isSet()) {
+        debugStream->error("Use -on or -off, not both");
+        return;
+    }
+    if (testOff.isSet()) {
+        debugStream->message("Turning off %s", name);
+        pyro.disable();
+        return;
+    }
     if (pyro.isLocked()) {
         debugStream->error("Disarmed: not firing %s", name);
         return;
@@ -143,7 +154,7 @@ SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) 
 SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { testFirePyro(mainPyro, "main", debugStream); });
 SimpleFlag testAux("-a", "Fires aux", false, [](DebugStream* debugStream) { testFirePyro(auxPyro, "aux", debugStream); });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain, &testAux};
+BaseFlag* testfireGroup[] = {&testfire, &testOn, &testOff, &testDrogue, &testMain, &testAux};
 SimpleFlag armFlag("--arm", "Arms the board: pyros can fire", true, [](DebugStream* debugStream) {
     armed.set(true);
     debugStream->message("ARMED has been set to: %d", (int)armed.get());
@@ -269,7 +280,7 @@ void loop() {
             logger.enableContinuousLogging();
             if (bootedOnPad && !stagingFired && stagingConditionsMet(state)) {
                 stagingFired = true;
-                auxPyro.fireFor(pyroFireDuration.get());
+                auxPyro.fireFor(STAGING_FIRE_DURATION_MS);
                 logger.logMessage(auxPyro.isLocked() ? "Staging: disarmed, aux not fired" : "Staging: fired aux");
             }
             indicatorManager.keepAliveBeep(state.timestamp);

@@ -122,8 +122,18 @@ ConfigurationCliBindings<FIRMWARE_VERSION_c,
 // CLI
 SimpleFlag resetBoard("--reset", "Reboots the board", true, [](DebugStream*) { NVIC_SystemReset(); });
 SimpleFlag testfire("--fire", "Test-fires a pyro", true, [](DebugStream*) {});
-SimpleFlag testOn("--on", "Holds the pyro on until reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOn("-on", "Holds the pyro on until -off or a reboot instead of firing it for the pyro fire duration", false, [](DebugStream*) {});
+SimpleFlag testOff("-off", "Turns the pyro off", false, [](DebugStream*) {});
 void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
+    if (testOn.isSet() && testOff.isSet()) {
+        debugStream->error("Use -on or -off, not both");
+        return;
+    }
+    if (testOff.isSet()) {
+        debugStream->message("Turning off %s", name);
+        pyro.disable();
+        return;
+    }
     debugStream->message(testOn.isSet() ? "Turning on %s" : "Firing %s", name);
     if (testOn.isSet()) {
         pyro.turnOn();
@@ -134,7 +144,7 @@ void testFirePyro(Pyro& pyro, const char* name, DebugStream* debugStream) {
 SimpleFlag testDrogue("-d", "Fires drogue", false, [](DebugStream* debugStream) { testFirePyro(droguePyro, "drogue", debugStream); });
 SimpleFlag testMain("-m", "Fires main", false, [](DebugStream* debugStream) { testFirePyro(mainPyro, "main", debugStream); });
 SimpleFlag helpFlag("--help", "Prints all commands", true, [](DebugStream* debugStream) { cliParser.printHelp(debugStream); });
-BaseFlag* testfireGroup[] = {&testfire, &testOn, &testDrogue, &testMain};
+BaseFlag* testfireGroup[] = {&testfire, &testOn, &testOff, &testDrogue, &testMain};
 BaseFlag* resetBoardGroup[] = {&resetBoard};
 BaseFlag* helpGroup[] = {&helpFlag};
 
