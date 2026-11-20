@@ -96,14 +96,14 @@ ConfigurationData<uint32_t> armed;
 
 bool bootedOnPad = false;
 bool stagingFired = false;
+constexpr uint32_t STAGING_DELAY_AFTER_BURNOUT_MS = 500;
+constexpr float STAGING_MIN_ALTITUDE_M = 150.0f;
+constexpr float STAGING_MIN_VELOCITY_MS = 7.5f;
 
 bool stagingConditionsMet(const RocketState_s& state) {
-    const uint32_t timeSinceLaunchMs = flightStateDeterminer.getStateTimer()->getTimeElapsed(state.timestamp.runtime_ms);
     return flightStateDeterminer.getFirstStageBurnout() &&
-           timeSinceLaunchMs >= 2000 && timeSinceLaunchMs <= 8000 &&
-           state.state1D.altitudeM >= 150.0f && state.state1D.altitudeM <= 3000.0f &&
-           state.state1D.velocityMS >= 50.0f && state.state1D.velocityMS <= 400.0f &&
-           state.orientation.tiltMagnitudeDeg <= 20.0f;
+           flightStateDeterminer.getBurnoutTimer()->getTimeElapsed(state.timestamp.runtime_ms) >= STAGING_DELAY_AFTER_BURNOUT_MS &&
+           state.state1D.altitudeM > STAGING_MIN_ALTITUDE_M && state.state1D.velocityMS > STAGING_MIN_VELOCITY_MS;
 }
 ConfigurationData<uint32_t> radioTransmitDelay;
 ConfigurationData<uint32_t> groundStationMode;

@@ -62,12 +62,11 @@ ArduinoFram fram(FRAM_CS_PIN);
 IndicatorLED led(LIGHT_PIN);
 IndicatorBuzzer buzzer(BUZZER_PIN, 4000, 1000);
 ArduinoServo airbrakeServo(AUX_2_PIN, 1000, 2050);
-constexpr uint32_t AIRBRAKE_STEP_MS = 3000;
+constexpr uint32_t AIRBRAKE_STEP_MS = 2000;
 enum AirbrakeStep_e {
     AIRBRAKE_STOWED,
     AIRBRAKE_FULL,
-    AIRBRAKE_ONE_THIRD,
-    AIRBRAKE_TWO_THIRDS,
+    AIRBRAKE_HALF,
     AIRBRAKE_FULL_FINAL,
 };
 AirbrakeStep_e airbrakeStep = AIRBRAKE_STOWED;
@@ -279,12 +278,9 @@ void loop() {
                     airbrakeServo.setPosition(1.0f);
                     airbrakeStep = AIRBRAKE_FULL;
                 } else if (airbrakeStep == AIRBRAKE_FULL && sinceBurnoutMs >= 2 * AIRBRAKE_STEP_MS) {
-                    airbrakeServo.setPosition(1.0f / 3.0f);
-                    airbrakeStep = AIRBRAKE_ONE_THIRD;
-                } else if (airbrakeStep == AIRBRAKE_ONE_THIRD && sinceBurnoutMs >= 3 * AIRBRAKE_STEP_MS) {
-                    airbrakeServo.setPosition(2.0f / 3.0f);
-                    airbrakeStep = AIRBRAKE_TWO_THIRDS;
-                } else if (airbrakeStep == AIRBRAKE_TWO_THIRDS && sinceBurnoutMs >= 4 * AIRBRAKE_STEP_MS) {
+                    airbrakeServo.setPosition(0.5f);
+                    airbrakeStep = AIRBRAKE_HALF;
+                } else if (airbrakeStep == AIRBRAKE_HALF && sinceBurnoutMs >= 3 * AIRBRAKE_STEP_MS) {
                     airbrakeServo.setPosition(1.0f);
                     airbrakeStep = AIRBRAKE_FULL_FINAL;
                 }
